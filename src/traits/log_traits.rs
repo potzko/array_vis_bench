@@ -56,8 +56,9 @@ impl SortLogger for () {
     fn log(&mut self, data: SortLog) {}
 }
 
+#[derive(Debug)]
 pub struct VisualizerLogger {
-    log: Vec<SortLog>,
+    pub log: Vec<SortLog>,
 }
 
 impl SortLogger for VisualizerLogger {
