@@ -1,3 +1,4 @@
+#[warn(dead_code)]
 #[derive(Debug)]
 pub enum SortLog {
     Cmp {
@@ -49,11 +50,11 @@ pub enum SortLog {
 }
 
 pub trait SortLogger {
-    fn log(&mut self, data: SortLog) {}
+    fn log(&mut self, _: SortLog) {}
 }
 
 impl SortLogger for () {
-    fn log(&mut self, data: SortLog) {}
+    fn log(&mut self, _: SortLog) {}
 }
 
 #[derive(Debug)]

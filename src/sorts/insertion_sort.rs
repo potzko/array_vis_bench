@@ -1,5 +1,6 @@
 const MAX_SIZE: usize = 5000;
 const BIG_O: &str = "O(N^2)";
+const NAME: &str = "insertion sort";
 
 use crate::traits;
 pub struct InsertionSort {}
@@ -13,6 +14,9 @@ impl traits::sort_traits::SortAlgo for InsertionSort {
     }
     fn sort<T: Ord, U: traits::log_traits::SortLogger>(arr: &mut [T], logger: &mut U) {
         sort::<T, U>(arr, logger);
+    }
+    fn name(&self) -> &str {
+        NAME
     }
 }
 
