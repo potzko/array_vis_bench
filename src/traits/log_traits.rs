@@ -1,5 +1,5 @@
 #[warn(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SortLog {
     Cmp {
         name: usize,

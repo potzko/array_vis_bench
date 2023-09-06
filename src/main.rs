@@ -7,19 +7,20 @@ mod traits;
 mod utils;
 mod visualise;
 fn main() {
-    let mut arr = utils::array_gen::get_rand_arr(2);
+    let mut arr = utils::array_gen::get_rand_arr(50);
+    let original_arr = arr.to_vec();
     //println!("{arr:?}");
     let mut logger = traits::log_traits::VisualizerLogger {
         log: Vec::<traits::log_traits::SortLog>::new(),
     };
     let start = Instant::now();
-    sorts::bubble_sorts::odd_even_bubble_sort::Odd_Even_Bubble_Sort::sort(&mut arr, &mut ());
+    sorts::bubble_sorts::shaker_sort::ShakerSort::sort(&mut arr, &mut logger);
     println!("{:?}", start.elapsed());
-    println!("{:?}", logger);
+    //println!("{:?}", logger);
     println!("{:?}", logger.log.len());
     //println!("{arr:?}");
     print!("{}", utils::check_utils::is_sorted(&arr));
-    visualise::tmp::main();
+    visualise::tmp::main(logger.log, &original_arr);
 }
 
 /*
