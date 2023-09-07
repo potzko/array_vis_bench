@@ -3,9 +3,9 @@ const BIG_O: &str = "O(N^2)";
 const NAME: &str = "odd-even bubble sort";
 
 use crate::traits;
-pub struct Odd_Even_Bubble_Sort {}
+pub struct OddEvenBubbleSort {}
 
-impl traits::sort_traits::SortAlgo for Odd_Even_Bubble_Sort {
+impl traits::sort_traits::SortAlgo for OddEvenBubbleSort {
     fn max_size(&self) -> usize {
         MAX_SIZE
     }

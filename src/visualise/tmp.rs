@@ -7,6 +7,8 @@ lazy_static::lazy_static! {
     static ref DATA_INITIAL_ARR: Mutex<Vec<u64>> = Mutex::new(Vec::new());
 }
 
+const ACTIONS_PER_FRAME: usize = 1000;
+
 pub fn main(log: Vec<SortLog>, initial_arr: &[u64]) {
     {
         // Initialize the global state
@@ -29,6 +31,9 @@ struct Model {
 fn model(app: &App) -> Model {
     let data = DATA_SWAPS.lock().unwrap();
     let arr = DATA_INITIAL_ARR.lock().unwrap();
+    app.set_loop_mode(LoopMode::NTimes {
+        number_of_updates: data.len() / ACTIONS_PER_FRAME + 1,
+    });
     let _window = app.new_window().view(view).build().unwrap();
     Model {
         _window,
@@ -39,10 +44,14 @@ fn model(app: &App) -> Model {
 }
 
 fn update(_app: &App, _model: &mut Model, _update: Update) {
-    let action = &_model.data[_model.ind];
-    match action {
-        SortLog::Swap { name, ind_a, ind_b } => _model.arr.swap(*ind_a, *ind_b),
-        _ => {}
+    for action in _model.data[_model.ind * ACTIONS_PER_FRAME..]
+        .iter()
+        .take(ACTIONS_PER_FRAME)
+    {
+        match action {
+            SortLog::Swap { name, ind_a, ind_b } => _model.arr.swap(*ind_a, *ind_b),
+            _ => {}
+        }
     }
     _model.ind += 1;
 }
@@ -54,7 +63,6 @@ fn view(app: &App, model: &Model, frame: Frame) {
     let num_elements = model.arr.len();
     let window_rect = app.window_rect();
     let bar_width = window_rect.w() / num_elements as f32;
-
     for (i, &value) in model.arr.iter().enumerate() {
         let x = map_range(i, 0, num_elements, window_rect.left(), window_rect.right());
         let height = map_range(
