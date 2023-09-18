@@ -1,8 +1,6 @@
 const MAX_SIZE: usize = 100000;
 const BIG_O: &str = "O(N*log(N))";
-const NAME: &str = "shell sort";
-
-use std::fmt::Debug;
+const NAME: &str = "heap sort";
 
 use crate::traits;
 use crate::traits::log_traits::SortLogger;
@@ -18,7 +16,7 @@ impl traits::sort_traits::SortAlgo for HeapSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy + Debug, U: traits::log_traits::SortLogger<T>>(
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
         arr: &mut [T],
         start: usize,
         end: usize,
@@ -31,7 +29,7 @@ impl traits::sort_traits::SortAlgo for HeapSort {
     }
 }
 
-fn sort<T: Ord + Copy + Debug, U: traits::log_traits::SortLogger<T>>(
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     start: usize,
     end: usize,

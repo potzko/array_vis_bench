@@ -43,7 +43,7 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
 ) {
     let len = (end - start) / jump;
 
-    if len < 16 {
+    if len < 2 {
         insertion_sort_jump(arr, start, end, jump, logger);
         return;
     }

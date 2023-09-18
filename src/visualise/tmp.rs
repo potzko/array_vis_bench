@@ -1,15 +1,13 @@
 use crate::traits::log_traits::SortLog;
 use nannou::prelude::*;
 use std::sync::Mutex;
-use std::thread::sleep;
-use std::time::Duration;
 
 lazy_static::lazy_static! {
     static ref DATA_SWAPS: Mutex<Vec<SortLog<u64>>> = Mutex::new(Vec::new());
     static ref DATA_INITIAL_ARR: Mutex<Vec<u64>> = Mutex::new(Vec::new());
 }
 
-const ACTIONS_PER_FRAME: usize = 200;
+const ACTIONS_PER_FRAME: usize = 1000;
 
 pub fn main(log: Vec<SortLog<u64>>, initial_arr: &[u64]) {
     {
@@ -39,7 +37,6 @@ fn model(app: &App) -> Model {
         number_of_updates: data.len() / ACTIONS_PER_FRAME + 1,
     });
     let _window = app.new_window().view(view).build().unwrap();
-    sleep(Duration::from_secs(0));
 
     Model {
         _window,

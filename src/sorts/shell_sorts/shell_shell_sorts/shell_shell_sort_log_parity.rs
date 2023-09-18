@@ -53,6 +53,12 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     for i in 0..num {
         sort(arr, start + jump * i, end, jump * num, logger);
     }
+    let num = num - 1;
+    if len >= num * 16 {
+        for i in 0..num {
+            insertion_sort_jump(arr, start + jump * i, end, jump * num, logger);
+        }
+    }
     insertion_sort_jump(arr, start, end, jump, logger);
 }
 

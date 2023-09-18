@@ -3,7 +3,6 @@ const BIG_O: &str = "O(N^log^2(N))";
 const NAME: &str = "circle_sort";
 
 use crate::traits::*;
-use std::fmt::Debug;
 pub struct CircleSort {}
 
 impl sort_traits::SortAlgo for CircleSort {
@@ -13,7 +12,7 @@ impl sort_traits::SortAlgo for CircleSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy + Debug, U: log_traits::SortLogger<T>>(
+    fn sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(
         arr: &mut [T],
         start: usize,
         end: usize,

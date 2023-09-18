@@ -4,7 +4,6 @@ const NAME: &str = "circle_sort";
 
 use crate::traits::*;
 use sort_traits::SortAlgo;
-use std::fmt::Debug;
 pub struct CircleSort {}
 
 impl sort_traits::SortAlgo for CircleSort {
@@ -14,7 +13,7 @@ impl sort_traits::SortAlgo for CircleSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy + Debug, U: log_traits::SortLogger<T>>(
+    fn sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(
         arr: &mut [T],
         start: usize,
         end: usize,
@@ -27,7 +26,7 @@ impl sort_traits::SortAlgo for CircleSort {
     }
 }
 
-fn circle_sort<T: Ord + Copy + Debug, U: log_traits::SortLogger<T>>(
+fn circle_sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(
     arr: &mut [T],
     start: usize,
     end: usize,

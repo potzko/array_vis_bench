@@ -1,3 +1,4 @@
+pub mod midian_pivot_quick_sort;
 pub mod quick_sort_left_left_pointers;
 pub mod quick_sort_left_left_pointers_optimised;
 pub mod quick_sort_left_right_pivot_optimised;

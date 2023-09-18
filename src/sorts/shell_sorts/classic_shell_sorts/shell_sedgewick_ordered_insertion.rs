@@ -1,9 +1,31 @@
 const MAX_SIZE: usize = 50000;
-const BIG_O: &str = "O(N^2)";
-const NAME: &str = "shell sort 2.25 shrink factor";
+const BIG_O: &str = "O(N^(4/3)))";
+const NAME: &str = "shell sort sedgewick jumps";
 
 use crate::traits;
 pub struct ShellSort {}
+
+#[inline]
+fn sequence_sedgewick(iter: usize) -> usize {
+    if iter == 0 {
+        return 1;
+    }
+    4_usize.pow(iter as u32) + 3 * 2_usize.pow(iter as u32 - 1) + 1
+}
+
+fn vec_sedgewick(len: usize) -> Vec<usize> {
+    let mut ret = Vec::new();
+    let mut iter = 0;
+    loop {
+        let num = sequence_sedgewick(iter);
+        if num >= len {
+            break;
+        }
+        ret.push(num);
+        iter += 1
+    }
+    ret
+}
 
 impl traits::sort_traits::SortAlgo for ShellSort {
     fn max_size(&self) -> usize {
@@ -18,58 +40,26 @@ impl traits::sort_traits::SortAlgo for ShellSort {
         end: usize,
         logger: &mut U,
     ) {
-        sort_helper::<T, U>(arr, start, end, logger);
+        sort::<T, U>(arr, start, end, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    sort(arr, start, end, 1, logger);
-
-    // Print TOTAL, COUNT and MAX values
-    /*
-    println!("Total: {}", *TOTAL.lock().unwrap());
-    println!("Count: {}", *COUNT.lock().unwrap());
-    println!(
-        "avrage: {}",
-        *TOTAL.lock().unwrap() / *COUNT.lock().unwrap()
-    );
-    */
-}
-
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     start: usize,
     end: usize,
-    jump: usize,
     logger: &mut U,
 ) {
-    if end < start {
-        return;
-    }
-    let len = (end - start) / jump;
-    if len < 64 {
-        insertion_sort_jump(arr, start, end, jump, logger);
-        return;
-    }
-    let num = 32;
-    for i in 0..num {
-        sort(arr, start + jump * i, end, jump * num, logger);
-    }
-    let num = 15;
-    if len >= num * 16 {
-        for i in 0..num {
-            insertion_sort_jump(arr, start + jump * i, end, jump * num, logger);
+    use crate::traits::log_traits::SortLog::*;
+    for &jump in vec_sedgewick(end - start).iter().rev() {
+        logger.log(Mark(format!("jump = {}", jump)));
+        for i in 0..jump {
+            insertion_sort_jump(arr, i, end, jump, logger);
         }
     }
-    insertion_sort_jump(arr, start, end, jump, logger);
 }
 
 fn insertion_sort_jump<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
@@ -79,25 +69,6 @@ fn insertion_sort_jump<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     jump: usize,
     logger: &mut U,
 ) {
-    /*
-    {
-        let mut jumps_tracker = JUMPS_TRACKER.lock().unwrap();
-        if jumps_tracker.insert(jump) {
-            println!("{}", jump);
-        }
-
-        let len = (end - start) / jump;
-
-        // Update TOTAL, COUNT and MAX
-        {
-            let mut total = TOTAL.lock().unwrap();
-            *total += len;
-        }
-        {
-            let mut count = COUNT.lock().unwrap();
-            *count += 1;
-        }
-    }*/
     for i in (start..end).step_by(jump) {
         logger.log(traits::log_traits::SortLog::Mark(format!(
             "inserting value at index {}",

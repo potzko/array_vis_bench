@@ -2,8 +2,6 @@ const MAX_SIZE: usize = 50000;
 const BIG_O: &str = "O(N Log(N))";
 const NAME: &str = "quick sort left left pointers";
 
-use std::fmt::Debug;
-
 use crate::traits;
 use traits::log_traits::SortLog;
 pub struct QuickSort {}
@@ -15,7 +13,7 @@ impl traits::sort_traits::SortAlgo for QuickSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy + Debug, U: traits::log_traits::SortLogger<T>>(
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
         arr: &mut [T],
         start: usize,
         end: usize,
@@ -28,7 +26,7 @@ impl traits::sort_traits::SortAlgo for QuickSort {
     }
 }
 
-fn partition<T: Ord + Copy + Debug, U: traits::log_traits::SortLogger<T>>(
+fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     start: usize,
     end: usize,
@@ -70,7 +68,7 @@ fn partition<T: Ord + Copy + Debug, U: traits::log_traits::SortLogger<T>>(
     i // Return the partition index
 }
 
-fn sort<T: Ord + Copy + Debug, U: traits::log_traits::SortLogger<T>>(
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     start: usize,
     end: usize,

@@ -1,13 +1,12 @@
-const MAX_SIZE: usize = 100000;
-const BIG_O: &str = "O(N*log(N))";
-const NAME: &str = "heap sort";
+const MAX_SIZE: usize = 50000;
+const BIG_O: &str = "O(N^2)";
+const NAME: &str = "bad_heap";
 
 use crate::traits;
-use crate::traits::log_traits::SortLogger;
-use crate::traits::sort_traits::SortAlgo;
-pub struct HeapSort {}
+use traits::log_traits::SortLog;
+pub struct FunSort {}
 
-impl traits::sort_traits::SortAlgo for HeapSort {
+impl traits::sort_traits::SortAlgo for FunSort {
     fn max_size(&self) -> usize {
         MAX_SIZE
     }
@@ -45,23 +44,13 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
         arr.swap(0, sorted_index);
         heapify(arr, start, sorted_index - 1, logger);
     }
+    use traits::sort_traits::SortAlgo;
     crate::sorts::insertion_sorts::insertion_sort::InsertionSort::sort(
         arr,
         start,
         start + std::cmp::min(end - start, 3),
         logger,
     );
-}
-
-fn first_heapify<T: Ord + Copy, U: SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    for start in (start..start + (end - start) / 2).rev() {
-        heapify(arr, start, end - 1, logger);
-    }
 }
 
 fn heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
@@ -73,8 +62,8 @@ fn heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     use traits::log_traits::SortLog::*;
 
     let mut ind = start;
-    let mut left = (ind << 1) | 1;
-    let mut right = (ind + 1) << 1;
+    let mut left = ind + 1;
+    let mut right = ind + 2;
 
     if right < end {
         logger.log(Cmp {
@@ -103,8 +92,8 @@ fn heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
             });
             arr.swap(ind, left);
             ind = left;
-            left = (ind << 1) | 1;
-            right = (ind + 1) << 1;
+            left = ind + 1;
+            right = ind + 2;
             if right < end {
                 logger.log(Cmp {
                     name: &arr as *const _ as usize,
@@ -119,5 +108,32 @@ fn heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
         } else {
             break;
         }
+    }
+}
+
+fn deep_heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+    arr: &mut [T],
+    start: usize,
+    end: usize,
+    logger: &mut U,
+) {
+    if end <= start {
+        return;
+    }
+    let left = start + 1;
+    let right = start + 2;
+    deep_heapify(arr, right, end, logger);
+    deep_heapify(arr, left, end, logger);
+    heapify(arr, start, end, logger);
+}
+
+fn first_heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+    arr: &mut [T],
+    start: usize,
+    end: usize,
+    logger: &mut U,
+) {
+    for start in (start..start + (end - start)).rev() {
+        heapify(arr, start, end - 1, logger);
     }
 }
