@@ -1,5 +1,6 @@
 use crate::traits::sort_traits::SortAlgo;
 use std::time::Instant;
+use traits::log_traits::SortLog::*;
 use traits::log_traits::SortLogger;
 
 mod sorts;
@@ -8,7 +9,7 @@ mod utils;
 mod visualise;
 
 fn main() {
-    let size = 5000;
+    let size = 3000;
     let mut arr: Vec<u64> = utils::array_gen::get_rand_arr(size);
     //arr = crate::utils::array_gen::get_arr(size);
     let original_arr = arr.clone();
@@ -18,8 +19,12 @@ fn main() {
         type_ghost: std::marker::PhantomData,
     };
 
+    for i in 0..10000 {
+        logger.log(Mark("".to_string()))
+    }
+
     let start: Instant = Instant::now();
-    sorts::fun_sorts::quick_surrender_optimised::FunSort::sort(&mut arr, 0, size, &mut (logger));
+    sorts::circle_sorts::stooge_circle_sort::CircleSort::sort(&mut arr, 0, size, &mut (logger));
     println!("{:?}", start.elapsed());
     //println!("{:?}", logger);
     println!("{:?}", logger.log.len());

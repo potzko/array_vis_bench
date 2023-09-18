@@ -7,7 +7,7 @@ lazy_static::lazy_static! {
     static ref DATA_INITIAL_ARR: Mutex<Vec<u64>> = Mutex::new(Vec::new());
 }
 
-const ACTIONS_PER_FRAME: usize = 1000;
+const ACTIONS_PER_FRAME: usize = 100;
 
 pub fn main(log: Vec<SortLog<u64>>, initial_arr: &[u64]) {
     {
