@@ -1,1 +1,5 @@
-pub mod quick_sort_left_right_pointers;
+pub mod quick_sort_left_left_pointers;
+pub mod quick_sort_left_left_pointers_optimised;
+pub mod quick_sort_left_right_pivot_optimised;
+pub mod quick_sort_left_right_pointers_moving_pivot;
+pub mod quick_sort_left_right_pointers_static_pivot;

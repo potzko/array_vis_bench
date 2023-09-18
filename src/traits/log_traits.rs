@@ -1,6 +1,8 @@
+use std::marker::PhantomData;
+
 #[warn(dead_code)]
 #[derive(Debug, Clone)]
-pub enum SortLog {
+pub enum SortLog<T: Copy> {
     Cmp {
         name: usize,
         ind_a: usize,
@@ -26,7 +28,6 @@ pub enum SortLog {
     CreateAuxArr {
         name: usize,
         length: usize,
-        data_type_size: usize,
     },
     CmpAcrossArrs {
         name_a: usize,
@@ -47,23 +48,40 @@ pub enum SortLog {
         name_b: usize,
         ind_b: usize,
     },
+    CmpOuterData {
+        name: usize,
+        ind: usize,
+        data: T,
+        result: bool,
+    },
+    WriteOutOfArr {
+        name: usize,
+        ind: usize,
+        data: T,
+    },
+    Write {
+        name: usize,
+        ind_a: usize,
+        ind_b: usize,
+    },
 }
 
-pub trait SortLogger {
-    fn log(&mut self, _: SortLog) {}
+pub trait SortLogger<T: Copy> {
+    fn log(&mut self, _: SortLog<T>) {}
 }
 
-impl SortLogger for () {
-    fn log(&mut self, _: SortLog) {}
+impl<T: Copy> SortLogger<T> for () {
+    fn log(&mut self, _: SortLog<T>) {}
 }
 
 #[derive(Debug)]
-pub struct VisualizerLogger {
-    pub log: Vec<SortLog>,
+pub struct VisualizerLogger<T: Copy> {
+    pub type_ghost: std::marker::PhantomData<T>,
+    pub log: Vec<SortLog<T>>,
 }
 
-impl SortLogger for VisualizerLogger {
-    fn log(&mut self, data: SortLog) {
+impl<T: Copy> SortLogger<T> for VisualizerLogger<T> {
+    fn log(&mut self, data: SortLog<T>) {
         self.log.push(data);
     }
 }

@@ -12,27 +12,37 @@ impl traits::sort_traits::SortAlgo for BubbleSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord, U: traits::log_traits::SortLogger>(arr: &mut [T], logger: &mut U) {
-        sort::<T, U>(arr, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+        arr: &mut [T],
+        start: usize,
+        end: usize,
+        logger: &mut U,
+    ) {
+        sort::<T, U>(arr, start, end, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn sort<T: Ord, U: traits::log_traits::SortLogger>(arr: &mut [T], logger: &mut U) {
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+    arr: &mut [T],
+    start: usize,
+    end: usize,
+    logger: &mut U,
+) {
     use traits::log_traits::SortLog;
-    for ii in 0..arr.len() {
-        for i in 1..arr.len() - ii {
+    for ii in start..end {
+        for i in start + 1..end - (ii - start) {
             logger.log(SortLog::Cmp {
-                name: 0,
+                name: &arr as *const _ as usize,
                 ind_a: i,
                 ind_b: i - 1,
                 result: arr[i] < arr[i - 1],
             });
             if arr[i] < arr[i - 1] {
                 logger.log(SortLog::Swap {
-                    name: 0,
+                    name: &arr as *const _ as usize,
                     ind_a: i - 1,
                     ind_b: i,
                 });

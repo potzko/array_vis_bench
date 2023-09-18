@@ -9,3 +9,8 @@ pub fn is_sorted<T: Ord>(arr: &[T]) -> bool {
     }
     true
 }
+
+pub fn is_sorted_arr<T: Ord>(arr: &[T], arr_original: &mut [T]) -> bool {
+    arr_original.sort();
+    arr_original == arr
+}

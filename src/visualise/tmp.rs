@@ -1,15 +1,17 @@
 use crate::traits::log_traits::SortLog;
 use nannou::prelude::*;
 use std::sync::Mutex;
+use std::thread::sleep;
+use std::time::Duration;
 
 lazy_static::lazy_static! {
-    static ref DATA_SWAPS: Mutex<Vec<SortLog>> = Mutex::new(Vec::new());
+    static ref DATA_SWAPS: Mutex<Vec<SortLog<u64>>> = Mutex::new(Vec::new());
     static ref DATA_INITIAL_ARR: Mutex<Vec<u64>> = Mutex::new(Vec::new());
 }
 
-const ACTIONS_PER_FRAME: usize = 1000;
+const ACTIONS_PER_FRAME: usize = 200;
 
-pub fn main(log: Vec<SortLog>, initial_arr: &[u64]) {
+pub fn main(log: Vec<SortLog<u64>>, initial_arr: &[u64]) {
     {
         // Initialize the global state
         let mut data = DATA_SWAPS.lock().unwrap();
@@ -23,9 +25,11 @@ pub fn main(log: Vec<SortLog>, initial_arr: &[u64]) {
 
 struct Model {
     _window: window::Id,
-    data: Vec<SortLog>,
+    data: Vec<SortLog<u64>>,
     arr: Vec<u64>,
     ind: usize,
+    draw: Vec<[usize; 2]>,
+    last_frame: Option<Draw>,
 }
 
 fn model(app: &App) -> Model {
@@ -35,25 +39,42 @@ fn model(app: &App) -> Model {
         number_of_updates: data.len() / ACTIONS_PER_FRAME + 1,
     });
     let _window = app.new_window().view(view).build().unwrap();
+    sleep(Duration::from_secs(0));
+
     Model {
         _window,
         data: (*data).to_vec(),
         arr: (*arr).to_vec(),
         ind: 0,
+        draw: Vec::<[usize; 2]>::new(),
+        last_frame: None,
     }
 }
 
-fn update(_app: &App, _model: &mut Model, _update: Update) {
-    for action in _model.data[_model.ind * ACTIONS_PER_FRAME..]
+fn update(_app: &App, state: &mut Model, _update: Update) {
+    for action in state.data[state.ind * ACTIONS_PER_FRAME..]
         .iter()
         .take(ACTIONS_PER_FRAME)
     {
         match action {
-            SortLog::Swap { name, ind_a, ind_b } => _model.arr.swap(*ind_a, *ind_b),
+            SortLog::Swap { name, ind_a, ind_b } => {
+                state.arr.swap(*ind_a, *ind_b);
+                state.draw.push([*ind_a, *name]);
+                state.draw.push([*ind_b, *name]);
+            }
+            SortLog::Write { name, ind_a, ind_b } => {
+                state.arr[*ind_a] = state.arr[*ind_b];
+                state.draw.push([*ind_a, *name]);
+                state.draw.push([*ind_b, *name]);
+            }
+            SortLog::WriteOutOfArr { name, ind, data } => {
+                state.arr[*ind] = *data;
+                state.draw.push([*ind, *name]);
+            }
             _ => {}
         }
     }
-    _model.ind += 1;
+    state.ind += 1;
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {

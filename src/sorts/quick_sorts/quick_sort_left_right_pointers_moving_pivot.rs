@@ -1,6 +1,6 @@
 const MAX_SIZE: usize = 50000;
 const BIG_O: &str = "O(N Log(N))";
-const NAME: &str = "quick sort left right pointers";
+const NAME: &str = "quick sort left right pointers moving pivot";
 
 use crate::traits;
 use traits::log_traits::SortLog;
@@ -13,15 +13,20 @@ impl traits::sort_traits::SortAlgo for QuickSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger>(arr: &mut [T], logger: &mut U) {
-        sort::<T, U>(arr, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+        arr: &mut [T],
+        start: usize,
+        end: usize,
+        logger: &mut U,
+    ) {
+        sort::<T, U>(arr, start, end, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger>(
+fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     start: usize,
     end: usize,
@@ -31,14 +36,14 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger>(
     let mut high = end - 1;
     while low < high - 1 {
         logger.log(SortLog::Cmp {
-            name: 0,
+            name: &arr as *const _ as usize,
             ind_a: low + 1,
             ind_b: low,
             result: arr[low + 1] <= arr[low],
         });
         if arr[low + 1] <= arr[low] {
             logger.log(SortLog::Swap {
-                name: 0,
+                name: &arr as *const _ as usize,
                 ind_a: low,
                 ind_b: low + 1,
             });
@@ -46,7 +51,7 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger>(
             low += 1;
         } else {
             logger.log(SortLog::Swap {
-                name: 0,
+                name: &arr as *const _ as usize,
                 ind_a: low + 1,
                 ind_b: high,
             });
@@ -55,14 +60,14 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger>(
         }
     }
     logger.log(SortLog::Cmp {
-        name: 0,
+        name: &arr as *const _ as usize,
         ind_a: high,
         ind_b: low,
         result: arr[high] < arr[low],
     });
     if arr[high] < arr[low] {
         logger.log(SortLog::Swap {
-            name: 0,
+            name: &arr as *const _ as usize,
             ind_a: low,
             ind_b: high,
         });
@@ -71,11 +76,7 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger>(
     high
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger>(arr: &mut [T], logger: &mut U) {
-    sort_helper(arr, 0, arr.len(), logger);
-}
-
-fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger>(
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     start: usize,
     end: usize,
@@ -85,6 +86,6 @@ fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger>(
         return;
     }
     let partition_index = partition(arr, start, end, logger);
-    sort_helper(arr, start, partition_index, logger);
-    sort_helper(arr, partition_index, end, logger);
+    sort(arr, start, partition_index, logger);
+    sort(arr, partition_index, end, logger);
 }
