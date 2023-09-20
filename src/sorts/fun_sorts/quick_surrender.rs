@@ -4,7 +4,6 @@ const NAME: &str = "quick surrender";
 
 use crate::traits;
 use rand::Rng;
-use traits::log_traits::SortLog;
 pub struct FunSort {}
 
 impl traits::sort_traits::SortAlgo for FunSort {
@@ -69,42 +68,16 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     // Choose a random index between start and end - 1 as the pivot
     let pivot_index: usize = rng.gen_range(start..end);
     // Swap the pivot with the last element
-    arr.swap(pivot_index, end - 1);
-    logger.log(SortLog::Swap {
-        name: &arr as *const _ as usize,
-        ind_a: pivot_index,
-        ind_b: end - 1,
-    });
+    logger.swap(arr, pivot_index, end - 1);
 
     let pivot = arr[end - 1];
     let mut small = start;
     for i in start..end - 1 {
-        logger.log(SortLog::CmpSingle {
-            name: &arr as *const _ as usize,
-            ind_a: i,
-            result: arr[i] < pivot,
-        });
-        logger.log(SortLog::CmpOuterData {
-            name: 0,
-            ind: i,
-            data: pivot,
-            result: arr[i] < pivot,
-        });
-        if arr[i] < pivot {
-            logger.log(SortLog::Swap {
-                name: &arr as *const _ as usize,
-                ind_a: i,
-                ind_b: small,
-            });
-            arr.swap(i, small);
+        if logger.cmp_lt_data(arr, i, pivot) {
+            logger.swap(arr, i, small);
             small += 1;
         }
     }
-    logger.log(SortLog::Swap {
-        name: &arr as *const _ as usize,
-        ind_a: small,
-        ind_b: end - 1,
-    });
-    arr.swap(small, end - 1);
+    logger.swap(arr, small, end - 1);
     small
 }

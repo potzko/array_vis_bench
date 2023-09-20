@@ -31,19 +31,21 @@ fn circle_sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) {
-    while circle_sort_iteration(arr, start, end, logger) {}
+    while circle_sort_iteration_decreasing(arr, start, end, logger)
+        && circle_sort_iteration_increasing(arr, start, end, logger)
+    {}
 }
 
-fn circle_sort_iteration<T: Ord + Copy, U: log_traits::SortLogger<T>>(
+fn circle_sort_iteration_increasing<T: Ord + Copy, U: log_traits::SortLogger<T>>(
     arr: &mut [T],
     start: usize,
     end: usize,
     logger: &mut U,
 ) -> bool {
     let mut swapped = false;
-
-    let mut iter = get_last_bit(end - start);
-    while iter > 1 {
+    let max = get_last_bit(end - start);
+    let mut iter = 4;
+    while iter <= max {
         for i in (start..end).step_by(iter) {
             let mut ind_left = i;
             let mut ind_right = i + iter - 1;
@@ -55,13 +57,41 @@ fn circle_sort_iteration<T: Ord + Copy, U: log_traits::SortLogger<T>>(
 
             while ind_left < ind_right && ind_left >= start {
                 if logger.cond_swap_lt(arr, ind_right, ind_left) {
-                    swapped = true
+                    swapped = true;
                 }
+
                 ind_left += 1;
                 ind_right -= 1;
             }
         }
+        iter *= 2;
+    }
+    swapped
+}
+
+fn circle_sort_iteration_decreasing<T: Ord + Copy, U: log_traits::SortLogger<T>>(
+    arr: &mut [T],
+    start: usize,
+    end: usize,
+    logger: &mut U,
+) -> bool {
+    let mut swapped = false;
+
+    let mut iter = get_last_bit(end - start);
+    while iter > 1 {
         iter /= 2;
+        for i in (start..end).step_by(iter) {
+            let mut ind_left = i;
+            let mut ind_right = i + iter - 1;
+            if ind_right >= end {
+                let tmp = ind_right - end + 1;
+                ind_left += tmp;
+                ind_right -= tmp;
+            }
+            if logger.cond_swap_lt(arr, ind_right, ind_left) {
+                swapped = true;
+            }
+        }
     }
     swapped
 }

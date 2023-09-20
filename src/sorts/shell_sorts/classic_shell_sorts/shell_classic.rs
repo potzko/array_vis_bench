@@ -31,39 +31,18 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) {
-    use crate::traits::log_traits::SortLog::*;
     let mut jump = (end - start) / 2;
     while jump >= 1 {
-        logger.log(Mark(format!("jump = {}", jump)));
-        for i in jump..end - start {
+        logger.mark(format!("jump = {}", jump));
+        for i in start + jump..end - start {
             let temp = arr[i];
             let mut j = i;
 
-            while j >= jump {
-                logger.log(CmpOuterData {
-                    name: &arr as *const _ as usize,
-                    ind: j - jump,
-                    data: temp,
-                    result: arr[j - jump] > temp,
-                });
-                if arr[j - jump] > temp {
-                    logger.log(Write {
-                        name: &arr as *const _ as usize,
-                        ind_a: j,
-                        ind_b: j - jump,
-                    });
-                    arr[j] = arr[j - jump];
-                    j -= jump;
-                } else {
-                    break;
-                }
+            while j >= start + jump && logger.cmp_gt_data(arr, j - jump, temp) {
+                logger.write(arr, j, j - jump);
+                j -= jump;
             }
-            logger.log(WriteOutOfArr {
-                name: &arr as *const _ as usize,
-                ind: j,
-                data: temp,
-            });
-            arr[j] = temp;
+            logger.write_data(arr, j, temp);
         }
 
         jump /= 2;

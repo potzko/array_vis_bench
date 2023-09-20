@@ -2,9 +2,6 @@ const MAX_SIZE: usize = 50000;
 const BIG_O: &str = "O(N^(4/3)))";
 const NAME: &str = "shell sort sedgewick jumps";
 
-use crate::traits;
-pub struct ShellSort {}
-
 #[inline]
 fn sequence_sedgewick(iter: usize) -> usize {
     if iter == 0 {
@@ -26,6 +23,9 @@ fn vec_sedgewick(len: usize) -> Vec<usize> {
     }
     ret
 }
+
+use crate::traits;
+pub struct ShellSort {}
 
 impl traits::sort_traits::SortAlgo for ShellSort {
     fn max_size(&self) -> usize {
@@ -53,46 +53,18 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) {
-    use crate::traits::log_traits::SortLog::*;
-    for &jump in vec_sedgewick(end - start).iter().rev() {
-        logger.log(Mark(format!("jump = {}", jump)));
-        for i in 0..jump {
-            insertion_sort_jump(arr, i, end, jump, logger);
-        }
-    }
-}
-
-fn insertion_sort_jump<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    jump: usize,
-    logger: &mut U,
-) {
-    for i in (start..end).step_by(jump) {
-        logger.log(traits::log_traits::SortLog::Mark(format!(
-            "inserting value at index {}",
-            i
-        )));
-        let mut ind = i;
-        while ind != start {
-            logger.log(traits::log_traits::SortLog::Cmp {
-                name: &arr as *const _ as usize,
-                ind_a: ind,
-                ind_b: ind - jump,
-                result: arr[ind] < arr[ind - jump],
-            });
-            if arr[ind] < arr[ind - jump] {
-                logger.log(traits::log_traits::SortLog::Swap {
-                    name: &arr as *const _ as usize,
-                    ind_a: ind,
-                    ind_b: ind - jump,
-                });
-                arr.swap(ind, ind - jump);
-                ind -= jump;
-            } else {
-                break;
+    let len = end - start;
+    let jumps = vec_sedgewick(len);
+    for &jump in jumps.iter().rev() {
+        logger.mark_mssg(&format!("jump = {}", jump));
+        for i in start + jump..end - start {
+            let temp = arr[i];
+            let mut j = i;
+            while j >= jump + start && logger.cmp_gt_data(arr, j - jump, temp) {
+                logger.write(arr, j, j - jump);
+                j -= jump;
             }
+            logger.write_data(arr, j, temp);
         }
     }
 }

@@ -9,7 +9,7 @@ mod utils;
 mod visualise;
 
 fn main() {
-    let size = 3000;
+    let size = 5000;
     let mut arr: Vec<u64> = utils::array_gen::get_rand_arr(size);
     //arr = crate::utils::array_gen::get_arr(size);
     let original_arr = arr.clone();
@@ -19,12 +19,17 @@ fn main() {
         type_ghost: std::marker::PhantomData,
     };
 
-    for i in 0..10000 {
-        logger.log(Mark("".to_string()))
+    for _ in 0..1 {
+        logger.log(Mark("started sort".to_string()))
     }
 
     let start: Instant = Instant::now();
-    sorts::circle_sorts::stooge_circle_sort::CircleSort::sort(&mut arr, 0, size, &mut (logger));
+    sorts::shell_sorts::shell_shell_sorts::shell_shell_sort_optimised::ShellSort::sort(
+        &mut arr,
+        0,
+        size,
+        &mut (logger),
+    );
     println!("{:?}", start.elapsed());
     //println!("{:?}", logger);
     println!("{:?}", logger.log.len());
@@ -38,8 +43,8 @@ fn main() {
         .log
         .iter()
         .filter(|&i| match i {
-            traits::log_traits::SortLog::Cmp { .. } => true,
-            traits::log_traits::SortLog::CmpOuterData { .. } => true,
+            traits::log_traits::SortLog::CmpInArr { .. } => true,
+            traits::log_traits::SortLog::CmpData { .. } => true,
             _ => false,
         })
         .count();

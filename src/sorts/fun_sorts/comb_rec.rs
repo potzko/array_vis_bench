@@ -4,9 +4,9 @@ const NAME: &str = "comb sort";
 
 use crate::traits;
 
-pub struct CombSort {}
+pub struct FunSort {}
 
-impl traits::sort_traits::SortAlgo for CombSort {
+impl traits::sort_traits::SortAlgo for FunSort {
     fn max_size(&self) -> usize {
         MAX_SIZE
     }
@@ -62,23 +62,10 @@ fn comb_iter<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
         return false;
     }
 
-    use crate::traits::log_traits::SortLog::*;
     let mut swap_flag = false;
 
     for i in start + jump..end {
-        logger.log(Cmp {
-            name: 0,
-            ind_a: i,
-            ind_b: i - jump,
-            result: arr[i] < arr[i - jump],
-        });
-        if arr[i] < arr[i - jump] {
-            logger.log(Swap {
-                name: 0,
-                ind_a: i,
-                ind_b: i - jump,
-            });
-            arr.swap(i, i - jump);
+        if logger.cond_swap_le(arr, i, i - jump) {
             swap_flag = true;
         }
     }

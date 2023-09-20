@@ -3,7 +3,6 @@ const BIG_O: &str = "O(N^2)";
 const NAME: &str = "cycle sort";
 
 use crate::traits::{self, log_traits::SortLogger};
-use std::mem::replace;
 
 pub struct CycleSort {}
 
@@ -32,20 +31,12 @@ fn sort<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], start: usize, end: usize
         let mut target: T = arr[i];
         let mut lower = get_lower(arr, i + 1, end, arr[i], logger) + i;
         while lower != i {
-            logger.log(traits::log_traits::SortLog::WriteOutOfArr {
-                name: 0,
-                ind: lower,
-                data: target,
-            });
-            target = replace(&mut arr[lower], target);
+            let tmp = arr[lower];
+            logger.write_data(arr, lower, target);
+            target = tmp;
             lower = get_lower(arr, i + 1, end, target, logger) + i;
         }
-        logger.log(traits::log_traits::SortLog::WriteOutOfArr {
-            name: 0,
-            ind: i,
-            data: target,
-        });
-        arr[i] = target;
+        logger.write_data(arr, i, target)
     }
 }
 
@@ -56,16 +47,9 @@ fn get_lower<T: Ord + Copy, U: SortLogger<T>>(
     target: T,
     logger: &mut U,
 ) -> usize {
-    use crate::traits::log_traits::SortLog::*;
     let mut ret = 0;
     for i in start..end {
-        logger.log(CmpOuterData {
-            name: 0,
-            ind: i,
-            data: target,
-            result: arr[i] < target,
-        });
-        if arr[i] < target {
+        if logger.cmp_lt_data(arr, i, target) {
             ret += 1
         }
     }

@@ -44,8 +44,6 @@ fn circle_sort_rec<T: Ord + Copy, U: log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) {
-    use log_traits::SortLog::*;
-
     if start == end {
         return;
     }
@@ -53,31 +51,14 @@ fn circle_sort_rec<T: Ord + Copy, U: log_traits::SortLogger<T>>(
     let (mut start_tmp, mut end_tmp) = (start, end);
 
     while start_tmp < end_tmp {
-        logger.log(Cmp {
-            name: &arr as *const _ as usize,
-            ind_a: start_tmp,
-            ind_b: end_tmp,
-            result: arr[start_tmp] > arr[end_tmp],
-        });
-        if arr[start_tmp] > arr[end_tmp] {
-            logger.log(Swap {
-                name: &arr as *const _ as usize,
-                ind_a: start_tmp,
-                ind_b: end_tmp,
-            });
-            arr.swap(start_tmp, end_tmp);
-        }
+        logger.cond_swap_lt(arr, end_tmp, start_tmp);
+
         start_tmp += 1;
         end_tmp -= 1;
     }
 
-    if start_tmp == end_tmp && arr[start_tmp] > arr[end_tmp + 1] {
-        logger.log(Swap {
-            name: &arr as *const _ as usize,
-            ind_a: start_tmp,
-            ind_b: end_tmp + 1,
-        });
-        arr.swap(start_tmp, end_tmp + 1);
+    if start_tmp == end_tmp {
+        logger.cond_swap_lt(arr, end_tmp + 1, start_tmp);
     }
 
     let mid = start + (end - start) / 2;

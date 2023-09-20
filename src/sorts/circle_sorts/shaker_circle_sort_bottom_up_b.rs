@@ -42,7 +42,6 @@ fn circle_sort_iteration_increasing<T: Ord + Copy, U: log_traits::SortLogger<T>>
     end: usize,
     logger: &mut U,
 ) -> bool {
-    use log_traits::SortLog::*;
     let mut swapped = false;
     let max = get_last_bit(end - start);
     let mut iter = 4;
@@ -62,19 +61,7 @@ fn circle_sort_iteration_increasing<T: Ord + Copy, U: log_traits::SortLogger<T>>
             }*/
 
             while ind_left < ind_right && ind_left >= start {
-                logger.log(Cmp {
-                    name: &arr as *const _ as usize,
-                    ind_a: ind_left,
-                    ind_b: ind_right,
-                    result: arr[ind_right] < arr[ind_left],
-                });
-                if arr[ind_right] < arr[ind_left] {
-                    logger.log(Swap {
-                        name: &arr as *const _ as usize,
-                        ind_a: ind_left,
-                        ind_b: ind_right,
-                    });
-                    arr.swap(ind_left, ind_right);
+                if logger.cond_swap_lt(arr, ind_right, ind_left) {
                     swapped = true;
                 }
                 ind_left += 1;
@@ -92,7 +79,6 @@ fn circle_sort_iteration_decreasing<T: Ord + Copy, U: log_traits::SortLogger<T>>
     end: usize,
     logger: &mut U,
 ) -> bool {
-    use log_traits::SortLog::*;
     let mut swapped = false;
 
     let mut iter = get_last_bit(end - start);
@@ -113,19 +99,7 @@ fn circle_sort_iteration_decreasing<T: Ord + Copy, U: log_traits::SortLogger<T>>
             }*/
 
             while ind_left < ind_right && ind_left >= start {
-                logger.log(Cmp {
-                    name: &arr as *const _ as usize,
-                    ind_a: ind_left,
-                    ind_b: ind_right,
-                    result: arr[ind_right] < arr[ind_left],
-                });
-                if arr[ind_right] < arr[ind_left] {
-                    logger.log(Swap {
-                        name: &arr as *const _ as usize,
-                        ind_a: ind_left,
-                        ind_b: ind_right,
-                    });
-                    arr.swap(ind_left, ind_right);
+                if logger.cond_swap_lt(arr, ind_right, ind_left) {
                     swapped = true;
                 }
                 ind_left += 1;

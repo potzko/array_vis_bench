@@ -3,7 +3,6 @@ const BIG_O: &str = "O(N Log(N))";
 const NAME: &str = "quick sort left left pointers";
 
 use crate::traits;
-use traits::log_traits::SortLog;
 pub struct QuickSort {}
 
 impl traits::sort_traits::SortAlgo for QuickSort {
@@ -35,37 +34,15 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     let pivot = arr[end - 1]; // Taking the last element as pivot
     let mut i = start; // Index of the smaller element
 
-    for j in start..end - 1 {
-        // If the current element is smaller than or equal to the pivot
-        if arr[j] <= pivot {
-            logger.log(SortLog::Cmp {
-                name: &arr as *const _ as usize,
-                ind_a: i,
-                ind_b: j,
-                result: arr[j] <= pivot,
-            });
-
-            // Swap arr[i] and arr[j]
-            arr.swap(i, j);
-            logger.log(SortLog::Swap {
-                name: &arr as *const _ as usize,
-                ind_a: i,
-                ind_b: j,
-            });
-
-            i += 1; // Increment the index of the smaller element
+    for ii in start..end - 1 {
+        // If the current element is smaller than or equal to the pivot, move it to the small portion of the array
+        if logger.cmp_le_data(arr, ii, pivot) {
+            logger.swap(arr, i, ii);
+            i += 1;
         }
     }
-
-    // Swap arr[i] and arr[end - 1] (or pivot)
-    arr.swap(i, end - 1);
-    logger.log(SortLog::Swap {
-        name: &arr as *const _ as usize,
-        ind_a: i,
-        ind_b: end - 1,
-    });
-
-    i // Return the partition index
+    logger.swap(arr, i, end - 1);
+    i
 }
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
@@ -77,7 +54,7 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     if end - start < 2 {
         return;
     }
-    logger.log(SortLog::Mark(format!("sorting {} to {}", start, end)));
+    logger.mark(format!("sorting {} to {}", start, end));
 
     let partition_index = partition(arr, start, end, logger);
     sort(arr, start, partition_index, logger);

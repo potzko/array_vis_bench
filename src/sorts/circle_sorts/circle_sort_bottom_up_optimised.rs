@@ -44,8 +44,6 @@ fn circle_sort_iteration<T: Ord + Copy, U: log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) {
-    use log_traits::SortLog::*;
-
     let mut iter = get_last_bit(end - start);
     while iter > 1 {
         for i in (start..end).step_by(iter) {
@@ -56,27 +54,9 @@ fn circle_sort_iteration<T: Ord + Copy, U: log_traits::SortLogger<T>>(
                 ind_left += tmp;
                 ind_right -= tmp;
             }
-            /*
-            while  ind_right >= end {
-                ind_left += 1;
-                ind_right -= 1;
-            }*/
 
             while ind_left < ind_right && ind_left >= start {
-                logger.log(Cmp {
-                    name: &arr as *const _ as usize,
-                    ind_a: ind_left,
-                    ind_b: ind_right,
-                    result: arr[ind_right] < arr[ind_left],
-                });
-                if arr[ind_right] < arr[ind_left] {
-                    logger.log(Swap {
-                        name: &arr as *const _ as usize,
-                        ind_a: ind_left,
-                        ind_b: ind_right,
-                    });
-                    arr.swap(ind_left, ind_right);
-                }
+                logger.cond_swap_lt(arr, ind_right, ind_left);
                 ind_left += 1;
                 ind_right -= 1;
             }

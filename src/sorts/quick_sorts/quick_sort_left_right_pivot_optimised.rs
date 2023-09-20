@@ -3,7 +3,6 @@ const BIG_O: &str = "O(N Log(N))";
 const NAME: &str = "quick sort left right pointers optimised";
 
 use crate::traits::{self, sort_traits::SortAlgo};
-use traits::log_traits::SortLog;
 pub struct QuickSort {}
 
 impl traits::sort_traits::SortAlgo for QuickSort {
@@ -32,111 +31,44 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) -> usize {
-    if end - start >= 3 {
-        // Logging the comparison
-        logger.log(SortLog::Cmp {
-            name: &arr as *const _ as usize,
-            ind_a: start,
-            ind_b: end,
-            result: arr[start] < arr[end - 1],
-        });
+    assert!(end - start >= 3);
+    // Find the median of three to use as the pivot
+    logger.cond_swap_lt(arr, start, end - 1);
 
-        if arr[start] < arr[end - 1] {
-            // Logging the swap
-            logger.log(SortLog::Swap {
-                name: &arr as *const _ as usize,
-                ind_a: start,
-                ind_b: end - 1,
-            });
-            arr.swap(start, end - 1);
-        }
+    logger.cond_swap_lt(arr, start + 1, start);
 
-        // Logging the comparison
-        logger.log(SortLog::Cmp {
-            name: &arr as *const _ as usize,
-            ind_a: start + 1,
-            ind_b: start,
-            result: arr[start + 1] < arr[start],
-        });
+    logger.cond_swap_lt(arr, start, end - 1);
 
-        if arr[start + 1] < arr[start] {
-            // Logging the swap
-            logger.log(SortLog::Swap {
-                name: &arr as *const _ as usize,
-                ind_a: start,
-                ind_b: start + 1,
-            });
-            arr.swap(start, start + 1);
-        }
-
-        // Logging the comparison
-        logger.log(SortLog::Cmp {
-            name: &arr as *const _ as usize,
-            ind_a: start,
-            ind_b: end - 1,
-            result: arr[start] < arr[end - 1],
-        });
-
-        if arr[start] < arr[end - 1] {
-            // Logging the swap
-            logger.log(SortLog::Swap {
-                name: &arr as *const _ as usize,
-                ind_a: start,
-                ind_b: end - 1,
-            });
-            arr.swap(start, end - 1);
-        }
-    }
-
-    let pivot = arr[start];
     let mut low = start + 1;
     let mut high = end - 1;
-
-    loop {
-        // Increment low pointer while the element at low is less than pivot
-        logger.log(SortLog::Cmp {
-            name: &arr as *const _ as usize,
-            ind_a: low,
-            ind_b: start,
-            result: arr[low] <= pivot,
-        });
-        while low <= high && arr[low] <= pivot {
+    while low >= end && logger.cmp_le(arr, start, low) {
+        low += 1;
+    }
+    if low == end {
+        //to do stuff
+        logger.swap(arr, start, end - 1);
+        return end - 1;
+    }
+    while logger.cmp_gt(arr, high, start) {
+        high -= 1
+    }
+    // Continue until the pointers cross
+    while low <= high {
+        logger.swap(arr, low, high);
+        // Increment low pointer while the element at low is less than or equal to the pivot
+        while low <= high && !logger.cmp_gt(arr, low, start) {
             low += 1;
         }
 
-        // Decrement high pointer while the element at high is greater than pivot
-        logger.log(SortLog::Cmp {
-            name: &arr as *const _ as usize,
-            ind_a: high,
-            ind_b: start,
-            result: arr[high] > pivot,
-        });
-        while low <= high && arr[high] > pivot {
+        // Decrement high pointer while the element at high is greater than the pivot
+        while logger.cmp_gt(arr, high, start) {
             high -= 1;
-        }
-
-        // If the pointers haven't crossed, swap the elements
-        if low < high {
-            logger.log(SortLog::Swap {
-                name: &arr as *const _ as usize,
-                ind_a: low,
-                ind_b: high,
-            });
-            arr.swap(low, high);
-        } else {
-            break;
         }
     }
 
-    // Swap the pivot (element at start) with the element at the high pointer
-    logger.log(SortLog::Swap {
-        name: &arr as *const _ as usize,
-        ind_a: start,
-        ind_b: high,
-    });
-    arr.swap(start, high);
-
-    high // Return the high pointer as the pivot position
+    // Position the pivot correctly by swapping it with the element at 'high'
+    logger.swap(arr, start, high);
+    high
 }
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
@@ -145,10 +77,11 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) {
-    logger.log(SortLog::Mark(format!("sorting {} to {}", start, end)));
+    logger.mark(format!("sorting {} to {}", start, end));
 
-    if end - start < 16 {
-        crate::sorts::insertion_sorts::insertion_sort::InsertionSort::sort(arr, start, end, logger);
+    if end - start < 256 {
+        crate::sorts::shell_sorts::classic_shell_sorts::shell_optimized_256_elements::ShellSort::sort(arr, start, end, logger);
+        //crate::sorts::insertion_sorts::insertion_sort::InsertionSort::sort(arr, start, end, logger);
         return;
     }
     let partition_index = partition(arr, start, end, logger);

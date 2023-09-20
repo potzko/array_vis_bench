@@ -3,7 +3,6 @@ const BIG_O: &str = "O(N Log(N))";
 const NAME: &str = "quick sort left right pointers";
 
 use crate::traits;
-use traits::log_traits::SortLog;
 pub struct QuickSort {}
 
 impl traits::sort_traits::SortAlgo for QuickSort {
@@ -35,27 +34,12 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     let pivot = arr[end - 1];
     let mut small = start;
     for i in start..end - 1 {
-        logger.log(SortLog::CmpSingle {
-            name: &arr as *const _ as usize,
-            ind_a: i,
-            result: arr[i] < pivot,
-        });
-        if arr[i] < pivot {
-            logger.log(SortLog::Swap {
-                name: &arr as *const _ as usize,
-                ind_a: i,
-                ind_b: small,
-            });
-            arr.swap(i, small);
+        if logger.cmp_le_data(arr, i, pivot) {
+            logger.swap(arr, i, small);
             small += 1;
         }
     }
-    logger.log(SortLog::Swap {
-        name: &arr as *const _ as usize,
-        ind_a: small,
-        ind_b: end - 1,
-    });
-    arr.swap(small, end - 1);
+    logger.swap(arr, small, end - 1);
     small
 }
 

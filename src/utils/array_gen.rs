@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use rand::Rng;
 
 pub fn get_rand_arr(length: usize) -> Vec<u64> {

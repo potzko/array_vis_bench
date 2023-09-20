@@ -31,23 +31,9 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) {
-    use traits::log_traits::SortLog;
     for ii in start..end {
         for i in start + 1..end - (ii - start) {
-            logger.log(SortLog::Cmp {
-                name: &arr as *const _ as usize,
-                ind_a: i,
-                ind_b: i - 1,
-                result: arr[i] < arr[i - 1],
-            });
-            if arr[i] < arr[i - 1] {
-                logger.log(SortLog::Swap {
-                    name: &arr as *const _ as usize,
-                    ind_a: i - 1,
-                    ind_b: i,
-                });
-                arr.swap(i, i - 1)
-            }
+            logger.cond_swap_le(arr, i, i - 1);
         }
     }
 }

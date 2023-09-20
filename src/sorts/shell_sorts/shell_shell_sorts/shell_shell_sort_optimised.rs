@@ -79,45 +79,10 @@ fn insertion_sort_jump<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     jump: usize,
     logger: &mut U,
 ) {
-    /*
-    {
-        let mut jumps_tracker = JUMPS_TRACKER.lock().unwrap();
-        if jumps_tracker.insert(jump) {
-            println!("{}", jump);
-        }
-
-        let len = (end - start) / jump;
-
-        // Update TOTAL, COUNT and MAX
-        {
-            let mut total = TOTAL.lock().unwrap();
-            *total += len;
-        }
-        {
-            let mut count = COUNT.lock().unwrap();
-            *count += 1;
-        }
-    }*/
     for i in (start..end).step_by(jump) {
-        logger.log(traits::log_traits::SortLog::Mark(format!(
-            "inserting value at index {}",
-            i
-        )));
         let mut ind = i;
         while ind != start {
-            logger.log(traits::log_traits::SortLog::Cmp {
-                name: &arr as *const _ as usize,
-                ind_a: ind,
-                ind_b: ind - jump,
-                result: arr[ind] < arr[ind - jump],
-            });
-            if arr[ind] < arr[ind - jump] {
-                logger.log(traits::log_traits::SortLog::Swap {
-                    name: &arr as *const _ as usize,
-                    ind_a: ind,
-                    ind_b: ind - jump,
-                });
-                arr.swap(ind, ind - jump);
+            if logger.cond_swap_le(arr, ind, ind - jump) {
                 ind -= jump;
             } else {
                 break;

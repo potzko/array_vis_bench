@@ -31,47 +31,22 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) {
-    use traits::log_traits::SortLog;
     if end - start < 2 {
         return;
     }
     let mut sorted: bool = false;
     while !sorted {
         sorted = true;
-        logger.log(SortLog::Mark("parity = 0".to_string()));
+        logger.mark_mssg("parity = 0");
         for ii in (start + 2..end).step_by(2) {
-            logger.log(SortLog::Cmp {
-                name: &arr as *const _ as usize,
-                ind_a: ii - 1,
-                ind_b: ii,
-                result: arr[ii] < arr[ii - 1],
-            });
-            if arr[ii] < arr[ii - 1] {
+            if logger.cond_swap_lt(arr, ii, ii - 1) {
                 sorted = false;
-                logger.log(SortLog::Swap {
-                    name: &arr as *const _ as usize,
-                    ind_a: ii,
-                    ind_b: ii - 1,
-                });
-                arr.swap(ii, ii - 1);
             }
         }
-        logger.log(SortLog::Mark("parity = 1".to_string()));
+        logger.mark_mssg("parity = 1");
         for ii in (start + 1..end).step_by(2) {
-            logger.log(SortLog::Cmp {
-                name: &arr as *const _ as usize,
-                ind_a: ii,
-                ind_b: ii - 1,
-                result: arr[ii] < arr[ii - 1],
-            });
-            if arr[ii] < arr[ii - 1] {
+            if logger.cond_swap_lt(arr, ii, ii - 1) {
                 sorted = false;
-                logger.log(SortLog::Swap {
-                    name: &arr as *const _ as usize,
-                    ind_a: ii,
-                    ind_b: ii - 1,
-                });
-                arr.swap(ii, ii - 1);
             }
         }
     }

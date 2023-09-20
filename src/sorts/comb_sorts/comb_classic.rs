@@ -34,27 +34,14 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) {
-    use crate::traits::log_traits::SortLog::*;
     let mut jump = end - start;
     let mut swap_flag = true;
     while swap_flag {
         swap_flag = false;
         jump = std::cmp::max(1, ((jump as f32) / SHRINK_FACTOR) as usize);
         for i in jump..end {
-            logger.log(Cmp {
-                name: 0,
-                ind_a: i,
-                ind_b: i - jump,
-                result: arr[i] < arr[i - jump],
-            });
-            if arr[i] < arr[i - jump] {
-                logger.log(Swap {
-                    name: 0,
-                    ind_a: i,
-                    ind_b: i - jump,
-                });
-                arr.swap(i, i - jump);
-                swap_flag = true;
+            if logger.cond_swap_lt(arr, i, i - jump) {
+                swap_flag = true
             }
         }
     }

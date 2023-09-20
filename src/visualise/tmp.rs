@@ -27,7 +27,6 @@ struct Model {
     arr: Vec<u64>,
     ind: usize,
     draw: Vec<[usize; 2]>,
-    last_frame: Option<Draw>,
 }
 
 fn model(app: &App) -> Model {
@@ -44,7 +43,6 @@ fn model(app: &App) -> Model {
         arr: (*arr).to_vec(),
         ind: 0,
         draw: Vec::<[usize; 2]>::new(),
-        last_frame: None,
     }
 }
 
@@ -59,12 +57,12 @@ fn update(_app: &App, state: &mut Model, _update: Update) {
                 state.draw.push([*ind_a, *name]);
                 state.draw.push([*ind_b, *name]);
             }
-            SortLog::Write { name, ind_a, ind_b } => {
+            SortLog::WriteInArr { name, ind_a, ind_b } => {
                 state.arr[*ind_a] = state.arr[*ind_b];
                 state.draw.push([*ind_a, *name]);
                 state.draw.push([*ind_b, *name]);
             }
-            SortLog::WriteOutOfArr { name, ind, data } => {
+            SortLog::WriteData { name, ind, data } => {
                 state.arr[*ind] = *data;
                 state.draw.push([*ind, *name]);
             }
