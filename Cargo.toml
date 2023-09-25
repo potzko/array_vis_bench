@@ -12,3 +12,5 @@ opt-level = 1
 rand = "0.8.5"
 nannou = "0.18.1"
 lazy_static = "1.4.0"
+image = "0.24.7"
+ffmpeg-next = "6.0.0"

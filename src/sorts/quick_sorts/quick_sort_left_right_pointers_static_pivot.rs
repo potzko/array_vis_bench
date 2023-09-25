@@ -31,18 +31,30 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) -> usize {
-    let pivot = arr[end - 1]; // Taking the last element as pivot
-    let mut i = start; // Index of the smaller element
-
-    for ii in start..end - 1 {
-        // If the current element is smaller than or equal to the pivot, move it to the small portion of the array
-        if logger.cmp_le_data(arr, ii, pivot) {
-            logger.swap(arr, i, ii);
-            i += 1;
+    let mut low = start + 1;
+    let mut high = end - 1;
+    while low >= end && logger.cmp_le(arr, start, low) {
+        low += 1;
+    }
+    if low == end {
+        logger.swap(arr, start, end - 1);
+        return end - 1;
+    }
+    while logger.cmp_gt(arr, high, start) {
+        high -= 1
+    }
+    while low <= high {
+        logger.swap(arr, low, high);
+        while low <= high && !logger.cmp_gt(arr, low, start) {
+            low += 1;
+        }
+        while logger.cmp_gt(arr, high, start) {
+            high -= 1;
         }
     }
-    logger.swap(arr, i, end - 1);
-    i
+
+    logger.swap(arr, start, high);
+    high
 }
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(

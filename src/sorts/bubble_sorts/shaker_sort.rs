@@ -2,6 +2,8 @@ const MAX_SIZE: usize = 5000;
 const BIG_O: &str = "O(N^2)";
 const NAME: &str = "shaker sort";
 
+use std::sync::BarrierWaitResult;
+
 use crate::traits;
 pub struct BubbleSort {}
 
@@ -33,11 +35,18 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
 ) {
     let len = end - start;
     for ii in start..len / 2 + start {
-        for i in start + 1..end - (ii - start) {
-            logger.cond_swap_lt(arr, i, i - 1);
+        let mut swaps = false;
+        for i in ii + 1..end - (ii - start) {
+            swaps |= logger.cond_swap_lt(arr, i, i - 1);
         }
-        for i in (start + 1..end - (ii - start)).rev() {
-            logger.cond_swap_lt(arr, i, i - 1);
+        if !swaps {
+            break;
+        }
+        for i in (ii + 1..end - (ii - start)).rev() {
+            swaps |= logger.cond_swap_lt(arr, i, i - 1);
+        }
+        if !swaps {
+            break;
         }
     }
 }

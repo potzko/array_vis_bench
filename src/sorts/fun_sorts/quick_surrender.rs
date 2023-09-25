@@ -34,8 +34,11 @@ fn quick_select<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     rng: &mut rand::rngs::ThreadRng,
     logger: &mut U,
 ) {
+    if end - start < 2 {
+        return;
+    }
     let piv = partition(arr, start, end, rng, logger);
-    if piv == target {
+    if piv == target + 1 {
         return;
     }
     if piv < target {

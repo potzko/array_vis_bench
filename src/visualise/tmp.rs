@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::traits::log_traits::SortLog;
 use nannou::prelude::*;
 use std::sync::Mutex;
@@ -7,7 +8,7 @@ lazy_static::lazy_static! {
     static ref DATA_INITIAL_ARR: Mutex<Vec<u64>> = Mutex::new(Vec::new());
 }
 
-const ACTIONS_PER_FRAME: usize = 100;
+const ACTIONS_PER_FRAME: usize = 500;
 
 pub fn main(log: Vec<SortLog<u64>>, initial_arr: &[u64]) {
     {
