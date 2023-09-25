@@ -1,11 +1,12 @@
-const MAX_SIZE: usize = 50000;
-const BIG_O: &str = "O(N Log(N))";
-const NAME: &str = "quick sort left left pointers";
+const MAX_SIZE: usize = 1000;
+const BIG_O: &str = "O(N^3?)";
+const NAME: &str = "cycln't sort";
 
 use crate::traits;
-pub struct QuickSort {}
 
-impl traits::sort_traits::SortAlgo for QuickSort {
+pub struct FunSort {}
+
+impl traits::sort_traits::SortAlgo for FunSort {
     fn max_size(&self) -> usize {
         MAX_SIZE
     }
@@ -31,28 +32,32 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) -> usize {
-    let mut low = start + 1;
+    let pivot = arr[start];
+    let mut low = start;
     let mut high = end - 1;
-    while low >= end && logger.cmp_le(arr, start, low) {
-        low += 1;
-    }
-    if low == end {
-        logger.swap(arr, start, end - 1);
-        return end - 1;
-    }
-    while logger.cmp_gt(arr, high, start) {
+    while high > start && logger.cmp_ge_data(arr, high, pivot) {
         high -= 1
+    }
+    if high == 0 {
+        return start;
+    }
+    while low >= end && logger.cmp_lt_data(arr, start, pivot) {
+        low += 1;
     }
     while low <= high {
         logger.swap(arr, low, high);
+        // Increment low pointer while the element at low is less than or equal to the pivot
         while low <= high && !logger.cmp_gt(arr, low, start) {
             low += 1;
         }
+
+        // Decrement high pointer while the element at high is greater than the pivot
         while logger.cmp_gt(arr, high, start) {
             high -= 1;
         }
     }
 
+    // Position the pivot correctly by swapping it with the element at 'high'
     logger.swap(arr, start, high);
     high
 }
@@ -63,12 +68,10 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) {
-    if end - start < 2 {
-        return;
+    for i in start..end {
+        let mut tmp = end;
+        while tmp != i {
+            tmp = partition(arr, i, tmp, logger)
+        }
     }
-    logger.mark(format!("sorting {} to {}", start, end));
-
-    let partition_index = partition(arr, start, end, logger);
-    sort(arr, start, partition_index, logger);
-    sort(arr, partition_index + 1, end, logger);
 }

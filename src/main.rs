@@ -12,7 +12,7 @@ fn main() {
     let size = 5000;
     let mut arr: Vec<u64> = utils::array_gen::get_rand_arr(size);
     //arr = crate::utils::array_gen::get_arr(size);
-    let original_arr = arr.clone();
+    let mut original_arr = arr.clone();
     //println!("{arr:?}");
     let mut logger = traits::log_traits::VisualizerLogger {
         log: Vec::<traits::log_traits::SortLog<u64>>::new(),
@@ -24,12 +24,7 @@ fn main() {
     }
 
     let start: Instant = Instant::now();
-    sorts::shell_sorts::shell_shell_sorts::shell_shell_sort_optimised::ShellSort::sort(
-        &mut arr,
-        0,
-        size,
-        &mut (logger),
-    );
+    sorts::fun_sorts::cyclent_sort_stack_optimized::FunSort::sort(&mut arr, 0, size, &mut (logger));
     println!("{:?}", start.elapsed());
     //println!("{:?}", logger);
     println!("{:?}", logger.log.len());
@@ -42,10 +37,12 @@ fn main() {
     let cmp_count = logger
         .log
         .iter()
-        .filter(|&i| match i {
-            traits::log_traits::SortLog::CmpInArr { .. } => true,
-            traits::log_traits::SortLog::CmpData { .. } => true,
-            _ => false,
+        .filter(|&i| {
+            matches!(
+                i,
+                traits::log_traits::SortLog::CmpInArr { .. }
+                    | traits::log_traits::SortLog::CmpData { .. }
+            )
         })
         .count();
     println!("cmp count: {}", cmp_count);
@@ -53,13 +50,11 @@ fn main() {
     let swap_counter = logger
         .log
         .iter()
-        .filter(|&i| match i {
-            traits::log_traits::SortLog::Swap { .. } => true,
-            _ => false,
-        })
+        .filter(|&i| matches!(i, traits::log_traits::SortLog::Swap { .. },))
         .count();
     println!("swap count: {}", swap_counter);
-    visualise::tmp::main(logger.log, &original_arr);
+    visualise::img_tmp::main(&mut original_arr, &logger.log);
+    //visualise::tmp::main(logger.log, &original_arr);
 }
 
 /*
