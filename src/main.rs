@@ -9,7 +9,7 @@ mod utils;
 mod visualise;
 
 fn main() {
-    let size = 5000;
+    let size = 1000;
     let mut arr: Vec<u64> = utils::array_gen::get_rand_arr(size);
     //arr = crate::utils::array_gen::get_arr(size);
     let mut original_arr = arr.clone();
