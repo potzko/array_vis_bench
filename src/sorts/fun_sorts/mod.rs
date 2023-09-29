@@ -7,3 +7,4 @@ pub mod cyclent_sort_stack_optimized;
 pub mod quick_surrender;
 pub mod quick_surrender_optimised;
 pub mod slow_sort;
+pub mod stooge_sort;

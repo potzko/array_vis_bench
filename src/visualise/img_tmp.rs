@@ -6,63 +6,147 @@ extern crate image;
 use super::sub_image::SubImg;
 use crate::traits::log_traits::SortLog;
 use image::{GenericImage, ImageBuffer, Rgba};
-use std::process::Command;
+use std::{hash::Hash, process::Command};
 
-const ACTIONS_PER_FRAME: usize = 20;
+const ACTIONS_PER_FRAME: usize = 100;
 
-pub fn main(arr: &mut [u64], actions: &[SortLog<u64>]) {
+const WHITE: Rgba<u8> = Rgba([0xff, 0xff, 0xff, 0xff]);
+const BLACK: Rgba<u8> = Rgba([0x0, 0x0, 0x0, 0xff]);
+const GREEN: Rgba<u8> = Rgba([0x0, 0xa0, 0x60, 0xff]);
+const BLUE: Rgba<u8> = Rgba([0x0, 0x30, 0xff, 0xff]);
+
+fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
+    let mut ret: Vec<SubImg> = Vec::with_capacity(amount as usize);
+    let width = view.width / amount;
+    for i in 0..amount {
+        ret.push(view.make_sub_img(i * width, 0, width, view.height));
+    }
+    ret
+}
+
+pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
     let script_path = r"D:\Programing\IDE\vscProjects\rustFolder\array_vis_bench\src\python_scripts\empty_tmp_folder.py";
     Command::new("python").arg(script_path).status().unwrap();
+    let mut arr = arr.to_vec();
+
+    let mut inplace = true;
+    let mut arrs: Vec<(usize, usize)> = Vec::new();
+    let mut ind_arrs: Vec<(usize, usize)> = Vec::new();
+    for i in actions {
+        match i {
+            SortLog::CreateAuxArr { name, length } => {
+                ind_arrs.push((*name, *length));
+                inplace = false;
+            }
+            SortLog::CreateAuxArrT { name, length } => {
+                arrs.push((*name, *length));
+                inplace = false;
+            }
+            _ => {}
+        }
+    }
 
     let width: u32 = arr.len() as u32;
     let height = (width as f64 / 16.0 * 9.0) as u32;
-    let min_max = (*arr.iter().min().unwrap(), *arr.iter().max().unwrap());
-
-    let color = Rgba([0xff, 0xff, 0xff, 0xff]);
-    let bg_color: Rgba<u8> = Rgba([0x0, 0x0, 0x0, 0xff]);
     println!(
         "{} frames to generate",
         actions.len() / ACTIONS_PER_FRAME + 3
     );
-    let mut img = ImageBuffer::from_fn(width, height, |_, _| Rgba([0x00, 0x00, 0x00, 0xff]));
+    let mut img = ImageBuffer::from_fn(width, height, |_, _| Rgba::<u8>([0x00, 0x00, 0x00, 0xff]));
+
+    let mut arrs: Vec<ArrActions> = Vec::new();
     let view = SubImg {
+        x: 0,
+        y: if inplace { 0 } else { height / 2 },
+        width,
+        height: if inplace { height } else { height / 2 },
+    };
+    let aux_view = SubImg {
         x: 0,
         y: 0,
         width,
-        height,
+        height: height / 2,
     };
-    full_rander_vec(&mut img, &view, arr, min_max, bg_color, color);
-
-    let mut redraw = vec![false; arr.len()];
-    let mut recolor = vec![false; arr.len()];
-    let mut old_color = vec![false; arr.len()];
-    for i in 0..actions.len() / ACTIONS_PER_FRAME + 3 {
-        if i % 100 == 0 {
-            println!("frame {} of {}", i, actions.len() / ACTIONS_PER_FRAME + 3);
+    arrs.push(ArrActions::new(arr, view, name));
+    let mut i = 1;
+    let mut image_i = 0;
+    while i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME < actions.len() {
+        let mut split_points: Vec<usize> = vec![i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME];
+        for i in i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME
+            ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())
+        {
+            match actions[i] {
+                SortLog::CreateAuxArr { .. } => split_points.push(i),
+                SortLog::CreateAuxArrT { .. } => split_points.push(i),
+                _ => {}
+            }
         }
-        update(arr, actions, i, &mut redraw, &mut recolor);
+
+        for ii in 1..split_points.len() {
+            println!("{:?}", split_points);
+            for arr_view in arrs.iter_mut() {
+                arr_view.update(&actions[split_points[ii - 1]..split_points[ii]], &mut img)
+            }
+            img.save(format!(
+                "D:\\Programing\\IDE\\vscProjects\\rustFolder\\array_vis_bench\\tmp\\{}.png",
+                image_i
+            ))
+            .unwrap();
+            image_i += 1;
+            println!("{ii} aaaaaaa");
+            match actions[split_points[ii]] {
+                SortLog::CreateAuxArr { name, length } => {
+                    aux_view.rect(&mut img, 0, 0, aux_view.width, aux_view.height, BLACK);
+                    let views = get_views(&aux_view, arrs.len() as u32);
+                    arrs.push(ArrActions::new(
+                        vec![0; length],
+                        SubImg {
+                            x: 0,
+                            y: 0,
+                            width: 1000,
+                            height: 000,
+                        },
+                        name,
+                    ));
+                    let len = arrs.len();
+                    for iii in 1..len {
+                        arrs[iii].view = views[iii - 1];
+                        arrs[iii].full_rander_vec(&mut img, BLACK, WHITE)
+                    }
+                    println!("1")
+                }
+                SortLog::FreeAuxArr { name: _ } => {}
+                _ => {}
+            }
+        }
+
+        for arr_view in arrs.iter_mut() {
+            arr_view.update(
+                &actions[*split_points.last().unwrap()
+                    ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())],
+                &mut img,
+            )
+        }
+        img.save(format!(
+            "D:\\Programing\\IDE\\vscProjects\\rustFolder\\array_vis_bench\\tmp\\{}.png",
+            image_i
+        ))
+        .unwrap();
+        i += 1;
+        image_i += 1
+    }
+    /*
+    for action_block in actions.chunks(ACTIONS_PER_FRAME) {
+        for arr_view in arrs.iter_mut() {
+            arr_view.update(action_block, &mut img)
+        }
         img.save(format!(
             "D:\\Programing\\IDE\\vscProjects\\rustFolder\\array_vis_bench\\tmp\\{}.png",
             i
         ))
         .unwrap();
-        for i in 0..arr.len() {
-            redraw[i] = (redraw[i] | old_color[i]) && !recolor[i];
-        }
-        update_image(&mut img, &view, arr, min_max, bg_color, color, &redraw);
-        update_image(
-            &mut img,
-            &view,
-            arr,
-            min_max,
-            bg_color,
-            Rgba([0x0, 0xa0, 0x60, 0xff]),
-            &recolor,
-        );
-        old_color = recolor;
-        redraw = vec![false; arr.len()];
-        recolor = vec![false; arr.len()];
-    }
+        i += 1;
+    }*/
 
     // Construct the path to the Python script
     let script_path = r"D:\Programing\IDE\vscProjects\rustFolder\array_vis_bench\src\python_scripts\pngs_to_vid.py";
@@ -71,107 +155,144 @@ pub fn main(arr: &mut [u64], actions: &[SortLog<u64>]) {
     Command::new("python").arg(script_path).status().unwrap();
 }
 
-fn full_rander_vec(
-    img: &mut impl GenericImage<Pixel = Rgba<u8>>,
-    view: &SubImg,
-    arr: &[u64],
-    min_max: (u64, u64),
-    color: Rgba<u8>,
-    color_bg: Rgba<u8>,
-) {
-    update_image(
-        img,
-        view,
-        arr,
-        min_max,
-        color,
-        color_bg,
-        &vec![true; arr.len()],
-    );
+struct ArrActions {
+    arr: Vec<usize>,
+    color: Vec<bool>,
+    old_color: Vec<bool>,
+    draw: Vec<bool>,
+    view: SubImg,
+    name: usize,
+    min: f64,
+    max: f64,
 }
+impl Hash for ArrActions {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state)
+    }
+}
+impl ArrActions {
+    fn update(
+        &mut self,
+        actions: &[SortLog<usize>],
+        img: &mut impl GenericImage<Pixel = Rgba<u8>>,
+    ) {
+        for action in actions {
+            match action {
+                SortLog::Swap { name, ind_a, ind_b } => {
+                    if *name == self.name {
+                        self.arr.swap(*ind_a, *ind_b);
+                        self.draw[*ind_a] = true;
+                        self.draw[*ind_b] = true;
+                    }
+                }
+                SortLog::WriteInArr { name, ind_a, ind_b } => {
+                    if *name == self.name {
+                        self.arr[*ind_a] = self.arr[*ind_b];
+                        self.draw[*ind_a] = true;
+                        self.draw[*ind_b] = true;
+                    }
+                }
+                SortLog::WriteData { name, ind, data } => {
+                    if *name == self.name {
+                        let data_f64 = *data as f64;
+                        if self.min > data_f64 {
+                            self.min = data_f64
+                        }
+                        if self.max < data_f64 {
+                            self.max = data_f64
+                        }
+                        self.arr[*ind] = *data;
+                        self.draw[*ind] = true;
+                    }
+                }
+                SortLog::CmpInArr {
+                    name,
+                    ind_a,
+                    ind_b,
+                    result: _,
+                } => {
+                    if *name == self.name {
+                        self.color[*ind_a] = true;
+                        self.color[*ind_b] = true;
+                    }
+                }
+                SortLog::CmpData {
+                    name,
+                    ind,
+                    data: _,
+                    result: _,
+                } => {
+                    if *name == self.name {
+                        self.color[*ind] = true;
+                    }
+                }
+                _ => {}
+            }
+        }
+        for i in 0..self.arr.len() {
+            self.draw[i] = (self.draw[i] | self.old_color[i]) && !self.color[i];
+        }
 
-fn update_image(
-    img: &mut impl GenericImage<Pixel = Rgba<u8>>,
-    view: &SubImg,
-    arr: &[u64],
-    min_max: (u64, u64),
-    color: Rgba<u8>,
-    color_bg: Rgba<u8>,
-    draw_inds: &[bool],
-) {
-    for (ind, val) in draw_inds.iter().enumerate() {
-        if *val {
-            view.rect(
-                img,
-                ind as u32 * (view.width / arr.len() as u32),
-                0,
-                view.width / arr.len() as u32,
-                view.height - ((arr[ind] as f64 / min_max.1 as f64) * view.height as f64) as u32,
-                color,
-            );
-            view.rect(
-                img,
-                ind as u32 * (view.width / arr.len() as u32),
-                view.height - ((arr[ind] as f64 / min_max.1 as f64) * view.height as f64) as u32,
-                view.width / arr.len() as u32,
-                ((arr[ind] as f64 / min_max.1 as f64) * view.height as f64) as u32,
-                color_bg,
-            );
+        self.update_arr_view(img, BLACK, WHITE, &self.draw.clone());
+        self.update_arr_view(img, BLACK, GREEN, &self.color.clone());
+
+        self.old_color = self.color.clone();
+        self.draw = vec![false; self.arr.len()];
+        self.color = vec![false; self.arr.len()];
+    }
+    fn update_arr_view(
+        &mut self,
+        img: &mut impl GenericImage<Pixel = Rgba<u8>>,
+        color_bg: Rgba<u8>,
+        color: Rgba<u8>,
+        draw_inds: &[bool],
+    ) {
+        for (ind, val) in draw_inds.iter().enumerate() {
+            if *val {
+                self.view.rect(
+                    img,
+                    ind as u32 * (self.view.width / self.arr.len() as u32),
+                    0,
+                    self.view.width / self.arr.len() as u32,
+                    self.view.height
+                        - ((self.arr[ind] as f64 / self.max) * self.view.height as f64) as u32,
+                    color_bg,
+                );
+                self.view.rect(
+                    img,
+                    ind as u32 * (self.view.width / self.arr.len() as u32),
+                    self.view.height
+                        - ((self.arr[ind] as f64 / self.max) * self.view.height as f64) as u32,
+                    self.view.width / self.arr.len() as u32,
+                    ((self.arr[ind] as f64 / self.max) * self.view.height as f64) as u32,
+                    color,
+                );
+            }
         }
     }
-}
 
-fn update(
-    arr: &mut [u64],
-    actions: &[SortLog<u64>],
-    iteration: usize,
-    draw: &mut [bool],
-    color: &mut [bool],
-) {
-    if iteration * ACTIONS_PER_FRAME >= actions.len() {
-        return;
+    fn full_rander_vec(
+        &mut self,
+        img: &mut impl GenericImage<Pixel = Rgba<u8>>,
+        color: Rgba<u8>,
+        color_bg: Rgba<u8>,
+    ) {
+        self.update_arr_view(img, color, color_bg, &vec![true; self.arr.len()]);
     }
-    for action in actions[iteration * ACTIONS_PER_FRAME..]
-        .iter()
-        .take(ACTIONS_PER_FRAME)
-    {
-        match action {
-            SortLog::Swap { name, ind_a, ind_b } => {
-                arr.swap(*ind_a, *ind_b);
-                draw[*ind_a] = true;
-                draw[*ind_b] = true;
-            }
-            SortLog::WriteInArr { name, ind_a, ind_b } => {
-                arr[*ind_a] = arr[*ind_b];
-                draw[*ind_a] = true;
-                draw[*ind_b] = true;
-            }
-            SortLog::WriteData { name, ind, data } => {
-                arr[*ind] = *data;
-                draw[*ind] = true;
-            }
-            SortLog::CmpInArr {
-                name,
-                ind_a,
-                ind_b,
-                result,
-            } => {
-                color[*ind_a] = true;
-                color[*ind_b] = true;
-            }
-            SortLog::CmpData {
-                name,
-                ind,
-                data,
-                result,
-            } => {
-                color[*ind] = true;
-            }
-            _ => {}
+
+    fn new(arr: Vec<usize>, view: SubImg, name: usize) -> ArrActions {
+        let min = *arr.iter().min().unwrap();
+        let max = *arr.iter().max().unwrap();
+        let len = arr.len();
+        ArrActions {
+            arr,
+            color: vec![false; len],
+            old_color: vec![false; len],
+            draw: vec![true; len],
+            view,
+            name,
+            min: min as f64,
+            max: max as f64,
         }
     }
-}
-
-fn set_bg(img: &mut impl GenericImage<Pixel = Rgba<u8>>, view: &SubImg, color: Rgba<u8>) {
-    view.rect(img, 0, 0, view.width, view.height, color)
 }

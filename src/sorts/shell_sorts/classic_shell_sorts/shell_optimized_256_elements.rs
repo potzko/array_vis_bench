@@ -32,7 +32,7 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) {
-    for jump in [85, 24] {
+    for jump in [84, 25] {
         logger.mark_mssg(&format!("jump = {}", jump));
         for i in start + jump..end {
             let temp = arr[i];

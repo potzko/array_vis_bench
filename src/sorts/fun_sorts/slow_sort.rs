@@ -3,7 +3,6 @@ const BIG_O: &str = "O(N^3)";
 const NAME: &str = "slow sort";
 
 use crate::traits;
-use rand::Rng;
 pub struct FunSort {}
 
 impl traits::sort_traits::SortAlgo for FunSort {

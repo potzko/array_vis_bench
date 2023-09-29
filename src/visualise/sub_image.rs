@@ -1,4 +1,5 @@
-use image::{GenericImage, ImageBuffer, Rgba};
+use image::{GenericImage, Rgba};
+#[derive(Clone, Copy)]
 pub struct SubImg {
     pub x: u32,
     pub y: u32,

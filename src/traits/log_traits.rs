@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! arr_name {
     (  $arr: expr ) => {
-        &$arr as *const _ as usize
+        $arr.as_ptr() as usize
     };
 }
 
@@ -299,6 +299,7 @@ pub trait SortLogger<T: Copy + Ord> {
 }
 
 impl<T: Copy + Ord> SortLogger<T> for () {
+    #[inline]
     fn log(&mut self, _: SortLog<T>) {}
 }
 
@@ -309,6 +310,7 @@ pub struct VisualizerLogger<T: Copy + Ord> {
 }
 
 impl<T: Copy + Ord> SortLogger<T> for VisualizerLogger<T> {
+    #[inline]
     fn log(&mut self, data: SortLog<T>) {
         self.log.push(data);
     }
