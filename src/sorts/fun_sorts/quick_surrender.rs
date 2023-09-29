@@ -42,7 +42,7 @@ fn quick_select<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
         return;
     }
     if piv < target {
-        quick_select(arr, piv + 1, end, target, rng, logger);
+        quick_select(arr, piv, end, target, rng, logger);
     } else {
         quick_select(arr, start, piv, target, rng, logger)
     };
@@ -55,7 +55,7 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     logger: &mut U,
 ) {
     let mut rng = rand::thread_rng();
-    for i in (start..end).step_by(2) {
+    for i in start..end {
         quick_select(arr, i, end, i, &mut rng, logger);
     }
     //sort(arr, start, end, &mut rng, logger)
