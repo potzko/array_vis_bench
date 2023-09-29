@@ -8,7 +8,7 @@ use crate::traits::log_traits::SortLog;
 use image::{GenericImage, ImageBuffer, Rgba};
 use std::process::Command;
 
-const ACTIONS_PER_FRAME: usize = 200;
+const ACTIONS_PER_FRAME: usize = 20;
 
 pub fn main(arr: &mut [u64], actions: &[SortLog<u64>]) {
     let script_path = r"D:\Programing\IDE\vscProjects\rustFolder\array_vis_bench\src\python_scripts\empty_tmp_folder.py";
