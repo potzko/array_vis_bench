@@ -24,7 +24,6 @@ fn vec_sedgewick(len: usize) -> Vec<usize> {
     }
     ret
 }
-
 use crate::traits;
 pub struct ShellSort {}
 
@@ -35,33 +34,22 @@ impl traits::sort_traits::SortAlgo for ShellSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    let len = end - start;
-    let jumps = vec_sedgewick(len);
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    let jumps = vec_sedgewick(arr.len());
     for &jump in jumps.iter().rev() {
         logger.mark_mssg(&format!("jump = {}", jump));
-        for i in start + jump..end - start {
+        for i in jump..arr.len() {
             let temp = arr[i];
             let mut j = i;
-            while j >= jump + start && logger.cmp_gt_data(arr, j - jump, temp) {
+            while j >= jump && logger.cmp_gt_data(arr, j - jump, temp) {
                 logger.write(arr, j, j - jump);
                 j -= jump;
             }

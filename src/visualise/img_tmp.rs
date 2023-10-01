@@ -6,6 +6,7 @@ extern crate image;
 use super::sub_image::SubImg;
 use crate::traits::log_traits::SortLog;
 use image::{GenericImage, ImageBuffer, Rgba};
+use std::mem::size_of;
 use std::{hash::Hash, process::Command};
 
 const ACTIONS_PER_FRAME: usize = 100;
@@ -17,9 +18,9 @@ const BLUE: Rgba<u8> = Rgba([0x0, 0x30, 0xff, 0xff]);
 
 fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
     let mut ret: Vec<SubImg> = Vec::with_capacity(amount as usize);
-    let width = view.width / amount;
+    let hight = view.height / amount;
     for i in 0..amount {
-        ret.push(view.make_sub_img(i * width, 0, width, view.height));
+        ret.push(view.make_sub_img(0, i * hight, view.width, hight));
     }
     ret
 }
@@ -27,7 +28,7 @@ fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
 pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
     let script_path = r"D:\Programing\IDE\vscProjects\rustFolder\array_vis_bench\src\python_scripts\empty_tmp_folder.py";
     Command::new("python").arg(script_path).status().unwrap();
-    let mut arr = arr.to_vec();
+    let arr = arr.to_vec();
 
     let mut inplace = true;
     let mut arrs: Vec<(usize, usize)> = Vec::new();
@@ -72,18 +73,20 @@ pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
     let mut image_i = 0;
     while i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME < actions.len() {
         let mut split_points: Vec<usize> = vec![i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME];
-        for i in i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME
+        #[allow(clippy::needless_range_loop)]
+        for ii in i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME
             ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())
         {
-            match actions[i] {
-                SortLog::CreateAuxArr { .. } => split_points.push(i),
-                SortLog::CreateAuxArrT { .. } => split_points.push(i),
+            match actions[ii] {
+                SortLog::CreateAuxArr { .. } => split_points.push(ii),
+                SortLog::CreateAuxArrT { .. } => {
+                    split_points.push(ii);
+                }
                 _ => {}
             }
         }
 
         for ii in 1..split_points.len() {
-            println!("{:?}", split_points);
             for arr_view in arrs.iter_mut() {
                 arr_view.update(&actions[split_points[ii - 1]..split_points[ii]], &mut img)
             }
@@ -93,9 +96,9 @@ pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
             ))
             .unwrap();
             image_i += 1;
-            println!("{ii} aaaaaaa");
             match actions[split_points[ii]] {
-                SortLog::CreateAuxArr { name, length } => {
+                SortLog::CreateAuxArrT { name, length }
+                | SortLog::CreateAuxArr { name, length } => {
                     aux_view.rect(&mut img, 0, 0, aux_view.width, aux_view.height, BLACK);
                     let views = get_views(&aux_view, arrs.len() as u32);
                     arrs.push(ArrActions::new(
@@ -113,7 +116,6 @@ pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
                         arrs[iii].view = views[iii - 1];
                         arrs[iii].full_rander_vec(&mut img, BLACK, WHITE)
                     }
-                    println!("1")
                 }
                 SortLog::FreeAuxArr { name: _ } => {}
                 _ => {}
@@ -133,7 +135,10 @@ pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
         ))
         .unwrap();
         i += 1;
-        image_i += 1
+        image_i += 1;
+        if i % 100 == 0 {
+            println!("{i} of {}", actions.len() / ACTIONS_PER_FRAME + 3);
+        }
     }
     /*
     for action_block in actions.chunks(ACTIONS_PER_FRAME) {
@@ -176,24 +181,23 @@ impl ArrActions {
         actions: &[SortLog<usize>],
         img: &mut impl GenericImage<Pixel = Rgba<u8>>,
     ) {
+        let size_t = size_of::<usize>();
         for action in actions {
             match action {
                 SortLog::Swap { name, ind_a, ind_b } => {
-                    if *name == self.name {
-                        self.arr.swap(*ind_a, *ind_b);
-                        self.draw[*ind_a] = true;
-                        self.draw[*ind_b] = true;
+                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
+                        let adjusted_ind_a = ind_a + (name - self.name) / size_t;
+                        let adjusted_ind_b = ind_b + (name - self.name) / size_t;
+                        self.arr.swap(adjusted_ind_a, adjusted_ind_b);
+                        self.draw[adjusted_ind_a] = true;
+                        self.draw[adjusted_ind_b] = true;
                     }
                 }
-                SortLog::WriteInArr { name, ind_a, ind_b } => {
-                    if *name == self.name {
-                        self.arr[*ind_a] = self.arr[*ind_b];
-                        self.draw[*ind_a] = true;
-                        self.draw[*ind_b] = true;
-                    }
-                }
-                SortLog::WriteData { name, ind, data } => {
-                    if *name == self.name {
+                SortLog::WriteDataU { name, ind, data } => {
+                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
+                        let adjusted_ind = ind + (name - self.name) / size_t;
+                        self.arr[adjusted_ind] = *data;
+                        self.draw[adjusted_ind] = true;
                         let data_f64 = *data as f64;
                         if self.min > data_f64 {
                             self.min = data_f64
@@ -201,8 +205,29 @@ impl ArrActions {
                         if self.max < data_f64 {
                             self.max = data_f64
                         }
-                        self.arr[*ind] = *data;
-                        self.draw[*ind] = true;
+                    }
+                }
+                SortLog::WriteInArr { name, ind_a, ind_b } => {
+                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
+                        let adjusted_ind_a = ind_a + (name - self.name) / size_t;
+                        let adjusted_ind_b = ind_b + (name - self.name) / size_t;
+                        self.arr[adjusted_ind_a] = self.arr[adjusted_ind_b];
+                        self.draw[adjusted_ind_a] = true;
+                        self.draw[adjusted_ind_b] = true;
+                    }
+                }
+                SortLog::WriteData { name, ind, data } => {
+                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
+                        let adjusted_ind = ind + (name - self.name) / size_t;
+                        self.arr[adjusted_ind] = *data;
+                        self.draw[adjusted_ind] = true;
+                        let data_f64 = *data as f64;
+                        if self.min > data_f64 {
+                            self.min = data_f64
+                        }
+                        if self.max < data_f64 {
+                            self.max = data_f64
+                        }
                     }
                 }
                 SortLog::CmpInArr {
@@ -211,9 +236,11 @@ impl ArrActions {
                     ind_b,
                     result: _,
                 } => {
-                    if *name == self.name {
-                        self.color[*ind_a] = true;
-                        self.color[*ind_b] = true;
+                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
+                        let adjusted_ind_a = ind_a + (name - self.name) / size_t;
+                        let adjusted_ind_b = ind_b + (name - self.name) / size_t;
+                        self.color[adjusted_ind_a] = true;
+                        self.color[adjusted_ind_b] = true;
                     }
                 }
                 SortLog::CmpData {
@@ -222,8 +249,36 @@ impl ArrActions {
                     data: _,
                     result: _,
                 } => {
-                    if *name == self.name {
-                        self.color[*ind] = true;
+                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
+                        let adjusted_ind = ind + (name - self.name) / size_t;
+                        self.color[adjusted_ind] = true;
+                    }
+                }
+                SortLog::CmpDataU {
+                    name,
+                    ind,
+                    data: _,
+                    result: _,
+                } => {
+                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
+                        let adjusted_ind = ind + (name - self.name) / size_t;
+                        self.color[adjusted_ind] = true;
+                    }
+                }
+                SortLog::CmpAcrossArrs {
+                    name_a,
+                    ind_a,
+                    name_b,
+                    ind_b,
+                    result: _,
+                } => {
+                    if *name_a >= self.name && *name_a < self.name + self.arr.len() * size_t {
+                        let adjusted_ind = ind_a + (name_a - self.name) / size_t;
+                        self.color[adjusted_ind] = true;
+                    }
+                    if *name_b >= self.name && *name_b < self.name + self.arr.len() * size_t {
+                        let adjusted_ind = ind_b + (name_b - self.name) / size_t;
+                        self.color[adjusted_ind] = true;
                     }
                 }
                 _ => {}
@@ -281,8 +336,8 @@ impl ArrActions {
     }
 
     fn new(arr: Vec<usize>, view: SubImg, name: usize) -> ArrActions {
-        let min = *arr.iter().min().unwrap();
-        let max = *arr.iter().max().unwrap();
+        let min = *arr.iter().min().unwrap_or(&0);
+        let max = *arr.iter().max().unwrap_or(&0);
         let len = arr.len();
         ArrActions {
             arr,

@@ -5,5 +5,6 @@ pub mod cycle_sorts;
 pub mod fun_sorts;
 pub mod heap_sort;
 pub mod insertion_sorts;
+pub mod merge_sorts;
 pub mod quick_sorts;
 pub mod shell_sorts;

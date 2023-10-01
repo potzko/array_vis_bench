@@ -13,58 +13,38 @@ impl traits::sort_traits::SortAlgo for FunSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    while comb_iter(arr, start, end, (end - start) / 2, logger) {
-        sort(
-            arr,
-            start,
-            start + ((end - start) as f64 * 2.0 / 3.0) as usize,
-            logger,
-        );
-        sort(arr, start + (end - start) / 3, end, logger);
-        sort(
-            arr,
-            start,
-            start + ((end - start) as f64 * 2.0 / 3.0) as usize,
-            logger,
-        );
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    let len = arr.len();
+
+    while comb_iter(arr, arr.len() / 2, logger) {
+        sort(&mut arr[..(len as f64 * 2.0 / 3.0) as usize], logger);
+        sort(&mut arr[len / 3..], logger);
+        sort(&mut arr[..(len as f64 * 2.0 / 3.0) as usize], logger);
     }
 
-    while comb_iter(arr, start, end, 1, logger) {}
+    while comb_iter(arr, 1, logger) {}
 }
 
 fn comb_iter<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     jump: usize,
     logger: &mut U,
 ) -> bool {
-    if end - start < 2 {
+    if arr.len() < 2 {
         return false;
     }
 
     let mut swap_flag = false;
 
-    for i in start + jump..end {
+    for i in jump..arr.len() {
         if logger.cond_swap_le(arr, i, i - jump) {
             swap_flag = true;
         }

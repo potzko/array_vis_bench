@@ -12,13 +12,8 @@ impl traits::sort_traits::SortAlgo for QuickSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
@@ -27,48 +22,41 @@ impl traits::sort_traits::SortAlgo for QuickSort {
 
 fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
+
     logger: &mut U,
 ) -> usize {
-    let mut low = start + 1;
-    let mut high = end - 1;
-    while low >= end && logger.cmp_le(arr, start, low) {
+    let mut low = 1;
+    let mut high = arr.len() - 1;
+    while low >= arr.len() && logger.cmp_le(arr, 0, low) {
         low += 1;
     }
-    if low == end {
-        logger.swap(arr, start, end - 1);
-        return end - 1;
+    if low == arr.len() {
+        logger.swap(arr, 0, arr.len() - 1);
+        return arr.len() - 1;
     }
-    while logger.cmp_gt(arr, high, start) {
+    while logger.cmp_gt(arr, high, 0) {
         high -= 1
     }
     while low <= high {
         logger.swap(arr, low, high);
-        while low <= high && !logger.cmp_gt(arr, low, start) {
+        while low <= high && !logger.cmp_gt(arr, low, 0) {
             low += 1;
         }
-        while logger.cmp_gt(arr, high, start) {
+        while logger.cmp_gt(arr, high, 0) {
             high -= 1;
         }
     }
 
-    logger.swap(arr, start, high);
+    logger.swap(arr, 0, high);
     high
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    if end - start < 2 {
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    if arr.len() < 2 {
         return;
     }
-    logger.mark(format!("sorting {} to {}", start, end));
 
-    let partition_index = partition(arr, start, end, logger);
-    sort(arr, start, partition_index, logger);
-    sort(arr, partition_index + 1, end, logger);
+    let partition_index = partition(arr, logger);
+    sort(&mut arr[..partition_index], logger);
+    sort(&mut arr[partition_index + 1..], logger);
 }

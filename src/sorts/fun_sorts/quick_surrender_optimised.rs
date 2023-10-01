@@ -13,13 +13,8 @@ impl traits::sort_traits::SortAlgo for FunSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
@@ -28,47 +23,38 @@ impl traits::sort_traits::SortAlgo for FunSort {
 
 fn quick_select<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     target: usize,
     rng: &mut rand::rngs::ThreadRng,
     logger: &mut U,
 ) {
-    if end - start < 2 {
+    if arr.len() < 2 {
         return;
     }
-    let piv = partition(arr, start, end, rng, logger);
+    let piv = partition(arr, rng, logger);
     if piv == target {
         return;
     }
     if piv < target {
-        quick_select(arr, piv + 1, end, target, rng, logger);
+        quick_select(&mut arr[piv + 1..], target, rng, logger);
     } else {
-        quick_select(arr, start, piv, target, rng, logger)
+        quick_select(&mut arr[..piv], target, rng, logger);
     };
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     use crate::traits::sort_traits::SortAlgo;
     let mut rng = rand::thread_rng();
-    for i in (start..end).step_by(16) {
-        quick_select(arr, i, end, std::cmp::min(i + 16, end), &mut rng, logger);
+    let len = arr.len();
+
+    for i in (0..arr.len()).step_by(16) {
+        quick_select(&mut arr[i..], std::cmp::min(i + 16, len), &mut rng, logger);
         crate::sorts::insertion_sorts::insertion_sort::InsertionSort::sort(
-            arr,
-            i,
-            std::cmp::min(i + 16, end),
+            &mut arr[i..std::cmp::min(i + 16, len)],
             logger,
         );
     }
     crate::sorts::insertion_sorts::insertion_sort::InsertionSort::sort(
-        arr,
-        16 * (end - start) / 16,
-        end,
+        &mut arr[16 * len / 16..len],
         logger,
     );
     //sort(arr, start, end, &mut rng, logger)
@@ -76,24 +62,22 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
 
 fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     rng: &mut rand::rngs::ThreadRng,
     logger: &mut U,
 ) -> usize {
     // Choose a random index between start and end - 1 as the pivot
-    let pivot_index: usize = rng.gen_range(start..end);
+    let pivot_index: usize = rng.gen_range(0..arr.len());
     // Swap the pivot with the last element
-    logger.swap(arr, pivot_index, end - 1);
+    logger.swap(arr, pivot_index, arr.len() - 1);
 
-    let pivot = arr[end - 1];
-    let mut small = start;
-    for i in start..end - 1 {
+    let pivot = arr[arr.len() - 1];
+    let mut small = 0;
+    for i in 0..arr.len() - 1 {
         if logger.cmp_lt_data(arr, i, pivot) {
             logger.swap(arr, i, small);
             small += 1;
         }
     }
-    logger.swap(arr, small, end - 1);
+    logger.swap(arr, small, arr.len() - 1);
     small
 }

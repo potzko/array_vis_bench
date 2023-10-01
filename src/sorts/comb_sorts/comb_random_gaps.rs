@@ -14,55 +14,42 @@ impl traits::sort_traits::SortAlgo for CombSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort_helper::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort_helper::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
+fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     let mut rng = rand::thread_rng();
-    sort(arr, start, end, &mut rng, logger)
+    sort(arr, &mut rng, logger)
 }
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
+
     rng: &mut rand::rngs::ThreadRng,
     logger: &mut U,
 ) {
-    while comb_iter(arr, start, end, 1, logger) {
-        comb_iter(arr, start, end, rng.gen_range(start..end), logger);
+    while comb_iter(arr, 1, logger) {
+        comb_iter(arr, rng.gen_range(0..arr.len()), logger);
     }
 }
 
 fn comb_iter<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     jump: usize,
     logger: &mut U,
 ) -> bool {
-    if end - start < 2 {
+    if arr.len() < 2 {
         return false;
     }
 
     let mut swap_flag = false;
 
-    for i in start + jump..end {
+    for i in jump..arr.len() {
         if logger.cond_swap_lt(arr, i, i - jump) {
             swap_flag = true;
         }

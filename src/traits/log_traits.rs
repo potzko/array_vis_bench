@@ -1,3 +1,4 @@
+#![allow(clippy::uninit_vec)]
 #[macro_export]
 macro_rules! arr_name {
     (  $arr: expr ) => {
@@ -37,6 +38,12 @@ pub enum SortLog<T: Copy> {
         data: T,
         result: bool,
     },
+    CmpDataU {
+        name: usize,
+        ind: usize,
+        data: usize,
+        result: bool,
+    },
     CmpAcrossArrs {
         name_a: usize,
         ind_a: usize,
@@ -54,11 +61,10 @@ pub enum SortLog<T: Copy> {
         ind: usize,
         data: T,
     },
-    WritAcrossArrs {
-        name_a: usize,
-        ind_a: usize,
-        name_b: usize,
-        ind_b: usize,
+    WriteDataU {
+        name: usize,
+        ind: usize,
+        data: usize,
     },
 }
 
@@ -75,18 +81,52 @@ pub trait SortLogger<T: Copy + Ord> {
         self.log(SortLog::Mark(mssg.to_string()))
     }
     #[inline]
-    fn create_aux_arr_t(&mut self, arr: &[T]) {
+    fn log_aux_arr_t(&mut self, arr: &[T]) {
         self.log(SortLog::CreateAuxArrT {
             name: arr_name!(arr),
             length: arr.len(),
         })
     }
     #[inline]
-    fn create_aux_arr(&mut self, arr: &[usize]) {
-        self.log(SortLog::CreateAuxArrT {
+    fn log_aux_arr_u(&mut self, arr: &[usize]) {
+        self.log(SortLog::CreateAuxArr {
             name: arr_name!(arr),
             length: arr.len(),
         })
+    }
+    #[inline]
+    fn copy_aux_arr_t(&mut self, arr: &[T]) -> Vec<T> {
+        let mut ret = Vec::<T>::with_capacity(arr.len());
+        unsafe { ret.set_len(arr.len()) }
+        self.log_aux_arr_t(&ret);
+        for i in 0..arr.len() {
+            self.write_accross(arr, i, &mut ret, i)
+        }
+        ret
+    }
+    #[inline]
+    fn create_aux_arr_t(&mut self, len: usize) -> Vec<T> {
+        let mut ret = Vec::<T>::with_capacity(len);
+        unsafe { ret.set_len(len) }
+        self.log_aux_arr_t(&ret);
+        ret
+    }
+    #[inline]
+    fn copy_aux_arr(&mut self, arr: &[usize]) -> Vec<usize> {
+        let mut ret = Vec::<usize>::with_capacity(arr.len());
+        unsafe { ret.set_len(arr.len()) }
+        self.log_aux_arr_u(&ret);
+        for i in 0..arr.len() {
+            self.write_accross_u(arr, i, &mut ret, i)
+        }
+        ret
+    }
+    #[inline]
+    fn create_aux_arr(&mut self, len: usize) -> Vec<usize> {
+        let mut ret = Vec::<usize>::with_capacity(len);
+        unsafe { ret.set_len(len) }
+        self.log_aux_arr_u(&ret);
+        ret
     }
     #[inline]
     fn free_aux_arr_t(&mut self, arr: &[T]) {
@@ -111,7 +151,7 @@ pub trait SortLogger<T: Copy + Ord> {
 
     //in arr cmp
     #[inline]
-    fn cmp_lt(&mut self, arr: &[T], ind_a: usize, ind_b: usize) -> bool {
+    fn cmp_lt<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool {
         let result = arr[ind_a] < arr[ind_b];
         self.log(SortLog::CmpInArr {
             name: arr_name!(arr),
@@ -122,7 +162,7 @@ pub trait SortLogger<T: Copy + Ord> {
         result
     }
     #[inline]
-    fn cmp_le(&mut self, arr: &[T], ind_a: usize, ind_b: usize) -> bool {
+    fn cmp_le<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool {
         let result = arr[ind_a] <= arr[ind_b];
         self.log(SortLog::CmpInArr {
             name: arr_name!(arr),
@@ -168,6 +208,17 @@ pub trait SortLogger<T: Copy + Ord> {
     fn cmp_gt_data(&mut self, arr: &[T], ind: usize, data: T) -> bool {
         let result = arr[ind] > data;
         self.log(SortLog::CmpData {
+            name: arr_name!(arr),
+            ind,
+            data,
+            result,
+        });
+        result
+    }
+    #[inline]
+    fn cmp_gt_data_u(&mut self, arr: &[usize], ind: usize, data: usize) -> bool {
+        let result = arr[ind] > data;
+        self.log(SortLog::CmpDataU {
             name: arr_name!(arr),
             ind,
             data,
@@ -234,6 +285,15 @@ pub trait SortLogger<T: Copy + Ord> {
         arr[ind_a] = arr[ind_b]
     }
     #[inline]
+    fn write_u(&mut self, arr: &mut [usize], ind_a: usize, ind_b: usize) {
+        self.log(SortLog::WriteInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+        });
+        arr[ind_a] = arr[ind_b]
+    }
+    #[inline]
     fn write_data(&mut self, arr: &mut [T], ind: usize, data: T) {
         self.log(SortLog::WriteData {
             name: arr_name!(arr),
@@ -243,20 +303,32 @@ pub trait SortLogger<T: Copy + Ord> {
         arr[ind] = data;
     }
     #[inline]
-    fn write_accross(&mut self, arr_a: &mut [T], ind_a: usize, arr_b: &mut [T], ind_b: usize) {
-        self.log(SortLog::WritAcrossArrs {
-            name_a: arr_name!(arr_a),
-            ind_a,
-            name_b: arr_name!(arr_b),
-            ind_b,
-        })
+    fn write_data_u(&mut self, arr: &mut [usize], ind: usize, data: usize) {
+        self.log(SortLog::WriteDataU {
+            name: arr_name!(arr),
+            ind,
+            data,
+        });
+        arr[ind] = data;
     }
-
+    #[inline]
+    fn write_accross(&mut self, arr_a: &[T], ind_a: usize, arr_b: &mut [T], ind_b: usize) {
+        self.write_data(arr_b, ind_b, arr_a[ind_a]);
+    }
+    fn write_accross_u(
+        &mut self,
+        arr_a: &[usize],
+        ind_a: usize,
+        arr_b: &mut [usize],
+        ind_b: usize,
+    ) {
+        self.write_data_u(arr_b, ind_b, arr_a[ind_a]);
+    }
     /*----------------
         Swaps
     --------------- */
     #[inline]
-    fn swap(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) {
+    fn swap<U: Ord>(&mut self, arr: &mut [U], ind_a: usize, ind_b: usize) {
         self.log(SortLog::Swap {
             name: arr_name!(arr),
             ind_a,
@@ -273,7 +345,7 @@ pub trait SortLogger<T: Copy + Ord> {
         ret
     }
     #[inline]
-    fn cond_swap_le(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) -> bool {
+    fn cond_swap_le<U: Ord>(&mut self, arr: &mut [U], ind_a: usize, ind_b: usize) -> bool {
         let ret = self.cmp_le(arr, ind_a, ind_b);
         if ret {
             self.swap(arr, ind_a, ind_b)

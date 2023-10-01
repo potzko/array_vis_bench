@@ -13,56 +13,52 @@ impl sort_traits::SortAlgo for CircleSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        circle_sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        circle_sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn circle_sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    for _ in 0..(((end - start) as f64).log2() as usize) >> 1 {
-        circle_sort_iteration(arr, start, end, logger);
+fn circle_sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    for _ in 0..(((arr.len()) as f64).log2() as usize) >> 1 {
+        if !circle_sort_iteration(arr, logger) {
+            break;
+        }
     }
-    crate::sorts::insertion_sorts::insertion_sort::InsertionSort::sort(arr, start, end, logger);
+    crate::sorts::insertion_sorts::insertion_sort::InsertionSort::sort(arr, logger);
 }
 
 fn circle_sort_iteration<T: Ord + Copy, U: log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
+
     logger: &mut U,
-) {
-    let mut iter = get_last_bit(end - start);
+) -> bool {
+    let mut swapped = false;
+
+    let mut iter = get_last_bit(arr.len());
     while iter > 1 {
-        for i in (start..end).step_by(iter) {
+        for i in (0..arr.len()).step_by(iter) {
             let mut ind_left = i;
             let mut ind_right = i + iter - 1;
-            if ind_right >= end {
-                let tmp = ind_right - end + 1;
+            if ind_right >= arr.len() {
+                let tmp = ind_right - arr.len() + 1;
                 ind_left += tmp;
                 ind_right -= tmp;
             }
 
-            while ind_left < ind_right && ind_left >= start {
-                logger.cond_swap_lt(arr, ind_right, ind_left);
+            while ind_left < ind_right {
+                if logger.cond_swap_lt(arr, ind_right, ind_left) {
+                    swapped = true
+                }
                 ind_left += 1;
                 ind_right -= 1;
             }
         }
         iter /= 2;
     }
+    swapped
 }
 
 fn get_last_bit(mut num: usize) -> usize {

@@ -12,30 +12,20 @@ impl traits::sort_traits::SortAlgo for ShellSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    let mut jump = (end - start) / 2;
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    let mut jump = arr.len() / 2;
     while jump >= 1 {
         logger.mark(format!("jump = {}", jump));
-        for i in start..jump + start {
-            insertion_sort_jump(arr, i, end, jump, logger);
+        for i in 0..jump {
+            insertion_sort_jump(arr, i, arr.len(), jump, logger);
         }
         jump /= 2;
     }

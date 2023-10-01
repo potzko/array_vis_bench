@@ -6,5 +6,6 @@ pub mod cyclent_sort_stack;
 pub mod cyclent_sort_stack_optimized;
 pub mod quick_surrender;
 pub mod quick_surrender_optimised;
+pub mod random_shell_sort;
 pub mod slow_sort;
 pub mod stooge_sort;
