@@ -12,66 +12,52 @@ impl traits::sort_traits::SortAlgo for ShellSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort_helper::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort_helper::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    sort(arr, start, end, 1, logger);
+fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    sort(arr, 1, logger);
 }
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     jump: usize,
     logger: &mut U,
 ) {
-    if end < start {
+    let len = arr.len() / jump;
+    if len == 0 {
         return;
     }
-    let len = (end - start) / jump;
     if len < 16 {
-        insertion_sort_jump(arr, start, end, jump, logger);
+        insertion_sort_jump(arr, jump, logger);
         return;
     }
     let num = (len as f64).log2() as usize;
     for i in 0..num {
-        sort(arr, start + jump * i, end, jump * num, logger);
+        sort(&mut arr[jump * i..], jump * num, logger);
     }
     let num = num - 1;
     if len >= num * 16 {
         for i in 0..num {
-            insertion_sort_jump(arr, start + jump * i, end, jump * num, logger);
+            insertion_sort_jump(&mut arr[jump * i..], jump * num, logger);
         }
     }
-    insertion_sort_jump(arr, start, end, jump, logger);
+    insertion_sort_jump(arr, jump, logger);
 }
 
 fn insertion_sort_jump<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     jump: usize,
     logger: &mut U,
 ) {
-    for i in (start..end).step_by(jump) {
+    for i in (0..arr.len()).step_by(jump) {
         let mut ind = i;
-        while ind != start {
+        while ind != 0 {
             if logger.cond_swap_le(arr, ind, ind - jump) {
                 ind -= jump;
             } else {

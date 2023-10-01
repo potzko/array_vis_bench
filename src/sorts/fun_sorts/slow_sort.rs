@@ -12,32 +12,23 @@ impl traits::sort_traits::SortAlgo for FunSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    if end - start < 2 {
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    if arr.len() < 2 {
         return;
     }
-    let len = end - start;
-    let mid = start + len / 2;
-    sort(arr, start, mid, logger);
-    sort(arr, mid, end, logger);
-    logger.cond_swap_gt(arr, mid - 1, end - 1);
-    sort(arr, start, end - 1, logger);
+    let len = arr.len();
+
+    let mid = arr.len() / 2;
+    sort(&mut arr[..mid], logger);
+    sort(&mut arr[mid..], logger);
+    logger.cond_swap_gt(arr, mid - 1, len - 1);
+    sort(&mut arr[..len - 1], logger);
 }

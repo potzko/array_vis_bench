@@ -2,7 +2,7 @@ const MAX_SIZE: usize = 5000;
 const BIG_O: &str = "O(N^2)";
 const NAME: &str = "insertion sort";
 
-use crate::traits::{self, log_traits::SortLogger};
+use crate::traits;
 pub struct InsertionSort {}
 
 impl traits::sort_traits::SortAlgo for InsertionSort {
@@ -12,26 +12,16 @@ impl traits::sort_traits::SortAlgo for InsertionSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn insertion_sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    for i in start + 1..end {
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    for i in 1..arr.len() {
         let num = arr[i];
         let mut ind = i;
 
@@ -41,8 +31,4 @@ fn insertion_sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
         }
         logger.write_data(arr, ind, num);
     }
-}
-
-fn sort<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], start: usize, end: usize, logger: &mut U) {
-    insertion_sort(arr, start, end, logger)
 }

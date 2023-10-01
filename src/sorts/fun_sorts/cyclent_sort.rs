@@ -13,13 +13,8 @@ impl traits::sort_traits::SortAlgo for FunSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
@@ -28,50 +23,44 @@ impl traits::sort_traits::SortAlgo for FunSort {
 
 fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     logger: &mut U,
 ) -> usize {
-    let pivot = arr[start];
-    let mut low = start;
-    let mut high = end - 1;
-    while high > start && logger.cmp_ge_data(arr, high, pivot) {
+    let pivot = arr[0];
+    let mut low = 0;
+    let mut high = arr.len() - 1;
+    while high > 0 && logger.cmp_ge_data(arr, high, pivot) {
         high -= 1
     }
     if high == 0 {
-        return start;
+        return 0;
     }
-    while low >= end && logger.cmp_lt_data(arr, start, pivot) {
+    while low >= arr.len() && logger.cmp_lt_data(arr, 0, pivot) {
         low += 1;
     }
     while low <= high {
         logger.swap(arr, low, high);
         // Increment low pointer while the element at low is less than or equal to the pivot
-        while low <= high && !logger.cmp_gt(arr, low, start) {
+        while low <= high && !logger.cmp_gt(arr, low, 0) {
             low += 1;
         }
 
         // Decrement high pointer while the element at high is greater than the pivot
-        while logger.cmp_gt(arr, high, start) {
+        while logger.cmp_gt(arr, high, 0) {
             high -= 1;
         }
     }
 
     // Position the pivot correctly by swapping it with the element at 'high'
-    logger.swap(arr, start, high);
+    logger.swap(arr, 0, high);
     high
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    for i in start..end {
-        let mut tmp = end;
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    for i in 0..arr.len() {
+        let mut tmp = arr.len();
         while tmp != i {
-            tmp = partition(arr, i, tmp, logger)
+            println!("{tmp}, {i}");
+            tmp = partition(&mut arr[i..tmp], logger) + i;
         }
     }
 }

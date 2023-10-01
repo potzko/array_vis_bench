@@ -12,30 +12,20 @@ impl traits::sort_traits::SortAlgo for FunSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    first_heapify(arr, start, end, logger);
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    first_heapify(arr, logger);
 
-    for i in (start + 1..end).rev() {
-        logger.swap(arr, start, i);
-        heapify(arr, start, i, logger);
+    for i in (1..arr.len()).rev() {
+        logger.swap(arr, 0, i);
+        heapify(arr, 0, i, logger);
     }
 }
 fn heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
@@ -65,11 +55,9 @@ fn heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
 
 fn first_heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     logger: &mut U,
 ) {
-    for start in (start..end).rev() {
-        heapify(arr, start, end, logger);
+    for start in (0..arr.len()).rev() {
+        heapify(arr, start, arr.len(), logger);
     }
 }

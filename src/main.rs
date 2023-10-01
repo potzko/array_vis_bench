@@ -1,7 +1,4 @@
-use crate::sorts::heap_sort::base_16_heap::HeapSort;
-use crate::traits::log_traits::SortLog;
 use crate::traits::sort_traits::SortAlgo;
-use ffmpeg_next::log;
 use std::time::Instant;
 use traits::log_traits::SortLog::*;
 use traits::log_traits::SortLogger;
@@ -12,10 +9,9 @@ mod utils;
 mod visualise;
 
 fn main() {
-    let size = 1000;
+    let size = 1000000;
     let mut arr: Vec<usize> = utils::array_gen::get_rand_arr(size);
-    //arr = crate::utils::array_gen::get_arr(size);
-    let mut original_arr = arr.clone();
+    let original_arr = arr.clone();
     //println!("{arr:?}");
     let mut logger = traits::log_traits::VisualizerLogger {
         log: Vec::<traits::log_traits::SortLog<usize>>::new(),
@@ -27,12 +23,7 @@ fn main() {
     }
 
     let start: Instant = Instant::now();
-    sorts::quick_sorts::quick_sort_left_left_pointers::QuickSort::sort(
-        &mut arr,
-        0,
-        size,
-        &mut (logger),
-    );
+    sorts::heap_sort::classic_heap_sorts::heap_sort_classic::HeapSort::sort(&mut arr, &mut ());
     println!("{:?}", start.elapsed());
     //println!("{:?}", logger);
     println!("{:?}", logger.log.len());
@@ -62,7 +53,8 @@ fn main() {
         .count();
     println!("swap count: {}", swap_counter);
 
-    visualise::img_tmp::main(&original_arr, arr.as_ptr() as usize, &logger.log);
+    //println!("{:?}", logger.log);
+    //visualise::img_tmp::main(&original_arr, arr.as_ptr() as usize, &logger.log);
     //visualise::tmp::main(logger.log, &original_arr);
 }
 

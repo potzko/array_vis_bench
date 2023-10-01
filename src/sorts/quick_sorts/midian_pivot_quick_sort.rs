@@ -13,13 +13,8 @@ impl traits::sort_traits::SortAlgo for QuickSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
@@ -28,69 +23,58 @@ impl traits::sort_traits::SortAlgo for QuickSort {
 
 fn quick_select<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     target: usize,
     rng: &mut rand::rngs::ThreadRng,
     logger: &mut U,
 ) {
-    let piv = partition(arr, start, end, rng, logger);
+    let piv = partition(arr, rng, logger);
     if piv == target {
         return;
     }
     if piv < target {
-        quick_select(arr, piv + 1, end, target, rng, logger);
+        quick_select(&mut arr[piv + 1..], target, rng, logger);
     } else {
-        quick_select(arr, start, piv, target, rng, logger)
+        quick_select(&mut arr[0..piv], target, rng, logger)
     };
 }
 
 fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     rng: &mut ThreadRng,
     logger: &mut U,
 ) {
-    if end - start < 2 {
+    if arr.is_empty() {
         return;
     }
-    let mid = start + (end - start) / 2;
-    quick_select(arr, start, end, mid, rng, logger);
-    sort_helper(arr, start, mid, rng, logger);
-    sort_helper(arr, mid, end, rng, logger);
+    let mid = arr.len() / 2;
+    quick_select(arr, mid, rng, logger);
+    sort_helper(&mut arr[0..mid], rng, logger);
+    sort_helper(&mut arr[mid..], rng, logger);
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     let mut rng = rand::thread_rng();
-    sort_helper(arr, start, end, &mut rng, logger);
+    sort_helper(arr, &mut rng, logger);
 }
 
 fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     rng: &mut rand::rngs::ThreadRng,
     logger: &mut U,
 ) -> usize {
     // Choose a random index between start and end - 1 as the pivot
-    let pivot_index: usize = rng.gen_range(start..end);
+    let pivot_index: usize = rng.gen_range(0..arr.len());
     // Swap the pivot with the last element
-    logger.swap(arr, pivot_index, end - 1);
+    logger.swap(arr, pivot_index, arr.len() - 1);
 
-    let pivot = arr[end - 1];
-    let mut small = start;
-    for i in start..end - 1 {
+    let pivot = arr[arr.len() - 1];
+    let mut small = 0;
+    for i in 0..arr.len() - 1 {
         if logger.cmp_lt_data(arr, i, pivot) {
             logger.swap(arr, i, small);
             small += 1;
         }
     }
-    logger.swap(arr, small, end - 1);
+    logger.swap(arr, small, arr.len() - 1);
     small
 }

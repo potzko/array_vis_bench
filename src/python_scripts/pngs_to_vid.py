@@ -1,9 +1,5 @@
-try:
-    import cv2
-except:
-    import pip
-    pip.main(['install', "opencv-python"])
-    import cv2
+
+import cv2
 import os
 
 

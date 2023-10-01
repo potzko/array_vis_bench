@@ -12,13 +12,8 @@ impl traits::sort_traits::SortAlgo for QuickSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
@@ -27,12 +22,10 @@ impl traits::sort_traits::SortAlgo for QuickSort {
 
 fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     logger: &mut U,
 ) -> usize {
-    let mut low = start;
-    let mut high = end - 1;
+    let mut low = 0;
+    let mut high = arr.len() - 1;
     while low < high - 1 {
         if logger.cond_swap_le(arr, low + 1, low) {
             low += 1;
@@ -45,16 +38,11 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     high
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    if end - start < 2 {
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    if arr.len() < 2 {
         return;
     }
-    let partition_index = partition(arr, start, end, logger);
-    sort(arr, start, partition_index, logger);
-    sort(arr, partition_index, end, logger);
+    let partition_index = partition(arr, logger);
+    sort(&mut arr[..partition_index], logger);
+    sort(&mut arr[partition_index..], logger);
 }

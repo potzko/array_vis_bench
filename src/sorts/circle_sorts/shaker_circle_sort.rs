@@ -12,26 +12,16 @@ impl sort_traits::SortAlgo for CircleSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        circle_sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        circle_sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn circle_sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    while circle_sort_rec_inc(arr, start, end - 1, logger) {}
+fn circle_sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    while circle_sort_rec_inc(arr, 0, arr.len() - 1, logger) {}
 }
 
 fn circle_sort_rec_dec<T: Ord + Copy, U: log_traits::SortLogger<T>>(

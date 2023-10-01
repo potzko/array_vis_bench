@@ -12,54 +12,41 @@ impl sort_traits::SortAlgo for CircleSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        circle_sort::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        circle_sort::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn circle_sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    while circle_sort_iteration_decreasing(arr, start, end, logger)
-        && circle_sort_iteration_increasing(arr, start, end, logger)
+fn circle_sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    while circle_sort_iteration_decreasing(arr, logger)
+        && circle_sort_iteration_increasing(arr, logger)
     {}
 }
 
 fn circle_sort_iteration_increasing<T: Ord + Copy, U: log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     logger: &mut U,
 ) -> bool {
     let mut swapped = false;
-    let max = get_last_bit(end - start);
-    let mut iter = 4;
+    let max = get_last_bit(arr.len());
+    let mut iter = 2;
     while iter <= max {
-        for i in (start..end).step_by(iter) {
+        for i in (0..arr.len()).step_by(iter) {
             let mut ind_left = i;
             let mut ind_right = i + iter - 1;
-            if ind_right >= end {
-                let tmp = ind_right - end + 1;
+            if ind_right >= arr.len() {
+                let tmp = ind_right - arr.len() + 1;
                 ind_left += tmp;
                 ind_right -= tmp;
             }
 
-            while ind_left < ind_right && ind_left >= start {
+            while ind_left < ind_right {
                 if logger.cond_swap_lt(arr, ind_right, ind_left) {
-                    swapped = true;
+                    swapped = true
                 }
-
                 ind_left += 1;
                 ind_right -= 1;
             }
@@ -68,30 +55,32 @@ fn circle_sort_iteration_increasing<T: Ord + Copy, U: log_traits::SortLogger<T>>
     }
     swapped
 }
-
 fn circle_sort_iteration_decreasing<T: Ord + Copy, U: log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     logger: &mut U,
 ) -> bool {
     let mut swapped = false;
 
-    let mut iter = get_last_bit(end - start);
+    let mut iter = get_last_bit(arr.len());
     while iter > 1 {
-        iter /= 2;
-        for i in (start..end).step_by(iter) {
+        for i in (0..arr.len()).step_by(iter) {
             let mut ind_left = i;
             let mut ind_right = i + iter - 1;
-            if ind_right >= end {
-                let tmp = ind_right - end + 1;
+            if ind_right >= arr.len() {
+                let tmp = ind_right - arr.len() + 1;
                 ind_left += tmp;
                 ind_right -= tmp;
             }
-            if logger.cond_swap_lt(arr, ind_right, ind_left) {
-                swapped = true;
+
+            while ind_left < ind_right {
+                if logger.cond_swap_lt(arr, ind_right, ind_left) {
+                    swapped = true
+                }
+                ind_left += 1;
+                ind_right -= 1;
             }
         }
+        iter /= 2;
     }
     swapped
 }

@@ -12,55 +12,41 @@ impl traits::sort_traits::SortAlgo for ShellSort {
     fn big_o(&self) -> &str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        arr: &mut [T],
-        start: usize,
-        end: usize,
-        logger: &mut U,
-    ) {
-        sort_helper::<T, U>(arr, start, end, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        sort_helper::<T, U>(arr, logger);
     }
     fn name(&self) -> &str {
         NAME
     }
 }
 
-fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) {
-    sort(arr, start, end, 1, logger);
+fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    sort(arr, 1, logger);
 }
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     jump: usize,
     logger: &mut U,
 ) {
-    let len = (end - start) / jump;
+    let len = arr.len() / jump;
 
-    if len < 2 {
+    if len == 0 {
         return;
     }
-    sort(arr, start, end, jump * 2, logger);
-    sort(arr, start + jump, end, jump * 2, logger);
-    insertion_sort_jump(arr, start, end, jump, logger);
+    sort(arr, jump * 2, logger);
+    sort(&mut arr[jump..], jump * 2, logger);
+    insertion_sort_jump(arr, jump, logger);
 }
 
 fn insertion_sort_jump<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    start: usize,
-    end: usize,
     jump: usize,
     logger: &mut U,
 ) {
-    for i in (start..end).step_by(jump) {
+    for i in (0..arr.len()).step_by(jump) {
         let mut ind = i;
-        while ind != start {
+        while ind != 0 {
             if logger.cond_swap_le(arr, ind, ind - jump) {
                 ind -= jump;
             } else {
