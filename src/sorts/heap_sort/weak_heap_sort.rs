@@ -37,8 +37,8 @@ pub fn weak_heap_sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
         while ii & 1 == get_bitwise_flag(&bottom_skips, ii >> 1) {
             ii >>= 1;
         }
-        let gparent = ii >> 1;
-        weak_heap_merge(arr, &mut bottom_skips, gparent, i, logger);
+        let big_parent = ii >> 1;
+        weak_heap_merge(arr, &mut bottom_skips, big_parent, i, logger);
     }
 
     for i in (2..n).rev() {
@@ -59,7 +59,7 @@ pub fn weak_heap_sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
 
 fn weak_heap_merge<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
-    bottom_skips: &mut [usize],
+    bottom_skips: &mut [u8],
     ind_a: usize,
     ind_b: usize,
     logger: &mut U,
@@ -69,10 +69,10 @@ fn weak_heap_merge<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     }
 }
 
-fn get_bitwise_flag(bottom_skips: &[usize], ind: usize) -> usize {
-    (bottom_skips[ind >> 3] >> (ind & 7)) & 1
+fn get_bitwise_flag(bottom_skips: &[u8], ind: usize) -> usize {
+    ((bottom_skips[ind >> 3] >> (ind & 7)) & 1).into()
 }
 
-fn toggle_bitwise_flag(bottom_skips: &mut [usize], ind: usize) {
+fn toggle_bitwise_flag(bottom_skips: &mut [u8], ind: usize) {
     bottom_skips[ind >> 3] ^= 1 << (ind & 7)
 }

@@ -26,7 +26,7 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logg
     merge_sort(arr, &mut tmp, logger);
 }
 
-const SMALL_SORT_SIZE: usize = 256;
+const SMALL_SORT_SIZE: usize = 32;
 use traits::sort_traits::SortAlgo;
 fn merge_sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
@@ -34,7 +34,7 @@ fn merge_sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     logger: &mut U,
 ) {
     if arr.len() < SMALL_SORT_SIZE {
-        super::super::shell_sorts::classic_shell_sorts::shell_optimized_256_elements::ShellSort::sort(arr, logger);
+        crate::sorts::insertion_sorts::insertion_sort::InsertionSort::sort(arr, logger);
         return;
     }
     let (left, right) = arr.split_at_mut(arr.len() / 2);
