@@ -9,22 +9,38 @@ impl traits::sort_traits::SortAlgo for ShellSort {
     fn max_size(&self) -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &str {
+    fn big_o(&self) -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        sort_helper::<T, U>(arr, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+        &self,
+        arr: &mut [T],
+        logger: &mut U,
+    ) {
+        sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         NAME
     }
 }
-
-fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    sort(arr, 1, logger);
+use std::fmt::Debug;
+#[allow(clippy::derivable_impls)]
+impl Default for ShellSort {
+    fn default() -> Self {
+        ShellSort {}
+    }
+}
+impl Debug for ShellSort {
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Result::Ok(())
+    }
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    sort_rec(arr, 1, logger);
+}
+
+fn sort_rec<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     jump: usize,
     logger: &mut U,
@@ -34,8 +50,8 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     if len == 0 {
         return;
     }
-    sort(arr, jump * 2, logger);
-    sort(&mut arr[jump..], jump * 2, logger);
+    sort_rec(arr, jump * 2, logger);
+    sort_rec(&mut arr[jump..], jump * 2, logger);
     insertion_sort_jump(arr, jump, logger);
 }
 

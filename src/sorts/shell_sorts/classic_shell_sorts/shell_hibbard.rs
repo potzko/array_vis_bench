@@ -27,14 +27,30 @@ impl traits::sort_traits::SortAlgo for ShellSort {
     fn max_size(&self) -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &str {
+    fn big_o(&self) -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+        &self,
+        arr: &mut [T],
+        logger: &mut U,
+    ) {
         sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         NAME
+    }
+}
+use std::fmt::Debug;
+#[allow(clippy::derivable_impls)]
+impl Default for ShellSort {
+    fn default() -> Self {
+        ShellSort {}
+    }
+}
+impl Debug for ShellSort {
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Result::Ok(())
     }
 }
 

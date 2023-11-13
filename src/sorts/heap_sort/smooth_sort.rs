@@ -10,15 +10,30 @@ impl traits::sort_traits::SortAlgo for HeapSort {
     fn max_size(&self) -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &str {
+    fn big_o(&self) -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        smooth_sort(arr, logger);
-        //, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+        &self,
+        arr: &mut [T],
+        logger: &mut U,
+    ) {
+        sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         NAME
+    }
+}
+use std::fmt::Debug;
+#[allow(clippy::derivable_impls)]
+impl Default for HeapSort {
+    fn default() -> Self {
+        HeapSort {}
+    }
+}
+impl Debug for HeapSort {
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Result::Ok(())
     }
 }
 
@@ -29,10 +44,7 @@ const LEONARDO_NUMS: [usize; 43] = [
     535828591, 866988873,
 ]; //max u32 leonardo number
 
-pub fn smooth_sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    input: &mut [T],
-    logger: &mut U,
-) {
+pub fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(input: &mut [T], logger: &mut U) {
     if input.len() < 2 {
         return;
     }

@@ -27,7 +27,7 @@ fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
 
 pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
     let script_path = r"D:\Programing\IDE\vscProjects\rustFolder\array_vis_bench\src\python_scripts\empty_tmp_folder.py";
-    Command::new("python").arg(script_path).status().unwrap();
+    Command::new("py").arg(script_path).status().unwrap();
     let arr = arr.to_vec();
 
     let mut inplace = true;
