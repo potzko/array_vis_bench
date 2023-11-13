@@ -4,6 +4,7 @@ const NAME: &str = "comb sort";
 
 use crate::traits;
 use rand::Rng;
+use std::fmt::Debug;
 
 pub struct CombSort {}
 
@@ -11,23 +12,38 @@ impl traits::sort_traits::SortAlgo for CombSort {
     fn max_size(&self) -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &str {
+    fn big_o(&self) -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        sort_helper::<T, U>(arr, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+        &self,
+        arr: &mut [T],
+        logger: &mut U,
+    ) {
+        sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         NAME
     }
 }
-
-fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    let mut rng = rand::thread_rng();
-    sort(arr, &mut rng, logger)
+#[allow(clippy::derivable_impls)]
+impl Default for CombSort {
+    fn default() -> Self {
+        CombSort {}
+    }
+}
+impl Debug for CombSort {
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Result::Ok(())
+    }
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    let mut rng = rand::thread_rng();
+    sort_helper(arr, &mut rng, logger)
+}
+
+fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
 
     rng: &mut rand::rngs::ThreadRng,

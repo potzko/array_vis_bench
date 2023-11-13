@@ -6,14 +6,20 @@ mod rotations;
 mod sorts;
 mod traits;
 mod utils;
+use utils::*;
 mod visualise;
+use strum::IntoEnumIterator; // 0.17.1
+
+type LoggerChoice = traits::log_traits::VisualizerLogger<usize>;
 
 fn main() {
     env::set_var("RUST_BACKTRACE", "1");
 
-    let size = 1000;
+    println!("enter length of array");
+    let size = read_num_stdin();
     let mut arr: Vec<usize> = utils::array_gen::get_rand_arr_in_range(size, 0, size);
     let mut _arr: Vec<usize> = utils::array_gen::get_arr(size);
+    let mut _arr: Vec<usize> = utils::array_gen::get_reversed_arr(size);
 
     let original_arr = arr.clone();
     //println!("{arr:?}");
@@ -21,11 +27,12 @@ fn main() {
         log: Vec::<traits::log_traits::SortLog<usize>>::new(),
         type_ghost: std::marker::PhantomData,
     };
+    for i in sorts::AnySort::iter() {
+        println!("{:?}", i);
+    }
+    let sort_choice = sorts::fun_sorts::random_shell_sort::FunSort {};
     let start: Instant = Instant::now();
-    sorts::merge_sorts::rotate_merge_sorts::rotate_merge_sort_optimized::MergeSort::sort(
-        &mut arr,
-        &mut (logger),
-    );
+    sort_choice.sort(&mut arr, &mut (logger));
     println!("{:?}", start.elapsed());
     //println!("{:?}", logger);
     println!("{:?}", logger.log.len());

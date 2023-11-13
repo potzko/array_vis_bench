@@ -10,14 +10,30 @@ impl traits::sort_traits::SortAlgo for FunSort {
     fn max_size(&self) -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &str {
+    fn big_o(&self) -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+        &self,
+        arr: &mut [T],
+        logger: &mut U,
+    ) {
         sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         NAME
+    }
+}
+use std::fmt::Debug;
+#[allow(clippy::derivable_impls)]
+impl Default for FunSort {
+    fn default() -> Self {
+        FunSort {}
+    }
+}
+impl Debug for FunSort {
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Result::Ok(())
     }
 }
 
@@ -45,18 +61,13 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logg
     use crate::traits::sort_traits::SortAlgo;
     let mut rng = rand::thread_rng();
     let len = arr.len();
+    let small_sort = crate::sorts::insertion_sorts::insertion_sort::InsertionSort {};
 
     for i in (0..arr.len()).step_by(16) {
         quick_select(&mut arr[i..], std::cmp::min(i + 16, len), &mut rng, logger);
-        crate::sorts::insertion_sorts::insertion_sort::InsertionSort::sort(
-            &mut arr[i..std::cmp::min(i + 16, len)],
-            logger,
-        );
+        small_sort.sort(&mut arr[i..std::cmp::min(i + 16, len)], logger);
     }
-    crate::sorts::insertion_sorts::insertion_sort::InsertionSort::sort(
-        &mut arr[16 * len / 16..len],
-        logger,
-    );
+    small_sort.sort(&mut arr[16 * len / 16..len], logger);
     //sort(arr, start, end, &mut rng, logger)
 }
 

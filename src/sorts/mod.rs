@@ -8,3 +8,10 @@ pub mod insertion_sorts;
 pub mod merge_sorts;
 pub mod quick_sorts;
 pub mod shell_sorts;
+
+use strum_macros::EnumIter;
+#[derive(Debug, EnumIter)]
+pub enum AnySort {
+    Bubble(bubble_sorts::AnySort),
+    Circle(circle_sorts::AnySort),
+}

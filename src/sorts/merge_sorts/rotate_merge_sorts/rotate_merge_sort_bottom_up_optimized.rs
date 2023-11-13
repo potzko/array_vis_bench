@@ -9,29 +9,40 @@ impl traits::sort_traits::SortAlgo for MergeSort {
     fn max_size(&self) -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &str {
+    fn big_o(&self) -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        rotate_merge_sort::<T, U>(arr, logger);
+    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+        &self,
+        arr: &mut [T],
+        logger: &mut U,
+    ) {
+        sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         NAME
+    }
+}
+use std::fmt::Debug;
+#[allow(clippy::derivable_impls)]
+impl Default for MergeSort {
+    fn default() -> Self {
+        MergeSort {}
+    }
+}
+impl Debug for MergeSort {
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Result::Ok(())
     }
 }
 
 const SMALL_SORT_SIZE: usize = 20;
 use traits::sort_traits::SortAlgo;
-fn rotate_merge_sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    logger: &mut U,
-) {
+fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     for i in (0..arr.len()).step_by(SMALL_SORT_SIZE) {
         let end = std::cmp::min(i + SMALL_SORT_SIZE, arr.len());
-        crate::sorts::insertion_sorts::insertion_sort::InsertionSort::sort(
-            &mut arr[i..end],
-            logger,
-        );
+        let small_sort = crate::sorts::insertion_sorts::insertion_sort::InsertionSort {};
+        small_sort.sort(arr, logger);
     }
     let mut gap = SMALL_SORT_SIZE;
     let mut i;
