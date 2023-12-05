@@ -1,5 +1,5 @@
 import os, shutil
-folder = 'D:\\Programing\\IDE\\vscProjects\\rustFolder\\array_vis_bench\\tmp'
+folder = '.\\tmp'
 for filename in os.listdir(folder):
     file_path = os.path.join(folder, filename)
     try:
