@@ -26,17 +26,6 @@ impl sort_traits::SortAlgo for CircleSort {
         NAME
     }
 }
-#[allow(clippy::derivable_impls)]
-impl Default for CircleSort {
-    fn default() -> Self {
-        CircleSort {}
-    }
-}
-impl Debug for CircleSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
-    }
-}
 
 fn sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     while circle_sort_iteration_increasing(arr, logger)

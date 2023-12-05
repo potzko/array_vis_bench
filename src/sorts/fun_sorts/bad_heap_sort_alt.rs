@@ -1,4 +1,4 @@
-const MAX_SIZE: usize = 50000;
+const MAX_SIZE: usize = 5000;
 const BIG_O: &str = "O(N^2)";
 const NAME: &str = "bad_heap";
 
@@ -37,6 +37,9 @@ impl Debug for FunSort {
 }
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    if arr.len() < 2 {
+        return;
+    }
     first_heapify(arr, logger);
 
     for i in (1..arr.len()).rev() {

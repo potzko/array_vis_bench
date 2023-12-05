@@ -24,14 +24,20 @@ pub fn test_sort(choice: &[String]) -> bool {
 }
 pub fn test_sort_small_arrs(choice: &[String]) -> bool {
     let mut flag = true;
-    for i in 0..=46655 {
-        let mut i = i;
-        let mut arr = [0; 6];
-        let mut arr_tmp = [0; 6];
-        for ii in 0..6 {
-            arr[ii] = i % 6;
-            arr_tmp[ii] = i % 6;
-            i /= 6;
+    for i in 0..7 {
+        flag = flag && test_permutations_n(choice, i);
+    }
+    flag
+}
+pub fn test_permutations_n(choice: &[String], n: usize) -> bool {
+    let mut flag = true;
+    let options = n.pow(n as u32);
+    let mut arr = vec![0; n];
+    for i in 0..options {
+        let mut tmp_i = i;
+        for ii in arr.iter_mut() {
+            *ii = tmp_i % n;
+            tmp_i /= n;
         }
         fn_sort(&mut arr, &mut (), choice);
         flag = flag && is_sorted(&arr);

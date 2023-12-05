@@ -24,18 +24,6 @@ impl traits::sort_traits::SortAlgo for MergeSort {
         NAME
     }
 }
-use std::fmt::Debug;
-#[allow(clippy::derivable_impls)]
-impl Default for MergeSort {
-    fn default() -> Self {
-        MergeSort {}
-    }
-}
-impl Debug for MergeSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
-    }
-}
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     let mut tmp = logger.copy_aux_arr_t(arr);
@@ -47,7 +35,7 @@ fn merge_sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     target: &mut [T],
     logger: &mut U,
 ) {
-    if arr.len() == 1 {
+    if arr.len() < 2 {
         return;
     }
     let (left, right) = arr.split_at_mut(arr.len() / 2);

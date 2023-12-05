@@ -23,20 +23,11 @@ impl traits::sort_traits::SortAlgo for FunSort {
         NAME
     }
 }
-use std::fmt::Debug;
-#[allow(clippy::derivable_impls)]
-impl Default for FunSort {
-    fn default() -> Self {
-        FunSort {}
-    }
-}
-impl Debug for FunSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
-    }
-}
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    if arr.len() < 2 {
+        return;
+    }
     logger.cond_swap_lt(arr, arr.len() - 1, 0);
     if arr.len() >= 3 {
         let len = arr.len();
