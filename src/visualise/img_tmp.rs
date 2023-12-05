@@ -25,11 +25,7 @@ fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
 }
 
 pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
-<<<<<<< HEAD
     let script_path = r"src\python_scripts\empty_tmp_folder.py";
-=======
-    let script_path = r".\src\python_scripts\empty_tmp_folder.py";
->>>>>>> 76bed49df12a29e46cda520afced8d72e5b8c497
     Command::new("py").arg(script_path).status().unwrap();
     let arr = arr.to_vec();
 
@@ -149,15 +145,9 @@ pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
     }*/
 
     // Construct the path to the Python script
-<<<<<<< HEAD
     let script_path = r"src\python_scripts\pngs_to_vid.py";
     Command::new("python").arg(script_path).status().unwrap();
     let script_path = r"src\python_scripts\empty_tmp_folder.py";
-=======
-    let script_path = r".\src\python_scripts\pngs_to_vid.py";
-    Command::new("python").arg(script_path).status().unwrap();
-    let script_path = r".\src\python_scripts\empty_tmp_folder.py";
->>>>>>> 76bed49df12a29e46cda520afced8d72e5b8c497
     Command::new("python").arg(script_path).status().unwrap();
 }
 

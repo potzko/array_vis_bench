@@ -40,6 +40,9 @@ impl Debug for CircleSort {
 }
 
 fn sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    if arr.len() < 2 {
+        return;
+    }
     for _ in 0..(((arr.len()) as f64).log2() as usize) >> 1 {
         circle_sort_rec(arr, 0, arr.len() - 1, logger);
     }

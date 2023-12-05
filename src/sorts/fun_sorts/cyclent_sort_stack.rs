@@ -72,6 +72,9 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
 }
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    if arr.len() < 2 {
+        return;
+    }
     let len = arr.len();
 
     use std::collections::VecDeque;

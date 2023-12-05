@@ -1,5 +1,3 @@
-use std::env;
-
 mod rotations;
 mod sort_test;
 mod sorts;
@@ -27,7 +25,7 @@ fn main() {
         type_ghost: std::marker::PhantomData,
     };
     let mut arr: Vec<usize> = vec![2, 2, 1];
-    let mut arr: Vec<usize> = utils::array_gen::get_rand_arr_in_range(100, 0, 10);
+    let mut arr: Vec<usize> = utils::array_gen::get_rand_arr_in_range(20, 0, 10);
 
     visualise::visualise_sort(
         &mut arr,
