@@ -12,6 +12,7 @@ fn swap_section<T: Ord + Copy, U: SortLogger<T>>(
     }
 }
 
+#[allow(dead_code)]
 pub fn rotate_2<T: Ord + Copy, U: SortLogger<T>>(
     arr: &mut [T],
     mut a: usize,

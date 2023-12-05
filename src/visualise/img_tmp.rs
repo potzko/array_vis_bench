@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-extern crate ffmpeg_next as ffmpeg;
 extern crate image;
 
 use super::sub_image::SubImg;
@@ -26,7 +25,7 @@ fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
 }
 
 pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
-    let script_path = r"D:\Programing\IDE\vscProjects\rustFolder\array_vis_bench\src\python_scripts\empty_tmp_folder.py";
+    let script_path = r"src\python_scripts\empty_tmp_folder.py";
     Command::new("py").arg(script_path).status().unwrap();
     let arr = arr.to_vec();
 
@@ -90,11 +89,7 @@ pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
             for arr_view in arrs.iter_mut() {
                 arr_view.update(&actions[split_points[ii - 1]..split_points[ii]], &mut img)
             }
-            img.save(format!(
-                "D:\\Programing\\IDE\\vscProjects\\rustFolder\\array_vis_bench\\tmp\\{}.png",
-                image_i
-            ))
-            .unwrap();
+            img.save(format!(".\\tmp\\{}.png", image_i)).unwrap();
             image_i += 1;
             match actions[split_points[ii]] {
                 SortLog::CreateAuxArrT { name, length }
@@ -129,11 +124,7 @@ pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
                 &mut img,
             )
         }
-        img.save(format!(
-            "D:\\Programing\\IDE\\vscProjects\\rustFolder\\array_vis_bench\\tmp\\{}.png",
-            image_i
-        ))
-        .unwrap();
+        img.save(format!(".\\tmp\\{}.png", image_i)).unwrap();
         i += 1;
         image_i += 1;
         if i % 100 == 0 {
@@ -154,9 +145,9 @@ pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
     }*/
 
     // Construct the path to the Python script
-    let script_path = r"D:\Programing\IDE\vscProjects\rustFolder\array_vis_bench\src\python_scripts\pngs_to_vid.py";
+    let script_path = r"src\python_scripts\pngs_to_vid.py";
     Command::new("python").arg(script_path).status().unwrap();
-    let script_path = r"D:\Programing\IDE\vscProjects\rustFolder\array_vis_bench\src\python_scripts\empty_tmp_folder.py";
+    let script_path = r"src\python_scripts\empty_tmp_folder.py";
     Command::new("python").arg(script_path).status().unwrap();
 }
 

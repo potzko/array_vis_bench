@@ -3,7 +3,6 @@ const BIG_O: &str = "O(N^2)";
 const NAME: &str = "odd-even bubble sort";
 
 use crate::traits;
-use std::fmt::Debug;
 
 pub struct BubbleSort {}
 
@@ -23,17 +22,6 @@ impl traits::sort_traits::SortAlgo for BubbleSort {
     }
     fn name(&self) -> &'static str {
         NAME
-    }
-}
-#[allow(clippy::derivable_impls)]
-impl Default for BubbleSort {
-    fn default() -> Self {
-        BubbleSort {}
-    }
-}
-impl Debug for BubbleSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
     }
 }
 

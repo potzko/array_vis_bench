@@ -10,10 +10,6 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8.5"
-nannou = "0.18.1"
 lazy_static = "1.4.0"
 image = "0.24.7"
-ffmpeg-next = "6.0.0"
-bimap = "0.6.3"
-strum = "0.25.0"
-strum_macros = "0.25.3"
+

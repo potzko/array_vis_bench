@@ -37,12 +37,30 @@ impl Debug for CycleSort {
     }
 }
 
-fn sort<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+fn sort_2<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     for i in 0..arr.len() {
         let mut target: T = arr[i];
-        let mut lower = get_lower(&arr[i + 1..], arr[i], logger) + i;
+        let mut lower = get_lower(&arr[i + 1..], target, logger) + i;
         while lower != i {
             let tmp = arr[lower];
+            logger.write_data(arr, lower, target);
+            target = tmp;
+            lower = get_lower(&arr[i + 1..], target, logger) + i;
+        }
+        logger.write_data(arr, i, target)
+    }
+}
+
+fn sort<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    for i in 0..arr.len() {
+        let mut target = arr[i];
+        let mut lower = get_lower(&arr[i + 1..], target, logger) + i;
+        while lower != i {
+            let mut tmp = arr[lower];
+            while tmp == target {
+                lower += 1;
+                tmp = arr[lower];
+            }
             logger.write_data(arr, lower, target);
             target = tmp;
             lower = get_lower(&arr[i + 1..], target, logger) + i;
