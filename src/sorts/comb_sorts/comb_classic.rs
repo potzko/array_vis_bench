@@ -3,7 +3,6 @@ const BIG_O: &str = "O(N^2)";
 const NAME: &str = "comb sort";
 
 use crate::traits;
-use std::fmt::Debug;
 
 pub struct CombSort {}
 
@@ -25,28 +24,21 @@ impl traits::sort_traits::SortAlgo for CombSort {
         NAME
     }
 }
-#[allow(clippy::derivable_impls)]
-impl Default for CombSort {
-    fn default() -> Self {
-        CombSort {}
-    }
-}
-impl Debug for CombSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
-    }
-}
-
 const SHRINK_FACTOR: f32 = 1.3;
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     let mut jump = arr.len();
     let mut swap_flag = true;
-    while swap_flag {
-        swap_flag = false;
+    while jump != 1 {
         jump = std::cmp::max(1, ((jump as f32) / SHRINK_FACTOR) as usize);
         for i in jump..arr.len() {
-            if logger.cond_swap_lt(arr, i, i - jump) {
+            logger.cond_swap_lt(arr, i, i - jump);
+        }
+    }
+    while swap_flag {
+        swap_flag = false;
+        for i in 1..arr.len() {
+            if logger.cond_swap_lt(arr, i, i - 1) {
                 swap_flag = true
             }
         }

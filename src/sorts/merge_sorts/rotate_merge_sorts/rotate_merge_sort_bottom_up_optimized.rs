@@ -42,7 +42,7 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logg
     for i in (0..arr.len()).step_by(SMALL_SORT_SIZE) {
         let end = std::cmp::min(i + SMALL_SORT_SIZE, arr.len());
         let small_sort = crate::sorts::insertion_sorts::insertion_sort::InsertionSort {};
-        small_sort.sort(arr, logger);
+        small_sort.sort(&mut arr[i..end], logger);
     }
     let mut gap = SMALL_SORT_SIZE;
     let mut i;

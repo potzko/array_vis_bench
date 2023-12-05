@@ -75,7 +75,6 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logg
     for i in 0..arr.len() {
         let mut tmp = arr.len();
         while tmp != i {
-            println!("{tmp}, {i}");
             tmp = partition(&mut arr[i..tmp], logger) + i;
         }
     }

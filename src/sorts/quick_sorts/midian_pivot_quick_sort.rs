@@ -43,12 +43,13 @@ fn quick_select<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     rng: &mut rand::rngs::ThreadRng,
     logger: &mut U,
 ) {
+    //println!("{}, {}", arr.len(), target);
     let piv = partition(arr, rng, logger);
     if piv == target {
         return;
     }
     if piv < target {
-        quick_select(&mut arr[piv + 1..], target, rng, logger);
+        quick_select(&mut arr[piv + 1..], target - piv - 1, rng, logger);
     } else {
         quick_select(&mut arr[0..piv], target, rng, logger)
     };
@@ -59,13 +60,13 @@ fn sort_helper<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     rng: &mut ThreadRng,
     logger: &mut U,
 ) {
-    if arr.is_empty() {
+    if arr.len() < 2 {
         return;
     }
     let mid = arr.len() / 2;
     quick_select(arr, mid, rng, logger);
     sort_helper(&mut arr[0..mid], rng, logger);
-    sort_helper(&mut arr[mid..], rng, logger);
+    sort_helper(&mut arr[mid + 1..], rng, logger);
 }
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
@@ -80,6 +81,8 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
 ) -> usize {
     // Choose a random index between start and end - 1 as the pivot
     let pivot_index: usize = rng.gen_range(0..arr.len());
+    //println!("{}, {}", arr.len(), pivot_index);
+
     // Swap the pivot with the last element
     logger.swap(arr, pivot_index, arr.len() - 1);
 
