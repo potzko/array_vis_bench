@@ -4,8 +4,9 @@ import os
 
 
 # specify the path for your images
-img_folder_path = 'D:\\Programing\\IDE\\vscProjects\\rustFolder\\array_vis_bench\\tmp'
+img_folder_path = '.\\\\\\tmp'
 images = [img for img in os.listdir(img_folder_path) if img.endswith(".png")]
+
 images.sort(key = lambda x: int(x[:-4]))
 
 # desired video resolution

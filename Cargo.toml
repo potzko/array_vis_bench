@@ -12,4 +12,9 @@ edition = "2021"
 rand = "0.8.5"
 lazy_static = "1.4.0"
 image = "0.24.7"
+<<<<<<< HEAD
 
+=======
+strum = "0.25.0"
+strum_macros = "0.25.3"
+>>>>>>> 76bed49df12a29e46cda520afced8d72e5b8c497
