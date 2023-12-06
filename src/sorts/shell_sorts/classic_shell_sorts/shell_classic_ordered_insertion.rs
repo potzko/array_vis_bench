@@ -23,18 +23,6 @@ impl traits::sort_traits::SortAlgo for ShellSort {
         NAME
     }
 }
-use std::fmt::Debug;
-#[allow(clippy::derivable_impls)]
-impl Default for ShellSort {
-    fn default() -> Self {
-        ShellSort {}
-    }
-}
-impl Debug for ShellSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
-    }
-}
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     let mut jump = arr.len() / 2;
@@ -57,7 +45,7 @@ fn insertion_sort_jump<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     for i in (start..end).step_by(jump) {
         let mut ind = i;
         while ind != start {
-            if logger.cond_swap_le(arr, ind, ind - jump) {
+            if logger.cond_swap_lt(arr, ind, ind - jump) {
                 ind -= jump;
             } else {
                 break;

@@ -24,14 +24,9 @@ fn main() {
         log: Vec::<traits::log_traits::SortLog<usize>>::new(),
         type_ghost: std::marker::PhantomData,
     };
-    let mut arr: Vec<usize> = vec![2, 2, 1];
-    let mut arr: Vec<usize> = utils::array_gen::get_rand_arr_in_range(20, 0, 10);
+    let mut arr: Vec<usize> = utils::array_gen::get_rand_arr_in_range(1000, 0, 10);
 
-    visualise::visualise_sort(
-        &mut arr,
-        &mut logger,
-        &["cycle_sorts".to_string(), "cycle_sort".to_string()],
-    );
+    visualise::visualise_sort(&mut arr, &mut logger, &pick_sort());
 
     let a = sorts::get_all_sorts();
     for i in a {
