@@ -23,18 +23,6 @@ impl traits::sort_traits::SortAlgo for MergeSort {
         NAME
     }
 }
-use std::fmt::Debug;
-#[allow(clippy::derivable_impls)]
-impl Default for MergeSort {
-    fn default() -> Self {
-        MergeSort {}
-    }
-}
-impl Debug for MergeSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
-    }
-}
 
 const SMALL_SORT_SIZE: usize = 20;
 use traits::sort_traits::SortAlgo;

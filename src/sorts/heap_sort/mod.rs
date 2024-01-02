@@ -1,8 +1,10 @@
 pub mod classic_heap_sorts;
+pub mod quick_heap_sorts;
 pub mod smooth_sort;
 pub mod weak_heap_sort;
 
 use crate::traits::{SortAlgo, SortLogger};
+
 pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
     arr: &mut [T],
     logger: &mut U,
@@ -23,6 +25,7 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
                 sort.sort(arr, logger);
                 vec![format!("name: {}", sort.name())]
             }
+            "heap_quick_sort" => quick_heap_sorts::fn_sort(arr, logger, &choice[1..]),
             "classic_heap_sorts" | _ => classic_heap_sorts::fn_sort(arr, logger, &choice[1..]),
         }
     }
@@ -30,14 +33,20 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
 
 pub fn options(choice: &[String]) -> Vec<String> {
     if choice.is_empty() {
-        ["smooth_sort", "weak_heap_sort", "classic_heap_sorts"]
-            .iter()
-            .map(|i| i.to_string())
-            .collect()
+        [
+            "smooth_sort",
+            "weak_heap_sort",
+            "classic_heap_sorts",
+            "heap_quick_sort",
+        ]
+        .iter()
+        .map(|i| i.to_string())
+        .collect()
     } else {
         #[allow(clippy::wildcard_in_or_patterns)]
         match choice[0].as_str() {
-            "classic_heap_sorts" | _ => classic_heap_sorts::options(choice),
+            "heap_quick_sort" => quick_heap_sorts::options(&choice[1..]),
+            "classic_heap_sorts" | _ => classic_heap_sorts::options(&choice[1..]),
         }
     }
 }

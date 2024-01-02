@@ -23,19 +23,6 @@ impl traits::sort_traits::SortAlgo for QuickSort {
         NAME
     }
 }
-use std::fmt::Debug;
-#[allow(clippy::derivable_impls)]
-impl Default for QuickSort {
-    fn default() -> Self {
-        QuickSort {}
-    }
-}
-impl Debug for QuickSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
-    }
-}
-
 fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     logger: &mut U,

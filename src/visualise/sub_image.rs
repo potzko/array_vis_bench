@@ -14,10 +14,12 @@ impl SubImg {
         y: u32,
         color: Rgba<u8>,
     ) {
+        /*
         assert!(x <= self.width);
         assert!(y <= self.height);
         assert!(self.x + self.width <= img.width());
         assert!(self.y + self.height <= img.height());
+        */
         img.put_pixel(self.x + x, self.y + y, color);
     }
 

@@ -9,8 +9,7 @@ mod visualise;
 fn main() {
     println!("{:?}", file!());
     /*
-    println!("enter length of array");
-    let size = read_num_stdin();
+
     let mut arr: Vec<usize> = utils::array_gen::get_rand_arr_in_range(size, 0, size);
     let mut _arr: Vec<usize> = utils::array_gen::get_arr(size);
     let mut _arr: Vec<usize> = utils::array_gen::get_reversed_arr(size);
@@ -24,7 +23,9 @@ fn main() {
         log: Vec::<traits::log_traits::SortLog<usize>>::new(),
         type_ghost: std::marker::PhantomData,
     };
-    let mut arr: Vec<usize> = utils::array_gen::get_rand_arr_in_range(1000, 0, 10);
+    println!("enter length of array");
+    let size = read_num_stdin();
+    let mut arr: Vec<usize> = utils::array_gen::get_rand_arr_in_range(size, 0, size * size);
 
     visualise::visualise_sort(&mut arr, &mut logger, &pick_sort());
 

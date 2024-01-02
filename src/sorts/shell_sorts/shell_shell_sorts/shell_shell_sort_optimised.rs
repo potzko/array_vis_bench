@@ -69,7 +69,7 @@ fn insertion_sort_jump<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     for i in (0..arr.len()).step_by(jump) {
         let mut ind = i;
         while ind != 0 {
-            if logger.cond_swap_le(arr, ind, ind - jump) {
+            if logger.cond_swap_lt(arr, ind, ind - jump) {
                 ind -= jump;
             } else {
                 break;
