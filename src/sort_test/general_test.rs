@@ -1,6 +1,4 @@
 use crate::sorts::fn_sort;
-use crate::traits::log_traits::*;
-use crate::utils::array_gen;
 
 pub fn is_sorted<T: Ord>(arr: &[T]) -> bool {
     if arr.len() < 2 {
@@ -14,6 +12,7 @@ pub fn is_sorted<T: Ord>(arr: &[T]) -> bool {
     true
 }
 
+#[allow(dead_code)]
 pub fn is_sorted_arr<T: Ord>(arr: &[T], arr_original: &mut [T]) -> bool {
     arr_original.sort();
     arr_original == arr
@@ -45,6 +44,7 @@ pub fn test_permutations_n(choice: &[String], n: usize) -> bool {
     flag
 }
 
+/*
 struct UnstableNum {
     a: usize,
     b: usize,
@@ -65,3 +65,4 @@ impl Ord for UnstableNum {
         self.a.cmp(&other.a)
     }
 }
+*/

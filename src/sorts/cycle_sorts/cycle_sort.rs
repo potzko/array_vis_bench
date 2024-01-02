@@ -37,6 +37,7 @@ impl Debug for CycleSort {
     }
 }
 
+/*
 fn sort_2<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     for i in 0..arr.len() {
         let mut target: T = arr[i];
@@ -50,6 +51,7 @@ fn sort_2<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         logger.write_data(arr, i, target)
     }
 }
+*/
 
 fn sort<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     for i in 0..arr.len() {

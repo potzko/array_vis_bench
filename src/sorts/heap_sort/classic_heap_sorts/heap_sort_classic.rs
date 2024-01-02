@@ -3,8 +3,10 @@ const BIG_O: &str = "O(N*log(N))";
 const NAME: &str = "heap sort";
 
 use crate::traits;
-
+use crate::traits::log_traits::SortLogger;
 pub struct HeapSort {}
+
+const HEAP_SIZE: usize = 2;
 
 impl traits::sort_traits::SortAlgo for HeapSort {
     fn max_size(&self) -> usize {
@@ -37,16 +39,6 @@ impl Debug for HeapSort {
     }
 }
 
-fn first_heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    logger: &mut U,
-) {
-    let len = arr.len();
-    for i in (0..len / 2).rev() {
-        heapify(arr, i, len, logger);
-    }
-}
-
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     first_heapify(arr, logger);
 
@@ -56,27 +48,50 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logg
     }
 }
 
+fn first_heapify<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    for start in (0..arr.len() / HEAP_SIZE + HEAP_SIZE).rev() {
+        heapify(arr, start, arr.len(), logger);
+    }
+}
+
 fn heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     start: usize,
     end: usize,
     logger: &mut U,
 ) {
+    use std::cmp::min;
+
     let mut ind = start;
-    let mut left = (ind << 1) | 1;
-    let mut right = (ind + 1) << 1;
+    let mut max_child = start * HEAP_SIZE + 1;
+    max_child = max_ind(arr, max_child, min(max_child + HEAP_SIZE, end), logger);
 
-    if right < end && logger.cmp_gt(arr, right, left) {
-        left = right;
-    }
-
-    while left < end && logger.cmp_gt(arr, left, ind) {
-        logger.swap(arr, ind, left);
-        ind = left;
-        left = (ind << 1) | 1;
-        right = (ind + 1) << 1;
-        if right < end && logger.cmp_gt(arr, right, left) {
-            left = right;
+    while max_child < end {
+        if logger.cond_swap_ge(arr, max_child, ind) {
+            ind = max_child;
+            max_child = max_ind(
+                arr,
+                ind * HEAP_SIZE + 1,
+                min(ind * HEAP_SIZE + HEAP_SIZE + 1, end),
+                logger,
+            );
+        } else {
+            break;
         }
     }
+}
+
+fn max_ind<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+    arr: &mut [T],
+    start: usize,
+    end: usize,
+    logger: &mut U,
+) -> usize {
+    let mut max = start;
+    for i in start + 1..end {
+        if logger.cmp_le(arr, max, i) {
+            max = i
+        }
+    }
+    max
 }
