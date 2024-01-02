@@ -49,7 +49,6 @@ pub fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(input: &mut [T]
         return;
     }
 
-    // Init addtitional index heap
     let input = input;
     let in_len = input.len();
     let mut heap = Vec::<usize>::new();
@@ -59,7 +58,7 @@ pub fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(input: &mut [T]
             heap.pop();
             let len_leo = heap.len();
             heap[len_leo - 1] += 1;
-        } else if heap.len() >= 1 && heap[heap.len() - 1] == 1 {
+        } else if !heap.is_empty() && heap[heap.len() - 1] == 1 {
             heap.push(0);
         } else {
             heap.push(1);
