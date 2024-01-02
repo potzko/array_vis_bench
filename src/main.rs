@@ -3,32 +3,52 @@ mod sort_test;
 mod sorts;
 mod traits;
 mod utils;
-use utils::*;
+use std::time::*;
+use utils::{array_gen::get_rand_arr, *};
+
 mod visualise;
 
+const TEST: bool = false;
+const VIS: bool = false;
+const BENCH: bool = true;
 fn main() {
-    println!("{:?}", file!());
-    /*
+    if BENCH {
+        let choice = pick_sort();
+        for i in [
+            5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 10000000,
+        ] {
+            let mut total = Duration::ZERO;
+            for _ in 0..5 {
+                let mut arr = get_rand_arr(i);
+                let start = Instant::now();
+                crate::sorts::fn_sort(&mut arr, &mut {}, &choice);
+                total += start.elapsed();
+            }
+            println!(
+                "took {:?} on avrage to sort arrays of length {i}",
+                total / 10
+            );
+        }
+    }
 
-    let mut arr: Vec<usize> = utils::array_gen::get_rand_arr_in_range(size, 0, size);
-    let mut _arr: Vec<usize> = utils::array_gen::get_arr(size);
-    let mut _arr: Vec<usize> = utils::array_gen::get_reversed_arr(size);
+    if VIS {
+        println!("enter length of array");
+        let size = read_num_stdin();
+        let mut arr: Vec<usize> = utils::array_gen::get_rand_arr_in_range(size, 0, size * size);
 
-    let mut logger = traits::log_traits::VisualizerLogger {
-        log: Vec::<traits::log_traits::SortLog<usize>>::new(),
-        type_ghost: std::marker::PhantomData,
-    };
-    */
-    let mut logger = traits::log_traits::VisualizerLogger {
-        log: Vec::<traits::log_traits::SortLog<usize>>::new(),
-        type_ghost: std::marker::PhantomData,
-    };
-    println!("enter length of array");
-    let size = read_num_stdin();
-    let mut arr: Vec<usize> = utils::array_gen::get_rand_arr_in_range(size, 0, size * size);
+        let mut logger = traits::log_traits::VisualizerLogger {
+            log: Vec::<traits::log_traits::SortLog<usize>>::new(),
+            type_ghost: std::marker::PhantomData,
+        };
+        visualise::visualise_sort(&mut arr, &mut logger, &pick_sort());
+    }
 
-    visualise::visualise_sort(&mut arr, &mut logger, &pick_sort());
+    if TEST {
+        test_all()
+    }
+}
 
+fn test_all() {
     let a = sorts::get_all_sorts();
     for i in a {
         println!("{i:?}");

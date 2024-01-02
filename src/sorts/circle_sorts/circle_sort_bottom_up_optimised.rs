@@ -5,7 +5,6 @@ const NAME: &str = "circle_sort";
 use crate::traits;
 use crate::traits::*;
 use sort_traits::SortAlgo;
-use std::fmt::Debug;
 
 pub struct CircleSort {}
 

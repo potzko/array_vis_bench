@@ -1,5 +1,5 @@
 use crate::traits::SortLogger;
-use crate::utils::check_utils::{self, *};
+use crate::utils::check_utils;
 
 pub mod bubble_sorts;
 pub mod circle_sorts;
