@@ -1,3 +1,4 @@
 /target
-/tmp
-/vids
+/tmp/*
+!/tmp/
+project.mp4

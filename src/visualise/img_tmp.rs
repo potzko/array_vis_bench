@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-
 extern crate image;
 
 use super::sub_image::SubImg;
@@ -8,12 +7,17 @@ use image::{GenericImage, ImageBuffer, Rgba};
 use std::mem::size_of;
 use std::{hash::Hash, process::Command};
 
-const ACTIONS_PER_FRAME: usize = 50;
+const ACTIONS_PER_FRAME: usize = 100;
 
 const WHITE: Rgba<u8> = Rgba([0xff, 0xff, 0xff, 0xff]);
 const BLACK: Rgba<u8> = Rgba([0x0, 0x0, 0x0, 0xff]);
 const GREEN: Rgba<u8> = Rgba([0x0, 0xa0, 0x60, 0xff]);
 const BLUE: Rgba<u8> = Rgba([0x0, 0x30, 0xff, 0xff]);
+
+enum VisualAction {
+    Draw,
+    Color,
+}
 
 fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
     let mut ret: Vec<SubImg> = Vec::with_capacity(amount as usize);
@@ -189,6 +193,7 @@ impl ArrActions {
                         let adjusted_ind = ind + (name - self.name) / size_t;
                         self.arr[adjusted_ind] = *data;
                         self.draw[adjusted_ind] = true;
+
                         let data_f64 = *data as f64;
                         if self.min > data_f64 {
                             self.min = data_f64
@@ -212,6 +217,7 @@ impl ArrActions {
                         let adjusted_ind = ind + (name - self.name) / size_t;
                         self.arr[adjusted_ind] = *data;
                         self.draw[adjusted_ind] = true;
+
                         let data_f64 = *data as f64;
                         if self.min > data_f64 {
                             self.min = data_f64

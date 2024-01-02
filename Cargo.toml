@@ -6,9 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [profile.dev]
-# opt-level = 1
+opt-level = 1
 
 [dependencies]
 rand = "0.8.5"
 lazy_static = "1.4.0"
 image = "0.24.7"
+rayon = "1.8.0"
