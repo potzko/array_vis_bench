@@ -1,5 +1,6 @@
 pub mod array_gen;
 pub mod check_utils;
+pub mod operations;
 
 use std::io::stdin;
 pub fn read_num_stdin() -> usize {
