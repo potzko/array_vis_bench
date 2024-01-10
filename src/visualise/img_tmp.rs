@@ -52,6 +52,7 @@ pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
 
     let width: u32 = arr.len() as u32;
     let height = (width as f64 / 16.0 * 9.0) as u32;
+    let _height = width / 3;
     println!(
         "{} frames to generate",
         actions.len() / ACTIONS_PER_FRAME + 3
@@ -151,8 +152,8 @@ pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
     // Construct the path to the Python script
     let script_path = r"src\python_scripts\pngs_to_vid.py";
     Command::new("python").arg(script_path).status().unwrap();
-    let script_path = r"src\python_scripts\empty_tmp_folder.py";
-    Command::new("python").arg(script_path).status().unwrap();
+    //let script_path = r"src\python_scripts\empty_tmp_folder.py";
+    //Command::new("python").arg(script_path).status().unwrap();
 }
 
 struct ArrActions {

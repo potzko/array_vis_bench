@@ -1,3 +1,4 @@
+pub mod iterative_quick_sort;
 pub mod midian_pivot_quick_sort;
 pub mod quick_sort_left_left_pointers;
 pub mod quick_sort_left_left_pointers_optimised;
@@ -43,6 +44,11 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
                 sort.sort(arr, logger);
                 vec![format!("name: {}", sort.name())]
             }
+            "iterative_quick_sort" => {
+                let sort = iterative_quick_sort::QuickSort {};
+                sort.sort(arr, logger);
+                vec![format!("name: {}", sort.name())]
+            }
             "quick_sort_left_right_pointers_static_pivot"
             | "quick_sort_left_right_pointers"
             | _ => {
@@ -63,6 +69,7 @@ pub fn options(choice: &[String]) -> Vec<String> {
             "quick_sort_left_right_pivot_optimised",
             "quick_sort_left_right_pointers_moving_pivot",
             "quick_sort_left_right_pointers_static_pivot",
+            "iterative_quick_sort",
         ]
         .iter()
         .map(|i| i.to_string())

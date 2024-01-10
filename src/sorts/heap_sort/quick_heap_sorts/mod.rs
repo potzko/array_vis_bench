@@ -1,5 +1,6 @@
 pub mod heap_quick_sort;
 pub mod heap_quick_sort_optimized;
+pub mod heap_quick_sort_optimized_tmp;
 
 use crate::traits::{SortAlgo, SortLogger};
 pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
@@ -19,6 +20,11 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
                 sort.sort(arr, logger);
                 vec![format!("name: {}", sort.name())]
             }
+            "heap_quick_sort_optimized_tmp" => {
+                let sort = heap_quick_sort_optimized_tmp::HeapSort {};
+                sort.sort(arr, logger);
+                vec![format!("name: {}", sort.name())]
+            }
             "heap_quick_sort" | _ => {
                 let sort = heap_quick_sort::HeapSort {};
                 sort.sort(arr, logger);
@@ -30,10 +36,14 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
 
 pub fn options(choice: &[String]) -> Vec<String> {
     if choice.is_empty() {
-        ["heap_quick_sort", "heap_quick_sort_optimized"]
-            .iter()
-            .map(|i| i.to_string())
-            .collect()
+        [
+            "heap_quick_sort",
+            "heap_quick_sort_optimized",
+            "heap_quick_sort_optimized_tmp",
+        ]
+        .iter()
+        .map(|i| i.to_string())
+        .collect()
     } else {
         vec![]
     }

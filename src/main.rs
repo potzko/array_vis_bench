@@ -9,11 +9,13 @@ use utils::{array_gen::get_rand_arr, *};
 mod visualise;
 
 const TEST: bool = false;
-const VIS: bool = false;
-const BENCH: bool = true;
+const VIS: bool = true;
+const BENCH: bool = false;
 fn main() {
     if BENCH {
         let choice = pick_sort();
+        let choice_2 = pick_sort();
+
         for i in [
             5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 10000000,
         ] {
@@ -29,12 +31,29 @@ fn main() {
                 total / 10
             );
         }
+        for i in [
+            5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 10000000,
+        ] {
+            let mut total = Duration::ZERO;
+            for _ in 0..5 {
+                let mut arr = get_rand_arr(i);
+                let start = Instant::now();
+                crate::sorts::fn_sort(&mut arr, &mut {}, &choice_2);
+                total += start.elapsed();
+            }
+            println!(
+                "took {:?} on avrage to sort arrays of length {i}",
+                total / 10
+            );
+        }
     }
 
     if VIS {
         println!("enter length of array");
         let size = read_num_stdin();
         let mut arr: Vec<usize> = utils::array_gen::get_rand_arr_in_range(size, 0, size * size);
+        let mut _arr: Vec<usize> = utils::array_gen::get_reversed_arr(size);
+        let mut _arr: Vec<usize> = utils::array_gen::get_arr(size);
 
         let mut logger = traits::log_traits::VisualizerLogger {
             log: Vec::<traits::log_traits::SortLog<usize>>::new(),
@@ -74,4 +93,39 @@ fn pick_sort() -> Vec<String> {
         choice.push(options[pick - 1].clone());
     }
     choice
+}
+
+fn heap_sort_no_logger<T: Ord + Copy>(arr: &mut [T]) {
+    first_heapify(arr);
+
+    for i in (1..arr.len()).rev() {
+        arr.swap(0, i);
+        heapify(arr, 0, i);
+    }
+}
+
+fn first_heapify<T: Ord + Copy>(arr: &mut [T]) {
+    for start in (0..arr.len() / 2).rev() {
+        heapify(arr, start, arr.len());
+    }
+}
+
+fn heapify<T: Ord + Copy>(arr: &mut [T], start: usize, end: usize) {
+    let mut ind = start;
+    let mut left = (ind << 1) | 1;
+    let mut right = (ind + 1) << 1;
+
+    if right < end && arr[right] > arr[left] {
+        left = right;
+    }
+
+    while left < end && arr[left] > arr[ind] {
+        arr.swap(ind, left);
+        ind = left;
+        left = (ind << 1) | 1;
+        right = (ind + 1) << 1;
+        if right < end && arr[right] > arr[left] {
+            left = right;
+        }
+    }
 }

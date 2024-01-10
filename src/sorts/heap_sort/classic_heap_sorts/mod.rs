@@ -22,18 +22,18 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
                 sort.sort(arr, logger);
                 vec![format!("name: {}", sort.name())]
             }
+            "base_16_heap" => {
+                let sort = base_16_heap::HeapSort {};
+                sort.sort(arr, logger);
+                vec![format!("name: {}", sort.name())]
+            }
             "base_256_heap" => {
                 let sort = base_256_heap::HeapSort {};
                 sort.sort(arr, logger);
                 vec![format!("name: {}", sort.name())]
             }
-            "base_16_heap" => {
-                let sort = base_3_heap::HeapSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
-            }
             "base_2_heap" | "heap_sort_classic" | _ => {
-                let sort = base_256_heap::HeapSort {};
+                let sort = heap_sort_classic::HeapSort {};
                 sort.sort(arr, logger);
                 vec![format!("name: {}", sort.name())]
             }
