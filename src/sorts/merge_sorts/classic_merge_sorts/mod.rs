@@ -11,31 +11,31 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
     choice: &[String],
 ) -> Vec<String> {
     if choice.is_empty() {
-        let sort = classic_merge_sort::MergeSort {};
-        sort.sort(arr, logger);
-        vec![format!("name: {}", sort.name())]
+        type Sort<A, B> = classic_merge_sort::SortImp<A, B>;
+        Sort::<T, U>::sort(arr, logger);
+        vec![format!("name: {}", Sort::<T, U>::name())]
     } else {
         #[allow(clippy::wildcard_in_or_patterns)]
         match choice[0].as_str() {
             "merge_sort_bottom_up" => {
-                let sort = merge_sort_bottom_up::MergeSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = merge_sort_bottom_up::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "merge_sort_bottom_up_optimized" => {
-                let sort = merge_sort_bottom_up_optimized::MergeSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = merge_sort_bottom_up_optimized::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "merge_sort_optimized" => {
-                let sort = merge_sort_optimized::MergeSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = merge_sort_optimized::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "classic_merge_sort" | _ => {
-                let sort = classic_merge_sort::MergeSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = classic_merge_sort::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
         }
     }

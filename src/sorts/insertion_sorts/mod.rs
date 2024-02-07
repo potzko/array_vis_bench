@@ -7,9 +7,9 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
     logger: &mut U,
     _: &[String],
 ) -> Vec<String> {
-    let sort = insertion_sort::InsertionSort {};
-    sort.sort(arr, logger);
-    vec![format!("name: {}", sort.name())]
+    type Sort<A, B> = insertion_sort::SortImp<A, B>;
+    Sort::sort(arr, logger);
+    vec![format!("name: {}", Sort::<T, U>::name())]
 }
 
 pub fn options(choice: &[String]) -> Vec<String> {

@@ -2,25 +2,26 @@ const MAX_SIZE: usize = 50000;
 const BIG_O: &str = "O(N^1.5)";
 const NAME: &str = "shell sort knuth jumps";
 
-use crate::traits;
-use traits::sort_traits::SortAlgo;
-pub struct ShellSort {}
+use crate::traits::{self, SortAlgo};
+use std::marker::PhantomData;
 
-impl traits::sort_traits::SortAlgo for ShellSort {
-    fn max_size(&self) -> usize {
+pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
+    _markers: (PhantomData<T>, PhantomData<U>),
+}
+
+impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
+    for SortImp<T, U>
+{
+    fn max_size() -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &'static str {
+    fn big_o() -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        &self,
-        arr: &mut [T],
-        logger: &mut U,
-    ) {
+    fn sort(arr: &mut [T], logger: &mut U) {
         sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         NAME
     }
 }
@@ -38,6 +39,6 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logg
             logger.write_data(arr, j, temp);
         }
     }
-    let small_sort = crate::sorts::insertion_sorts::insertion_sort::InsertionSort {};
-    small_sort.sort(arr, logger);
+    type SmallSort<A, B> = crate::sorts::insertion_sorts::insertion_sort::SortImp<A, B>;
+    SmallSort::sort(arr, logger);
 }

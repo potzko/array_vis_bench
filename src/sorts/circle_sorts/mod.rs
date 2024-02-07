@@ -18,66 +18,66 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
     choice: &[String],
 ) -> Vec<String> {
     if choice.is_empty() {
-        let sort = circle_sort_recursive::CircleSort {};
-        sort.sort(arr, logger);
-        vec![format!("name: {}", sort.name())]
+        type Sort<A, B> = circle_sort_recursive::SortImp<A, B>;
+        Sort::<T, U>::sort(arr, logger);
+        vec![format!("name: {}", Sort::<T, U>::name())]
     } else {
         #[allow(clippy::wildcard_in_or_patterns)]
         match choice[0].as_str() {
             "circle_sort_bottom_up" => {
-                let sort = circle_sort_bottom_up::CircleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = circle_sort_bottom_up::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "circle_sort_bottom_up_increasing_size" => {
-                let sort = circle_sort_bottom_up_increasing_size::CircleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = circle_sort_bottom_up_increasing_size::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "circle_sort_bottom_up_optimised" => {
-                let sort = circle_sort_bottom_up_optimised::CircleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = circle_sort_bottom_up_optimised::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "circle_sort_recursive_increasing_size" => {
-                let sort = circle_sort_recursive_increasing_size::CircleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = circle_sort_recursive_increasing_size::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "circle_sort_recursive_optimised" => {
-                let sort = circle_sort_recursive_optimised::CircleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = circle_sort_recursive_optimised::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shaker_circle_sort" => {
-                let sort = shaker_circle_sort::CircleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shaker_circle_sort::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shaker_circle_sort_bottom_up" => {
-                let sort = shaker_circle_sort_bottom_up::CircleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shaker_circle_sort_bottom_up::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shaker_circle_sort_bottom_up_b" => {
-                let sort = shaker_circle_sort_bottom_up_b::CircleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shaker_circle_sort_bottom_up_b::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "stooge_circle_sort" => {
-                let sort = stooge_circle_sort::CircleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = stooge_circle_sort::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "stooge_circle_sort_reversed" => {
-                let sort = stooge_circle_sort_reversed::CircleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = stooge_circle_sort_reversed::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "circle_sort_recursive" | _ => {
-                let sort = circle_sort_recursive::CircleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = circle_sort_recursive::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
         }
     }

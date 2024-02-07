@@ -2,40 +2,29 @@ const MAX_SIZE: usize = 100000;
 const BIG_O: &str = "O(N*log(N))";
 const NAME: &str = "heap sort";
 
-use crate::traits;
-use crate::traits::log_traits::SortLogger;
-pub struct HeapSort {}
-
 const HEAP_SIZE: usize = 3;
 
-impl traits::sort_traits::SortAlgo for HeapSort {
-    fn max_size(&self) -> usize {
+use crate::traits;
+use std::marker::PhantomData;
+
+pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
+    _markers: (PhantomData<T>, PhantomData<U>),
+}
+
+impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
+    for SortImp<T, U>
+{
+    fn max_size() -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &'static str {
+    fn big_o() -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        &self,
-        arr: &mut [T],
-        logger: &mut U,
-    ) {
+    fn sort(arr: &mut [T], logger: &mut U) {
         sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         NAME
-    }
-}
-use std::fmt::Debug;
-#[allow(clippy::derivable_impls)]
-impl Default for HeapSort {
-    fn default() -> Self {
-        HeapSort {}
-    }
-}
-impl Debug for HeapSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
     }
 }
 
@@ -48,7 +37,7 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logg
     }
 }
 
-fn first_heapify<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+fn first_heapify<T: Ord + Copy, U: traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     for start in (0..arr.len() / HEAP_SIZE + HEAP_SIZE).rev() {
         heapify(arr, start, arr.len(), logger);
     }

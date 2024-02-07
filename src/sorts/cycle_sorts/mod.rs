@@ -7,9 +7,8 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
     logger: &mut U,
     _: &[String],
 ) -> Vec<String> {
-    let sort = cycle_sort::CycleSort {};
-    sort.sort(arr, logger);
-    vec![format!("name: {}", sort.name())]
+    cycle_sort::SortImp::<T, U>::sort(arr, logger);
+    vec![format!("name: {}", cycle_sort::SortImp::<T, U>::name())]
 }
 
 pub fn options(choice: &[String]) -> Vec<String> {

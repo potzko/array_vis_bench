@@ -2,41 +2,29 @@ const MAX_SIZE: usize = 5000;
 const BIG_O: &str = "O(N^2)";
 const NAME: &str = "cycle sort";
 
-use crate::traits::{self, log_traits::SortLogger};
-use std::fmt::Debug;
+use crate::traits;
+use std::marker::PhantomData;
 
-pub struct CycleSort {}
+pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
+    _markers: (PhantomData<T>, PhantomData<U>),
+}
 
-impl traits::sort_traits::SortAlgo for CycleSort {
-    fn max_size(&self) -> usize {
+impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
+    for SortImp<T, U>
+{
+    fn max_size() -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &'static str {
+    fn big_o() -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        &self,
-        arr: &mut [T],
-        logger: &mut U,
-    ) {
+    fn sort(arr: &mut [T], logger: &mut U) {
         sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         NAME
     }
 }
-#[allow(clippy::derivable_impls)]
-impl Default for CycleSort {
-    fn default() -> Self {
-        CycleSort {}
-    }
-}
-impl Debug for CycleSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
-    }
-}
-
 /*
 fn sort_2<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     for i in 0..arr.len() {
@@ -53,7 +41,7 @@ fn sort_2<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
 }
 */
 
-fn sort<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+fn sort<T: Ord + Copy, U: traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     for i in 0..arr.len() {
         let mut target = arr[i];
         let mut lower = get_lower(&arr[i + 1..], target, logger) + i;
@@ -71,7 +59,11 @@ fn sort<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     }
 }
 
-fn get_lower<T: Ord + Copy, U: SortLogger<T>>(arr: &[T], target: T, logger: &mut U) -> usize {
+fn get_lower<T: Ord + Copy, U: traits::SortLogger<T>>(
+    arr: &[T],
+    target: T,
+    logger: &mut U,
+) -> usize {
     let mut ret = 0;
     for i in 0..arr.len() {
         if logger.cmp_lt_data(arr, i, target) {

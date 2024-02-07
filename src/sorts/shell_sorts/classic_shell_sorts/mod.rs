@@ -14,51 +14,51 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
     choice: &[String],
 ) -> Vec<String> {
     if choice.is_empty() {
-        let sort = shell_classic::ShellSort {};
-        sort.sort(arr, logger);
-        vec![format!("name: {}", sort.name())]
+        type Sort<A, B> = shell_classic::SortImp<A, B>;
+        Sort::sort(arr, logger);
+        vec![format!("name: {}", Sort::<T, U>::name())]
     } else {
         #[allow(clippy::wildcard_in_or_patterns)]
         match choice[0].as_str() {
             "shell_classic_ordered_insertion" => {
-                let sort = shell_classic_ordered_insertion::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_classic_ordered_insertion::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shell_hibbard" => {
-                let sort = shell_hibbard::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_hibbard::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shell_knuth" => {
-                let sort = shell_knuth::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_knuth::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shell_optimized_256_elements" => {
-                let sort = shell_optimized_256_elements::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_optimized_256_elements::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shell_sedgewick" => {
-                let sort = shell_sedgewick::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_sedgewick::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shell_sedgewick_branching" => {
-                let sort = shell_sedgewick_branching::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_sedgewick_branching::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shell_sedgewick_ordered_insertion" => {
-                let sort = shell_sedgewick_ordered_insertion::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_sedgewick_ordered_insertion::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shell_classic" | _ => {
-                let sort = shell_classic::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_classic::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
         }
     }

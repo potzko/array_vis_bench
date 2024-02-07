@@ -8,21 +8,21 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
     choice: &[String],
 ) -> Vec<String> {
     if choice.is_empty() {
-        let sort = comb_classic::CombSort {};
-        sort.sort(arr, logger);
-        vec![format!("name: {}", sort.name())]
+        type Sort<A, B> = comb_classic::SortImp<A, B>;
+        Sort::<T, U>::sort(arr, logger);
+        vec![format!("name: {}", Sort::<T, U>::name())]
     } else {
         #[allow(clippy::wildcard_in_or_patterns)]
         match choice[0].as_str() {
             "comb_random_gaps" => {
-                let sort = comb_random_gaps::CombSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}\n", sort.name())]
+                type Sort<A, B> = comb_random_gaps::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}\n", Sort::<T, U>::name())]
             }
             "comb_classic" | _ => {
-                let sort = comb_classic::CombSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}\n", sort.name())]
+                type Sort<A, B> = comb_classic::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}\n", Sort::<T, U>::name())]
             }
         }
     }

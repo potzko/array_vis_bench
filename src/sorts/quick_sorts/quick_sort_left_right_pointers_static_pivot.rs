@@ -3,23 +3,25 @@ const BIG_O: &str = "O(N Log(N))";
 const NAME: &str = "quick sort left left pointers";
 
 use crate::traits;
-pub struct QuickSort {}
+use std::marker::PhantomData;
 
-impl traits::sort_traits::SortAlgo for QuickSort {
-    fn max_size(&self) -> usize {
+pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
+    _markers: (PhantomData<T>, PhantomData<U>),
+}
+
+impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
+    for SortImp<T, U>
+{
+    fn max_size() -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &'static str {
+    fn big_o() -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        &self,
-        arr: &mut [T],
-        logger: &mut U,
-    ) {
+    fn sort(arr: &mut [T], logger: &mut U) {
         sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         NAME
     }
 }
