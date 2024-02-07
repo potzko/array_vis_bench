@@ -4,37 +4,26 @@ const NAME: &str = "circle_sort";
 
 use crate::traits;
 use crate::traits::*;
-use std::fmt::Debug;
+use std::marker::PhantomData;
 
-pub struct CircleSort {}
+pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
+    _markers: (PhantomData<T>, PhantomData<U>),
+}
 
-impl sort_traits::SortAlgo for CircleSort {
-    fn max_size(&self) -> usize {
+impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
+    for SortImp<T, U>
+{
+    fn max_size() -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &'static str {
+    fn big_o() -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        &self,
-        arr: &mut [T],
-        logger: &mut U,
-    ) {
+    fn sort(arr: &mut [T], logger: &mut U) {
         sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         NAME
-    }
-}
-#[allow(clippy::derivable_impls)]
-impl Default for CircleSort {
-    fn default() -> Self {
-        CircleSort {}
-    }
-}
-impl Debug for CircleSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
     }
 }
 

@@ -12,41 +12,41 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
     choice: &[String],
 ) -> Vec<String> {
     if choice.is_empty() {
-        let sort = shell_shell_sort_classic::ShellSort {};
-        sort.sort(arr, logger);
-        vec![format!("name: {}", sort.name())]
+        type Sort<A, B> = shell_shell_sort_classic::SortImp<A, B>;
+        Sort::sort(arr, logger);
+        vec![format!("name: {}", Sort::<T, U>::name())]
     } else {
         #[allow(clippy::wildcard_in_or_patterns)]
         match choice[0].as_str() {
             "shell_shell_sort_3parity" => {
-                let sort = shell_shell_sort_3parity::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_shell_sort_3parity::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shell_shell_sort_fibonacci" => {
-                let sort = shell_shell_sort_fibonacci::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_shell_sort_fibonacci::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shell_shell_sort_log_parity" => {
-                let sort = shell_shell_sort_log_parity::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_shell_sort_log_parity::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shell_shell_sort_optimised" => {
-                let sort = shell_shell_sort_optimised::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_shell_sort_optimised::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shell_shell_sort_root_parity" => {
-                let sort = shell_shell_sort_root_parity::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_shell_sort_root_parity::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shell_shell_sort_classic" | _ => {
-                let sort = shell_shell_sort_classic::ShellSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shell_shell_sort_classic::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
         }
     }

@@ -3,31 +3,30 @@ const BIG_O: &str = "O(N*log(N))";
 const NAME: &str = "heap sort";
 
 use crate::traits;
-use crate::traits::log_traits::SortLogger;
-pub struct HeapSort {}
+use crate::traits::*;
+use rand::Rng;
+use std::marker::PhantomData;
 
-const HEAP_SIZE: usize = 2;
+pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
+    _markers: (PhantomData<T>, PhantomData<U>),
+}
 
-impl traits::sort_traits::SortAlgo for HeapSort {
-    fn max_size(&self) -> usize {
+impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
+    for SortImp<T, U>
+{
+    fn max_size() -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &'static str {
+    fn big_o() -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        &self,
-        arr: &mut [T],
-        logger: &mut U,
-    ) {
+    fn sort(arr: &mut [T], logger: &mut U) {
         sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         NAME
     }
 }
-
-use rand::Rng;
 
 fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     first_heapify(arr, logger);
@@ -62,40 +61,23 @@ fn heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     end: usize,
     logger: &mut U,
 ) {
-    use std::cmp::min;
-
     let mut ind = start;
-    let mut max_child = start * HEAP_SIZE + 1;
-    max_child = max_ind(arr, max_child, min(max_child + HEAP_SIZE, end), logger);
+    let mut left = (ind << 1) | 1;
+    let mut right = (ind + 1) << 1;
 
-    while max_child < end {
-        if logger.cond_swap_ge(arr, max_child, ind) {
-            ind = max_child;
-            max_child = max_ind(
-                arr,
-                ind * HEAP_SIZE + 1,
-                min(ind * HEAP_SIZE + HEAP_SIZE + 1, end),
-                logger,
-            );
-        } else {
-            break;
+    if right < end && logger.cmp_gt(arr, right, left) {
+        left = right;
+    }
+
+    while left < end && logger.cmp_gt(arr, left, ind) {
+        logger.swap(arr, ind, left);
+        ind = left;
+        left = (ind << 1) | 1;
+        right = (ind + 1) << 1;
+        if right < end && logger.cmp_gt(arr, right, left) {
+            left = right;
         }
     }
-}
-
-fn max_ind<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    start: usize,
-    end: usize,
-    logger: &mut U,
-) -> usize {
-    let mut max = start;
-    for i in start + 1..end {
-        if logger.cmp_le(arr, max, i) {
-            max = i
-        }
-    }
-    max
 }
 
 fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(

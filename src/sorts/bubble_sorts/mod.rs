@@ -11,31 +11,31 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
     choice: &[String],
 ) -> Vec<String> {
     if choice.is_empty() {
-        let sort = bubble_sort::BubbleSort {};
-        sort.sort(arr, logger);
-        vec![format!("name: {}", sort.name())]
+        type Sort<A, B> = bubble_sort::SortImp<A, B>;
+        Sort::<T, U>::sort(arr, logger);
+        vec![format!("name: {}", Sort::<T, U>::name())]
     } else {
         #[allow(clippy::wildcard_in_or_patterns)]
         match choice[0].as_str() {
             "bubble_sort_recursive" => {
-                let sort = bubble_sort_recursive::BubbleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = bubble_sort_recursive::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "odd_even_bubble_sort" => {
-                let sort = odd_even_bubble_sort::BubbleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = odd_even_bubble_sort::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "shaker_sort" => {
-                let sort = shaker_sort::BubbleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = shaker_sort::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "bubble_sort" | _ => {
-                let sort = bubble_sort::BubbleSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = bubble_sort::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
         }
     }

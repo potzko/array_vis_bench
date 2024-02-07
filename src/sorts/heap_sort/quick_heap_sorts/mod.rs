@@ -9,26 +9,26 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
     choice: &[String],
 ) -> Vec<String> {
     if choice.is_empty() {
-        let sort = heap_quick_sort::HeapSort {};
-        sort.sort(arr, logger);
-        vec![format!("name: {}", sort.name())]
+        type Sort<A, B> = heap_quick_sort::SortImp<A, B>;
+        Sort::<T, U>::sort(arr, logger);
+        vec![format!("name: {}", Sort::<T, U>::name())]
     } else {
         #[allow(clippy::wildcard_in_or_patterns)]
         match choice[0].as_str() {
             "heap_quick_sort_optimized" => {
-                let sort = heap_quick_sort_optimized::HeapSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = heap_quick_sort_optimized::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "heap_quick_sort_optimized_tmp" => {
-                let sort = heap_quick_sort_optimized_tmp::HeapSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = heap_quick_sort_optimized_tmp::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "heap_quick_sort" | _ => {
-                let sort = heap_quick_sort::HeapSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = heap_quick_sort::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
         }
     }

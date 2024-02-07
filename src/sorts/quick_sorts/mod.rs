@@ -13,48 +13,48 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
     choice: &[String],
 ) -> Vec<String> {
     if choice.is_empty() {
-        let sort = quick_sort_left_right_pointers_static_pivot::QuickSort {};
-        sort.sort(arr, logger);
-        vec![format!("name: {}", sort.name())]
+        type Sort<A, B> = quick_sort_left_right_pointers_static_pivot::SortImp<A, B>;
+        Sort::sort(arr, logger);
+        vec![format!("name: {}", Sort::<T, U>::name())]
     } else {
         #[allow(clippy::wildcard_in_or_patterns)]
         match choice[0].as_str() {
             "midian_pivot_quick_sort" => {
-                let sort = midian_pivot_quick_sort::QuickSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = midian_pivot_quick_sort::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "quick_sort_left_left_pointers" => {
-                let sort = quick_sort_left_left_pointers::QuickSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = quick_sort_left_left_pointers::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "quick_sort_left_left_pointers_optimised" => {
-                let sort = quick_sort_left_left_pointers_optimised::QuickSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = quick_sort_left_left_pointers_optimised::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "quick_sort_left_right_pivot_optimised" => {
-                let sort = quick_sort_left_right_pivot_optimised::QuickSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = quick_sort_left_right_pivot_optimised::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "quick_sort_left_right_pointers_moving_pivot" => {
-                let sort = quick_sort_left_right_pointers_moving_pivot::QuickSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = quick_sort_left_right_pointers_moving_pivot::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "iterative_quick_sort" => {
-                let sort = iterative_quick_sort::QuickSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = iterative_quick_sort::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "quick_sort_left_right_pointers_static_pivot"
             | "quick_sort_left_right_pointers"
             | _ => {
-                let sort = quick_sort_left_right_pointers_static_pivot::QuickSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = quick_sort_left_right_pointers_static_pivot::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
         }
     }

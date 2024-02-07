@@ -3,36 +3,26 @@ const BIG_O: &str = "O(N^2)";
 const NAME: &str = "bad_heap";
 
 use crate::traits;
-pub struct FunSort {}
+use std::marker::PhantomData;
 
-impl traits::sort_traits::SortAlgo for FunSort {
-    fn max_size(&self) -> usize {
+pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
+    _markers: (PhantomData<T>, PhantomData<U>),
+}
+
+impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
+    for SortImp<T, U>
+{
+    fn max_size() -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &'static str {
+    fn big_o() -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        &self,
-        arr: &mut [T],
-        logger: &mut U,
-    ) {
+    fn sort(arr: &mut [T], logger: &mut U) {
         sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         NAME
-    }
-}
-use std::fmt::Debug;
-#[allow(clippy::derivable_impls)]
-impl Default for FunSort {
-    fn default() -> Self {
-        FunSort {}
-    }
-}
-impl Debug for FunSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
     }
 }
 

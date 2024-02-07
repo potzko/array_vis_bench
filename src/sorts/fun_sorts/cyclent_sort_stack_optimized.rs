@@ -3,37 +3,26 @@ const BIG_O: &str = "O(N log n?)";
 const NAME: &str = "cycln't sort";
 
 use crate::traits;
+use std::marker::PhantomData;
 
-pub struct FunSort {}
+pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
+    _markers: (PhantomData<T>, PhantomData<U>),
+}
 
-impl traits::sort_traits::SortAlgo for FunSort {
-    fn max_size(&self) -> usize {
+impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
+    for SortImp<T, U>
+{
+    fn max_size() -> usize {
         MAX_SIZE
     }
-    fn big_o(&self) -> &'static str {
+    fn big_o() -> &'static str {
         BIG_O
     }
-    fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-        &self,
-        arr: &mut [T],
-        logger: &mut U,
-    ) {
+    fn sort(arr: &mut [T], logger: &mut U) {
         sort::<T, U>(arr, logger);
     }
-    fn name(&self) -> &'static str {
+    fn name() -> &'static str {
         NAME
-    }
-}
-use std::fmt::Debug;
-#[allow(clippy::derivable_impls)]
-impl Default for FunSort {
-    fn default() -> Self {
-        FunSort {}
-    }
-}
-impl Debug for FunSort {
-    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Result::Ok(())
     }
 }
 
@@ -93,11 +82,11 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logg
     let mut stack: Vec<usize> = Vec::with_capacity((arr.len() as f64).log2() as usize * 8);
     let mut i = 0;
     while i < arr.len() {
-        while stack.is_empty() || *stack.last().unwrap() >= i + 256 {
+        while stack.is_empty() || *stack.last().unwrap() >= i + 32 {
             stack.push(i + partition(&mut arr[i..*stack.last().unwrap_or(&len)], logger))
         }
-        let small_sort = crate::sorts::shell_sorts::classic_shell_sorts::shell_optimized_256_elements::ShellSort {};
-        small_sort.sort(arr, logger);
+        type SmallSort<A, B> = crate::sorts::insertion_sorts::insertion_sort::SortImp<A, B>;
+        SmallSort::sort(arr, logger);
         i = stack.pop().unwrap_or(i);
         i += 1
     }

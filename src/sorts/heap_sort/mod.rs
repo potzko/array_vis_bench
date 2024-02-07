@@ -16,14 +16,14 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
         #[allow(clippy::wildcard_in_or_patterns)]
         match choice[0].as_str() {
             "weak_heap_sort" => {
-                let sort = weak_heap_sort::HeapSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = weak_heap_sort::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "heap_quick_sort" => {
-                let sort = heap_quick_sort::HeapSort {};
-                sort.sort(arr, logger);
-                vec![format!("name: {}", sort.name())]
+                type Sort<A, B> = heap_quick_sort::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
             }
             "quick_heap_sorts" => quick_heap_sorts::fn_sort(arr, logger, &choice[1..]),
 

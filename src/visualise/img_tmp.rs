@@ -7,7 +7,7 @@ use image::{GenericImage, ImageBuffer, Rgba};
 use std::mem::size_of;
 use std::{hash::Hash, process::Command};
 
-const ACTIONS_PER_FRAME: usize = 100;
+const ACTIONS_PER_FRAME: usize = 20;
 
 const WHITE: Rgba<u8> = Rgba([0xff, 0xff, 0xff, 0xff]);
 const BLACK: Rgba<u8> = Rgba([0x0, 0x0, 0x0, 0xff]);

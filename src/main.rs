@@ -94,38 +94,3 @@ fn pick_sort() -> Vec<String> {
     }
     choice
 }
-
-fn heap_sort_no_logger<T: Ord + Copy>(arr: &mut [T]) {
-    first_heapify(arr);
-
-    for i in (1..arr.len()).rev() {
-        arr.swap(0, i);
-        heapify(arr, 0, i);
-    }
-}
-
-fn first_heapify<T: Ord + Copy>(arr: &mut [T]) {
-    for start in (0..arr.len() / 2).rev() {
-        heapify(arr, start, arr.len());
-    }
-}
-
-fn heapify<T: Ord + Copy>(arr: &mut [T], start: usize, end: usize) {
-    let mut ind = start;
-    let mut left = (ind << 1) | 1;
-    let mut right = (ind + 1) << 1;
-
-    if right < end && arr[right] > arr[left] {
-        left = right;
-    }
-
-    while left < end && arr[left] > arr[ind] {
-        arr.swap(ind, left);
-        ind = left;
-        left = (ind << 1) | 1;
-        right = (ind + 1) << 1;
-        if right < end && arr[right] > arr[left] {
-            left = right;
-        }
-    }
-}
