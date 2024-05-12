@@ -2,6 +2,7 @@ pub mod shell_shell_sort_3parity;
 pub mod shell_shell_sort_classic;
 pub mod shell_shell_sort_fibonacci;
 pub mod shell_shell_sort_log_parity;
+pub mod shell_shell_sort_merge_variation_2_parity;
 pub mod shell_shell_sort_optimised;
 pub mod shell_shell_sort_root_parity;
 
@@ -43,6 +44,11 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
                 Sort::sort(arr, logger);
                 vec![format!("name: {}", Sort::<T, U>::name())]
             }
+            "shell_shell_sort_merge_variation_2_parity" => {
+                type Sort<A, B> = shell_shell_sort_merge_variation_2_parity::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
+            }
             "shell_shell_sort_classic" | _ => {
                 type Sort<A, B> = shell_shell_sort_classic::SortImp<A, B>;
                 Sort::sort(arr, logger);
@@ -61,6 +67,7 @@ pub fn options(choice: &[String]) -> Vec<String> {
             "shell_shell_sort_log_parity",
             "shell_shell_sort_optimised",
             "shell_shell_sort_root_parity",
+            "shell_shell_sort_merge_variation_2_parity",
         ]
         .iter()
         .map(|i| i.to_string())

@@ -2,6 +2,7 @@ pub mod classic_merge_sort;
 pub mod merge_sort_bottom_up;
 pub mod merge_sort_bottom_up_optimized;
 pub mod merge_sort_optimized;
+pub mod merge_sort_outside_lists;
 mod utils;
 
 use crate::traits::{SortAlgo, SortLogger};
@@ -32,6 +33,11 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
                 Sort::<T, U>::sort(arr, logger);
                 vec![format!("name: {}", Sort::<T, U>::name())]
             }
+            "merge_sort_outside_lists" => {
+                type Sort<A, B> = merge_sort_outside_lists::SortImp<A, B>;
+                Sort::<T, U>::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
+            }
             "classic_merge_sort" | _ => {
                 type Sort<A, B> = classic_merge_sort::SortImp<A, B>;
                 Sort::<T, U>::sort(arr, logger);
@@ -47,6 +53,7 @@ pub fn options(choice: &[String]) -> Vec<String> {
             "classic_merge_sort",
             "merge_sort_bottom_up",
             "merge_sort_bottom_up_optimized",
+            "merge_sort_outside_lists",
             "classic_merge_sort",
         ]
         .iter()
