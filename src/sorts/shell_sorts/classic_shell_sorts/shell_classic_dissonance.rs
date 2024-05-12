@@ -40,8 +40,11 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logg
             }
             logger.write_data(arr, j, temp);
         }
+        if jump == 1{
+            return;
+        }
         {
-            let jump = jump + 1;
+            let jump = jump * 2 - 1;
             for i in jump..arr.len() {
                 let temp = arr[i];
                 let mut j = i;
