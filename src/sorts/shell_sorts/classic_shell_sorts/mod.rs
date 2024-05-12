@@ -6,6 +6,7 @@ pub mod shell_optimized_256_elements;
 pub mod shell_sedgewick;
 pub mod shell_sedgewick_branching;
 pub mod shell_sedgewick_ordered_insertion;
+pub mod shell_classic_dissonance;
 
 use crate::traits::{SortAlgo, SortLogger};
 pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
@@ -55,6 +56,11 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
                 Sort::sort(arr, logger);
                 vec![format!("name: {}", Sort::<T, U>::name())]
             }
+            "shell_classic_dissonance" => {
+                type Sort<A, B> = shell_classic_dissonance::SortImp<A, B>;
+                Sort::sort(arr, logger);
+                vec![format!("name: {}", Sort::<T, U>::name())]
+            }
             "shell_classic" | _ => {
                 type Sort<A, B> = shell_classic::SortImp<A, B>;
                 Sort::sort(arr, logger);
@@ -75,6 +81,7 @@ pub fn options(choice: &[String]) -> Vec<String> {
             "shell_sedgewick",
             "shell_sedgewick_branching",
             "shell_sedgewick_ordered_insertion",
+            "shell_classic_dissonance",
         ]
         .iter()
         .map(|i| i.to_string())
