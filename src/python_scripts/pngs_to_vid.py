@@ -34,6 +34,7 @@ def vid(inp):
 if __name__ == '__main__':
     def split_even_chuncks(arr, n):
         k, m = divmod(len(arr), n)
+        print(f"splicing images to video, {n} chunks of size {len(arr) // n}")
         return [arr[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n)]
 
     arrs = split_even_chuncks(images, cpu_count * 5)
@@ -51,7 +52,7 @@ if __name__ == '__main__':
 
         # Create an output video writer
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter('project.mp4v', fourcc, frame_rate, size)
+        out = cv2.VideoWriter('project.mp4', fourcc, frame_rate, size)
 
         for video in videos:
             ret, frame = video.read()

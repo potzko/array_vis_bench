@@ -11,7 +11,11 @@ mod visualise;
 const TEST: bool = false;
 const VIS: bool = true;
 const BENCH: bool = false;
+
 fn main() {
+    //use std::env;
+    //env::set_var("RUST_BACKTRACE", "1");
+
     if BENCH {
         let choice = pick_sort();
         let choice_2 = pick_sort();

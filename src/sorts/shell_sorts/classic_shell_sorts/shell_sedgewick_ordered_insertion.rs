@@ -53,14 +53,28 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logg
     let jumps = vec_sedgewick(len);
     for &jump in jumps.iter().rev() {
         logger.mark_mssg(&format!("jump = {}", jump));
-        for i in jump..arr.len() {
-            let temp = arr[i];
-            let mut j = i;
-            while j >= jump && logger.cmp_gt_data(arr, j - jump, temp) {
-                logger.write(arr, j, j - jump);
-                j -= jump;
+        for i in 0..jump {
+            insertion_sort_jump(arr, i, arr.len(), jump, logger)
+        }
+    }
+}
+
+
+fn insertion_sort_jump<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+    arr: &mut [T],
+    start: usize,
+    end: usize,
+    jump: usize,
+    logger: &mut U,
+) {
+    for i in (start..end).step_by(jump) {
+        let mut ind = i;
+        while ind != start {
+            if logger.cond_swap_lt(arr, ind, ind - jump) {
+                ind -= jump;
+            } else {
+                break;
             }
-            logger.write_data(arr, j, temp);
         }
     }
 }
