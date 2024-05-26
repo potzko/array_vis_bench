@@ -3,9 +3,12 @@ extern crate image;
 
 use super::sub_image::SubImg;
 use crate::traits::log_traits::SortLog;
-use image::{GenericImage, ImageBuffer, Rgba};
+use image::codecs::gif::{GifEncoder, Repeat};
+use image::{Delay, DynamicImage, GenericImage, ImageBuffer, Rgba};
+use std::fs::File;
+use std::hash::Hash;
+use std::io::Write;
 use std::mem::size_of;
-use std::{hash::Hash, process::Command};
 
 const ACTIONS_PER_FRAME: usize = 100;
 
@@ -28,9 +31,23 @@ fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
     ret
 }
 
+fn push_image(encoder: &mut GifEncoder<&mut Vec<u8>>, image: &ImageBuffer<Rgba<u8>, Vec<u8>>) {
+    let img = image.clone();
+    let resized_img =
+        DynamicImage::ImageRgba8(img).resize(1920, 1080, image::imageops::FilterType::Nearest);
+
+    let resized_img_buffer = resized_img.to_rgba8();
+
+    let frame = image::Frame::from_parts(
+        resized_img_buffer,
+        0,
+        0,
+        Delay::from_numer_denom_ms(1000, 1000),
+    );
+    encoder.encode_frame(frame).unwrap();
+}
+
 pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
-    let script_path = r"src\python_scripts\empty_tmp_folder.py";
-    Command::new("py").arg(script_path).status().unwrap();
     let arr = arr.to_vec();
 
     let mut inplace = true;
@@ -52,12 +69,12 @@ pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
 
     let width: u32 = arr.len() as u32;
     let height = (width as f64 / 16.0 * 9.0) as u32;
-    let _height = width / 3;
     println!(
         "{} frames to generate",
         actions.len() / ACTIONS_PER_FRAME + 3
     );
-    let mut img = ImageBuffer::from_fn(width, height, |_, _| Rgba::<u8>([0x00, 0x00, 0x00, 0xff]));
+    let mut img: ImageBuffer<Rgba<u8>, Vec<u8>> =
+        ImageBuffer::from_fn(width, height, |_, _| Rgba::<u8>([0x00, 0x00, 0x00, 0xff]));
 
     let mut arrs: Vec<ArrActions> = Vec::new();
     let view = SubImg {
@@ -74,86 +91,86 @@ pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
     };
     arrs.push(ArrActions::new(arr, view, name));
     let mut i = 1;
-    let mut image_i = 0;
-    while i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME < actions.len() {
-        let mut split_points: Vec<usize> = vec![i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME];
-        #[allow(clippy::needless_range_loop)]
-        for ii in i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME
-            ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())
-        {
-            match actions[ii] {
-                SortLog::CreateAuxArr { .. } => split_points.push(ii),
-                SortLog::CreateAuxArrT { .. } => {
-                    split_points.push(ii);
-                }
-                _ => {}
-            }
-        }
-
-        for ii in 1..split_points.len() {
-            for arr_view in arrs.iter_mut() {
-                arr_view.update(&actions[split_points[ii - 1]..split_points[ii]], &mut img)
-            }
-            img.save(format!(".\\tmp\\{}.png", image_i)).unwrap();
-            image_i += 1;
-            match actions[split_points[ii]] {
-                SortLog::CreateAuxArrT { name, length }
-                | SortLog::CreateAuxArr { name, length } => {
-                    aux_view.rect(&mut img, 0, 0, aux_view.width, aux_view.height, BLACK);
-                    let views = get_views(&aux_view, arrs.len() as u32);
-                    arrs.push(ArrActions::new(
-                        vec![0; length],
-                        SubImg {
-                            x: 0,
-                            y: 0,
-                            width: 1000,
-                            height: 000,
-                        },
-                        name,
-                    ));
-                    let len = arrs.len();
-                    for iii in 1..len {
-                        arrs[iii].view = views[iii - 1];
-                        arrs[iii].full_rander_vec(&mut img, BLACK, WHITE)
+    let mut encoder_buffer = Vec::new();
+    {
+        let mut encoder: GifEncoder<&mut Vec<u8>> = GifEncoder::new(&mut encoder_buffer);
+        encoder.set_repeat(Repeat::Infinite).unwrap();
+        while i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME < actions.len() {
+            let mut split_points: Vec<usize> = vec![i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME];
+            #[allow(clippy::needless_range_loop)]
+            for ii in i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME
+                ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())
+            {
+                match actions[ii] {
+                    SortLog::CreateAuxArr { .. } => split_points.push(ii),
+                    SortLog::CreateAuxArrT { .. } => {
+                        split_points.push(ii);
                     }
+                    _ => {}
                 }
-                SortLog::FreeAuxArr { name: _ } => {}
-                _ => {}
+            }
+            for ii in 1..split_points.len() {
+                for arr_view in arrs.iter_mut() {
+                    arr_view.update(&actions[split_points[ii - 1]..split_points[ii]], &mut img)
+                }
+                push_image(&mut encoder, &img);
+
+                match actions[split_points[ii]] {
+                    SortLog::CreateAuxArrT { name, length }
+                    | SortLog::CreateAuxArr { name, length } => {
+                        aux_view.rect(&mut img, 0, 0, aux_view.width, aux_view.height, BLACK);
+                        let views = get_views(&aux_view, arrs.len() as u32);
+                        arrs.push(ArrActions::new(
+                            vec![0; length],
+                            SubImg {
+                                x: 0,
+                                y: 0,
+                                width: 1000,
+                                height: 000,
+                            },
+                            name,
+                        ));
+                        let len = arrs.len();
+                        for iii in 1..len {
+                            arrs[iii].view = views[iii - 1];
+                            arrs[iii].full_rander_vec(&mut img, BLACK, WHITE)
+                        }
+                    }
+                    SortLog::FreeAuxArr { name: _ } => {}
+                    _ => {}
+                }
+            }
+
+            for arr_view in arrs.iter_mut() {
+                arr_view.update(
+                    &actions[*split_points.last().unwrap()
+                        ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())],
+                    &mut img,
+                )
+            }
+            push_image(&mut encoder, &img);
+
+            i += 1;
+            if i % 100 == 0 {
+                println!("{i} of {}", actions.len() / ACTIONS_PER_FRAME + 3);
             }
         }
-
-        for arr_view in arrs.iter_mut() {
-            arr_view.update(
-                &actions[*split_points.last().unwrap()
-                    ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())],
-                &mut img,
-            )
-        }
-        img.save(format!(".\\tmp\\{}.png", image_i)).unwrap();
-        i += 1;
-        image_i += 1;
-        if i % 100 == 0 {
-            println!("{i} of {}", actions.len() / ACTIONS_PER_FRAME + 3);
-        }
+        /*
+        for action_block in actions.chunks(ACTIONS_PER_FRAME) {
+            for arr_view in arrs.iter_mut() {
+                arr_view.update(action_block, &mut img)
+            }
+            img.save(format!(
+                "D:\\Programing\\IDE\\vscProjects\\rustFolder\\array_vis_bench\\tmp\\{}.png",
+                i
+            ))
+            .unwrap();
+            i += 1;
+        }*/
     }
-    /*
-    for action_block in actions.chunks(ACTIONS_PER_FRAME) {
-        for arr_view in arrs.iter_mut() {
-            arr_view.update(action_block, &mut img)
-        }
-        img.save(format!(
-            "D:\\Programing\\IDE\\vscProjects\\rustFolder\\array_vis_bench\\tmp\\{}.png",
-            i
-        ))
-        .unwrap();
-        i += 1;
-    }*/
-
     // Construct the path to the Python script
-    let script_path = r"src\python_scripts\pngs_to_vid.py";
-    Command::new("python").arg(script_path).status().unwrap();
-    let script_path = r"src\python_scripts\empty_tmp_folder.py";
-    Command::new("python").arg(script_path).status().unwrap();
+    let mut output_file = File::create("output.gif").unwrap();
+    output_file.write_all(&encoder_buffer).unwrap();
 }
 
 struct ArrActions {
