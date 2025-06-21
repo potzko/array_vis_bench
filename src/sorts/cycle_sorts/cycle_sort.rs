@@ -1,74 +1,41 @@
-const MAX_SIZE: usize = 5000;
-const BIG_O: &str = "O(N^2)";
-const NAME: &str = "cycle sort";
+use crate::create_sort;
 
-use crate::traits;
-use std::marker::PhantomData;
+create_sort!(sort, "cycle sort", "O(N^2)", false);
 
-pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
-    _markers: (PhantomData<T>, PhantomData<U>),
-}
-
-impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
-    for SortImp<T, U>
-{
-    fn max_size() -> usize {
-        MAX_SIZE
-    }
-    fn big_o() -> &'static str {
-        BIG_O
-    }
-    fn sort(arr: &mut [T], logger: &mut U) {
-        sort::<T, U>(arr, logger);
-    }
-    fn name() -> &'static str {
-        NAME
-    }
-}
-/*
-fn sort_2<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    for i in 0..arr.len() {
-        let mut target: T = arr[i];
-        let mut lower = get_lower(&arr[i + 1..], target, logger) + i;
-        while lower != i {
-            let tmp = arr[lower];
-            logger.write_data(arr, lower, target);
-            target = tmp;
-            lower = get_lower(&arr[i + 1..], target, logger) + i;
-        }
-        logger.write_data(arr, i, target)
-    }
-}
-*/
-
-fn sort<T: Ord + Copy, U: traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    for i in 0..arr.len() {
-        let mut target = arr[i];
-        let mut lower = get_lower(&arr[i + 1..], target, logger) + i;
-        while lower != i {
-            let mut tmp = arr[lower];
-            while tmp == target {
-                lower += 1;
-                tmp = arr[lower];
+fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    let n = arr.len();
+    for cycle_start in 0..n - 1 {
+        let mut item = arr[cycle_start];
+        let mut pos = cycle_start;
+        for i in cycle_start + 1..n {
+            if logger.cmp_lt_data(arr, i, item) {
+                pos += 1;
             }
-            logger.write_data(arr, lower, target);
-            target = tmp;
-            lower = get_lower(&arr[i + 1..], target, logger) + i;
         }
-        logger.write_data(arr, i, target)
-    }
-}
-
-fn get_lower<T: Ord + Copy, U: traits::SortLogger<T>>(
-    arr: &[T],
-    target: T,
-    logger: &mut U,
-) -> usize {
-    let mut ret = 0;
-    for i in 0..arr.len() {
-        if logger.cmp_lt_data(arr, i, target) {
-            ret += 1
+        if pos == cycle_start {
+            continue;
+        }
+        while item == arr[pos] {
+            pos += 1;
+        }
+        if pos != cycle_start {
+            std::mem::swap(&mut item, &mut arr[pos]);
+            logger.write_data(arr, pos, item);
+        }
+        while pos != cycle_start {
+            pos = cycle_start;
+            for i in cycle_start + 1..n {
+                if logger.cmp_lt_data(arr, i, item) {
+                    pos += 1;
+                }
+            }
+            while item == arr[pos] {
+                pos += 1;
+            }
+            if item != arr[pos] {
+                std::mem::swap(&mut item, &mut arr[pos]);
+                logger.write_data(arr, pos, item);
+            }
         }
     }
-    ret
 }

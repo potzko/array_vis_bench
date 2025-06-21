@@ -1,37 +1,14 @@
-const MAX_SIZE: usize = 50000;
-const BIG_O: &str = "O(N Log(N))";
-const NAME: &str = "quick sort left right pointers";
+use crate::create_sort;
+use crate::traits::sort_traits::SortAlgo;
 
-use crate::traits;
-use std::marker::PhantomData;
+create_sort!(sort, "quick sort left left pointers", "O(N Log(N))", false);
 
-pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
-    _markers: (PhantomData<T>, PhantomData<U>),
-}
-
-impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
-    for SortImp<T, U>
-{
-    fn max_size() -> usize {
-        MAX_SIZE
-    }
-    fn big_o() -> &'static str {
-        BIG_O
-    }
-    fn sort(arr: &mut [T], logger: &mut U) {
-        sort::<T, U>(arr, logger);
-    }
-    fn name() -> &'static str {
-        NAME
-    }
-}
-
-fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+fn partition<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     logger: &mut U,
 ) -> usize {
+    assert!(arr.len() >= 2);
     let pivot = arr[arr.len() - 1];
-
     let mut small = 0;
     for i in 0..arr.len() - 1 {
         if logger.cmp_le_data(arr, i, pivot) {
@@ -43,8 +20,10 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     small
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    if arr.len() < 2 {
+fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    if arr.len() < 32 {
+        type SmallSort<A, B> = crate::sorts::insertion_sorts::insertion_sort::SortImp<A, B>;
+        SmallSort::sort(arr, logger);
         return;
     }
     let partition_index = partition(arr, logger);

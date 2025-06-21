@@ -1,34 +1,9 @@
-const MAX_SIZE: usize = 100000;
-const BIG_O: &str = "O(N*log(N))";
-const NAME: &str = "heap sort";
-
-use crate::traits;
-use crate::traits::*;
+use crate::create_sort;
 use rand::Rng;
-use std::marker::PhantomData;
 
-pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
-    _markers: (PhantomData<T>, PhantomData<U>),
-}
+create_sort!(sort, "heap sort", "O(N*log(N))", false);
 
-impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
-    for SortImp<T, U>
-{
-    fn max_size() -> usize {
-        MAX_SIZE
-    }
-    fn big_o() -> &'static str {
-        BIG_O
-    }
-    fn sort(arr: &mut [T], logger: &mut U) {
-        sort::<T, U>(arr, logger);
-    }
-    fn name() -> &'static str {
-        NAME
-    }
-}
-
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     first_heapify(arr, logger);
 
     for i in (1..arr.len()).rev() {
@@ -37,7 +12,10 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logg
     }
 }
 
-fn first_heapify<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+fn first_heapify<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
+    arr: &mut [T],
+    logger: &mut U,
+) {
     if arr.len() < 2 {
         return;
     }
@@ -55,7 +33,7 @@ fn first_heapify<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U)
     }
 }
 
-fn heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+fn heapify<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     start: usize,
     end: usize,
@@ -80,7 +58,7 @@ fn heapify<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     }
 }
 
-fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+fn partition<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     rng: &mut rand::rngs::ThreadRng,
     logger: &mut U,
@@ -100,7 +78,7 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     small
 }
 
-fn quick_select<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+fn quick_select<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     target: usize,
     rng: &mut rand::rngs::ThreadRng,

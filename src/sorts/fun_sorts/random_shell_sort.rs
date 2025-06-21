@@ -1,9 +1,6 @@
-const MAX_SIZE: usize = 5000;
-const BIG_O: &str = "O(N^2.5)";
-const NAME: &str = "shell sort hibbard jumps";
 use rand::Rng;
 
-fn random_vec<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+fn random_vec<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
     len: usize,
     logger: &mut U,
 ) -> Vec<usize> {
@@ -18,31 +15,12 @@ fn random_vec<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     sort_u(&mut ret, logger);
     ret
 }
-use crate::traits;
-use std::marker::PhantomData;
 
-pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
-    _markers: (PhantomData<T>, PhantomData<U>),
-}
+use crate::create_sort;
 
-impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
-    for SortImp<T, U>
-{
-    fn max_size() -> usize {
-        MAX_SIZE
-    }
-    fn big_o() -> &'static str {
-        BIG_O
-    }
-    fn sort(arr: &mut [T], logger: &mut U) {
-        sort::<T, U>(arr, logger);
-    }
-    fn name() -> &'static str {
-        NAME
-    }
-}
+create_sort!(sort, "shell sort hibbard jumps", "O(N^2.5)", false);
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     if arr.len() < 2 {
         return;
     }
@@ -61,7 +39,10 @@ fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logg
     }
 }
 
-fn sort_u<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [usize], logger: &mut U) {
+fn sort_u<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
+    arr: &mut [usize],
+    logger: &mut U,
+) {
     if arr.len() < 2 {
         return;
     }

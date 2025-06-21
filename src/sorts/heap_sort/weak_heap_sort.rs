@@ -1,32 +1,11 @@
-const MAX_SIZE: usize = 100000;
-const BIG_O: &str = "O(N*log(N))";
-const NAME: &str = "weak heap sort";
+use crate::create_sort;
 
-use crate::traits;
-use std::marker::PhantomData;
+create_sort!(sort, "weak heap sort", "O(N*log(N))", false);
 
-pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
-    _markers: (PhantomData<T>, PhantomData<U>),
-}
-
-impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
-    for SortImp<T, U>
-{
-    fn max_size() -> usize {
-        MAX_SIZE
-    }
-    fn big_o() -> &'static str {
-        BIG_O
-    }
-    fn sort(arr: &mut [T], logger: &mut U) {
-        sort::<T, U>(arr, logger);
-    }
-    fn name() -> &'static str {
-        NAME
-    }
-}
-
-pub fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+pub fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
+    arr: &mut [T],
+    logger: &mut U,
+) {
     let n = arr.len();
 
     if n < 2 {
@@ -59,7 +38,7 @@ pub fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], 
     arr.swap(0, 1);
 }
 
-fn weak_heap_merge<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+fn weak_heap_merge<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     bottom_skips: &mut [u8],
     ind_a: usize,

@@ -1,32 +1,8 @@
-const MAX_SIZE: usize = 50000;
-const BIG_O: &str = "O(N log n?)";
-const NAME: &str = "cycln't sort";
+use crate::create_sort;
 
-use crate::traits;
-use std::marker::PhantomData;
+create_sort!(sort, "cyclent sort stack", "O(N^3?)", false);
 
-pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
-    _markers: (PhantomData<T>, PhantomData<U>),
-}
-
-impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
-    for SortImp<T, U>
-{
-    fn max_size() -> usize {
-        MAX_SIZE
-    }
-    fn big_o() -> &'static str {
-        BIG_O
-    }
-    fn sort(arr: &mut [T], logger: &mut U) {
-        sort::<T, U>(arr, logger);
-    }
-    fn name() -> &'static str {
-        NAME
-    }
-}
-
-fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+fn partition<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     logger: &mut U,
 ) -> usize {
@@ -60,20 +36,11 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     high
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    if arr.len() < 2 {
-        return;
-    }
-    let len = arr.len();
-
-    use std::collections::VecDeque;
-    let mut stack: VecDeque<usize> =
-        VecDeque::with_capacity((arr.len() as f64).log2() as usize * 4);
-    stack.push_front(partition(arr, logger));
-    for i in 0..arr.len() - 1 {
-        while stack.is_empty() || *stack.front().unwrap() != i {
-            stack.push_front(i + partition(&mut arr[i..*stack.front().unwrap_or(&len)], logger))
+fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    for i in 0..arr.len() {
+        let mut tmp = arr.len();
+        while tmp != i {
+            tmp = partition(&mut arr[i..tmp], logger) + i;
         }
-        stack.pop_front();
     }
 }
