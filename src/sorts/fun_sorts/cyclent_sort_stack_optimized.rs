@@ -1,51 +1,11 @@
-const MAX_SIZE: usize = 50000;
-const BIG_O: &str = "O(N log n?)";
-const NAME: &str = "cycln't sort";
+use crate::create_sort;
 
-use crate::traits;
-use std::marker::PhantomData;
+create_sort!(sort, "cyclent sort stack optimized", "O(N^3?)", false);
 
-pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
-    _markers: (PhantomData<T>, PhantomData<U>),
-}
-
-impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
-    for SortImp<T, U>
-{
-    fn max_size() -> usize {
-        MAX_SIZE
-    }
-    fn big_o() -> &'static str {
-        BIG_O
-    }
-    fn sort(arr: &mut [T], logger: &mut U) {
-        sort::<T, U>(arr, logger);
-    }
-    fn name() -> &'static str {
-        NAME
-    }
-}
-
-fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
+fn partition<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     logger: &mut U,
 ) -> usize {
-    if arr.len() > 1024 {
-        logger.cond_swap_lt(arr, 0, 2);
-        logger.cond_swap_lt(arr, 1, 0);
-        logger.cond_swap_lt(arr, 0, 2);
-        if arr.len() > 2048 {
-            logger.cond_swap_lt(arr, 3, 5);
-            logger.cond_swap_lt(arr, 4, 3);
-            logger.cond_swap_lt(arr, 3, 5);
-            logger.cond_swap_lt(arr, 6, 8);
-            logger.cond_swap_lt(arr, 7, 6);
-            logger.cond_swap_lt(arr, 6, 8);
-            logger.cond_swap_lt(arr, 0, 6);
-            logger.cond_swap_lt(arr, 3, 0);
-            logger.cond_swap_lt(arr, 0, 6);
-        }
-    }
     let pivot = arr[0];
     let mut low = 0;
     let mut high = arr.len() - 1;
@@ -76,19 +36,11 @@ fn partition<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
     high
 }
 
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    let len = arr.len();
-    use crate::traits::sort_traits::SortAlgo;
-    let mut stack: Vec<usize> = Vec::with_capacity((arr.len() as f64).log2() as usize * 8);
-    let mut i = 0;
-    while i < arr.len() {
-        while stack.is_empty() || *stack.last().unwrap() >= i + 32 {
-            stack.push(i + partition(&mut arr[i..*stack.last().unwrap_or(&len)], logger))
+fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    for i in 0..arr.len() {
+        let mut tmp = arr.len();
+        while tmp != i {
+            tmp = partition(&mut arr[i..tmp], logger) + i;
         }
-        type SmallSort<A, B> = crate::sorts::insertion_sorts::insertion_sort::SortImp<A, B>;
-        SmallSort::sort(arr, logger);
-        i = stack.pop().unwrap_or(i);
-        i += 1
     }
-    //super::super::insertion_sorts::insertion_sort::InsertionSort::sort(arr, start, end, logger)
 }
