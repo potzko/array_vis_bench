@@ -1,50 +1,26 @@
-const MAX_SIZE: usize = 50000;
-const BIG_O: &str = "O(N Log(N))";
-const NAME: &str = "merge sort";
+use crate::create_sort;
+use crate::traits::sort_traits::SortAlgo;
+
+create_sort!(sort, "merge sort bottom up", "O(N Log(N))", true);
 
 use super::utils::merge_inplace;
-use crate::traits;
-use std::marker::PhantomData;
 
-pub struct SortImp<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> {
-    _markers: (PhantomData<T>, PhantomData<U>),
-}
-
-impl<T: Ord + Copy, U: traits::log_traits::SortLogger<T>> traits::sort_traits::SortAlgo<T, U>
-    for SortImp<T, U>
-{
-    fn max_size() -> usize {
-        MAX_SIZE
+const SMALL_SORT_SIZE: usize = 32;
+fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    for i in (0..arr.len()).step_by(SMALL_SORT_SIZE) {
+        let end = std::cmp::min(i + SMALL_SORT_SIZE, arr.len());
+        type SmallSort<A, B> = crate::sorts::insertion_sorts::insertion_sort::SortImp<A, B>;
+        SmallSort::sort(&mut arr[i..end], logger);
     }
-    fn big_o() -> &'static str {
-        BIG_O
-    }
-    fn sort(arr: &mut [T], logger: &mut U) {
-        sort::<T, U>(arr, logger);
-    }
-    fn name() -> &'static str {
-        NAME
-    }
-}
-
-fn sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     let mut tmp = logger.copy_aux_arr_t(arr);
-    merge_sort(arr, &mut tmp, logger);
-}
-
-fn merge_sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    target: &mut [T],
-    logger: &mut U,
-) {
-    let mut gap = 1;
+    let mut gap = SMALL_SORT_SIZE;
     let mut i;
     while gap < arr.len() {
         i = 0;
         while i < arr.len() {
             let end = std::cmp::min(i + 2 * gap, arr.len());
             let mid = std::cmp::min(i + gap, arr.len());
-            merge_inplace(&arr[i..mid], &arr[mid..end], &mut target[i..end], logger);
+            merge_inplace(&arr[i..mid], &arr[mid..end], &mut tmp[i..end], logger);
             i += gap * 2;
         }
 
@@ -53,7 +29,7 @@ fn merge_sort<T: Ord + Copy, U: traits::log_traits::SortLogger<T>>(
         while i < arr.len() {
             let end = std::cmp::min(i + 2 * gap, arr.len());
             let mid = std::cmp::min(i + gap, arr.len());
-            merge_inplace(&target[i..mid], &target[mid..end], &mut arr[i..end], logger);
+            merge_inplace(&tmp[i..mid], &tmp[mid..end], &mut arr[i..end], logger);
             i += gap * 2;
         }
         gap *= 2;
