@@ -1,25 +1,39 @@
 use crate::create_sort;
 use crate::traits::*;
+use sort_registry_macro::SortRegistry;
 
-create_sort!(sort, "heap sort", "O(N*log(N))", false);
+create_sort!(sort, "heap quick sort optimized", "O(N*log(N))", false);
+
+/// Heap Quick Sort Optimized implementation
+#[derive(SortRegistry)]
+pub struct HeapQuickSortOptimized;
+
+impl HeapQuickSortOptimized {
+    pub fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
+        arr: &mut [T],
+        logger: &mut U,
+    ) {
+        type SmallSort<A, B> = crate::sorts::insertion_sorts::insertion_sort::SortImp<A, B>;
+        if arr.len() < 16 {
+            SmallSort::sort(arr, logger);
+            return;
+        }
+        let split: usize = arr.len() / 2;
+        let split_len = arr[split..].len();
+        first_heapify_lt(&mut arr[0..split], logger);
+        first_heapify_gt(&mut arr[split..], logger);
+        while logger.cond_swap_lt(arr, split, 0) {
+            heapify_lt(arr, 0, split, logger);
+            heapify_gt_left(&mut arr[split..], 0, split_len, logger);
+        }
+        sort_left(&mut arr[0..split], logger);
+        sort_right(&mut arr[split..], logger);
+        SmallSort::sort(arr, logger);
+    }
+}
 
 fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    type SmallSort<A, B> = crate::sorts::insertion_sorts::insertion_sort::SortImp<A, B>;
-    if arr.len() < 16 {
-        SmallSort::sort(arr, logger);
-        return;
-    }
-    let split: usize = arr.len() / 2;
-    let split_len = arr[split..].len();
-    first_heapify_lt(&mut arr[0..split], logger);
-    first_heapify_gt(&mut arr[split..], logger);
-    while logger.cond_swap_lt(arr, split, 0) {
-        heapify_lt(arr, 0, split, logger);
-        heapify_gt_left(&mut arr[split..], 0, split_len, logger);
-    }
-    sort_left(&mut arr[0..split], logger);
-    sort_right(&mut arr[split..], logger);
-    SmallSort::sort(arr, logger);
+    HeapQuickSortOptimized::sort(arr, logger);
 }
 
 fn sort_left<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(

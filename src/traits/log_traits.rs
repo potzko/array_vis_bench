@@ -432,3 +432,12 @@ impl<T: Copy + Ord> SortLogger<T> for VisualizerLogger<T> {
         self.log.push(data);
     }
 }
+
+/// A no-operation logger that does nothing when logging
+#[derive(Debug, Clone, Copy)]
+pub struct NoOpLogger;
+
+impl<T: Copy + Ord> SortLogger<T> for NoOpLogger {
+    #[inline]
+    fn log(&mut self, _: SortLog<T>) {}
+}
