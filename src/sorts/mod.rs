@@ -5,6 +5,7 @@ pub mod bubble_sorts;
 pub mod circle_sorts;
 pub mod comb_sorts;
 pub mod cycle_sorts;
+pub mod example_generic_sort;
 pub mod fun_sorts;
 pub mod heap_sort;
 pub mod insertion_sorts;
