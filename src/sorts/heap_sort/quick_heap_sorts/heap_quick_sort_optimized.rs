@@ -1,11 +1,9 @@
 use crate::create_sort;
 use crate::traits::*;
-use sort_registry_macro::SortRegistry;
 
 create_sort!(sort, "heap quick sort optimized", "O(N*log(N))", false);
 
 /// Heap Quick Sort Optimized implementation
-#[derive(SortRegistry)]
 pub struct HeapQuickSortOptimized;
 
 impl HeapQuickSortOptimized {

@@ -5,6 +5,11 @@ pub mod quick_sort_left_left_pointers_optimised;
 pub mod quick_sort_left_right_pivot_optimised;
 pub mod quick_sort_left_right_pointers_moving_pivot;
 pub mod quick_sort_left_right_pointers_static_pivot;
+pub mod strategy_registry;
+pub mod pivot_strategies;
+pub mod partition_strategies;
+pub mod auto_register;
+pub mod generic_quick_sort;
 
 use crate::traits::{SortAlgo, SortLogger};
 pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
@@ -19,6 +24,10 @@ pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
     } else {
         #[allow(clippy::wildcard_in_or_patterns)]
         match choice[0].as_str() {
+            "generic_quick_sort" => {
+                let vals = generic_quick_sort::run(arr, logger, choice);
+                vals
+            }
             "midian_pivot_quick_sort" => {
                 type Sort<A, B> = midian_pivot_quick_sort::SortImp<A, B>;
                 Sort::sort(arr, logger);

@@ -3,7 +3,7 @@ use crate::traits::sort_traits::SortAlgo;
 
 create_sort!(
     sort,
-    "quick sort left right pointers static pivot",
+    "quick_sort<partition: partition_left_right_pointers<pivot_selection: first_element>>",
     "O(N Log(N))",
     false
 );

@@ -1,6 +1,6 @@
 use crate::traits::log_traits::SortLogger;
 
-trait RotateImpl<T: Ord + Copy, U SortLogger<T>> {
+trait RotateImpl<T: Ord + Copy, U: SortLogger<T>> {
     fn rotate(arr: &mut [T], split_ind: usize, logger: &mut U);
 }
 
@@ -22,13 +22,17 @@ pub fn rotate_2<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], split_ind: usize
     );
 }
 
-struct Reverse3TimeRotatation<T: Ord + Copy, U: SortLogger<T>> RotateImpl<T, U>;
-impl<T: Ord + Copy, U: SortLogger<T>> RotateImpl<T, U> for Reverse3TimeRotatation {
-    pub fn rotate(arr: &mut [T], split_ind: usize, logger: &mut U) {
+struct Reverse3TimeRotation;
+impl<T: Ord + Copy, U: SortLogger<T>> RotateImpl<T, U> for Reverse3TimeRotation {
+    fn rotate(arr: &mut [T], split_ind: usize, logger: &mut U) {
         reverse(&mut arr[..split_ind], logger);
         reverse(&mut arr[split_ind..], logger);
         reverse(arr, logger);
     }
+}
+
+pub fn rotate<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], split_ind: usize, logger: &mut U) {
+    Reverse3TimeRotation::rotate(arr, split_ind, logger)
 }
 
 #[allow(dead_code)]

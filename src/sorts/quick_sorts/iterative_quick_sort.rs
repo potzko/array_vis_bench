@@ -1,7 +1,12 @@
 use crate::create_sort;
 use crate::traits::sort_traits::SortAlgo;
 
-create_sort!(sort, "iterative quick sort", "O(N Log(N))", false);
+create_sort!(
+    sort,
+    "quick_sort<mode: iterative>",
+    "O(N Log(N))",
+    false
+);
 
 use std::collections::VecDeque;
 

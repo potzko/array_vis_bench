@@ -2,7 +2,7 @@ use crate::create_sort;
 
 create_sort!(
     sort,
-    "quick sort left right pointers moving pivot",
+    "quick_sort<partition: partition_left_right_pointers<pivot_selection: moving_pivot_median_of_three>>",
     "O(N Log(N))",
     false
 );

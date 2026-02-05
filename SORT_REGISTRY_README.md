@@ -1,113 +1,77 @@
-# Sort Registry System
+# Sort Registry (Derive-Based)
 
-This project now includes a centralized sort registry that allows you to automatically discover and categorize all your sorting algorithms.
+This project uses a derive-only, auto-registration system to discover and run sorting algorithms without any code generation scripts.
 
-## How it Works
+## Overview
 
-1. **Registry System**: The registry is defined in `src/traits/mod.rs` and provides:
-   - `register_sort(name, big_o, stable, category)` - Register a sort
-   - `get_registered_sorts()` - Get all registered sorts
-   - `get_sorts_by_category(category)` - Get sorts by category
-   - `init_sort_registry()` - Initialize the registry
+- Auto-registration: Each sort registers itself at startup via a `#[derive(SortRegistry)]` implementation using `ctor`.
+- Standardized execution type: Sort closures are stored as `Arc<dyn Fn(&mut [usize], &mut NoOpLogger) + Send + Sync>`.
+- Split responsibilities:
+    - Metadata registry is in `sort_registry_core` (names, complexity, stability, category).
+    - Runtime closure registry lives in `src/traits/mod.rs`.
 
-2. **Automatic Generation**: The `generate_registration/` directory contains a script that automatically scans your codebase and generates registration code for all your sorts.
+## How It Works
 
-## Usage
-
-### 1. Generate Registration Code
-
-```bash
-cd generate_registration
-cargo run > ../generated_registrations.rs
-```
-
-This will create a file with a `register_all_sorts()` function that registers all your sorts.
-
-### 2. Use the Registry
-
-Add this to your `main.rs` or `lib.rs`:
+1. Define your sort function generically: `fn sort<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U)`.
+2. Use `create_sort!` to generate the trait impl and a monomorphic registration type:
 
 ```rust
-use crate::traits::{init_sort_registry, register_sort, get_registered_sorts, get_sorts_by_category};
+create_sort!(
+        my_sort_fn,
+        "my_sort<partition: partition_style<pivot_selection: strategy>>",
+        "O(N log N)",
+        false
+);
+```
 
-// Include the generated registrations
-mod generated_registrations;
-use generated_registrations::register_all_sorts;
+- `create_sort!` expands to:
+    - `SortImp<T, U>` implementing `SortAlgo<T, U>`.
+    - `SortReg` implementing `SortAlgo<usize, NoOpLogger>` and deriving `SortRegistry`.
+    - The derive inserts the runtime closure into `SORT_REGISTRY` and registers metadata in `sort_registry_core`.
+
+## APIs
+
+- Metadata (from `sort_registry_core`):
+    - `register_sort(name, big_o, stable, category)`
+    - `get_registered_sorts() -> Vec<String>`
+
+- Runtime closures (from `src/traits/mod.rs`):
+    - `get_sort(name: &str) -> Option<Arc<dyn Fn(&mut [usize], &mut NoOpLogger) + Send + Sync>>`
+
+## Usage Example
+
+```rust
+use crate::traits::{get_registered_sorts, get_sort, log_traits::NoOpLogger};
 
 fn main() {
-    // Register all sorts
-    register_all_sorts();
-    
-    // Get all sorts
-    let all_sorts = get_registered_sorts();
-    for sort in &all_sorts {
-        println!("{} ({}) - Stable: {} - Category: {}", 
-                 sort.name, sort.big_o, sort.stable, sort.category);
-    }
-    
-    // Get sorts by category
-    let bubble_sorts = get_sorts_by_category("bubble_sorts");
-    let quick_sorts = get_sorts_by_category("quick_sorts");
-    // etc.
+        // List all registered sort names
+        let names = get_registered_sorts();
+        println!("Registered sorts: {}", names.len());
+
+        // Run a sort by name
+        if let Some(run) = get_sort("quick_sort<partition: partition_left_right_pointers<pivot_selection: median_of_three>>") {
+                let mut arr = vec![5usize, 3, 1, 4, 2];
+                let mut logger = NoOpLogger;
+                run(&mut arr, &mut logger);
+                println!("Sorted: {:?}", arr);
+        }
 }
 ```
 
-### 3. Example Output
+## Naming Convention
 
-The registry provides information about each sort:
-- **Name**: The sort's display name
-- **Big O**: Time complexity
-- **Stable**: Whether the sort is stable
-- **Category**: The category (based on directory structure)
+Many sorts use hierarchical, descriptive names to expose configuration:
 
-## Categories
-
-The system automatically categorizes sorts based on their directory structure:
-- `bubble_sorts/` → "bubble_sorts"
-- `quick_sorts/` → "quick_sorts"
-- `merge_sorts/` → "merge_sorts"
-- `heap_sorts/` → "heap_sorts"
-- etc.
-
-## Benefits
-
-1. **Centralized Discovery**: All sorts are automatically discovered and registered
-2. **Categorization**: Sorts are automatically categorized by type
-3. **Metadata**: Each sort includes name, complexity, and stability information
-4. **Type Safety**: Fully type-safe and abstracted over data types and loggers
-5. **Easy to Use**: Simple API for querying sorts
+- Example: `quick_sort<partition: partition_left_right_pointers<pivot_selection: median_of_three>>`
+- This clarifies the partition strategy and pivot selection used.
 
 ## Adding New Sorts
 
-When you add a new sort:
-1. Use the `create_sort!` macro as usual
-2. Run the generation script to update registrations
-3. The new sort will automatically be included in the registry
+1. Implement your generic sort function.
+2. Call `create_sort!` with the display name, complexity, and stability.
+3. The derive takes care of registration automatically—no scripts, no generated files.
 
-## Example Integration
+## Notes
 
-```rust
-// In your main.rs
-use crate::traits::{init_sort_registry, get_registered_sorts, get_sorts_by_category};
-
-fn main() {
-    // Initialize and register all sorts
-    init_sort_registry();
-    register_all_sorts();
-    
-    // Use the registry
-    let all_sorts = get_registered_sorts();
-    println!("Found {} sorting algorithms", all_sorts.len());
-    
-    // Filter by category
-    let stable_sorts: Vec<_> = all_sorts.iter()
-        .filter(|s| s.stable)
-        .collect();
-    
-    let fast_sorts: Vec<_> = all_sorts.iter()
-        .filter(|s| s.big_o.contains("log"))
-        .collect();
-}
-```
-
-This system provides a clean, type-safe way to manage and discover all your sorting algorithms! 
+- The previous `generate_registration/` tooling and `generated_registrations.rs` file have been removed. All registration is now derive-based.
+- The project standardizes on `usize` for data and `NoOpLogger` for monomorphic registrations.
