@@ -1,12 +1,9 @@
-pub mod benchmark;
 pub mod rotations;
 pub mod sort_test;
 pub mod sorts;
 pub mod traits;
 pub mod utils;
 pub mod visualise;
+pub mod bench_registry;
 
-// Include the generated registrations as a module
-pub mod generated_registrations {
-    include!("../generated_registrations.rs");
-}
+// Auto-registration is handled via derive macros with linkme; no generated registrations needed.

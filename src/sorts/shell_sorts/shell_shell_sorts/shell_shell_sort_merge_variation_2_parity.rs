@@ -73,6 +73,7 @@ pub fn jump_merge<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
     }
 }
 
+#[allow(dead_code)]
 fn jump_merge_2<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
     target: &mut [T],
     arr: &[T],

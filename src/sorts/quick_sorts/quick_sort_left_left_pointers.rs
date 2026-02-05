@@ -1,7 +1,12 @@
 use crate::create_sort;
 use crate::traits::sort_traits::SortAlgo;
 
-create_sort!(sort, "quick sort left left pointers", "O(N Log(N))", false);
+create_sort!(
+    sort,
+    "quick_sort<partition: partition_left_left<pivot_selection: last_element>>",
+    "O(N Log(N))",
+    false
+);
 
 fn partition<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
     arr: &mut [T],

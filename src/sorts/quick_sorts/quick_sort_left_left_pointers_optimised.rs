@@ -3,7 +3,7 @@ use crate::traits::sort_traits::SortAlgo;
 
 create_sort!(
     sort,
-    "quick sort left left pointers optimised",
+    "quick_sort<partition: partition_left_left<pivot_selection: last_element_optimized_3_swaps>>",
     "O(N Log(N))",
     false
 );

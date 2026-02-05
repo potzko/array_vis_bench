@@ -1,7 +1,12 @@
 use crate::create_sort;
 use crate::traits::sort_traits::SortAlgo;
 
-create_sort!(sort, "median pivot quick sort", "O(N Log(N))", false);
+create_sort!(
+    sort,
+    "quick_sort<partition: partition_left_right_pointers<pivot_selection: median_of_three>>",
+    "O(N Log(N))",
+    false
+);
 
 fn partition<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
     arr: &mut [T],

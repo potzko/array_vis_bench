@@ -1,21 +1,19 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, GenericParam};
+use syn::{parse_macro_input, DeriveInput};
+use heck::ToSnakeCase;
 
-/// Derive macro for automatically registering sorts in the global registry
+/// Derive macro for automatically registering sorts in the global registry.
 ///
-/// This macro will:
-/// 1. Extract the type name and generic parameters
-/// 2. Generate a registration function that adds the sort to the global registry
-/// 3. Ensure the registration happens at compile time
+/// Intended for generic sort types that implement `crate::traits::sort_traits::SortAlgo<T, U>`.
+/// When derived, a `crate::traits::SortRegistry` implementation is generated that:
+/// - Registers a function pointer in `crate::traits::SORT_REGISTRY` keyed by the sort's `name()`
+/// - Adds the sort's name to `crate::traits::SORT_NAMES` via `register_sort(name, big_o, stable, _)`
+/// - Uses `#[ctor::ctor]` to ensure registration occurs at program startup
 ///
-/// Usage:
-/// ```rust
-/// #[derive(SortRegistry)]
-/// pub struct MySort<T, U> {
-///     // sort implementation
-/// }
-/// ```
+/// Function pointers allow full compile-time monomorphization and inlining (no trait objects).
+///
+/// Usage (with `create_sort!`): the macro is applied to the monomorphic `SortReg` type that `create_sort!` generates.
 #[proc_macro_derive(SortRegistry)]
 pub fn derive_sort_registry(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -23,67 +21,49 @@ pub fn derive_sort_registry(input: TokenStream) -> TokenStream {
     let generics = &input.generics;
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
-    // Generate a unique function name for registration
-    let register_fn = syn::Ident::new(&format!("__register_{}", name), name.span());
-
-    // Extract generic parameter names for the registry
-    let type_params: Vec<_> = generics
-        .params
-        .iter()
-        .filter_map(|param| {
-            if let GenericParam::Type(type_param) = param {
-                Some(&type_param.ident)
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    // Create a type name string that includes generic parameters
-    let type_name = if type_params.is_empty() {
-        quote! { stringify!(#name).to_string() }
-    } else {
-        let param_names: Vec<_> = type_params
-            .iter()
-            .map(|param| quote! { stringify!(#param) })
-            .collect();
-        quote! {
-            {
-                let mut name = stringify!(#name).to_string();
-                name.push('<');
-                name.push_str(&[#(#param_names),*].join(", "));
-                name.push('>');
-                name
-            }
-        }
-    };
+    // Unique function name for registration (snake_case to satisfy lint)
+    let snake = name.to_string().to_snake_case();
+    let register_fn = syn::Ident::new(&format!("__register_{}", snake), name.span());
+    
+    // Function pointer name for the monomorphic sort implementation
+    let sort_fn_name = syn::Ident::new(&format!("__sort_fn_{}", snake), name.span());
 
     let expanded = quote! {
-        impl #impl_generics crate::traits::SortRegistry for #name #ty_generics #where_clause {
+        /// Monomorphic sort function - compiled with full optimizations for usize/NoOpLogger
+        fn #sort_fn_name(arr: &mut [usize], logger: &mut crate::traits::log_traits::NoOpLogger) {
+            <#name as crate::traits::sort_traits::SortAlgo<usize, crate::traits::log_traits::NoOpLogger>>::sort(arr, logger);
+        }
+
+        impl #impl_generics sort_registry_core::SortRegistry for #name #ty_generics #where_clause {
             fn register() {
                 use std::sync::Once;
                 static REGISTERED: Once = Once::new();
                 REGISTERED.call_once(|| {
-                    let type_name = #type_name;
-                    crate::traits::SORT_REGISTRY.lock().unwrap().insert(
-                        type_name,
-                        Box::new(|arr: &mut [i32], logger: &mut crate::traits::log_traits::NoOpLogger| {
-                            Self::sort(arr, logger);
-                        })
-                    );
-                });
-            }
+                    // Resolve metadata via SortAlgo for concrete usize/NoOpLogger
+                    type TReg = usize;
+                    type UReg = crate::traits::log_traits::NoOpLogger;
+                    let sort_name: &'static str = <#name as crate::traits::sort_traits::SortAlgo<TReg, UReg>>::name();
+                    let big_o: &'static str = <#name as crate::traits::sort_traits::SortAlgo<TReg, UReg>>::big_o();
+                    let stable: bool = <#name as crate::traits::sort_traits::SortAlgo<TReg, UReg>>::stable();
 
-            fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-                // This will be implemented by the user
-                // For now, we'll provide a default implementation that does nothing
-                // The user should override this method
+                    // Register function pointer (fully inlinable, no trait object overhead)
+                    crate::traits::SORT_REGISTRY
+                        .lock()
+                        .unwrap()
+                        .insert(
+                            sort_name.to_string(),
+                            #sort_fn_name as crate::traits::SortFn
+                        );
+
+                    // Also register metadata into names list (core)
+                    sort_registry_core::register_sort(sort_name, big_o, stable, module_path!());
+                });
             }
         }
 
         #[ctor::ctor]
         fn #register_fn() {
-            <#name #ty_generics as crate::traits::SortRegistry>::register();
+            <#name #ty_generics as sort_registry_core::SortRegistry>::register();
         }
     };
     TokenStream::from(expanded)

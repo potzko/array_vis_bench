@@ -1,13 +1,11 @@
 use array_vis_bench::traits::get_registered_sorts;
 use array_vis_bench::traits::log_traits::{SortLog, VisualizerLogger};
 use array_vis_bench::visualise::visualise_sort;
-use array_vis_bench::generated_registrations::register_all_sorts;
 use array_vis_bench::utils::array_gen::{get_rand_arr, get_rand_arr_in_range, get_arr, get_reversed_arr};
 use std::io::{self, Write};
 
 fn main() {
-    // Register all sorts first
-    register_all_sorts();
+    // Sorts are auto-registered via derive macros at startup
     
     println!("Array Visualization Benchmark");
     println!("==============================");
@@ -137,6 +135,10 @@ fn get_user_selection(prompt: &str, min: usize, max: usize) -> usize {
 
 fn create_sort_choice(sort_name: &str) -> Vec<String> {
     // Map sort names to their category and implementation
+    // First, handle hierarchical quick sort names generically
+    if let Some(choice) = parse_quick_sort_name(sort_name) {
+        return choice;
+    }
     match sort_name {
         // Merge sorts
         "merge sort" => vec!["merge_sorts".to_string(), "classic_merge_sort".to_string()],
@@ -149,14 +151,9 @@ fn create_sort_choice(sort_name: &str) -> Vec<String> {
         "rotate merge sort bottom up" => vec!["merge_sorts".to_string(), "rotate_merge_sort_bottom_up".to_string()],
         "rotate merge sort bottom up optimized" => vec!["merge_sorts".to_string(), "rotate_merge_sort_bottom_up_optimized".to_string()],
         
-        // Quick sorts
-        "median pivot quick sort" => vec!["quick_sorts".to_string(), "midian_pivot_quick_sort".to_string()],
-        "quick sort left left pointers" => vec!["quick_sorts".to_string(), "quick_sort_left_left_pointers".to_string()],
-        "quick sort left left pointers optimised" => vec!["quick_sorts".to_string(), "quick_sort_left_left_pointers_optimised".to_string()],
-        "quick sort left right pointers static pivot" => vec!["quick_sorts".to_string(), "quick_sort_left_right_pointers_static_pivot".to_string()],
-        "quick sort left right pointers moving pivot" => vec!["quick_sorts".to_string(), "quick_sort_left_right_pointers_moving_pivot".to_string()],
-        "quick sort left right pivot optimised" => vec!["quick_sorts".to_string(), "quick_sort_left_right_pivot_optimised".to_string()],
-        "iterative quick sort" => vec!["quick_sorts".to_string(), "iterative_quick_sort".to_string()],
+        // Quick sorts (legacy explicit names)
+        "quick_sort<partition: partition_left_right_pointers<pivot_selection: median_of_three>>" => vec!["quick_sorts".to_string(), "midian_pivot_quick_sort".to_string()],
+        "quick_sort<mode: iterative>" => vec!["quick_sorts".to_string(), "iterative_quick_sort".to_string()],
         
         // Heap sorts
         "heap sort classic" => vec!["heap_sort".to_string(), "classic_heap_sorts".to_string(), "heap_sort_classic".to_string()],
@@ -227,4 +224,71 @@ fn create_sort_choice(sort_name: &str) -> Vec<String> {
             vec!["heap_sort".to_string(), "heap_quick_sort_optimized".to_string()]
         }
     }
+}
+
+fn parse_quick_sort_name(sort_name: &str) -> Option<Vec<String>> {
+    // Supports names like:
+    // quick_sort<partition: partition_left_left<pivot_selection: last_element>>
+    // quick_sort_optimized<partition: partition_left_right_pointers<pivot_selection: median_of_three>>
+    // quick_sort<mode: iterative>
+    let trimmed = sort_name.trim();
+    let is_opt = if let Some(rest) = trimmed.strip_prefix("quick_sort_optimized<") {
+        Some(rest)
+    } else {
+        None
+    };
+    let is_std = if let Some(rest) = trimmed.strip_prefix("quick_sort<") {
+        Some(rest)
+    } else {
+        None
+    };
+
+    // Mode-only variant
+    if trimmed == "quick_sort<mode: iterative>" {
+        return Some(vec!["quick_sorts".to_string(), "iterative_quick_sort".to_string()]);
+    }
+
+    let inner = match (is_opt, is_std) {
+        (Some(rest), None) => (true, rest),
+        (None, Some(rest)) => (false, rest),
+        _ => return None,
+    };
+
+    let (optimized, rest) = inner;
+    // Expect: partition: X<pivot_selection: Y>>
+    let rest = rest.strip_suffix('>')?; // remove trailing '>'
+    // Split on first '<' to separate partition and pivot_selection
+    let mut parts = rest.splitn(2, '<');
+    let partition_part = parts.next()?; // "partition: partition_left_left"
+    let pivot_part = parts.next()?; // "pivot_selection: last_element"
+
+    // Extract partition strategy
+    let partition = partition_part.trim();
+    let partition = partition.strip_prefix("partition:")?.trim();
+
+    // Extract pivot selection
+    let pivot = pivot_part.strip_suffix('>') // in case of nested '>>' or malformed
+        .unwrap_or(pivot_part)
+        .trim();
+    let pivot = pivot.strip_prefix("pivot_selection:")?.trim();
+
+    // Special-case moving pivot (dedicated implementation)
+    if partition == "partition_left_right_pointers" && pivot == "moving_pivot_median_of_three" {
+        return Some(vec!["quick_sorts".to_string(), "quick_sort_left_right_pointers_moving_pivot".to_string()]);
+    }
+
+    // Map to available implementations (generic runner)
+    let choice = route_quick_sort_combo(optimized, partition, pivot);
+    Some(choice)
+}
+
+fn route_quick_sort_combo(optimized: bool, partition: &str, pivot: &str) -> Vec<String> {
+    // Route all combinations to a generic quick sort runner with config
+    vec![
+        "quick_sorts".to_string(),
+        "generic_quick_sort".to_string(),
+        partition.to_string(),
+        pivot.to_string(),
+        optimized.to_string(),
+    ]
 }

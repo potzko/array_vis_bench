@@ -8,49 +8,37 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
+/// Function pointer type for sort implementations (fully optimizable, no trait objects)
+pub type SortFn = fn(&mut [usize], &mut log_traits::NoOpLogger);
+
 lazy_static! {
-    pub static ref SORT_REGISTRY: Mutex<HashMap<String, Box<dyn Fn(&mut [i32], &mut log_traits::NoOpLogger) + Send + Sync>>> =
+    pub static ref SORT_REGISTRY: Mutex<HashMap<String, SortFn>> =
         Mutex::new(HashMap::new());
-    
-    pub static ref SORT_NAMES: Mutex<Vec<String>> = Mutex::new(Vec::new());
 }
 
-/// Trait for types that can be registered in the global sort registry
-pub trait SortRegistry {
-    /// Register this sort in the global registry
-    fn register();
+/// Trait for types that can be registered (metadata side)
+pub use sort_registry_core::SortRegistry;
 
-    /// Sort function that will be called by the registry
-    fn sort<T: Ord + Copy, U: log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U);
-}
-
-/// Get all registered sort names
+/// Get all registered sort names (from core)
 pub fn get_registered_sorts() -> Vec<String> {
-    SORT_NAMES.lock().unwrap().clone()
+    sort_registry_core::get_registered_sorts()
 }
 
-/// Get a sort function by name
-pub fn get_sort(
-    name: &str,
-) -> Option<&'static (dyn Fn(&mut [i32], &mut log_traits::NoOpLogger) + Send + Sync)> {
-    // This is a bit tricky because we can't easily return a reference to the boxed function
-    // For now, we'll return None and implement this differently
-    None
+/// Get a sort function by name - returns a bare function pointer (fully inlinable)
+pub fn get_sort(name: &str) -> Option<SortFn> {
+    SORT_REGISTRY
+        .lock()
+        .unwrap()
+        .get(name)
+        .copied()
 }
 
-/// Initialize the sort registry
-pub fn init_sort_registry() {
-    // This function is called to ensure the registry is initialized
-    // The actual initialization happens when sorts are registered
-}
+/// Initialize the sort registry (no-op)
+pub fn init_sort_registry() {}
 
-/// Register a sort in the global registry
-pub fn register_sort(name: &str, _big_o: &str, _stable: bool, _category: &str) {
-    // Add the sort name to our list
-    let mut sort_names = SORT_NAMES.lock().unwrap();
-    if !sort_names.contains(&name.to_string()) {
-        sort_names.push(name.to_string());
-    }
+/// Register sort metadata (delegates to core)
+pub fn register_sort(name: &str, big_o: &str, stable: bool, category: &str) {
+    sort_registry_core::register_sort(name, big_o, stable, category)
 }
 
 /// Macro to create a sort implementation with reduced boilerplate
@@ -101,5 +89,34 @@ macro_rules! create_sort {
                 STABLE
             }
         }
+
+        // Monomorphic registration type for derive-based registry
+        #[derive(sort_registry_macro::SortRegistry)]
+        pub struct SortReg;
+
+        impl traits::sort_traits::SortAlgo<usize, traits::log_traits::NoOpLogger> for SortReg {
+            fn big_o() -> &'static str { BIG_O }
+            fn name() -> &'static str { NAME }
+            fn sort(arr: &mut [usize], logger: &mut traits::log_traits::NoOpLogger) {
+                $sort_fn::<usize, traits::log_traits::NoOpLogger>(arr, logger);
+            }
+            fn stable() -> bool { STABLE }
+        }
+
+        // Bench-time static registration (no trait objects) via distributed slice
+        // Provides a monomorphic function pointer for benchmarks
+        #[allow(non_upper_case_globals)]
+        fn __bench_run(arr: &mut [usize]) {
+            let mut logger = traits::log_traits::NoOpLogger;
+            $sort_fn::<usize, traits::log_traits::NoOpLogger>(arr, &mut logger);
+        }
+
+        #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
+        static __BENCH_SORT_ENTRY: crate::bench_registry::SortBenchEntry = crate::bench_registry::SortBenchEntry {
+            name: NAME,
+            big_o: BIG_O,
+            stable: STABLE,
+            run: __bench_run,
+        };
     };
 }

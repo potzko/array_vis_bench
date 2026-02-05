@@ -1,5 +1,4 @@
 use crate::traits::*;
-use sort_registry_macro::SortRegistry;
 
 /// Example of a generic sort with a strategy parameter
 pub struct GenericMergeSort<Strategy> {
@@ -28,7 +27,6 @@ pub trait MergeStrategy<T: Ord + Copy, U: log_traits::SortLogger<T>> {
 }
 
 /// Classic merge strategy
-#[derive(SortRegistry)]
 pub struct ClassicMergeStrategy;
 
 impl<T: Ord + Copy, U: log_traits::SortLogger<T>> MergeStrategy<T, U> for ClassicMergeStrategy {
@@ -66,7 +64,6 @@ impl<T: Ord + Copy, U: log_traits::SortLogger<T>> MergeStrategy<T, U> for Classi
 }
 
 /// In-place merge strategy
-#[derive(SortRegistry)]
 pub struct InPlaceMergeStrategy;
 
 impl<T: Ord + Copy, U: log_traits::SortLogger<T>> MergeStrategy<T, U> for InPlaceMergeStrategy {
