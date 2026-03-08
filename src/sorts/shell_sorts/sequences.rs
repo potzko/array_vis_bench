@@ -2,7 +2,8 @@
 // This module owns the registration infrastructure and re-exports the
 // sequence types so the rest of shell_sorts can import from one place.
 pub use crate::utils::shell_sequences::{
-    Ciura, Classic, GapSequence, Hibbard, Knuth, Sedgewick,
+    Ciura, Classic, GapSequence, Hibbard, Knuth, Optimized256, Pratt, Sedgewick,
+    SedgewickBranching, Tokuda,
 };
 
 use crate::traits::log_traits::SortLogger;
@@ -120,8 +121,12 @@ macro_rules! register_sequence {
     };
 }
 
-register_sequence!(classic,   classic_ordered,   Classic);
-register_sequence!(knuth,     knuth_ordered,     Knuth);
-register_sequence!(hibbard,   hibbard_ordered,   Hibbard);
-register_sequence!(sedgewick, sedgewick_ordered, Sedgewick);
-register_sequence!(ciura,     ciura_ordered,     Ciura);
+register_sequence!(classic,              classic_ordered,              Classic);
+register_sequence!(knuth,                knuth_ordered,                Knuth);
+register_sequence!(hibbard,              hibbard_ordered,              Hibbard);
+register_sequence!(sedgewick,            sedgewick_ordered,            Sedgewick);
+register_sequence!(sedgewick_branching,  sedgewick_branching_ordered,  SedgewickBranching);
+register_sequence!(ciura,                ciura_ordered,                Ciura);
+register_sequence!(tokuda,               tokuda_ordered,               Tokuda);
+register_sequence!(pratt,                pratt_ordered,                Pratt);
+register_sequence!(optimized256,         optimized256_ordered,         Optimized256);
