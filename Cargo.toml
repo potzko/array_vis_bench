@@ -23,6 +23,7 @@ sort_registry_macro = { path = "./sort_registry_macro" }
 sort_registry_core = { path = "./sort_registry_core" }
 ctor = "0.2"
 linkme = "0.3"
+const_format = "0.2"
 #gif = "0.13.1"
 
 ## Benchmarks removed for now
