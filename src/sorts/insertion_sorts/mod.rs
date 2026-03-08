@@ -1,15 +1,14 @@
-use crate::traits::{SortAlgo, SortLogger};
+use crate::traits::log_traits::SortLogger;
 
 pub mod insertion_sort;
 
-pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
-    arr: &mut [T],
-    logger: &mut U,
+pub fn fn_sort(
+    arr: &mut [usize],
+    logger: &mut dyn SortLogger<usize>,
     _: &[String],
 ) -> Vec<String> {
-    type Sort<A, B> = insertion_sort::SortImp<A, B>;
-    Sort::sort(arr, logger);
-    vec![format!("name: {}", Sort::<T, U>::name())]
+    insertion_sort::sort_dyn(arr, logger);
+    vec!["name: insertion sort".to_string()]
 }
 
 pub fn options(choice: &[String]) -> Vec<String> {

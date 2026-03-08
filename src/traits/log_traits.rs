@@ -68,6 +68,13 @@ pub enum SortLog<T: Copy> {
     },
 }
 
+/// Instrumentation trait for sort algorithms.
+///
+/// All methods that operate on `T` (the sort element type) are non-generic and
+/// dyn-compatible.  The helper methods that accept a *different* element type
+/// `U` (e.g. for auxiliary arrays) are gated with `where Self: Sized` so they
+/// are only callable on concrete loggers — adding a new gap sequence or sort
+/// should never need those.
 pub trait SortLogger<T: Copy + Ord> {
     fn log(&mut self, _: SortLog<T>) {}
 
@@ -95,7 +102,7 @@ pub trait SortLogger<T: Copy + Ord> {
         })
     }
     #[inline(always)]
-    fn copy_aux_arr_t(&mut self, arr: &[T]) -> Vec<T> {
+    fn copy_aux_arr_t(&mut self, arr: &[T]) -> Vec<T> where Self: Sized {
         let mut ret = Vec::<T>::with_capacity(arr.len());
         unsafe { ret.set_len(arr.len()) }
         self.log_aux_arr_t(&ret);
@@ -112,7 +119,7 @@ pub trait SortLogger<T: Copy + Ord> {
         ret
     }
     #[inline(always)]
-    fn copy_aux_arr(&mut self, arr: &[usize]) -> Vec<usize> {
+    fn copy_aux_arr(&mut self, arr: &[usize]) -> Vec<usize> where Self: Sized {
         let mut ret = Vec::<usize>::with_capacity(arr.len());
         unsafe { ret.set_len(arr.len()) }
         self.log_aux_arr_u(&ret);
@@ -142,16 +149,15 @@ pub trait SortLogger<T: Copy + Ord> {
     }
 
     /*----------------
-        Cmps
-        lt -> less then
-        le -> less then or equal
-        gt -> greater then
-        ge -> greater then or equal
+        Cmps — generic-over-U versions (for auxiliary/cross-type comparisons).
+        Gated with `where Self: Sized` so they are excluded from the dyn vtable.
     --------------- */
 
-    //in arr cmp
     #[inline(always)]
-    fn cmp_eq<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool {
+    fn cmp_eq<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool
+    where
+        Self: Sized,
+    {
         let result = arr[ind_a] == arr[ind_b];
         self.log(SortLog::CmpInArr {
             name: arr_name!(arr),
@@ -162,7 +168,10 @@ pub trait SortLogger<T: Copy + Ord> {
         result
     }
     #[inline(always)]
-    fn cmp_neq<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool {
+    fn cmp_neq<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool
+    where
+        Self: Sized,
+    {
         let result = arr[ind_a] != arr[ind_b];
         self.log(SortLog::CmpInArr {
             name: arr_name!(arr),
@@ -173,7 +182,10 @@ pub trait SortLogger<T: Copy + Ord> {
         result
     }
     #[inline(always)]
-    fn cmp_lt<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool {
+    fn cmp_lt<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool
+    where
+        Self: Sized,
+    {
         let result = arr[ind_a] < arr[ind_b];
         self.log(SortLog::CmpInArr {
             name: arr_name!(arr),
@@ -184,7 +196,10 @@ pub trait SortLogger<T: Copy + Ord> {
         result
     }
     #[inline(always)]
-    fn cmp_le<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool {
+    fn cmp_le<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool
+    where
+        Self: Sized,
+    {
         let result = arr[ind_a] <= arr[ind_b];
         self.log(SortLog::CmpInArr {
             name: arr_name!(arr),
@@ -194,13 +209,29 @@ pub trait SortLogger<T: Copy + Ord> {
         });
         result
     }
+
+    // T-specific comparisons — dyn-compatible (no extra type params).
     #[inline(always)]
     fn cmp_gt(&mut self, arr: &[T], ind_a: usize, ind_b: usize) -> bool {
-        self.cmp_lt(arr, ind_b, ind_a)
+        let result = arr[ind_a] > arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        result
     }
     #[inline(always)]
     fn cmp_ge(&mut self, arr: &[T], ind_a: usize, ind_b: usize) -> bool {
-        self.cmp_le(arr, ind_b, ind_a)
+        let result = arr[ind_a] >= arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        result
     }
 
     //in arr to outside data cmp
@@ -369,11 +400,16 @@ pub trait SortLogger<T: Copy + Ord> {
     ) {
         self.write_data_u(arr_b, ind_b, arr_a[ind_a]);
     }
+
     /*----------------
-        Swaps
+        Swaps — generic-over-U gated with `where Self: Sized`.
+        Use `cond_swap_lt` / `cond_swap_gt` for T-specific operations in sorts.
     --------------- */
     #[inline(always)]
-    fn swap<U: Ord>(&mut self, arr: &mut [U], ind_a: usize, ind_b: usize) {
+    fn swap<U: Ord>(&mut self, arr: &mut [U], ind_a: usize, ind_b: usize)
+    where
+        Self: Sized,
+    {
         self.log(SortLog::Swap {
             name: arr_name!(arr),
             ind_a,
@@ -381,37 +417,89 @@ pub trait SortLogger<T: Copy + Ord> {
         });
         arr.swap(ind_a, ind_b);
     }
+
+    /// Conditionally swap arr[ind_a] and arr[ind_b] if arr[ind_a] < arr[ind_b].
+    /// Returns true if a swap occurred.
+    ///
+    /// Dyn-compatible: works on `dyn SortLogger<T>`.
     #[inline(always)]
     fn cond_swap_lt(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) -> bool {
-        let ret = self.cmp_lt(arr, ind_a, ind_b);
-        if ret {
-            self.swap(arr, ind_a, ind_b)
+        let result = arr[ind_a] < arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        if result {
+            self.log(SortLog::Swap {
+                name: arr_name!(arr),
+                ind_a,
+                ind_b,
+            });
+            arr.swap(ind_a, ind_b);
         }
-        ret
+        result
     }
+
+    /// Conditionally swap if arr[ind_a] <= arr[ind_b].
+    /// Gated with `where Self: Sized` because the original impl called `swap<U>`.
     #[inline(always)]
-    fn cond_swap_le<U: Ord>(&mut self, arr: &mut [U], ind_a: usize, ind_b: usize) -> bool {
-        let ret = self.cmp_le(arr, ind_a, ind_b);
+    fn cond_swap_le<U: Ord>(&mut self, arr: &mut [U], ind_a: usize, ind_b: usize) -> bool
+    where
+        Self: Sized,
+    {
+        let ret = arr[ind_a] <= arr[ind_b];
         if ret {
             self.swap(arr, ind_a, ind_b)
         }
         ret
     }
+
+    /// Conditionally swap arr[ind_a] and arr[ind_b] if arr[ind_a] >= arr[ind_b].
+    ///
+    /// Dyn-compatible.
     #[inline(always)]
     fn cond_swap_ge(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) -> bool {
-        let ret = self.cmp_ge(arr, ind_a, ind_b);
-        if ret {
-            self.swap(arr, ind_a, ind_b)
+        let result = arr[ind_a] >= arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        if result {
+            self.log(SortLog::Swap {
+                name: arr_name!(arr),
+                ind_a,
+                ind_b,
+            });
+            arr.swap(ind_a, ind_b);
         }
-        ret
+        result
     }
+
+    /// Conditionally swap arr[ind_a] and arr[ind_b] if arr[ind_a] > arr[ind_b].
+    ///
+    /// Dyn-compatible.
     #[inline(always)]
     fn cond_swap_gt(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) -> bool {
-        let ret = self.cmp_gt(arr, ind_a, ind_b);
-        if ret {
-            self.swap(arr, ind_a, ind_b)
+        let result = arr[ind_a] > arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        if result {
+            self.log(SortLog::Swap {
+                name: arr_name!(arr),
+                ind_a,
+                ind_b,
+            });
+            arr.swap(ind_a, ind_b);
         }
-        ret
+        result
     }
 }
 

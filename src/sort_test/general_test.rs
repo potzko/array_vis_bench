@@ -38,7 +38,7 @@ pub fn test_permutations_n(choice: &[String], n: usize) -> bool {
             *ii = tmp_i % n;
             tmp_i /= n;
         }
-        fn_sort(&mut arr, &mut (), choice);
+        fn_sort(&mut arr, &mut () as &mut dyn crate::traits::log_traits::SortLogger<usize>, choice);
         flag = flag && is_sorted(&arr);
     }
     flag
