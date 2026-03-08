@@ -1,58 +1,31 @@
-use crate::traits::{SortAlgo, SortLogger};
-
 pub mod bubble_sort;
 pub mod bubble_sort_recursive;
 pub mod odd_even_bubble_sort;
 pub mod shaker_sort;
 
-pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
-    arr: &mut [T],
-    logger: &mut U,
+use crate::traits::log_traits::SortLogger;
+
+pub fn fn_sort(
+    arr: &mut [usize],
+    logger: &mut dyn SortLogger<usize>,
     choice: &[String],
 ) -> Vec<String> {
-    if choice.is_empty() {
-        type Sort<A, B> = bubble_sort::SortImp<A, B>;
-        Sort::<T, U>::sort(arr, logger);
-        vec![format!("name: {}", Sort::<T, U>::name())]
-    } else {
-        #[allow(clippy::wildcard_in_or_patterns)]
-        match choice[0].as_str() {
-            "bubble_sort_recursive" => {
-                type Sort<A, B> = bubble_sort_recursive::SortImp<A, B>;
-                Sort::<T, U>::sort(arr, logger);
-                vec![format!("name: {}", Sort::<T, U>::name())]
-            }
-            "odd_even_bubble_sort" => {
-                type Sort<A, B> = odd_even_bubble_sort::SortImp<A, B>;
-                Sort::<T, U>::sort(arr, logger);
-                vec![format!("name: {}", Sort::<T, U>::name())]
-            }
-            "shaker_sort" => {
-                type Sort<A, B> = shaker_sort::SortImp<A, B>;
-                Sort::<T, U>::sort(arr, logger);
-                vec![format!("name: {}", Sort::<T, U>::name())]
-            }
-            "bubble_sort" | _ => {
-                type Sort<A, B> = bubble_sort::SortImp<A, B>;
-                Sort::<T, U>::sort(arr, logger);
-                vec![format!("name: {}", Sort::<T, U>::name())]
-            }
-        }
+    let name = choice.first().map(String::as_str).unwrap_or("");
+    match name {
+        "bubble sort recursive" => bubble_sort_recursive::sort_dyn(arr, logger),
+        "odd-even bubble sort"  => odd_even_bubble_sort::sort_dyn(arr, logger),
+        "shaker sort"           => shaker_sort::sort_dyn(arr, logger),
+        _                       => bubble_sort::sort_dyn(arr, logger),
     }
+    vec![format!("name: {}", name)]
 }
 
-pub fn options(choice: &[String]) -> Vec<String> {
-    if choice.is_empty() {
-        [
-            "bubble_sort",
-            "bubble_sort_recursive",
-            "shaker_sort",
-            "bubble_sort",
-        ]
-        .iter()
-        .map(|i| i.to_string())
-        .collect()
-    } else {
-        vec![]
+pub fn sort_choice(name: &str) -> Option<Vec<String>> {
+    match name {
+        "bubble sort"
+        | "bubble sort recursive"
+        | "odd-even bubble sort"
+        | "shaker sort" => Some(vec!["bubble_sorts".to_string(), name.to_string()]),
+        _ => None,
     }
 }

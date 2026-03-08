@@ -1,0 +1,467 @@
+use crate::arr_name;
+use crate::sort_log::SortLog;
+
+/// Instrumentation trait for sort algorithms.
+///
+/// All methods that operate on `T` (the sort element type) are non-generic and
+/// dyn-compatible.  The helper methods that accept a *different* element type
+/// `U` (e.g. for auxiliary arrays) are gated with `where Self: Sized` so they
+/// are only callable on concrete loggers — adding a new gap sequence or sort
+/// should never need those.
+pub trait SortLogger<T: Copy + Ord> {
+    fn log(&mut self, _: SortLog<T>) {}
+
+    /* Misc */
+    #[inline(always)]
+    fn mark(&mut self, mssg: String) {
+        self.log(SortLog::Mark(mssg))
+    }
+    #[inline(always)]
+    fn mark_mssg(&mut self, mssg: &str) {
+        self.log(SortLog::Mark(mssg.to_string()))
+    }
+    #[inline(always)]
+    fn log_aux_arr_t(&mut self, arr: &[T]) {
+        self.log(SortLog::CreateAuxArrT {
+            name: arr_name!(arr),
+            length: arr.len(),
+        })
+    }
+    #[inline(always)]
+    fn log_aux_arr_u(&mut self, arr: &[usize]) {
+        self.log(SortLog::CreateAuxArr {
+            name: arr_name!(arr),
+            length: arr.len(),
+        })
+    }
+    #[inline(always)]
+    fn copy_aux_arr_t(&mut self, arr: &[T]) -> Vec<T>
+    where
+        Self: Sized,
+    {
+        let mut ret = Vec::<T>::with_capacity(arr.len());
+        unsafe { ret.set_len(arr.len()) }
+        self.log_aux_arr_t(&ret);
+        for i in 0..arr.len() {
+            self.write_accross(arr, i, &mut ret, i)
+        }
+        ret
+    }
+    #[inline(always)]
+    fn create_aux_arr_t(&mut self, len: usize) -> Vec<T> {
+        let mut ret = Vec::<T>::with_capacity(len);
+        unsafe { ret.set_len(len) }
+        self.log_aux_arr_t(&ret);
+        ret
+    }
+    #[inline(always)]
+    fn copy_aux_arr(&mut self, arr: &[usize]) -> Vec<usize>
+    where
+        Self: Sized,
+    {
+        let mut ret = Vec::<usize>::with_capacity(arr.len());
+        unsafe { ret.set_len(arr.len()) }
+        self.log_aux_arr_u(&ret);
+        for i in 0..arr.len() {
+            self.write_accross_u(arr, i, &mut ret, i)
+        }
+        ret
+    }
+    #[inline(always)]
+    fn create_aux_arr(&mut self, len: usize) -> Vec<usize> {
+        let mut ret = Vec::<usize>::with_capacity(len);
+        unsafe { ret.set_len(len) }
+        self.log_aux_arr_u(&ret);
+        ret
+    }
+    #[inline(always)]
+    fn free_aux_arr_t(&mut self, arr: &[T]) {
+        self.log(SortLog::FreeAuxArr {
+            name: arr_name!(arr),
+        })
+    }
+    #[inline(always)]
+    fn free_aux_arr(&mut self, arr: &[usize]) {
+        self.log(SortLog::FreeAuxArr {
+            name: arr_name!(arr),
+        })
+    }
+
+    /*----------------
+        Cmps — generic-over-U versions (for auxiliary/cross-type comparisons).
+        Gated with `where Self: Sized` so they are excluded from the dyn vtable.
+    --------------- */
+
+    #[inline(always)]
+    fn cmp_eq<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool
+    where
+        Self: Sized,
+    {
+        let result = arr[ind_a] == arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        result
+    }
+    #[inline(always)]
+    fn cmp_neq<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool
+    where
+        Self: Sized,
+    {
+        let result = arr[ind_a] != arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        result
+    }
+    #[inline(always)]
+    fn cmp_lt<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool
+    where
+        Self: Sized,
+    {
+        let result = arr[ind_a] < arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        result
+    }
+    #[inline(always)]
+    fn cmp_le<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool
+    where
+        Self: Sized,
+    {
+        let result = arr[ind_a] <= arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        result
+    }
+
+    // T-specific comparisons — dyn-compatible (no extra type params).
+    #[inline(always)]
+    fn cmp_gt(&mut self, arr: &[T], ind_a: usize, ind_b: usize) -> bool {
+        let result = arr[ind_a] > arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        result
+    }
+    #[inline(always)]
+    fn cmp_ge(&mut self, arr: &[T], ind_a: usize, ind_b: usize) -> bool {
+        let result = arr[ind_a] >= arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        result
+    }
+
+    // in-arr to outside data cmp
+    #[inline(always)]
+    fn cmp_eq_data(&mut self, arr: &[T], ind: usize, data: T) -> bool {
+        let result = arr[ind] == data;
+        self.log(SortLog::CmpData {
+            name: arr_name!(arr),
+            ind,
+            data,
+            result,
+        });
+        result
+    }
+    #[inline(always)]
+    fn cmp_neq_data(&mut self, arr: &[T], ind: usize, data: T) -> bool {
+        let result = arr[ind] != data;
+        self.log(SortLog::CmpData {
+            name: arr_name!(arr),
+            ind,
+            data,
+            result,
+        });
+        result
+    }
+    #[inline(always)]
+    fn cmp_lt_data(&mut self, arr: &[T], ind: usize, data: T) -> bool {
+        let result = arr[ind] < data;
+        self.log(SortLog::CmpData {
+            name: arr_name!(arr),
+            ind,
+            data,
+            result,
+        });
+        result
+    }
+    #[inline(always)]
+    fn cmp_le_data(&mut self, arr: &[T], ind: usize, data: T) -> bool {
+        let result = arr[ind] <= data;
+        self.log(SortLog::CmpData {
+            name: arr_name!(arr),
+            ind,
+            data,
+            result,
+        });
+        result
+    }
+    #[inline(always)]
+    fn cmp_gt_data(&mut self, arr: &[T], ind: usize, data: T) -> bool {
+        let result = arr[ind] > data;
+        self.log(SortLog::CmpData {
+            name: arr_name!(arr),
+            ind,
+            data,
+            result,
+        });
+        result
+    }
+    #[inline(always)]
+    fn cmp_gt_data_u(&mut self, arr: &[usize], ind: usize, data: usize) -> bool {
+        let result = arr[ind] > data;
+        self.log(SortLog::CmpDataU {
+            name: arr_name!(arr),
+            ind,
+            data,
+            result,
+        });
+        result
+    }
+    #[inline(always)]
+    fn cmp_ge_data(&mut self, arr: &[T], ind: usize, data: T) -> bool {
+        let result = arr[ind] >= data;
+        self.log(SortLog::CmpData {
+            name: arr_name!(arr),
+            ind,
+            data,
+            result,
+        });
+        result
+    }
+
+    // arr_a to arr_b cmp
+    #[inline(always)]
+    fn cmp_lt_accross(&mut self, arr_a: &[T], ind_a: usize, arr_b: &[T], ind_b: usize) -> bool {
+        let result = arr_a[ind_a] < arr_b[ind_b];
+        self.log(SortLog::CmpAcrossArrs {
+            name_a: arr_name!(arr_a),
+            ind_a,
+            name_b: arr_name!(arr_b),
+            ind_b,
+            result,
+        });
+        result
+    }
+    #[inline(always)]
+    fn cmp_le_accross(&mut self, arr_a: &[T], ind_a: usize, arr_b: &[T], ind_b: usize) -> bool {
+        let result = arr_a[ind_a] <= arr_b[ind_b];
+        self.log(SortLog::CmpAcrossArrs {
+            name_a: arr_name!(arr_a),
+            ind_a,
+            name_b: arr_name!(arr_b),
+            ind_b,
+            result,
+        });
+        result
+    }
+    #[inline(always)]
+    fn cmp_gt_accross(&mut self, arr_a: &[T], ind_a: usize, arr_b: &[T], ind_b: usize) -> bool {
+        self.cmp_lt_accross(arr_b, ind_b, arr_a, ind_a)
+    }
+    #[inline(always)]
+    fn cmp_ge_accross(&mut self, arr_a: &[T], ind_a: usize, arr_b: &[T], ind_b: usize) -> bool {
+        self.cmp_le_accross(arr_b, ind_b, arr_a, ind_a)
+    }
+
+    /*----------------
+        Writes
+    --------------- */
+    #[inline(always)]
+    fn write(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) {
+        self.log(SortLog::WriteInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+        });
+        arr[ind_a] = arr[ind_b]
+    }
+    #[inline(always)]
+    fn write_u(&mut self, arr: &mut [usize], ind_a: usize, ind_b: usize) {
+        self.log(SortLog::WriteInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+        });
+        arr[ind_a] = arr[ind_b]
+    }
+    #[inline(always)]
+    fn write_data(&mut self, arr: &mut [T], ind: usize, data: T) {
+        self.log(SortLog::WriteData {
+            name: arr_name!(arr),
+            ind,
+            data,
+        });
+        arr[ind] = data;
+    }
+    #[inline(always)]
+    fn write_data_u(&mut self, arr: &mut [usize], ind: usize, data: usize) {
+        self.log(SortLog::WriteDataU {
+            name: arr_name!(arr),
+            ind,
+            data,
+        });
+        arr[ind] = data;
+    }
+    #[inline(always)]
+    fn write_accross(&mut self, arr_a: &[T], ind_a: usize, arr_b: &mut [T], ind_b: usize) {
+        self.write_data(arr_b, ind_b, arr_a[ind_a]);
+    }
+    #[inline(always)]
+    fn write_accross_u(
+        &mut self,
+        arr_a: &[usize],
+        ind_a: usize,
+        arr_b: &mut [usize],
+        ind_b: usize,
+    ) {
+        self.write_data_u(arr_b, ind_b, arr_a[ind_a]);
+    }
+
+    /*----------------
+        Swaps
+        T-specific (dyn-compatible): cond_swap_lt, cond_swap_le, cond_swap_ge, cond_swap_gt
+        Generic-over-U (where Self: Sized): swap, cond_swap_le_any
+    --------------- */
+    #[inline(always)]
+    fn swap<U: Ord>(&mut self, arr: &mut [U], ind_a: usize, ind_b: usize)
+    where
+        Self: Sized,
+    {
+        self.log(SortLog::Swap {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+        });
+        arr.swap(ind_a, ind_b);
+    }
+
+    /// Conditionally swap arr[ind_a] and arr[ind_b] if arr[ind_a] < arr[ind_b].
+    /// Returns true if a swap occurred.
+    ///
+    /// Dyn-compatible: works on `dyn SortLogger<T>`.
+    #[inline(always)]
+    fn cond_swap_lt(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) -> bool {
+        let result = arr[ind_a] < arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        if result {
+            self.log(SortLog::Swap {
+                name: arr_name!(arr),
+                ind_a,
+                ind_b,
+            });
+            arr.swap(ind_a, ind_b);
+        }
+        result
+    }
+
+    /// Conditionally swap arr[ind_a] and arr[ind_b] if arr[ind_a] <= arr[ind_b].
+    ///
+    /// Dyn-compatible: works on `dyn SortLogger<T>`.
+    #[inline(always)]
+    fn cond_swap_le(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) -> bool {
+        let result = arr[ind_a] <= arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        if result {
+            self.log(SortLog::Swap {
+                name: arr_name!(arr),
+                ind_a,
+                ind_b,
+            });
+            arr.swap(ind_a, ind_b);
+        }
+        result
+    }
+
+    /// Conditionally swap if arr[ind_a] <= arr[ind_b] for an arbitrary element type U.
+    /// Gated with `where Self: Sized` — use `cond_swap_le` for the sort element type T.
+    #[inline(always)]
+    fn cond_swap_le_any<U: Ord>(&mut self, arr: &mut [U], ind_a: usize, ind_b: usize) -> bool
+    where
+        Self: Sized,
+    {
+        let ret = arr[ind_a] <= arr[ind_b];
+        if ret {
+            self.swap(arr, ind_a, ind_b)
+        }
+        ret
+    }
+
+    /// Conditionally swap arr[ind_a] and arr[ind_b] if arr[ind_a] >= arr[ind_b].
+    ///
+    /// Dyn-compatible.
+    #[inline(always)]
+    fn cond_swap_ge(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) -> bool {
+        let result = arr[ind_a] >= arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        if result {
+            self.log(SortLog::Swap {
+                name: arr_name!(arr),
+                ind_a,
+                ind_b,
+            });
+            arr.swap(ind_a, ind_b);
+        }
+        result
+    }
+
+    /// Conditionally swap arr[ind_a] and arr[ind_b] if arr[ind_a] > arr[ind_b].
+    ///
+    /// Dyn-compatible.
+    #[inline(always)]
+    fn cond_swap_gt(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) -> bool {
+        let result = arr[ind_a] > arr[ind_b];
+        self.log(SortLog::CmpInArr {
+            name: arr_name!(arr),
+            ind_a,
+            ind_b,
+            result,
+        });
+        if result {
+            self.log(SortLog::Swap {
+                name: arr_name!(arr),
+                ind_a,
+                ind_b,
+            });
+            arr.swap(ind_a, ind_b);
+        }
+        result
+    }
+}

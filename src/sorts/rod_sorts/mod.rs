@@ -1,11 +1,9 @@
+pub mod branching;
 pub mod combinations;
-pub mod sequences;
-pub mod shell_sort;
-pub mod shell_sort_ordered;
+pub mod rod_sort;
 
 use crate::traits::log_traits::SortLogger;
-use sequences::{Classic, GAP_SEQUENCES};
-use shell_sort::ShellSort;
+use branching::ROD_STRATEGIES;
 
 pub fn fn_sort(
     arr: &mut [usize],
@@ -14,28 +12,26 @@ pub fn fn_sort(
 ) -> Vec<String> {
     let name = choice.first().map(String::as_str).unwrap_or("");
 
-    for entry in GAP_SEQUENCES {
+    for entry in ROD_STRATEGIES {
         if entry.name == name {
             (entry.sort_vis)(arr, logger);
             return vec![format!("name: {}", name)];
         }
     }
 
-    // Default: classic sequence
-    ShellSort::<Classic>::sort(arr, logger);
+    // Default: classic strategy
+    use branching::Classic;
+    use rod_sort::RodSort;
+    RodSort::<Classic>::sort(arr, logger);
     vec![format!("name: {}", name)]
 }
 
-pub fn options(_: &[String]) -> Vec<String> {
-    vec![]
-}
-
 /// Returns the choice vec for `fn_sort` dispatch if `name` is a registered
-/// shell-sort variant, otherwise `None`.
+/// rod-sort variant, otherwise `None`.
 pub fn sort_choice(name: &str) -> Option<Vec<String>> {
-    for entry in GAP_SEQUENCES {
+    for entry in ROD_STRATEGIES {
         if entry.name == name {
-            return Some(vec!["shell_sorts".to_string(), name.to_string()]);
+            return Some(vec!["rod_sorts".to_string(), name.to_string()]);
         }
     }
     None

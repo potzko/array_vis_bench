@@ -1,20 +1,21 @@
-use crate::traits::{SortAlgo, SortLogger};
-
 pub mod cycle_sort;
 
-pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
-    arr: &mut [T],
-    logger: &mut U,
-    _: &[String],
+use crate::traits::log_traits::SortLogger;
+
+pub fn fn_sort(
+    arr: &mut [usize],
+    logger: &mut dyn SortLogger<usize>,
+    choice: &[String],
 ) -> Vec<String> {
-    cycle_sort::SortImp::<T, U>::sort(arr, logger);
-    vec![format!("name: {}", cycle_sort::SortImp::<T, U>::name())]
+    let name = choice.first().map(String::as_str).unwrap_or("");
+    cycle_sort::sort_dyn(arr, logger);
+    vec![format!("name: {}", name)]
 }
 
-pub fn options(choice: &[String]) -> Vec<String> {
-    if choice.is_empty() {
-        vec!["cycle_sort".to_string()]
+pub fn sort_choice(name: &str) -> Option<Vec<String>> {
+    if name == "cycle sort" {
+        Some(vec!["cycle_sorts".to_string(), name.to_string()])
     } else {
-        vec![]
+        None
     }
 }

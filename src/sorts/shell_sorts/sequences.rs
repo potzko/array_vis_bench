@@ -1,6 +1,3 @@
-// Pure sequence implementations live in utils::shell_sequences.
-// This module owns the registration infrastructure and re-exports the
-// sequence types so the rest of shell_sorts can import from one place.
 pub use crate::utils::shell_sequences::{
     Ciura, Classic, GapSequence, Hibbard, Knuth, Optimized256, Pratt, Sedgewick,
     SedgewickBranching, Tokuda,
@@ -9,18 +6,12 @@ pub use crate::utils::shell_sequences::{
 use crate::traits::log_traits::SortLogger;
 use crate::traits::SortFn;
 
-/// A runtime entry describing a concrete shell-sort variant.
-///
-/// Populated at link time via `#[linkme::distributed_slice(GAP_SEQUENCES)]`
-/// entries in each sequence's registration block below.  `combinations.rs`
-/// iterates this slice at startup to fill SORT_REGISTRY / SORT_NAMES.
-/// `shell_sorts::fn_sort` iterates it for visualization dispatch.
 pub struct GapSequenceEntry {
     pub name: &'static str,
     pub big_o: &'static str,
-    /// Monomorphic sort for SORT_REGISTRY (NoOpLogger, fully inlinable).
+    /// Navigation path for the tree menu, e.g. `["shell sorts", "shell sort", "ciura"]`.
+    pub path: &'static [&'static str],
     pub sort_fn: SortFn,
-    /// Sort with dynamic logger dispatch, used by fn_sort for visualization.
     pub sort_vis: fn(&mut [usize], &mut dyn SortLogger<usize>),
 }
 
@@ -28,18 +19,11 @@ pub struct GapSequenceEntry {
 pub static GAP_SEQUENCES: [GapSequenceEntry] = [..];
 
 // ---------------------------------------------------------------------------
-// Registration macro
-//
-// Generates two private submodules — one for the standard shell sort and one
-// for the ordered-insertion variant — plus four distributed-slice statics for
-// a given GapSequence type.
-//
 // Usage:  register_sequence!(mod_name, mod_name_ordered, SequenceType)
-//
 // To add a new gap sequence:
 //   1. Add the struct + GapSequence impl to utils/shell_sequences/mod.rs
 //   2. Add it to the re-export list at the top of this file
-//   3. Call register_sequence!(name, name_ordered, Type) below — nothing else changes
+//   3. Call register_sequence!(name, name_ordered, Type) — nothing else changes
 // ---------------------------------------------------------------------------
 macro_rules! register_sequence {
     ($mod:ident, $mod_ord:ident, $seq:ident) => {
@@ -51,6 +35,7 @@ macro_rules! register_sequence {
 
             const SORT_NAME: &str =
                 const_format::concatcp!("shell sort<sequence: ", $seq::NAME, ">");
+            const PATH: &[&str] = &["shell sorts", "shell sort", $seq::NAME];
 
             fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) {
                 ShellSort::<$seq>::sort(arr, logger);
@@ -67,6 +52,7 @@ macro_rules! register_sequence {
             static ENTRY: GapSequenceEntry = GapSequenceEntry {
                 name: SORT_NAME,
                 big_o: $seq::BIG_O,
+                path: PATH,
                 sort_fn,
                 sort_vis,
             };
@@ -89,6 +75,7 @@ macro_rules! register_sequence {
 
             const SORT_NAME: &str =
                 const_format::concatcp!("shell sort ordered<sequence: ", $seq::NAME, ">");
+            const PATH: &[&str] = &["shell sorts", "shell sort ordered", $seq::NAME];
 
             fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) {
                 ShellSortOrdered::<$seq>::sort(arr, logger);
@@ -105,6 +92,7 @@ macro_rules! register_sequence {
             static ENTRY: GapSequenceEntry = GapSequenceEntry {
                 name: SORT_NAME,
                 big_o: $seq::BIG_O,
+                path: PATH,
                 sort_fn,
                 sort_vis,
             };

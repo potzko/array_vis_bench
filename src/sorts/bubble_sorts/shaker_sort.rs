@@ -2,7 +2,10 @@ use crate::create_sort;
 
 create_sort!(sort, "shaker sort", "O(N^2)", true);
 
-fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+fn sort<T: Ord + Copy, U: ?Sized + crate::traits::log_traits::SortLogger<T>>(
+    arr: &mut [T],
+    logger: &mut U,
+) {
     let mut left = 0;
     let mut right = arr.len() - 1;
     while left < right {
@@ -15,4 +18,8 @@ fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T
         }
         left += 1;
     }
+}
+
+pub fn sort_dyn(arr: &mut [usize], logger: &mut dyn crate::traits::log_traits::SortLogger<usize>) {
+    sort(arr, logger);
 }
