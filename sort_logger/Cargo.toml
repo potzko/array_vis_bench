@@ -1,0 +1,8 @@
+[package]
+name = "sort_logger"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "sort_logger"
+path = "src/lib.rs"

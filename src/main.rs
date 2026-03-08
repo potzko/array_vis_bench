@@ -1,4 +1,5 @@
 use array_vis_bench::traits::get_registered_sorts;
+use array_vis_bench::traits::get_sort_tree;
 use array_vis_bench::traits::log_traits::{SortLog, VisualizerLogger};
 use array_vis_bench::visualise::visualise_sort;
 use array_vis_bench::utils::array_gen::{get_rand_arr, get_rand_arr_in_range, get_arr, get_reversed_arr};
@@ -14,15 +15,9 @@ fn main() {
     println!("Array Visualization Benchmark");
     println!("==============================");
     
-    // Step 1: Select sorting algorithm
-    let registered_sorts = get_registered_sorts();
-    println!("\nAvailable Sorting Algorithms:");
-    for (i, sort_name) in registered_sorts.iter().enumerate() {
-        println!("  {}: {}", i + 1, sort_name);
-    }
-    
-    let selected_sort = get_user_selection("Select a sorting algorithm", 1, registered_sorts.len());
-    let sort_name = &registered_sorts[selected_sort - 1];
+    // Step 1: Select sorting algorithm via decision tree
+    let tree = get_sort_tree();
+    let sort_name = select_sort(&tree);
     println!("Selected: {}", sort_name);
     
     // Step 2: Select array type
@@ -80,7 +75,7 @@ fn main() {
     };
     
     // Create sort selection format that the system expects
-    let sort_choice = create_sort_choice(sort_name);
+    let sort_choice = create_sort_choice(&sort_name);
     
     println!("\nGenerating visualization...");
     
@@ -137,19 +132,18 @@ fn get_user_selection(prompt: &str, min: usize, max: usize) -> usize {
 }
 
 fn create_sort_choice(sort_name: &str) -> Vec<String> {
-    // Shell sorts — checked against GAP_SEQUENCES so new variants are
-    // automatically routable without touching this function.
-    if let Some(choice) = array_vis_bench::sorts::shell_sorts::sort_choice(sort_name) {
-        return choice;
-    }
+    use array_vis_bench::sorts;
+
+    if let Some(c) = sorts::shell_sorts::sort_choice(sort_name) { return c; }
+    if let Some(c) = sorts::rod_sorts::sort_choice(sort_name)   { return c; }
+    if let Some(c) = sorts::bubble_sorts::sort_choice(sort_name) { return c; }
+    if let Some(c) = sorts::circle_sorts::sort_choice(sort_name) { return c; }
+    if let Some(c) = sorts::comb_sorts::sort_choice(sort_name)  { return c; }
+    if let Some(c) = sorts::cycle_sorts::sort_choice(sort_name) { return c; }
 
     match sort_name {
         "insertion sort" => vec!["insertion_sorts".to_string(), "insertion_sort".to_string()],
 
-        // When a new sort family is reconnected (see REFACTOR_PLAN.md), add
-        // its arm here — or, better, expose a sort_choice() function from that
-        // module (like shell_sorts::sort_choice) so this function never needs
-        // to change.
         _ => panic!(
             "\n\
              ┌─────────────────────────────────────────────────────────┐\n\
@@ -179,3 +173,60 @@ fn validate_sort_routing() {
 
 // Quick sort name parsing removed — will be reimplemented in Phase 2.
 // See REFACTOR_PLAN.md.
+
+/// Navigate the sort tree interactively and return the chosen sort's registered name.
+///
+/// At each level the user sees a numbered list of sub-trees (categories) and
+/// leaf sorts combined.  Picking a sub-tree recurses deeper; picking a leaf
+/// returns the sort name.  Works for any tree depth.
+fn select_sort(tree: &sort_registry_core::SortTree) -> String {
+    use sort_registry_core::SortTree;
+
+    // Collect this level's options: branches first, then leaves.
+    // Each option is either a (label, &subtree) or a (display_label, sort_name).
+    enum Opt<'a> {
+        Branch(&'a str, &'a SortTree),
+        Leaf(&'a str, &'a str),
+    }
+
+    let mut opts: Vec<Opt> = Vec::new();
+    for (label, subtree) in &tree.children {
+        opts.push(Opt::Branch(label, subtree));
+    }
+    for (display, name) in &tree.leaves {
+        opts.push(Opt::Leaf(display, name));
+    }
+
+    // Auto-select if there is exactly one option at this level.
+    if opts.len() == 1 {
+        return match &opts[0] {
+            Opt::Branch(_, subtree) => select_sort(subtree),
+            Opt::Leaf(_, name) => name.to_string(),
+        };
+    }
+
+    println!();
+    for (i, opt) in opts.iter().enumerate() {
+        match opt {
+            Opt::Branch(label, subtree) => {
+                let count = count_leaves(subtree);
+                println!("  {}: {} ({} sort{})", i + 1, label, count,
+                    if count == 1 { "" } else { "s" });
+            }
+            Opt::Leaf(display, _) => {
+                println!("  {}: {}", i + 1, display);
+            }
+        }
+    }
+
+    let sel = get_user_selection("Select", 1, opts.len()) - 1;
+    match &opts[sel] {
+        Opt::Branch(_, subtree) => select_sort(subtree),
+        Opt::Leaf(_, name) => name.to_string(),
+    }
+}
+
+fn count_leaves(tree: &sort_registry_core::SortTree) -> usize {
+    tree.leaves.len()
+        + tree.children.iter().map(|(_, c)| count_leaves(c)).sum::<usize>()
+}

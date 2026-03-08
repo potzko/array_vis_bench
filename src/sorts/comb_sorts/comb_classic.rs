@@ -2,7 +2,7 @@ use crate::create_sort;
 
 create_sort!(sort, "comb sort classic", "O(N^2)", false);
 
-fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+fn sort<T: Ord + Copy, U: ?Sized + crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     let mut gap = arr.len();
     let mut swapped = true;
     while gap > 1 || swapped {
@@ -16,4 +16,8 @@ fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T
             }
         }
     }
+}
+
+pub fn sort_dyn(arr: &mut [usize], logger: &mut dyn crate::traits::log_traits::SortLogger<usize>) {
+    sort(arr, logger);
 }

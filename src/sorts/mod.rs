@@ -1,15 +1,17 @@
 use crate::traits::log_traits::SortLogger;
 use crate::utils::check_utils;
 
+pub mod annotations;
+pub mod bubble_sorts;
+pub mod circle_sorts;
+pub mod comb_sorts;
+pub mod cycle_sorts;
 pub mod insertion_sorts;
+pub mod rod_sorts;
 pub mod shell_sorts;
 
-// Sorts disconnected during refactor — see REFACTOR_PLAN.md.
-// Uncomment a module and add its arm back to fn_sort/options below to restore.
-// pub mod bubble_sorts;
-// pub mod circle_sorts;
-// pub mod comb_sorts;
-// pub mod cycle_sorts;
+
+// Sorts still disconnected — see REFACTOR_PLAN.md.
 // pub mod example_generic_sort;
 // pub mod fun_sorts;
 // pub mod heap_sort;
@@ -26,7 +28,12 @@ pub fn fn_sort(
         insertion_sorts::fn_sort(arr, logger, choice)
     } else {
         match choice[0].as_str() {
-            "shell_sorts" => shell_sorts::fn_sort(arr, logger, &choice[1..]),
+            "bubble_sorts"    => bubble_sorts::fn_sort(arr, logger, &choice[1..]),
+            "circle_sorts"    => circle_sorts::fn_sort(arr, logger, &choice[1..]),
+            "comb_sorts"      => comb_sorts::fn_sort(arr, logger, &choice[1..]),
+            "cycle_sorts"     => cycle_sorts::fn_sort(arr, logger, &choice[1..]),
+            "rod_sorts"       => rod_sorts::fn_sort(arr, logger, &choice[1..]),
+            "shell_sorts"     => shell_sorts::fn_sort(arr, logger, &choice[1..]),
             "insertion_sorts" | _ => insertion_sorts::fn_sort(arr, logger, &choice[1..]),
         }
     };

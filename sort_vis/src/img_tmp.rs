@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 extern crate image;
 
-use super::sub_image::SubImg;
-use crate::traits::log_traits::SortLog;
+use crate::sub_image::SubImg;
+use sort_logger::SortLog;
 use image::codecs::gif::{GifEncoder, Repeat};
 use image::{Delay, DynamicImage, GenericImage, ImageBuffer, Rgba};
 use std::fs::File;
@@ -47,7 +47,7 @@ fn push_image(encoder: &mut GifEncoder<&mut Vec<u8>>, image: &ImageBuffer<Rgba<u
     encoder.encode_frame(frame).unwrap();
 }
 
-pub fn main(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
+pub fn render_gif(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
     let arr = arr.to_vec();
 
     let mut inplace = true;

@@ -24,6 +24,11 @@ pub fn get_registered_sorts() -> Vec<String> {
     sort_registry_core::get_registered_sorts()
 }
 
+/// Build the full navigation tree for the interactive sort-selection menu.
+pub fn get_sort_tree() -> sort_registry_core::SortTree {
+    sort_registry_core::get_sort_tree()
+}
+
 /// Get a sort function by name - returns a bare function pointer (fully inlinable)
 pub fn get_sort(name: &str) -> Option<SortFn> {
     SORT_REGISTRY

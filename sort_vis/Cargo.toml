@@ -1,0 +1,12 @@
+[package]
+name = "sort_vis"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "sort_vis"
+path = "src/lib.rs"
+
+[dependencies]
+sort_logger = { path = "../sort_logger" }
+image = "0.24"
