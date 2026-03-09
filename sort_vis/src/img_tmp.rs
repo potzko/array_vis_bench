@@ -3,14 +3,30 @@ extern crate image;
 
 use crate::sub_image::SubImg;
 use sort_logger::SortLog;
-use image::codecs::gif::{GifEncoder, Repeat};
-use image::{Delay, DynamicImage, GenericImage, ImageBuffer, Rgba};
-use std::fs::File;
+use image::{DynamicImage, GenericImage, ImageBuffer, Rgba};
 use std::hash::Hash;
 use std::io::Write;
 use std::mem::size_of;
+use std::process::{Child, ChildStdin, Command, Stdio};
 
 const ACTIONS_PER_FRAME: usize = 100;
+const OUTPUT_WIDTH: u32 = 1920;
+const OUTPUT_HEIGHT: u32 = 1080;
+const FRAMERATE: u32 = 30;
+
+/// Switch encoding target by uncommenting one line:
+// const ENCODING: Encoding = Encoding::Lossless;
+// const ENCODING: Encoding = Encoding::Lossy;
+const ENCODING: Encoding = Encoding::Fast;
+
+/// Lossless — perfect quality, large file, moderate encode speed.
+/// Lossy     — good quality (CRF 23), small file, moderate encode speed.
+/// Fast      — lower quality (CRF 28), small file, fastest encode.
+enum Encoding {
+    Lossless,
+    Lossy,
+    Fast,
+}
 
 const WHITE: Rgba<u8> = Rgba([0xff, 0xff, 0xff, 0xff]);
 const BLACK: Rgba<u8> = Rgba([0x0, 0x0, 0x0, 0xff]);
@@ -31,20 +47,60 @@ fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
     ret
 }
 
-fn push_image(encoder: &mut GifEncoder<&mut Vec<u8>>, image: &ImageBuffer<Rgba<u8>, Vec<u8>>) {
-    let img = image.clone();
-    let resized_img =
-        DynamicImage::ImageRgba8(img).resize(1920, 1080, image::imageops::FilterType::Nearest);
+fn spawn_ffmpeg() -> Child {
+    let video_size = format!("{}x{}", OUTPUT_WIDTH, OUTPUT_HEIGHT);
+    let framerate = FRAMERATE.to_string();
 
-    let resized_img_buffer = resized_img.to_rgba8();
+    // Args shared by all modes: input spec
+    let mut args: Vec<&str> = vec![
+        "-y",
+        "-f", "rawvideo",
+        "-pixel_format", "rgb24",
+        "-video_size", &video_size,
+        "-framerate", &framerate,
+        "-i", "pipe:0",
+    ];
 
-    let frame = image::Frame::from_parts(
-        resized_img_buffer,
-        0,
-        0,
-        Delay::from_numer_denom_ms(1000, 1000),
-    );
-    encoder.encode_frame(frame).unwrap();
+    // Mode-specific output args
+    match ENCODING {
+        Encoding::Lossless => args.extend([
+            // libx264rgb stores raw RGB — no YUV conversion, no quality loss.
+            // colormatrix=GBR signals to players not to apply a YUV matrix on playback.
+            "-c:v", "libx264rgb",
+            "-crf", "0",
+            "-preset", "medium",
+            "-x264-params", "colormatrix=GBR:colorprim=bt709:transfer=bt709",
+        ]),
+        Encoding::Lossy => args.extend([
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv444p",  // 4:4:4 avoids chroma blur on sharp edges
+            "-crf", "23",
+            "-preset", "medium",
+        ]),
+        Encoding::Fast => args.extend([
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-crf", "28",
+            "-preset", "ultrafast",
+        ]),
+    }
+
+    args.push("output.mp4");
+
+    Command::new("ffmpeg")
+        .args(&args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .expect("failed to spawn ffmpeg — is it installed?")
+}
+
+fn push_frame(stdin: &mut ChildStdin, image: &ImageBuffer<Rgba<u8>, Vec<u8>>) {
+    let resized = DynamicImage::ImageRgba8(image.clone())
+        .resize_exact(OUTPUT_WIDTH, OUTPUT_HEIGHT, image::imageops::FilterType::Nearest)
+        .to_rgb8();
+    stdin.write_all(resized.as_raw()).unwrap();
 }
 
 pub fn render_gif(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
@@ -90,87 +146,78 @@ pub fn render_gif(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
         height: height / 2,
     };
     arrs.push(ArrActions::new(arr, view, name));
+
+    let mut ffmpeg = spawn_ffmpeg();
+    let stdin = ffmpeg.stdin.as_mut().expect("ffmpeg stdin not available");
+
     let mut i = 1;
-    let mut encoder_buffer = Vec::new();
-    {
-        let mut encoder: GifEncoder<&mut Vec<u8>> = GifEncoder::new(&mut encoder_buffer);
-        encoder.set_repeat(Repeat::Infinite).unwrap();
-        while i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME < actions.len() {
-            let mut split_points: Vec<usize> = vec![i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME];
-            #[allow(clippy::needless_range_loop)]
-            for ii in i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME
-                ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())
-            {
-                match actions[ii] {
-                    SortLog::CreateAuxArr { .. } => split_points.push(ii),
-                    SortLog::CreateAuxArrT { .. } => {
-                        split_points.push(ii);
-                    }
-                    _ => {}
+    while i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME < actions.len() {
+        let mut split_points: Vec<usize> = vec![i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME];
+        #[allow(clippy::needless_range_loop)]
+        for ii in i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME
+            ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())
+        {
+            match actions[ii] {
+                SortLog::CreateAuxArr { .. } => split_points.push(ii),
+                SortLog::CreateAuxArrT { .. } => {
+                    split_points.push(ii);
                 }
-            }
-            for ii in 1..split_points.len() {
-                for arr_view in arrs.iter_mut() {
-                    arr_view.update(&actions[split_points[ii - 1]..split_points[ii]], &mut img)
-                }
-                push_image(&mut encoder, &img);
-
-                match actions[split_points[ii]] {
-                    SortLog::CreateAuxArrT { name, length }
-                    | SortLog::CreateAuxArr { name, length } => {
-                        aux_view.rect(&mut img, 0, 0, aux_view.width, aux_view.height, BLACK);
-                        let views = get_views(&aux_view, arrs.len() as u32);
-                        arrs.push(ArrActions::new(
-                            vec![0; length],
-                            SubImg {
-                                x: 0,
-                                y: 0,
-                                width: 1000,
-                                height: 000,
-                            },
-                            name,
-                        ));
-                        let len = arrs.len();
-                        for iii in 1..len {
-                            arrs[iii].view = views[iii - 1];
-                            arrs[iii].full_rander_vec(&mut img, BLACK, WHITE)
-                        }
-                    }
-                    SortLog::FreeAuxArr { name: _ } => {}
-                    _ => {}
-                }
-            }
-
-            for arr_view in arrs.iter_mut() {
-                arr_view.update(
-                    &actions[*split_points.last().unwrap()
-                        ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())],
-                    &mut img,
-                )
-            }
-            push_image(&mut encoder, &img);
-
-            i += 1;
-            if i % 100 == 0 {
-                println!("{i} of {}", actions.len() / ACTIONS_PER_FRAME + 3);
+                _ => {}
             }
         }
-        /*
-        for action_block in actions.chunks(ACTIONS_PER_FRAME) {
+        for ii in 1..split_points.len() {
             for arr_view in arrs.iter_mut() {
-                arr_view.update(action_block, &mut img)
+                arr_view.update(&actions[split_points[ii - 1]..split_points[ii]], &mut img)
             }
-            img.save(format!(
-                "D:\\Programing\\IDE\\vscProjects\\rustFolder\\array_vis_bench\\tmp\\{}.png",
-                i
-            ))
-            .unwrap();
-            i += 1;
-        }*/
+            push_frame(stdin, &img);
+
+            match actions[split_points[ii]] {
+                SortLog::CreateAuxArrT { name, length }
+                | SortLog::CreateAuxArr { name, length } => {
+                    aux_view.rect(&mut img, 0, 0, aux_view.width, aux_view.height, BLACK);
+                    let views = get_views(&aux_view, arrs.len() as u32);
+                    arrs.push(ArrActions::new(
+                        vec![0; length],
+                        SubImg {
+                            x: 0,
+                            y: 0,
+                            width: 1000,
+                            height: 000,
+                        },
+                        name,
+                    ));
+                    let len = arrs.len();
+                    for iii in 1..len {
+                        arrs[iii].view = views[iii - 1];
+                        arrs[iii].full_rander_vec(&mut img, BLACK, WHITE)
+                    }
+                }
+                SortLog::FreeAuxArr { name: _ } => {}
+                _ => {}
+            }
+        }
+
+        for arr_view in arrs.iter_mut() {
+            arr_view.update(
+                &actions[*split_points.last().unwrap()
+                    ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())],
+                &mut img,
+            )
+        }
+        push_frame(stdin, &img);
+
+        i += 1;
+        if i % 100 == 0 {
+            println!("{i} of {}", actions.len() / ACTIONS_PER_FRAME + 3);
+        }
     }
-    // Construct the path to the Python script
-    let mut output_file = File::create("output.gif").unwrap();
-    output_file.write_all(&encoder_buffer).unwrap();
+
+    // Close stdin so ffmpeg knows the stream is done
+    drop(ffmpeg.stdin.take());
+    let status = ffmpeg.wait().expect("failed to wait on ffmpeg");
+    if !status.success() {
+        eprintln!("ffmpeg exited with status: {status}");
+    }
 }
 
 struct ArrActions {
