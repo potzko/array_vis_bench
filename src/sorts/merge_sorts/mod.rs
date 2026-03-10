@@ -7,6 +7,7 @@ pub mod natural;
 pub mod rotation;
 pub mod rotation_merge;
 pub mod top_down;
+pub mod timsort;
 pub mod top_down_mirror;
 
 use crate::traits::log_traits::SortLogger;
