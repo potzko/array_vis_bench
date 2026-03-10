@@ -134,6 +134,7 @@ fn get_user_selection(prompt: &str, min: usize, max: usize) -> usize {
 fn create_sort_choice(sort_name: &str) -> Vec<String> {
     use array_vis_bench::sorts;
 
+    if let Some(c) = sorts::merge_sorts::sort_choice(sort_name) { return c; }
     if let Some(c) = sorts::shell_sorts::sort_choice(sort_name) { return c; }
     if let Some(c) = sorts::rod_sorts::sort_choice(sort_name)   { return c; }
     if let Some(c) = sorts::bubble_sorts::sort_choice(sort_name) { return c; }

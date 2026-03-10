@@ -1,6 +1,6 @@
 pub mod array_gen;
 pub mod check_utils;
-pub mod operations;
+pub mod rotation;
 pub mod shell_branching;
 pub mod shell_sequences;
 

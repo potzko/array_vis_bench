@@ -11,11 +11,12 @@ pub mod rod_sorts;
 pub mod shell_sorts;
 
 
+pub mod merge_sorts;
+
 // Sorts still disconnected — see REFACTOR_PLAN.md.
 // pub mod example_generic_sort;
 // pub mod fun_sorts;
 // pub mod heap_sort;
-// pub mod merge_sorts;
 // pub mod quick_sorts;
 
 pub fn fn_sort(
@@ -33,6 +34,7 @@ pub fn fn_sort(
             "comb_sorts"      => comb_sorts::fn_sort(arr, logger, &choice[1..]),
             "cycle_sorts"     => cycle_sorts::fn_sort(arr, logger, &choice[1..]),
             "rod_sorts"       => rod_sorts::fn_sort(arr, logger, &choice[1..]),
+            "merge_sorts"     => merge_sorts::fn_sort(arr, logger, &choice[1..]),
             "shell_sorts"     => shell_sorts::fn_sort(arr, logger, &choice[1..]),
             "insertion_sorts" | _ => insertion_sorts::fn_sort(arr, logger, &choice[1..]),
         }
