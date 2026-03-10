@@ -34,6 +34,8 @@ macro_rules! register_merge_sort {
             #[allow(unused_imports)]
             use crate::sorts::merge_sorts::bottom_up::BottomUpMergeSort;
             #[allow(unused_imports)]
+            use crate::sorts::merge_sorts::naive::NaiveMergeSort;
+            #[allow(unused_imports)]
             use crate::sorts::merge_sorts::natural::NaturalMergeSort;
             #[allow(unused_imports)]
             use crate::sorts::merge_sorts::top_down_mirror::TopDownMirrorMergeSort;
@@ -118,6 +120,12 @@ register_merge_sort!(tdm_t32,              TopDownMirrorMergeSort::<InsertionSma
 register_merge_sort!(tdm_t32_pp,           TopDownMirrorMergeSort::<InsertionSmallSort<32>, true,  false>, "top-down mirror merge sort<threshold: 32, ping-pong>","O(N log N)", &["merge sorts", "classic", "top-down mirror", "threshold 32 + ping-pong"]);
 register_merge_sort!(tdm_t32_ee,           TopDownMirrorMergeSort::<InsertionSmallSort<32>, false, true>,  "top-down mirror merge sort<threshold: 32, early-exit>","O(N log N)", &["merge sorts", "classic", "top-down mirror", "threshold 32 + early-exit"]);
 register_merge_sort!(tdm_t32_pp_ee,        TopDownMirrorMergeSort::<InsertionSmallSort<32>, true,  true>,  "top-down mirror merge sort<threshold: 32, ping-pong, early-exit>","O(N log N)", &["merge sorts", "classic", "top-down mirror", "threshold 32 + ping-pong + early-exit"]);
+
+// ---------------------------------------------------------------------------
+// Naive  (SmallSort)
+// ---------------------------------------------------------------------------
+register_merge_sort!(naive,     NaiveMergeSort::<NoSmallSort>,           "naive merge sort",               "O(N log N)", &["merge sorts", "classic", "naive", "classic"]);
+register_merge_sort!(naive_t32, NaiveMergeSort::<InsertionSmallSort<32>>, "naive merge sort<threshold: 32>", "O(N log N)", &["merge sorts", "classic", "naive", "threshold 32"]);
 
 // ---------------------------------------------------------------------------
 // register_rotation!(mod_td, mod_td_ss, mod_bu, mod_bu_ss,

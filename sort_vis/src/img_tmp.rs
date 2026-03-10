@@ -133,7 +133,6 @@ pub fn render_gif(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
     let mut img: ImageBuffer<Rgba<u8>, Vec<u8>> =
         ImageBuffer::from_fn(width, height, |_, _| Rgba::<u8>([0x00, 0x00, 0x00, 0xff]));
 
-    let mut arrs: Vec<ArrActions> = Vec::new();
     let view = SubImg {
         x: 0,
         y: if inplace { 0 } else { height / 2 },
@@ -146,7 +145,7 @@ pub fn render_gif(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
         width,
         height: height / 2,
     };
-    arrs.push(ArrActions::new(arr, view, name));
+    let mut store = ArrStore::new(ArrActions::new(arr, view, name));
 
     let mut ffmpeg = spawn_ffmpeg();
     let stdin = ffmpeg.stdin.as_mut().expect("ffmpeg stdin not available");
@@ -166,46 +165,39 @@ pub fn render_gif(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
             }
         }
         for ii in 1..split_points.len() {
-            for arr_view in arrs.iter_mut() {
-                arr_view.update(&actions[split_points[ii - 1]..split_points[ii]], &mut img)
-            }
+            store.update(&actions[split_points[ii - 1]..split_points[ii]], &mut img);
             push_frame(stdin, &img);
 
             match actions[split_points[ii]] {
                 SortLog::CreateAuxArrT { name, length }
                 | SortLog::CreateAuxArr { name, length } => {
                     aux_view.rect(&mut img, 0, 0, aux_view.width, aux_view.height, BLACK);
-                    let views = get_views(&aux_view, arrs.len() as u32);
-                    arrs.push(ArrActions::new(
+                    let n_aux = store.aux_count();
+                    let views = get_views(&aux_view, n_aux as u32);
+                    store.insert(ArrActions::new(
                         vec![0; length],
-                        SubImg {
-                            x: 0,
-                            y: 0,
-                            width: 1000,
-                            height: 000,
-                        },
+                        SubImg { x: 0, y: 0, width: 1000, height: 000 },
                         name,
                     ));
-                    let len = arrs.len();
-                    for iii in 1..len {
-                        arrs[iii].view = views[iii - 1];
-                        arrs[iii].full_rander_vec(&mut img, BLACK, WHITE)
+                    // Re-assign views for all aux arrays (indices 1..)
+                    let aux_views_count = views.len();
+                    for iii in 0..aux_views_count {
+                        store.aux_mut(iii).view = views[iii];
+                        store.aux_mut(iii).full_rander_vec(&mut img, BLACK, WHITE);
                     }
                 }
                 SortLog::FreeAuxArr { name } => {
-                    arrs.retain(|a| a.name != name);
+                    store.remove(name);
                 }
                 _ => {}
             }
         }
 
-        for arr_view in arrs.iter_mut() {
-            arr_view.update(
-                &actions[*split_points.last().unwrap()
-                    ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())],
-                &mut img,
-            )
-        }
+        store.update(
+            &actions[*split_points.last().unwrap()
+                ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())],
+            &mut img,
+        );
         push_frame(stdin, &img);
 
         i += 1;
@@ -222,6 +214,154 @@ pub fn render_gif(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// ArrStore — sorted-by-name collection; O(log N) dispatch per action
+// ---------------------------------------------------------------------------
+
+/// Holds all tracked arrays sorted by base pointer so that any event address
+/// can be resolved to the owning array with a single binary search.
+struct ArrStore {
+    /// arrs[0] is always the main sort array; arrs[1..] are aux arrays, also
+    /// kept in sorted order by `name` so partition_point works correctly.
+    arrs: Vec<ArrActions>,
+}
+
+impl ArrStore {
+    fn new(main: ArrActions) -> Self {
+        ArrStore { arrs: vec![main] }
+    }
+
+    /// Binary-search for the array whose memory range contains `addr`.
+    /// Returns `(index_in_arrs, element_offset)` or `None`.
+    fn lookup(&self, addr: usize) -> Option<(usize, usize)> {
+        let size_t = size_of::<usize>();
+        // Largest index whose name <= addr
+        let pos = self.arrs.partition_point(|a| a.name <= addr);
+        if pos == 0 {
+            return None;
+        }
+        let a = &self.arrs[pos - 1];
+        if addr < a.name + a.arr.len() * size_t {
+            Some((pos - 1, (addr - a.name) / size_t))
+        } else {
+            None
+        }
+    }
+
+    /// Insert a new array, maintaining sorted order by name.
+    fn insert(&mut self, entry: ArrActions) {
+        let pos = self.arrs.partition_point(|a| a.name <= entry.name);
+        self.arrs.insert(pos, entry);
+    }
+
+    /// Remove the array with the given base pointer.
+    fn remove(&mut self, name: usize) {
+        if let Ok(i) = self.arrs.binary_search_by_key(&name, |a| a.name) {
+            self.arrs.remove(i);
+        }
+    }
+
+    /// Number of aux arrays (everything after index 0).
+    fn aux_count(&self) -> usize {
+        self.arrs.len()
+    }
+
+    /// Mutable ref to the iii-th aux array (0-indexed among aux arrays).
+    fn aux_mut(&mut self, iii: usize) -> &mut ArrActions {
+        // aux arrays are at indices 1.. but their sorted position may vary;
+        // skip index 0 (main array) by taking arrs[1..][iii].
+        &mut self.arrs[1 + iii]
+    }
+
+    /// Dispatch all actions to the correct array in O(A log N) total.
+    fn update(
+        &mut self,
+        actions: &[SortLog<usize>],
+        img: &mut impl GenericImage<Pixel = Rgba<u8>>,
+    ) {
+        let size_t = size_of::<usize>();
+        for action in actions {
+            match action {
+                SortLog::Swap { name, ind_a, ind_b } => {
+                    if let Some((i, off)) = self.lookup(*name) {
+                        let a = &mut self.arrs[i];
+                        let ia = ind_a + off;
+                        let ib = ind_b + off;
+                        a.arr.swap(ia, ib);
+                        a.draw[ia] = true;
+                        a.draw[ib] = true;
+                    }
+                }
+                SortLog::WriteData { name, ind, data } => {
+                    if let Some((i, off)) = self.lookup(*name) {
+                        let a = &mut self.arrs[i];
+                        let idx = ind + off;
+                        a.arr[idx] = *data;
+                        a.draw[idx] = true;
+                        let v = *data as f64;
+                        if v < a.min { a.min = v; }
+                        if v > a.max { a.max = v; }
+                    }
+                }
+                SortLog::WriteDataU { name, ind, data } => {
+                    if let Some((i, off)) = self.lookup(*name) {
+                        let a = &mut self.arrs[i];
+                        let idx = ind + off;
+                        a.arr[idx] = *data;
+                        a.draw[idx] = true;
+                        let v = *data as f64;
+                        if v < a.min { a.min = v; }
+                        if v > a.max { a.max = v; }
+                    }
+                }
+                SortLog::WriteInArr { name, ind_a, ind_b } => {
+                    if let Some((i, off)) = self.lookup(*name) {
+                        let a = &mut self.arrs[i];
+                        let ia = ind_a + off;
+                        let ib = ind_b + off;
+                        a.arr[ia] = a.arr[ib];
+                        a.draw[ia] = true;
+                        a.draw[ib] = true;
+                    }
+                }
+                SortLog::CmpInArr { name, ind_a, ind_b, result: _ } => {
+                    if let Some((i, off)) = self.lookup(*name) {
+                        let a = &mut self.arrs[i];
+                        a.color[ind_a + off] = true;
+                        a.color[ind_b + off] = true;
+                    }
+                }
+                SortLog::CmpData { name, ind, data: _, result: _ } => {
+                    if let Some((i, off)) = self.lookup(*name) {
+                        self.arrs[i].color[ind + off] = true;
+                    }
+                }
+                SortLog::CmpDataU { name, ind, data: _, result: _ } => {
+                    if let Some((i, off)) = self.lookup(*name) {
+                        self.arrs[i].color[ind + off] = true;
+                    }
+                }
+                SortLog::CmpAcrossArrs { name_a, ind_a, name_b, ind_b, result: _ } => {
+                    if let Some((i, off)) = self.lookup(*name_a) {
+                        self.arrs[i].color[ind_a + off] = true;
+                    }
+                    if let Some((i, off)) = self.lookup(*name_b) {
+                        self.arrs[i].color[ind_b + off] = true;
+                    }
+                }
+                _ => {}
+            }
+        }
+        for a in self.arrs.iter_mut() {
+            a.finalize_frame(img);
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// ArrActions — per-array state and rendering
+// ---------------------------------------------------------------------------
+
 struct ArrActions {
     arr: Vec<usize>,
     color: Vec<bool>,
@@ -232,133 +372,42 @@ struct ArrActions {
     min: f64,
     max: f64,
 }
+
 impl Hash for ArrActions {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state)
     }
 }
+
 impl ArrActions {
-    fn update(
-        &mut self,
-        actions: &[SortLog<usize>],
-        img: &mut impl GenericImage<Pixel = Rgba<u8>>,
-    ) {
-        let size_t = size_of::<usize>();
-        for action in actions {
-            match action {
-                SortLog::Swap { name, ind_a, ind_b } => {
-                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
-                        let adjusted_ind_a = ind_a + (name - self.name) / size_t;
-                        let adjusted_ind_b = ind_b + (name - self.name) / size_t;
-                        self.arr.swap(adjusted_ind_a, adjusted_ind_b);
-                        self.draw[adjusted_ind_a] = true;
-                        self.draw[adjusted_ind_b] = true;
-                    }
-                }
-                SortLog::WriteDataU { name, ind, data } => {
-                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
-                        let adjusted_ind = ind + (name - self.name) / size_t;
-                        self.arr[adjusted_ind] = *data;
-                        self.draw[adjusted_ind] = true;
-
-                        let data_f64 = *data as f64;
-                        if self.min > data_f64 {
-                            self.min = data_f64
-                        }
-                        if self.max < data_f64 {
-                            self.max = data_f64
-                        }
-                    }
-                }
-                SortLog::WriteInArr { name, ind_a, ind_b } => {
-                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
-                        let adjusted_ind_a = ind_a + (name - self.name) / size_t;
-                        let adjusted_ind_b = ind_b + (name - self.name) / size_t;
-                        self.arr[adjusted_ind_a] = self.arr[adjusted_ind_b];
-                        self.draw[adjusted_ind_a] = true;
-                        self.draw[adjusted_ind_b] = true;
-                    }
-                }
-                SortLog::WriteData { name, ind, data } => {
-                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
-                        let adjusted_ind = ind + (name - self.name) / size_t;
-                        self.arr[adjusted_ind] = *data;
-                        self.draw[adjusted_ind] = true;
-
-                        let data_f64 = *data as f64;
-                        if self.min > data_f64 {
-                            self.min = data_f64
-                        }
-                        if self.max < data_f64 {
-                            self.max = data_f64
-                        }
-                    }
-                }
-                SortLog::CmpInArr {
-                    name,
-                    ind_a,
-                    ind_b,
-                    result: _,
-                } => {
-                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
-                        let adjusted_ind_a = ind_a + (name - self.name) / size_t;
-                        let adjusted_ind_b = ind_b + (name - self.name) / size_t;
-                        self.color[adjusted_ind_a] = true;
-                        self.color[adjusted_ind_b] = true;
-                    }
-                }
-                SortLog::CmpData {
-                    name,
-                    ind,
-                    data: _,
-                    result: _,
-                } => {
-                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
-                        let adjusted_ind = ind + (name - self.name) / size_t;
-                        self.color[adjusted_ind] = true;
-                    }
-                }
-                SortLog::CmpDataU {
-                    name,
-                    ind,
-                    data: _,
-                    result: _,
-                } => {
-                    if *name >= self.name && *name < self.name + self.arr.len() * size_t {
-                        let adjusted_ind = ind + (name - self.name) / size_t;
-                        self.color[adjusted_ind] = true;
-                    }
-                }
-                SortLog::CmpAcrossArrs {
-                    name_a,
-                    ind_a,
-                    name_b,
-                    ind_b,
-                    result: _,
-                } => {
-                    if *name_a >= self.name && *name_a < self.name + self.arr.len() * size_t {
-                        let adjusted_ind = ind_a + (name_a - self.name) / size_t;
-                        self.color[adjusted_ind] = true;
-                    }
-                    if *name_b >= self.name && *name_b < self.name + self.arr.len() * size_t {
-                        let adjusted_ind = ind_b + (name_b - self.name) / size_t;
-                        self.color[adjusted_ind] = true;
-                    }
-                }
-                _ => {}
-            }
+    fn new(arr: Vec<usize>, view: SubImg, name: usize) -> ArrActions {
+        let min = *arr.iter().min().unwrap_or(&0);
+        let max = *arr.iter().max().unwrap_or(&0);
+        let len = arr.len();
+        ArrActions {
+            arr,
+            color: vec![false; len],
+            old_color: vec![false; len],
+            draw: vec![true; len],
+            view,
+            name,
+            min: min as f64,
+            max: max as f64,
         }
+    }
+
+    /// Apply accumulated draw/color state to the image buffer and reset flags.
+    fn finalize_frame(&mut self, img: &mut impl GenericImage<Pixel = Rgba<u8>>) {
         for i in 0..self.arr.len() {
             self.draw[i] = (self.draw[i] | self.old_color[i]) && !self.color[i];
         }
-
         self.update_arr_view(img, BLACK, WHITE, &self.draw.clone());
         self.update_arr_view(img, BLACK, GREEN, &self.color.clone());
-
         self.old_color = self.color.clone();
         self.draw = vec![false; self.arr.len()];
         self.color = vec![false; self.arr.len()];
     }
+
     fn update_arr_view(
         &mut self,
         img: &mut impl GenericImage<Pixel = Rgba<u8>>,
@@ -397,21 +446,5 @@ impl ArrActions {
         color_bg: Rgba<u8>,
     ) {
         self.update_arr_view(img, color, color_bg, &vec![true; self.arr.len()]);
-    }
-
-    fn new(arr: Vec<usize>, view: SubImg, name: usize) -> ArrActions {
-        let min = *arr.iter().min().unwrap_or(&0);
-        let max = *arr.iter().max().unwrap_or(&0);
-        let len = arr.len();
-        ArrActions {
-            arr,
-            color: vec![false; len],
-            old_color: vec![false; len],
-            draw: vec![true; len],
-            view,
-            name,
-            min: min as f64,
-            max: max as f64,
-        }
     }
 }
