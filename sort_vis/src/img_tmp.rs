@@ -53,6 +53,7 @@ fn spawn_ffmpeg() -> Child {
 
     // Args shared by all modes: input spec
     let mut args: Vec<&str> = vec![
+        "-loglevel", "error",
         "-y",
         "-f", "rawvideo",
         "-pixel_format", "rgb24",
