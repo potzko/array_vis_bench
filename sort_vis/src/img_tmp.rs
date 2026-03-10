@@ -103,9 +103,8 @@ pub fn render_gif(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
             {
                 match actions[ii] {
                     SortLog::CreateAuxArr { .. } => split_points.push(ii),
-                    SortLog::CreateAuxArrT { .. } => {
-                        split_points.push(ii);
-                    }
+                    SortLog::CreateAuxArrT { .. } => split_points.push(ii),
+                    SortLog::FreeAuxArr { .. } => split_points.push(ii),
                     _ => {}
                 }
             }
@@ -136,7 +135,9 @@ pub fn render_gif(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
                             arrs[iii].full_rander_vec(&mut img, BLACK, WHITE)
                         }
                     }
-                    SortLog::FreeAuxArr { name: _ } => {}
+                    SortLog::FreeAuxArr { name } => {
+                        arrs.retain(|a| a.name != name);
+                    }
                     _ => {}
                 }
             }
