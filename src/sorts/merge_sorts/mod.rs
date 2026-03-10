@@ -2,6 +2,7 @@ mod utils;
 pub mod small_sort;
 pub mod bottom_up;
 pub mod combinations;
+pub mod naive;
 pub mod natural;
 pub mod rotation;
 pub mod rotation_merge;
