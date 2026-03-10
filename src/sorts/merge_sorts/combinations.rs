@@ -50,6 +50,8 @@ macro_rules! register_merge_sort {
                 HelixRotation, DrillRotation, JugglingRotation,
             };
             #[allow(unused_imports)]
+            use crate::sorts::merge_sorts::timsort::TimSort;
+            #[allow(unused_imports)]
             use crate::sorts::merge_sorts::small_sort::{NoSmallSort, InsertionSmallSort};
 
             fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) {
@@ -334,6 +336,15 @@ register_rotation!(rot_td_pis, rot_td_ss_pis, rot_bu_pis, rot_bu_ss_pis, rot_td_
 register_rotation!(rot_td_hel, rot_td_ss_hel, rot_bu_hel, rot_bu_ss_hel, rot_td_t_hel, rot_td_ss_t_hel, rot_bu_t_hel, rot_bu_ss_t_hel, HelixRotation);
 register_rotation!(rot_td_dri, rot_td_ss_dri, rot_bu_dri, rot_bu_ss_dri, rot_td_t_dri, rot_td_ss_t_dri, rot_bu_t_dri, rot_bu_ss_t_dri, DrillRotation);
 register_rotation!(rot_td_jug, rot_td_ss_jug, rot_bu_jug, rot_bu_ss_jug, rot_td_t_jug, rot_td_ss_t_jug, rot_bu_t_jug, rot_bu_ss_t_jug, JugglingRotation);
+
+// ---------------------------------------------------------------------------
+// Natural  (PING_PONG, EARLY_EXIT)
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Miscellaneous
+// ---------------------------------------------------------------------------
+register_merge_sort!(tim,        TimSort::<false>, "timsort",         "O(N log N)", &["merge sorts", "miscellaneous", "timsort"]);
+register_merge_sort!(tim_gallop, TimSort::<true>,  "timsort<gallop>", "O(N log N)", &["merge sorts", "miscellaneous", "timsort<gallop>"]);
 
 // ---------------------------------------------------------------------------
 // Natural  (PING_PONG, EARLY_EXIT)
