@@ -166,7 +166,7 @@ macro_rules! register_circle_recursive_sc {
                     big_o: "O(N log\u{00B2} N)",
                     stable: false,
                     run: bench,
-                };
+            };
         }
     };
 }

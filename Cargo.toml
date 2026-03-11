@@ -37,6 +37,9 @@ sort_logger = { path = "./sort_logger" }
 sort_vis = { path = "./sort_vis" }
 #gif = "0.13.1"
 
-## Benchmarks removed for now
-
 [dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "sorts"
+harness = false
