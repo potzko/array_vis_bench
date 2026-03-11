@@ -39,7 +39,7 @@ macro_rules! register_comb {
                 let mut g = n;
                 let mut gs = Vec::new();
                 while g > 1 {
-                    g = (g * $den / $num).max(1);
+                    g = (g * $num / $den).max(1);
                     gs.push(g);
                 }
                 if gs.last() != Some(&1) {
