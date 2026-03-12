@@ -44,12 +44,13 @@ impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool>
         // d starts at the smallest power-of-2 >= n and halves each level.
         // At each level we emit the same merges as the recursive top-down at
         // that depth, visiting them left-to-right.
-        // Skip the deepest levels that are fully covered by the small-sort.
-        let threshold = if S::THRESHOLD > 0 { S::THRESHOLD } else { 1 };
+        // Skip the deepest levels already covered by the small-sort (if any).
         let mut d = n.next_power_of_two();
-        // Advance d down until each segment is larger than the threshold.
-        while d / 2 >= threshold && d / 2 > 0 {
-            d /= 2;
+        if S::THRESHOLD > 0 {
+            // Advance d down until each segment is larger than the threshold.
+            while d / 2 >= S::THRESHOLD && d / 2 > 0 {
+                d /= 2;
+            }
         }
 
         // Track which buffer is currently the "source".

@@ -1,4 +1,5 @@
 pub mod comb_sort;
+pub mod comb_sort_ratio;
 pub mod combinations;
 pub mod sequences;
 

@@ -3,6 +3,8 @@ use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
 use heck::ToSnakeCase;
 
+mod sort_family;
+
 /// Derive macro for automatically registering sorts in the global registry.
 ///
 /// Intended for generic sort types that implement `crate::traits::sort_traits::SortAlgo<T, U>`.
@@ -67,4 +69,36 @@ pub fn derive_sort_registry(input: TokenStream) -> TokenStream {
         }
     };
     TokenStream::from(expanded)
+}
+
+/// Generate all concrete sort combinations from a declarative variant-tree description.
+///
+/// # Syntax
+///
+/// ```ignore
+/// sort_family! {
+///     type Sort = RootType<{Slot1}, {Slot2}>;
+///
+///     Slot1 {
+///         ConcreteType1 => "label1"
+///         GenericType<{SubSlot}> => "label2" {
+///             SubSlot { SubTypeA => "a"  SubTypeB => "b" }
+///         }
+///     }
+///
+///     Slot2 { /* … */ }
+///
+///     name   = "human readable name";
+///     big_o  = "O(N log N)";
+///     stable = false;
+///     path   = ["category", "{Slot1}", "{SubSlot}"];
+/// }
+/// ```
+///
+/// For each leaf in the variant tree one anonymous `fn` + `static` block is generated
+/// that registers the combination in `BENCH_SORTS` (linkme) and `SORT_REGISTRY` (ctor).
+#[proc_macro]
+pub fn sort_family(input: TokenStream) -> TokenStream {
+    let family = parse_macro_input!(input as sort_family::SortFamilyInput);
+    TokenStream::from(sort_family::expand(family))
 }

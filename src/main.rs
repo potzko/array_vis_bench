@@ -135,30 +135,19 @@ fn create_sort_choice(sort_name: &str) -> Vec<String> {
     use array_vis_bench::sorts;
 
     if let Some(c) = sorts::merge_sorts::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::shell_sorts::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::rod_sorts::sort_choice(sort_name)   { return c; }
-    if let Some(c) = sorts::bubble_sorts::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::circle_sorts::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::comb_sorts::sort_choice(sort_name)  { return c; }
-    if let Some(c) = sorts::cycle_sorts::sort_choice(sort_name) { return c; }
 
-    match sort_name {
-        "insertion sort" => vec!["insertion_sorts".to_string(), "insertion_sort".to_string()],
-
-        _ => panic!(
-            "\n\
-             ┌─────────────────────────────────────────────────────────┐\n\
-             │              SORT DISPATCH BUG DETECTED                 │\n\
-             └─────────────────────────────────────────────────────────┘\n\
-             Sort '{}' is registered in SORT_REGISTRY but has no\n\
-             visualization dispatch route in create_sort_choice().\n\
-             \n\
-             To fix: add a route for this sort family in main.rs, or\n\
-             expose a sort_choice() function from that sort's module\n\
-             (see shell_sorts::sort_choice for the pattern to follow).\n",
-            sort_name
-        ),
-    }
+    panic!(
+        "\n\
+         ┌─────────────────────────────────────────────────────────┐\n\
+         │              SORT DISPATCH BUG DETECTED                 │\n\
+         └─────────────────────────────────────────────────────────┘\n\
+         Sort '{}' is registered in SORT_REGISTRY but has no\n\
+         visualization dispatch route in create_sort_choice().\n\
+         \n\
+         To fix: migrate this sort to sort_family!(... direct_sort = true; ...)\n\
+         or add a sort_choice() route in the sort's module.\n",
+        sort_name
+    )
 }
 
 /// Panics at startup if any registered sort lacks a visualization route.
