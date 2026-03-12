@@ -14,26 +14,22 @@ pub struct CombEntry {
 pub static COMB_SEQUENCES: [CombEntry] = [..];
 
 // ---------------------------------------------------------------------------
-// Shrink-factor sequences
+// Visualization-only registration (COMB_SEQUENCES for fn_sort dispatch).
 //
-// Each variant is defined by a rational approximation of a shrink factor.
-// The gaps for an array of length n are:  n, n/k, n/k², ..., 1
-// where k is the shrink factor (as a float).
-//
-// Usage:  register_comb!(mod_name, DISPLAY_NAME, NUMERATOR, DENOMINATOR)
-// NUMERATOR/DENOMINATOR is the rational approximation of the shrink factor.
+// Each variant is registered in COMB_SEQUENCES so that the interactive
+// visualiser can find it by name.  BENCH_SORTS + SORT_REGISTRY are handled
+// separately by the `sort_family!` call below.
 // ---------------------------------------------------------------------------
-macro_rules! register_comb {
+macro_rules! register_comb_vis {
     ($mod:ident, $display:literal, $num:literal, $den:literal) => {
         mod $mod {
             use crate::sorts::comb_sorts::comb_sort::CombSort;
             use crate::sorts::comb_sorts::sequences::{CombEntry, COMB_SEQUENCES};
             use crate::traits::log_traits::{NoOpLogger, SortLogger};
 
-            const DISPLAY: &str = $display;
             const SORT_NAME: &str =
                 const_format::concatcp!("comb sort (shrink ", $display, ")");
-            const PATH: &[&str] = &["comb sorts", DISPLAY];
+            const PATH: &[&str] = &["comb sorts", $display];
 
             fn gaps(n: usize) -> Vec<usize> {
                 let mut g = n;
@@ -54,10 +50,6 @@ macro_rules! register_comb {
             fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) {
                 CombSort::sort_with_gaps(arr, logger, gaps(arr.len()));
             }
-            fn bench(arr: &mut [usize]) {
-                let mut l = NoOpLogger;
-                CombSort::sort_with_gaps(arr, &mut l, gaps(arr.len()));
-            }
 
             #[linkme::distributed_slice(COMB_SEQUENCES)]
             static ENTRY: CombEntry = CombEntry {
@@ -67,28 +59,47 @@ macro_rules! register_comb {
                 sort_fn,
                 sort_vis,
             };
-
-            #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
-            static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
-                crate::bench_registry::SortBenchEntry {
-                    name: SORT_NAME,
-                    big_o: "O(N^2)",
-                    stable: false,
-                    run: bench,
-                };
         }
     };
 }
 
 // Classic (1.3 = 13/10) — the original Dobosiewicz/Box shrink factor
-register_comb!(classic,      "1.3",          10, 13);
+register_comb_vis!(classic,           "1.3",        10, 13);
 // sqrt(2) ≈ 99/70
-register_comb!(sqrt2,        "√2 ≈ 1.414",   70, 99);
+register_comb_vis!(sqrt2,             "√2 ≈ 1.414", 70, 99);
 // Golden ratio φ ≈ 89/55
-register_comb!(phi,          "φ ≈ 1.618",    55, 89);
+register_comb_vis!(phi,               "φ ≈ 1.618",  55, 89);
 // 4/3 — simple rational close to 1.3, faster gap decay
-register_comb!(four_thirds,  "4/3",           3,  4);
+register_comb_vis!(four_thirds,       "4/3",          3,  4);
 // 11/8 — suggested in Lacey & Box (1991)
-register_comb!(eleven_eighths, "11/8",        8, 11);
+register_comb_vis!(eleven_eighths,    "11/8",          8, 11);
 // 5/4 — faster convergence, coarser early passes
-register_comb!(five_fourths, "5/4",           4,  5);
+register_comb_vis!(five_fourths,      "5/4",           4,  5);
+
+// ---------------------------------------------------------------------------
+// Bench + sort-registry via sort_family!
+//
+// CombSortRatio<NUM, DEN> implements SortAlgo and computes the same gaps as
+// the visualisation closures above, so benchmark results are consistent.
+// The sort name format matches the COMB_SEQUENCES names exactly so that the
+// interactive UI and benchmarks refer to the same sort.
+// ---------------------------------------------------------------------------
+use crate::sorts::comb_sorts::comb_sort_ratio::CombSortRatio;
+
+sort_registry_macro::sort_family! {
+    type Sort = {R};
+
+    R {
+        CombSortRatio<10, 13> => "1.3"
+        CombSortRatio<70, 99> => "√2 ≈ 1.414"
+        CombSortRatio<55, 89> => "φ ≈ 1.618"
+        CombSortRatio<3,  4>  => "4/3"
+        CombSortRatio<8, 11>  => "11/8"
+        CombSortRatio<4,  5>  => "5/4"
+    }
+
+    name   = "comb sort";
+    big_o  = "O(N^2)";
+    stable = false;
+    path   = ["comb sorts", "{R}"];
+}
