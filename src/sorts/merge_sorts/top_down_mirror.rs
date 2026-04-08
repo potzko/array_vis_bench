@@ -28,38 +28,35 @@ impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool>
             return;
         }
 
-        // Pre-sort initial chunks when a small-sort strategy is active.
+        // d starts at the smallest power-of-2 >= n and halves each level.
+        let mut d = n.next_power_of_two();
+
+        // Pre-sort using Bresenham boundaries when a small-sort is active.
+        // We must use the Bresenham stepping (not fixed-size chunks) so that
+        // each pre-sorted segment aligns with what mirror_pass expects.
         if S::THRESHOLD > 0 {
-            let mut i = 0;
+            // Advance d down until Bresenham segments are roughly THRESHOLD-sized.
+            while d / 2 >= 1 && n / (d / 2) <= S::THRESHOLD {
+                d /= 2;
+            }
+            // Pre-sort each individual left/right Bresenham segment at this level.
+            let mut i = 0usize;
+            let mut dec = 0usize;
             while i < n {
-                let end = (i + S::THRESHOLD).min(n);
-                S::sort(&mut arr[i..end], logger);
-                i += S::THRESHOLD;
+                dec += n;
+                let m = (i + dec / d).min(n);
+                dec %= d;
+                dec += n;
+                let b = (m + dec / d).min(n);
+                dec %= d;
+                if m > i { S::sort(&mut arr[i..m], logger); }
+                if b > m { S::sort(&mut arr[m..b], logger); }
+                i = b;
             }
         }
 
         let mut tmp = logger.create_aux_arr_t(n);
         copy_across(arr, &mut tmp, logger);
-
-        // d starts at the smallest power-of-2 >= n and halves each level.
-        // At each level we emit the same merges as the recursive top-down at
-        // that depth, visiting them left-to-right.
-        // Skip the deepest levels already covered by the small-sort (if any).
-        let mut d = n.next_power_of_two();
-        if S::THRESHOLD > 0 {
-            // Advance d down until each segment is larger than the threshold.
-            while d / 2 >= S::THRESHOLD && d / 2 > 0 {
-                d /= 2;
-            }
-        }
-
-        // Track which buffer is currently the "source".
-        // After each level the roles swap (ping-pong) or we copy back.
-        // The pre-sorted chunks are in arr; tmp is a copy of arr (pre-sort).
-        // Redo the copy so tmp matches arr after pre-sort.
-        if S::THRESHOLD > 0 {
-            copy_across(arr, &mut tmp, logger);
-        }
         let mut src_is_arr = true;
 
         while d > 1 {

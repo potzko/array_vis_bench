@@ -4,14 +4,13 @@ use crate::utils::check_utils;
 // Migrated to sort_family! (new system):
 pub mod merge_sorts;
 
-// Not yet migrated — disconnected until sort_family! migration lands:
-// pub mod bubble_sorts;
-// pub mod circle_sorts;
-// pub mod comb_sorts;
-// pub mod cycle_sorts;
-// pub mod insertion_sorts;
-// pub mod rod_sorts;
-// pub mod shell_sorts;
+pub mod bubble_sorts;
+pub mod circle_sorts;
+pub mod comb_sorts;
+pub mod cycle_sorts;
+pub mod insertion_sorts;
+pub mod rod_sorts;
+pub mod shell_sorts;
 
 // Always-disconnected (future work):
 // pub mod annotations;
@@ -31,6 +30,13 @@ pub fn fn_sort(
     } else {
         match choice[0].as_str() {
             "merge_sorts" => merge_sorts::fn_sort(arr, logger, &choice[1..]),
+            "bubble_sorts" => bubble_sorts::fn_sort(arr, logger, &choice[1..]),
+            "circle_sorts" => circle_sorts::fn_sort(arr, logger, &choice[1..]),
+            "comb_sorts" => comb_sorts::fn_sort(arr, logger, &choice[1..]),
+            "cycle_sorts" => cycle_sorts::fn_sort(arr, logger, &choice[1..]),
+            "insertion_sorts" => insertion_sorts::fn_sort(arr, logger, &choice[1..]),
+            "rod_sorts" => rod_sorts::fn_sort(arr, logger, &choice[1..]),
+            "shell_sorts" => shell_sorts::fn_sort(arr, logger, &choice[1..]),
             _ => vec![format!("unknown sort family: {}", choice[0])],
         }
     };

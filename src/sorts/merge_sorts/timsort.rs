@@ -107,14 +107,8 @@ fn binary_insertion_sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         let pivot = arr[i];
         // Upper bound: first pos where arr[pos] > pivot (stable: equal elements keep order).
         let pos = upper_bound(arr, lo, i, pivot, logger);
-        // Shift arr[pos..i] one slot right.
-        let mut j = i;
-        while j > pos {
-            let v = arr[j - 1];
-            logger.write_data(arr, j, v);
-            j -= 1;
-        }
-        logger.write_data(arr, pos, pivot);
+        // Shift arr[pos..i] one slot right and insert pivot.
+        logger.shift_insert(arr, i, pos, pivot);
         i += 1;
     }
 }
@@ -157,7 +151,7 @@ fn merge_collapse<const GALLOP: bool, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         };
 
         let (base_a, len_a) = stack[merge_at];
-        let (base_b, len_b) = stack[merge_at + 1];
+        let (_base_b, len_b) = stack[merge_at + 1];
         stack[merge_at] = (base_a, len_a + len_b);
         stack.remove(merge_at + 1);
 

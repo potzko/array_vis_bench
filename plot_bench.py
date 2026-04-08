@@ -19,17 +19,18 @@ def parse(criterion_dir: Path) -> dict:
     Expects:  criterion_dir/sorts/n=<N>/<sort_name>/new/estimates.json
     """
     data = defaultdict(list)
-    sorts_dir = criterion_dir / "sorts"
 
-    if not sorts_dir.exists():
-        print(f"No benchmark data found in {sorts_dir}", file=sys.stderr)
+    # Criterion creates dirs like "sorts_n=80", "sorts_n=5120", etc.
+    n_dirs = [d for d in criterion_dir.iterdir()
+              if d.is_dir() and d.name.startswith("sorts_n=")]
+
+    if not n_dirs:
+        print(f"No benchmark data found in {criterion_dir}", file=sys.stderr)
         return {}
 
-    for n_dir in sorts_dir.iterdir():
-        if not n_dir.is_dir() or not n_dir.name.startswith("n="):
-            continue
+    for n_dir in n_dirs:
         try:
-            n = int(n_dir.name[2:])
+            n = int(n_dir.name.split("n=", 1)[1])
         except ValueError:
             continue
 

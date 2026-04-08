@@ -22,9 +22,7 @@ impl Rotation for BridgeRotation {
             if bridge < left {
                 // Save bridge-sized gap, walk pairs backward, restore gap at front.
                 let mut buf = logger.create_aux_arr_t(bridge);
-                for i in 0..bridge {
-                    logger.write_accross(arr, left + i, &mut buf, i);
-                }
+                logger.copy_range(arr, left, &mut buf, 0, bridge);
                 let mut ptb = left;
                 let mut ptc = right;
                 let mut ptd = n;
@@ -37,9 +35,7 @@ impl Rotation for BridgeRotation {
                     let v_ptb = arr[ptb];
                     logger.write_data(arr, ptd, v_ptb);
                 }
-                for i in 0..bridge {
-                    logger.write_data(arr, i, buf[i]);
-                }
+                logger.copy_range(&buf, 0, arr, 0, bridge);
                 logger.free_aux_arr_t(&buf);
             } else {
                 buf_rotate_left(arr, left, logger);
@@ -49,9 +45,7 @@ impl Rotation for BridgeRotation {
             let bridge = left - right;
             if bridge < right {
                 let mut buf = logger.create_aux_arr_t(bridge);
-                for i in 0..bridge {
-                    logger.write_accross(arr, right + i, &mut buf, i);
-                }
+                logger.copy_range(arr, right, &mut buf, 0, bridge);
                 let mut pta = 0usize;
                 let mut ptb = left;
                 let mut ptc = right;
@@ -64,9 +58,7 @@ impl Rotation for BridgeRotation {
                     ptb += 1;
                     ptc += 1;
                 }
-                for i in 0..bridge {
-                    logger.write_data(arr, n - bridge + i, buf[i]);
-                }
+                logger.copy_range(&buf, 0, arr, n - bridge, bridge);
                 logger.free_aux_arr_t(&buf);
             } else {
                 buf_rotate_right(arr, left, logger);
@@ -74,3 +66,5 @@ impl Rotation for BridgeRotation {
         }
     }
 }
+
+register_rotation!(BridgeRotation);

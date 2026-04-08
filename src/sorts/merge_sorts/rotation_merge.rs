@@ -121,9 +121,11 @@ fn sym_merge_r<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 mod tests {
     use super::*;
     use crate::traits::log_traits::NoOpLogger;
+    #[allow(unused_imports)]
     use crate::utils::rotation::{
         ReversalRotation, AuxiliaryRotation, BridgeRotation, ContrevRotation,
         TrinityRotation, GriesMillsRotation, GrailRotation, PistonRotation,

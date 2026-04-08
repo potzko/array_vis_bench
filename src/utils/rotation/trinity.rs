@@ -13,6 +13,7 @@ impl Rotation for TrinityRotation {
         let n = arr.len();
         let left = split_ind;
         let right = n - left;
+
         if left == 0 || right == 0 {
             return;
         }
@@ -20,63 +21,54 @@ impl Rotation for TrinityRotation {
             forward_block_swap(arr, 0, left, left, logger);
             return;
         }
-        if left < right {
-            if left <= TRINITY_AUX {
-                buf_rotate_left(arr, left, logger);
-                return;
-            }
-            let bridge = right - left;
-            if bridge <= TRINITY_AUX && bridge > 3 {
-                let mut buf = logger.create_aux_arr_t(bridge);
-                for i in 0..bridge {
-                    logger.write_accross(arr, left + i, &mut buf, i);
-                }
-                let mut ptb = left;
-                let mut ptc = right;
-                let mut ptd = n;
+
+        let small = left.min(right);
+        let bridge = left.abs_diff(right);
+
+        // Small side fits in aux: simple buffered rotation
+        if small <= TRINITY_AUX {
+            if left < right { buf_rotate_left(arr, left, logger) }
+            else             { buf_rotate_right(arr, left, logger) }
+            return;
+        }
+
+        // Bridge fits in aux: bridge rotation
+        if bridge <= TRINITY_AUX && bridge > 3 {
+            let mut buf = logger.create_aux_arr_t(bridge);
+
+            if left < right {
+                // Save bridge arr[left..right] to aux
+                logger.copy_range(arr, left, &mut buf, 0, bridge);
+                // Shift left part → tail, right tail → middle (backwards)
+                let (mut ptb, mut ptc, mut ptd) = (left, right, n);
                 for _ in 0..left {
                     ptc -= 1; ptd -= 1; ptb -= 1;
-                    let v_ptd = arr[ptd];
-                    logger.write_data(arr, ptc, v_ptd);
-                    let v_ptb = arr[ptb];
-                    logger.write_data(arr, ptd, v_ptb);
+                    logger.write(arr, ptc, ptd);
+                    logger.write(arr, ptd, ptb);
                 }
-                for i in 0..bridge {
-                    logger.write_data(arr, i, buf[i]);
-                }
-                logger.free_aux_arr_t(&buf);
+                // Restore bridge from aux → front
+                logger.copy_range(&buf, 0, arr, 0, bridge);
             } else {
-                ContrevRotation::rotate(arr, left, logger);
-            }
-        } else {
-            // right < left
-            if right <= TRINITY_AUX {
-                buf_rotate_right(arr, left, logger);
-                return;
-            }
-            let bridge = left - right;
-            if bridge <= TRINITY_AUX && bridge > 3 {
-                let mut buf = logger.create_aux_arr_t(bridge);
-                for i in 0..bridge {
-                    logger.write_accross(arr, right + i, &mut buf, i);
-                }
-                let mut pta = 0usize;
-                let mut ptb = left;
-                let mut ptc = right;
+                // Save bridge arr[right..left] to aux
+                logger.copy_range(arr, right, &mut buf, 0, bridge);
+                // Shift right part → front, left head → middle (forwards)
+                let (mut pta, mut ptb, mut ptc) = (0, left, right);
                 for _ in 0..right {
-                    let v_pta = arr[pta];
-                    logger.write_data(arr, ptc, v_pta);
-                    let v_ptb = arr[ptb];
-                    logger.write_data(arr, pta, v_ptb);
+                    logger.write(arr, ptc, pta);
+                    logger.write(arr, pta, ptb);
                     pta += 1; ptb += 1; ptc += 1;
                 }
-                for i in 0..bridge {
-                    logger.write_data(arr, n - bridge + i, buf[i]);
-                }
-                logger.free_aux_arr_t(&buf);
-            } else {
-                ContrevRotation::rotate(arr, left, logger);
+                // Restore bridge from aux → tail
+                logger.copy_range(&buf, 0, arr, n - bridge, bridge);
             }
+
+            logger.free_aux_arr_t(&buf);
+            return;
         }
+
+        // Fallback: contrev
+        ContrevRotation::rotate(arr, left, logger);
     }
 }
+
+register_rotation!(TrinityRotation);

@@ -69,6 +69,14 @@ macro_rules! register_rotation {
             #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
             static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
                 crate::bench_registry::SortBenchEntry { name: NAME, big_o: "O(N log N)", stable: true, run: bench };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
         mod $mod_td_ss {
             use super::{MergeSortEntry, MERGE_SORTS};
@@ -91,6 +99,14 @@ macro_rules! register_rotation {
             #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
             static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
                 crate::bench_registry::SortBenchEntry { name: NAME, big_o: "O(N log N)", stable: true, run: bench };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
         mod $mod_bu {
             use super::{MergeSortEntry, MERGE_SORTS};
@@ -113,6 +129,14 @@ macro_rules! register_rotation {
             #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
             static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
                 crate::bench_registry::SortBenchEntry { name: NAME, big_o: "O(N log N)", stable: true, run: bench };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
         mod $mod_bu_ss {
             use super::{MergeSortEntry, MERGE_SORTS};
@@ -135,6 +159,14 @@ macro_rules! register_rotation {
             #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
             static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
                 crate::bench_registry::SortBenchEntry { name: NAME, big_o: "O(N log N)", stable: true, run: bench };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
         // --- threshold-32 variants ---
         mod $mod_td_t {
@@ -158,6 +190,14 @@ macro_rules! register_rotation {
             #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
             static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
                 crate::bench_registry::SortBenchEntry { name: NAME, big_o: "O(N log N)", stable: true, run: bench };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
         mod $mod_td_ss_t {
             use super::{MergeSortEntry, MERGE_SORTS};
@@ -180,6 +220,14 @@ macro_rules! register_rotation {
             #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
             static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
                 crate::bench_registry::SortBenchEntry { name: NAME, big_o: "O(N log N)", stable: true, run: bench };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
         mod $mod_bu_t {
             use super::{MergeSortEntry, MERGE_SORTS};
@@ -202,6 +250,14 @@ macro_rules! register_rotation {
             #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
             static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
                 crate::bench_registry::SortBenchEntry { name: NAME, big_o: "O(N log N)", stable: true, run: bench };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
         mod $mod_bu_ss_t {
             use super::{MergeSortEntry, MERGE_SORTS};
@@ -224,6 +280,14 @@ macro_rules! register_rotation {
             #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
             static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
                 crate::bench_registry::SortBenchEntry { name: NAME, big_o: "O(N log N)", stable: true, run: bench };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
     };
 }

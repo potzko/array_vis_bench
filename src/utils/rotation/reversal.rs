@@ -16,3 +16,5 @@ impl Rotation for ReversalRotation {
         reverse(arr, logger);
     }
 }
+
+register_rotation!(ReversalRotation);

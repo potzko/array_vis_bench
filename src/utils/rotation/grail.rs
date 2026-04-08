@@ -39,3 +39,5 @@ impl Rotation for GrailRotation {
         }
     }
 }
+
+register_rotation!(GrailRotation);

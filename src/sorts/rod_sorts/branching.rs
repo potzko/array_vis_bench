@@ -73,6 +73,14 @@ macro_rules! register_rod {
                     stable: false,
                     run: bench,
                 };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
     };
 }

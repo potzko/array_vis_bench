@@ -7,6 +7,9 @@ fn sort<T: Ord + Copy, U: ?Sized + crate::traits::log_traits::SortLogger<T>>(
     logger: &mut U,
 ) {
     let n = arr.len();
+    if n < 2 {
+        return;
+    }
     for cycle_start in 0..n - 1 {
         let mut item = arr[cycle_start];
         let mut pos = cycle_start;

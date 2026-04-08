@@ -78,6 +78,14 @@ macro_rules! register_circle_recursive {
                     stable: false,
                     run: bench,
                 };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
     };
 }
@@ -120,6 +128,14 @@ macro_rules! register_circle_bottom_up {
                     stable: false,
                     run: bench,
                 };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
     };
 }
@@ -167,6 +183,14 @@ macro_rules! register_circle_recursive_sc {
                     stable: false,
                     run: bench,
             };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
     };
 }
@@ -213,6 +237,14 @@ macro_rules! register_circle_bottom_up_sc {
                     stable: false,
                     run: bench,
                 };
+
+            #[cfg(test)]
+            mod sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                }
+            }
         }
     };
 }
@@ -254,6 +286,14 @@ mod shaker_recursive {
             stable: false,
             run: bench,
         };
+
+    #[cfg(test)]
+    mod sort_test {
+        #[test]
+        fn correctness() {
+            crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

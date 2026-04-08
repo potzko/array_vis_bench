@@ -24,3 +24,29 @@ macro_rules! for_each_bench_sort {
         }
     };
 }
+
+#[cfg(test)]
+pub(crate) mod test_helpers {
+    use super::SortBenchEntry;
+
+    pub fn check_sort(entry: &SortBenchEntry) {
+        let cases: Vec<Vec<usize>> = vec![
+            vec![],
+            vec![1],
+            vec![2, 1],
+            vec![1, 2],
+            (0..32).rev().collect(),
+            (0..32).collect(),
+            vec![5; 32],
+            (0..33).map(|i| if i % 2 == 0 { i } else { 33 - i }).collect(),
+            (0..100).rev().collect(),
+        ];
+        for case in &cases {
+            let mut arr = case.clone();
+            let mut expected = case.clone();
+            expected.sort();
+            (entry.run)(&mut arr);
+            assert_eq!(arr, expected, "{}: sort failed", entry.name);
+        }
+    }
+}

@@ -46,9 +46,7 @@ impl Rotation for ContrevRotation {
             let mut cnt = (ptd - pta) / 2;
             while cnt > 0 {
                 ptd -= 1;
-                let (a, d) = (arr[pta], arr[ptd]);
-                logger.write_data(arr, pta, d);
-                logger.write_data(arr, ptd, a);
+                logger.swap(arr, pta, ptd);
                 pta += 1;
                 cnt -= 1;
             }
@@ -78,12 +76,12 @@ impl Rotation for ContrevRotation {
             let mut cnt = (ptd - pta) / 2;
             while cnt > 0 {
                 ptd -= 1;
-                let (a, d) = (arr[pta], arr[ptd]);
-                logger.write_data(arr, pta, d);
-                logger.write_data(arr, ptd, a);
+                logger.swap(arr, pta, ptd);
                 pta += 1;
                 cnt -= 1;
             }
         }
     }
 }
+
+register_rotation!(ContrevRotation);

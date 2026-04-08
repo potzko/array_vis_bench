@@ -33,3 +33,5 @@ impl Rotation for GriesMillsRotation {
         }
     }
 }
+
+register_rotation!(GriesMillsRotation);
