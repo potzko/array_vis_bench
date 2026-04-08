@@ -34,9 +34,7 @@ pub fn copy_across<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     dst: &mut [T],
     logger: &mut U,
 ) {
-    for i in 0..src.len().min(dst.len()) {
-        logger.write_accross(src, i, dst, i);
-    }
+    logger.copy_range(src, 0, dst, 0, src.len().min(dst.len()));
 }
 
 /// In-place insertion sort (dyn-compatible).

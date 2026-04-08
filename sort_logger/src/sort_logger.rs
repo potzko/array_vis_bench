@@ -341,15 +341,10 @@ pub trait SortLogger<T: Copy + Ord> {
     }
 
     /*----------------
-        Swaps
-        T-specific (dyn-compatible): cond_swap_lt, cond_swap_le, cond_swap_ge, cond_swap_gt
-        Generic-over-U (where Self: Sized): swap, cond_swap_le_any
+        Swaps — all dyn-compatible
     --------------- */
     #[inline(always)]
-    fn swap<U: Ord>(&mut self, arr: &mut [U], ind_a: usize, ind_b: usize)
-    where
-        Self: Sized,
-    {
+    fn swap(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) {
         self.log(SortLog::Swap {
             name: arr_name!(arr),
             ind_a,
@@ -360,8 +355,6 @@ pub trait SortLogger<T: Copy + Ord> {
 
     /// Conditionally swap arr[ind_a] and arr[ind_b] if arr[ind_a] < arr[ind_b].
     /// Returns true if a swap occurred.
-    ///
-    /// Dyn-compatible: works on `dyn SortLogger<T>`.
     #[inline(always)]
     fn cond_swap_lt(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) -> bool {
         let result = arr[ind_a] < arr[ind_b];
@@ -383,8 +376,6 @@ pub trait SortLogger<T: Copy + Ord> {
     }
 
     /// Conditionally swap arr[ind_a] and arr[ind_b] if arr[ind_a] <= arr[ind_b].
-    ///
-    /// Dyn-compatible: works on `dyn SortLogger<T>`.
     #[inline(always)]
     fn cond_swap_le(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) -> bool {
         let result = arr[ind_a] <= arr[ind_b];
@@ -405,23 +396,7 @@ pub trait SortLogger<T: Copy + Ord> {
         result
     }
 
-    /// Conditionally swap if arr[ind_a] <= arr[ind_b] for an arbitrary element type U.
-    /// Gated with `where Self: Sized` — use `cond_swap_le` for the sort element type T.
-    #[inline(always)]
-    fn cond_swap_le_any<U: Ord>(&mut self, arr: &mut [U], ind_a: usize, ind_b: usize) -> bool
-    where
-        Self: Sized,
-    {
-        let ret = arr[ind_a] <= arr[ind_b];
-        if ret {
-            self.swap(arr, ind_a, ind_b)
-        }
-        ret
-    }
-
     /// Conditionally swap arr[ind_a] and arr[ind_b] if arr[ind_a] >= arr[ind_b].
-    ///
-    /// Dyn-compatible.
     #[inline(always)]
     fn cond_swap_ge(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) -> bool {
         let result = arr[ind_a] >= arr[ind_b];
@@ -443,8 +418,6 @@ pub trait SortLogger<T: Copy + Ord> {
     }
 
     /// Conditionally swap arr[ind_a] and arr[ind_b] if arr[ind_a] > arr[ind_b].
-    ///
-    /// Dyn-compatible.
     #[inline(always)]
     fn cond_swap_gt(&mut self, arr: &mut [T], ind_a: usize, ind_b: usize) -> bool {
         let result = arr[ind_a] > arr[ind_b];
@@ -463,5 +436,50 @@ pub trait SortLogger<T: Copy + Ord> {
             arr.swap(ind_a, ind_b);
         }
         result
+    }
+
+    /*----------------
+        Compound operations — all dyn-compatible
+    --------------- */
+
+    /// Reverse a slice in-place.
+    #[inline(always)]
+    fn reverse(&mut self, arr: &mut [T]) {
+        let n = arr.len();
+        let mut i = 0;
+        let mut ii = n.saturating_sub(1);
+        while i < ii {
+            self.swap(arr, i, ii);
+            i += 1;
+            ii -= 1;
+        }
+    }
+
+    /// Swap `n` elements starting at `s1` with `n` elements starting at `s2`.
+    #[inline(always)]
+    fn block_swap(&mut self, arr: &mut [T], s1: usize, s2: usize, n: usize) {
+        for i in 0..n {
+            self.swap(arr, s1 + i, s2 + i);
+        }
+    }
+
+    /// Shift `arr[to..from]` right by one slot and write `data` at `arr[to]`.
+    #[inline(always)]
+    fn shift_insert(&mut self, arr: &mut [T], from: usize, to: usize, data: T) {
+        let mut j = from;
+        while j > to {
+            let v = arr[j - 1];
+            self.write_data(arr, j, v);
+            j -= 1;
+        }
+        self.write_data(arr, to, data);
+    }
+
+    /// Copy `len` elements from `src[src_start..]` into `dst[dst_start..]`.
+    #[inline(always)]
+    fn copy_range(&mut self, src: &[T], src_start: usize, dst: &mut [T], dst_start: usize, len: usize) {
+        for i in 0..len {
+            self.write_accross(src, src_start + i, dst, dst_start + i);
+        }
     }
 }

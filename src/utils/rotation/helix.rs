@@ -21,9 +21,7 @@ impl Rotation for HelixRotation {
                 while mid > start {
                     mid -= 1;
                     end -= 1;
-                    let tmp = arr[mid];
-                    logger.write_data(arr, mid, arr[end]);
-                    logger.write_data(arr, end, tmp);
+                    logger.swap(arr, mid, end);
                 }
                 left %= right;
                 mid += left;
@@ -33,9 +31,7 @@ impl Rotation for HelixRotation {
                     break;
                 }
                 while mid < end {
-                    let tmp = arr[mid];
-                    logger.write_data(arr, mid, arr[start]);
-                    logger.write_data(arr, start, tmp);
+                    logger.swap(arr, mid, start);
                     mid += 1;
                     start += 1;
                 }
@@ -49,3 +45,5 @@ impl Rotation for HelixRotation {
         }
     }
 }
+
+register_rotation!(HelixRotation);

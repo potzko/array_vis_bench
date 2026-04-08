@@ -33,3 +33,5 @@ impl Rotation for PistonRotation {
         }
     }
 }
+
+register_rotation!(PistonRotation);

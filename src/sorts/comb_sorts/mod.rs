@@ -40,5 +40,9 @@ pub fn sort_choice(name: &str) -> Option<Vec<String>> {
             return Some(vec!["comb_sorts".to_string(), name.to_string()]);
         }
     }
+    // sort_family! registers with names like "comb sort<1.3>"
+    if name.starts_with("comb sort") {
+        return Some(vec!["comb_sorts".to_string(), name.to_string()]);
+    }
     None
 }

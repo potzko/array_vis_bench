@@ -65,7 +65,7 @@ pub fn register_sort(name: &str, big_o: &str, stable: bool, category: &str) {
 /// )
 ///
 /// Example:
-/// ```
+/// ```ignore
 /// create_sort!(
 ///     bubble_sort,
 ///     "bubble sort",
@@ -132,5 +132,13 @@ macro_rules! create_sort {
             stable: STABLE,
             run: __bench_run,
         };
+
+        #[cfg(test)]
+        mod sort_test {
+            #[test]
+            fn correctness() {
+                crate::bench_registry::test_helpers::check_sort(&super::__BENCH_SORT_ENTRY);
+            }
+        }
     };
 }

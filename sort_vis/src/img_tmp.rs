@@ -279,7 +279,7 @@ impl ArrStore {
         actions: &[SortLog<usize>],
         img: &mut impl GenericImage<Pixel = Rgba<u8>>,
     ) {
-        let size_t = size_of::<usize>();
+        let _size_t = size_of::<usize>();
         for action in actions {
             match action {
                 SortLog::Swap { name, ind_a, ind_b } => {

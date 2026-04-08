@@ -16,7 +16,7 @@ const PROBE_RUNS: usize = 10;
 /// Criterion samples collected per (sort × N) pair that passes the threshold.
 const SAMPLES: usize = 10;
 
-const MAX_N: usize = 10_000_000;
+const MAX_N: usize = 5_000_000_000;
 
 fn bench_sorts(c: &mut Criterion) {
     let mut active: Vec<&'static bench_registry::SortBenchEntry> =
@@ -88,7 +88,7 @@ fn bench_sorts(c: &mut Criterion) {
             );
         }
 
-        n *= 8;
+        n *= 2;
     }
 }
 

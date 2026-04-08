@@ -433,6 +433,8 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
         }
     };
 
+    let st_test_mod = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_test");
+
     let base = quote! {
         #[allow(non_snake_case, dead_code)]
         fn #fn_sort(
@@ -457,6 +459,15 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
                 stable: #stable,
                 run: #fn_bench,
             };
+
+        #[cfg(test)]
+        #[allow(non_snake_case)]
+        mod #st_test_mod {
+            #[test]
+            fn correctness() {
+                crate::bench_registry::test_helpers::check_sort(&super::#st_bench);
+            }
+        }
     };
 
     if family.direct_sort {

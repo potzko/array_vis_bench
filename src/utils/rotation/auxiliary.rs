@@ -20,3 +20,5 @@ impl Rotation for AuxiliaryRotation {
         }
     }
 }
+
+register_rotation!(AuxiliaryRotation);

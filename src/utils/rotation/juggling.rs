@@ -30,3 +30,5 @@ impl Rotation for JugglingRotation {
         }
     }
 }
+
+register_rotation!(JugglingRotation);

@@ -30,13 +30,9 @@ impl<S: SmallSort> NaiveMergeSort<S> {
 
         // Copy each half into its own aux array.
         let mut left = logger.create_aux_arr_t(mid);
-        for i in 0..mid {
-            logger.write_accross(arr, i, &mut left, i);
-        }
+        logger.copy_range(arr, 0, &mut left, 0, mid);
         let mut right = logger.create_aux_arr_t(right_len);
-        for i in 0..right_len {
-            logger.write_accross(arr, mid + i, &mut right, i);
-        }
+        logger.copy_range(arr, mid, &mut right, 0, right_len);
 
         // Recursively sort both halves.
         Self::sort_inner(&mut left, logger);

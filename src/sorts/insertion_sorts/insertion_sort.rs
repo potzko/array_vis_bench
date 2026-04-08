@@ -4,10 +4,13 @@ create_sort!(sort, "insertion sort", "O(N^2)", true);
 
 fn sort<T: Ord + Copy, U: ?Sized + crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     for i in 1..arr.len() {
-        for ii in (1..=i).rev() {
-            if !logger.cond_swap_lt(arr, ii, ii - 1) {
-                break;
-            }
+        let key = arr[i];
+        let mut j = i;
+        while j > 0 && logger.cmp_gt_data(arr, j - 1, key) {
+            j -= 1;
+        }
+        if j < i {
+            logger.shift_insert(arr, i, j, key);
         }
     }
 }

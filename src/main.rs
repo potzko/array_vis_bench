@@ -91,7 +91,7 @@ fn main() {
     println!("Statistics:");
     println!("  - Array size: {}", arr.len());
     println!("  - Operations logged: {}", logger.log.len());
-    println!("  - GIF saved as: output.gif");
+    println!("  - GIF saved as: output.mp4");
     
     println!("\nVisualization complete!");
 }
@@ -135,6 +135,13 @@ fn create_sort_choice(sort_name: &str) -> Vec<String> {
     use array_vis_bench::sorts;
 
     if let Some(c) = sorts::merge_sorts::sort_choice(sort_name) { return c; }
+    if let Some(c) = sorts::bubble_sorts::sort_choice(sort_name) { return c; }
+    if let Some(c) = sorts::circle_sorts::sort_choice(sort_name) { return c; }
+    if let Some(c) = sorts::comb_sorts::sort_choice(sort_name) { return c; }
+    if let Some(c) = sorts::cycle_sorts::sort_choice(sort_name) { return c; }
+    if let Some(c) = sorts::insertion_sorts::sort_choice(sort_name) { return c; }
+    if let Some(c) = sorts::rod_sorts::sort_choice(sort_name) { return c; }
+    if let Some(c) = sorts::shell_sorts::sort_choice(sort_name) { return c; }
 
     panic!(
         "\n\

@@ -6,6 +6,9 @@ fn sort<T: Ord + Copy, U: ?Sized + crate::traits::log_traits::SortLogger<T>>(
     arr: &mut [T],
     logger: &mut U,
 ) {
+    if arr.len() < 2 {
+        return;
+    }
     let mut left = 0;
     let mut right = arr.len() - 1;
     while left < right {

@@ -18,9 +18,7 @@ impl Rotation for DrillRotation {
                 right %= left;
                 let loop_count = end - mid - right;
                 for _ in 0..loop_count {
-                    let tmp = arr[mid];
-                    logger.write_data(arr, mid, arr[start]);
-                    logger.write_data(arr, start, tmp);
+                    logger.swap(arr, mid, start);
                     mid += 1;
                     start += 1;
                 }
@@ -33,9 +31,7 @@ impl Rotation for DrillRotation {
             for _ in 0..loop_count {
                 mid -= 1;
                 end -= 1;
-                let tmp = arr[mid];
-                logger.write_data(arr, mid, arr[end]);
-                logger.write_data(arr, end, tmp);
+                logger.swap(arr, mid, end);
             }
         }
         if left != 0 && right != 0 {
@@ -43,3 +39,5 @@ impl Rotation for DrillRotation {
         }
     }
 }
+
+register_rotation!(DrillRotation);
