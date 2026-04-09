@@ -18,4 +18,4 @@ Rod sort is generic over `S: BranchingStrategy`. See [shell_branching/README.md]
 
 ## Status
 
-Compiled but commented out of the active dispatch in `sorts/mod.rs`, pending migration to `sort_family!`.
+Active — wired into the dispatch tree in `sorts/mod.rs`. Uses distributed-slice registration.

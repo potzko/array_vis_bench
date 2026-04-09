@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-extern crate image;
 
 use crate::sub_image::SubImg;
 use sort_logger::SortLog;
@@ -39,12 +38,10 @@ enum VisualAction {
 }
 
 fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
-    let mut ret: Vec<SubImg> = Vec::with_capacity(amount as usize);
-    let hight = view.height / amount;
-    for i in 0..amount {
-        ret.push(view.make_sub_img(0, i * hight, view.width, hight));
-    }
-    ret
+    let height = view.height / amount;
+    (0..amount)
+        .map(|i| view.make_sub_img(0, i * height, view.width, height))
+        .collect()
 }
 
 fn spawn_ffmpeg() -> Child {
@@ -176,14 +173,14 @@ pub fn render_gif(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
                     let views = get_views(&aux_view, n_aux as u32);
                     store.insert(ArrActions::new(
                         vec![0; length],
-                        SubImg { x: 0, y: 0, width: 1000, height: 000 },
+                        SubImg { x: 0, y: 0, width: 0, height: 0 },
                         name,
                     ));
                     // Re-assign views for all aux arrays (indices 1..)
                     let aux_views_count = views.len();
                     for iii in 0..aux_views_count {
                         store.aux_mut(iii).view = views[iii];
-                        store.aux_mut(iii).full_rander_vec(&mut img, BLACK, WHITE);
+                        store.aux_mut(iii).full_render_vec(&mut img, BLACK, WHITE);
                     }
                 }
                 SortLog::FreeAuxArr { name } => {
@@ -279,7 +276,6 @@ impl ArrStore {
         actions: &[SortLog<usize>],
         img: &mut impl GenericImage<Pixel = Rgba<u8>>,
     ) {
-        let _size_t = size_of::<usize>();
         for action in actions {
             match action {
                 SortLog::Swap { name, ind_a, ind_b } => {
@@ -439,7 +435,7 @@ impl ArrActions {
         }
     }
 
-    fn full_rander_vec(
+    fn full_render_vec(
         &mut self,
         img: &mut impl GenericImage<Pixel = Rgba<u8>>,
         color: Rgba<u8>,

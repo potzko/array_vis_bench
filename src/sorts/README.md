@@ -15,7 +15,9 @@ Sorts self-register at program startup — there is no central list to maintain.
 
 ## Migration status
 
-Only `merge_sorts` is currently wired into the active dispatch (`mod.rs`). The remaining families (`bubble_sorts`, `shell_sorts`, `quick_sorts`, etc.) are compiled but commented out of the dispatch tree, pending migration to the `sort_family!` system.
+Eight families are wired into the active dispatch (`mod.rs`): `merge_sorts`, `bubble_sorts`, `circle_sorts`, `comb_sorts`, `cycle_sorts`, `insertion_sorts`, `rod_sorts`, and `shell_sorts`. Of these, `merge_sorts` uses the `sort_family!` system; the others use `create_sort!` / distributed-slice registration.
+
+The remaining families (`fun_sorts`, `heap_sort`, `quick_sorts`) are compiled but commented out, pending future work.
 
 ## Files in this directory
 

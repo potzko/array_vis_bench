@@ -19,4 +19,4 @@ These properties make it the preferred "small-sort" finisher for merge sort, tim
 
 ## Status
 
-Compiled but commented out of the active dispatch in `sorts/mod.rs`, pending migration to `sort_family!`.
+Active — wired into the dispatch tree in `sorts/mod.rs`. Uses `create_sort!` registration.

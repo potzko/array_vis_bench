@@ -18,4 +18,4 @@ Write-minimality is important when writes are expensive (e.g. flash memory, EEPR
 
 ## Status
 
-Compiled but commented out of the active dispatch in `sorts/mod.rs`, pending migration to `sort_family!`.
+Active — wired into the dispatch tree in `sorts/mod.rs`. Uses `create_sort!` registration.

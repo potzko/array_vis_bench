@@ -39,14 +39,14 @@ impl SubImg {
         }
     }
 
-    pub fn make_sub_img(&self, x: u32, y: u32, width: u32, hight: u32) -> Self {
+    pub fn make_sub_img(&self, x: u32, y: u32, width: u32, height: u32) -> Self {
         assert!(x + width <= self.width);
-        assert!(y + hight <= self.height);
+        assert!(y + height <= self.height);
         SubImg {
             x: self.x + x,
             y: self.y + y,
             width,
-            height: hight,
+            height,
         }
     }
 }

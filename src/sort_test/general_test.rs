@@ -1,68 +1,53 @@
-use crate::sorts::fn_sort;
-
-pub fn is_sorted<T: Ord>(arr: &[T]) -> bool {
-    if arr.len() < 2 {
-        return true;
-    }
-    for i in 1..arr.len() {
-        if arr[i] < arr[i - 1] {
-            return false;
-        }
-    }
-    true
-}
-
-#[allow(dead_code)]
-pub fn is_sorted_arr<T: Ord>(arr: &[T], arr_original: &mut [T]) -> bool {
-    arr_original.sort();
-    arr_original == arr
-}
+use crate::bench_registry;
 
 pub fn test_sort(choice: &[String]) -> bool {
-    test_sort_small_arrs(choice)
-}
-pub fn test_sort_small_arrs(choice: &[String]) -> bool {
-    let mut flag = true;
-    for i in 0..7 {
-        flag = flag && test_permutations_n(choice, i);
-    }
-    flag
-}
-pub fn test_permutations_n(choice: &[String], n: usize) -> bool {
-    let mut flag = true;
-    let options = n.pow(n as u32);
-    let mut arr = vec![0; n];
-    for i in 0..options {
-        let mut tmp_i = i;
-        for ii in arr.iter_mut() {
-            *ii = tmp_i % n;
-            tmp_i /= n;
+    // Find the sort by name in BENCH_SORTS
+    let name = choice.last().map(String::as_str).unwrap_or("");
+    for entry in bench_registry::BENCH_SORTS.iter() {
+        if entry.name == name {
+            return test_entry(entry);
         }
-        fn_sort(&mut arr, &mut () as &mut dyn crate::traits::log_traits::SortLogger<usize>, choice);
-        flag = flag && is_sorted(&arr);
     }
-    flag
+    eprintln!("sort_test: '{}' not found in BENCH_SORTS", name);
+    false
 }
 
-/*
-struct UnstableNum {
-    a: usize,
-    b: usize,
-}
-impl PartialEq for UnstableNum {
-    fn eq(&self, other: &Self) -> bool {
-        self.a.eq(&other.a)
+pub fn test_all() -> bool {
+    let mut all_ok = true;
+    for entry in bench_registry::BENCH_SORTS.iter() {
+        if !test_entry(entry) {
+            all_ok = false;
+        }
     }
+    all_ok
 }
-impl PartialOrd for UnstableNum {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.a.partial_cmp(&other.a)
+
+fn test_entry(entry: &bench_registry::SortBenchEntry) -> bool {
+    let cases: Vec<(&str, Vec<usize>)> = vec![
+        ("empty", vec![]),
+        ("single", vec![1]),
+        ("reversed pair", vec![2, 1]),
+        ("sorted pair", vec![1, 2]),
+        ("reversed 32", (0..32).rev().collect()),
+        ("sorted 32", (0..32).collect()),
+        ("all-same 32", vec![5; 32]),
+        ("alternating 33", (0..33).map(|i| if i % 2 == 0 { i } else { 33 - i }).collect()),
+        ("reversed 100", (0..100).rev().collect()),
+    ];
+
+    let mut ok = true;
+    for (label, case) in &cases {
+        let mut arr = case.clone();
+        let mut expected = case.clone();
+        expected.sort();
+        (entry.run)(&mut arr);
+        if arr != expected {
+            eprintln!("{}: FAILED on '{}'", entry.name, label);
+            ok = false;
+        }
     }
-}
-impl Eq for UnstableNum {}
-impl Ord for UnstableNum {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.a.cmp(&other.a)
+    if ok {
+        eprintln!("{}: OK", entry.name);
     }
+    ok
 }
-*/

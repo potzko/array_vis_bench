@@ -29,3 +29,7 @@ All variants self-register at startup via a `#[ctor]` in `combinations.rs`. The 
 - `sequences.rs` -- `GAP_SEQUENCES` slice and per-sequence registration entries.
 - `combinations.rs` -- `#[ctor]` that registers all variants into `SORT_REGISTRY`.
 - `classic_shell_sorts/` -- legacy hand-written shell sort variants (pre-generic system). See [classic_shell_sorts/README.md](classic_shell_sorts/README.md).
+
+## Status
+
+Active — wired into the dispatch tree in `sorts/mod.rs`. Uses distributed-slice registration.

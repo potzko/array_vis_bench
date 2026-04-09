@@ -1,11 +1,9 @@
 use crate::create_sort;
+use crate::traits::log_traits::SortLogger;
 
 create_sort!(sort, "cycle sort", "O(N^2)", false);
 
-fn sort<T: Ord + Copy, U: ?Sized + crate::traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    logger: &mut U,
-) {
+fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     let n = arr.len();
     if n < 2 {
         return;
@@ -39,15 +37,13 @@ fn sort<T: Ord + Copy, U: ?Sized + crate::traits::log_traits::SortLogger<T>>(
             while item == arr[pos] {
                 pos += 1;
             }
-            if item != arr[pos] {
-                let displaced = arr[pos];
-                logger.write_data(arr, pos, item);
-                item = displaced;
-            }
+            let displaced = arr[pos];
+            logger.write_data(arr, pos, item);
+            item = displaced;
         }
     }
 }
 
-pub fn sort_dyn(arr: &mut [usize], logger: &mut dyn crate::traits::log_traits::SortLogger<usize>) {
+pub fn sort_dyn(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) {
     sort(arr, logger);
 }
