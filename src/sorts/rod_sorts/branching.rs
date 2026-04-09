@@ -34,27 +34,17 @@ pub static ROD_STRATEGIES: [RodEntry] = [..];
 macro_rules! register_rod {
     ($mod:ident, $strat:ident) => {
         mod $mod {
-            use crate::sorts::rod_sorts::branching::{
-                ROD_STRATEGIES, RodEntry, BranchingStrategy,
-            };
+            use super::*;
             use crate::sorts::rod_sorts::rod_sort::RodSort;
             use crate::traits::log_traits::{NoOpLogger, SortLogger};
-            use super::$strat;
 
             const SORT_NAME: &str =
                 const_format::concatcp!("rod sort<strategy: ", $strat::NAME, ">");
             const PATH: &[&str] = &["rod sorts", $strat::NAME];
 
-            fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) {
-                RodSort::<$strat>::sort(arr, logger);
-            }
-            fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) {
-                RodSort::<$strat>::sort(arr, logger);
-            }
-            fn bench(arr: &mut [usize]) {
-                let mut l = NoOpLogger;
-                RodSort::<$strat>::sort(arr, &mut l);
-            }
+            fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) { RodSort::<$strat>::sort(arr, logger) }
+            fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) { RodSort::<$strat>::sort(arr, logger) }
+            fn bench(arr: &mut [usize]) { RodSort::<$strat>::sort(arr, &mut NoOpLogger) }
 
             #[linkme::distributed_slice(ROD_STRATEGIES)]
             static ENTRY: RodEntry = RodEntry {

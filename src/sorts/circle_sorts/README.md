@@ -46,4 +46,4 @@ Controls how the sort converges after the main circle passes — e.g. repeat unt
 
 ## Status
 
-Compiled but commented out of the active dispatch in `sorts/mod.rs`, pending migration to `sort_family!`.
+Active — wired into the dispatch tree in `sorts/mod.rs`. Uses distributed-slice registration.

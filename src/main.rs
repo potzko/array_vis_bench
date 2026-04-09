@@ -1,6 +1,6 @@
 use array_vis_bench::traits::get_registered_sorts;
 use array_vis_bench::traits::get_sort_tree;
-use array_vis_bench::traits::log_traits::{SortLog, VisualizerLogger};
+use array_vis_bench::traits::log_traits::VisualizerLogger;
 use array_vis_bench::visualise::visualise_sort;
 use array_vis_bench::utils::array_gen::{get_rand_arr, get_rand_arr_in_range, get_arr, get_reversed_arr};
 use std::io::{self, Write};
@@ -70,7 +70,7 @@ fn main() {
     
     // Create visualizer logger
     let mut logger = VisualizerLogger {
-        log: Vec::<SortLog<usize>>::new(),
+        log: Vec::new(),
         type_ghost: std::marker::PhantomData,
     };
     

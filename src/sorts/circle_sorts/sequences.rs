@@ -36,30 +36,28 @@ pub struct CircleEntry {
 pub static CIRCLE_ENTRIES: [CircleEntry] = [..];
 
 // ---------------------------------------------------------------------------
-// Registration macros
+// Unified registration macro
+//
+// Usage:
+//   register_circle!(mod_name, "sort name", &["path", ..."], driver_fn::<TypeA, TypeB>);
+//
+// The $call expression must be a function accepting (&mut [T], &mut U)
+// where U: SortLogger<T>.
 // ---------------------------------------------------------------------------
-
-// Convergence variants (run to completion, no finishing sort)
-macro_rules! register_circle_recursive {
-    ($mod:ident, $sort_name:literal, $path:expr, $Order:ident) => {
+macro_rules! register_circle {
+    ($mod:ident, $sort_name:expr, $path:expr, $call:expr) => {
         mod $mod {
-            use super::{$Order, Convergence, CircleEntry, CIRCLE_ENTRIES};
-            use crate::sorts::circle_sorts::finishing::drive_recursive;
+            use super::*;
+            #[allow(unused_imports)]
+            use crate::sorts::circle_sorts::finishing::*;
             use crate::traits::log_traits::{NoOpLogger, SortLogger};
 
             const SORT_NAME: &str = $sort_name;
             const PATH: &[&str] = $path;
 
-            fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) {
-                drive_recursive::<$Order, Convergence>(arr, logger);
-            }
-            fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) {
-                drive_recursive::<$Order, Convergence>(arr, logger);
-            }
-            fn bench(arr: &mut [usize]) {
-                let mut l = NoOpLogger;
-                drive_recursive::<$Order, Convergence>(arr, &mut l);
-            }
+            fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) { $call(arr, logger) }
+            fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) { $call(arr, logger) }
+            fn bench(arr: &mut [usize]) { $call(arr, &mut NoOpLogger) }
 
             #[linkme::distributed_slice(CIRCLE_ENTRIES)]
             static ENTRY: CircleEntry = CircleEntry {
@@ -90,276 +88,118 @@ macro_rules! register_circle_recursive {
     };
 }
 
-macro_rules! register_circle_bottom_up {
-    ($mod:ident, $sort_name:literal, $path:expr, $Dir:ident) => {
-        mod $mod {
-            use super::{$Dir, Convergence, CircleEntry, CIRCLE_ENTRIES};
-            use crate::sorts::circle_sorts::finishing::drive_bottom_up;
-            use crate::traits::log_traits::{NoOpLogger, SortLogger};
-
-            const SORT_NAME: &str = $sort_name;
-            const PATH: &[&str] = $path;
-
-            fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) {
-                drive_bottom_up::<$Dir, Convergence>(arr, logger);
-            }
-            fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) {
-                drive_bottom_up::<$Dir, Convergence>(arr, logger);
-            }
-            fn bench(arr: &mut [usize]) {
-                let mut l = NoOpLogger;
-                drive_bottom_up::<$Dir, Convergence>(arr, &mut l);
-            }
-
-            #[linkme::distributed_slice(CIRCLE_ENTRIES)]
-            static ENTRY: CircleEntry = CircleEntry {
-                name: SORT_NAME,
-                big_o: "O(N log\u{00B2} N)",
-                path: PATH,
-                sort_fn,
-                sort_vis,
-            };
-
-            #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
-            static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
-                crate::bench_registry::SortBenchEntry {
-                    name: SORT_NAME,
-                    big_o: "O(N log\u{00B2} N)",
-                    stable: false,
-                    run: bench,
-                };
-
-            #[cfg(test)]
-            mod sort_test {
-                #[test]
-                fn correctness() {
-                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
-                }
-            }
-        }
-    };
-}
-
-// Short-circuit variants: stop after log2(n) passes, finish with S
-macro_rules! register_circle_recursive_sc {
-    ($mod:ident, $order_display:literal, $Order:ident, $S:ident) => {
-        mod $mod {
-            use super::{$Order, $S, ShortCircuit, CircleEntry, CIRCLE_ENTRIES};
-            use crate::sorts::circle_sorts::finishing::{drive_recursive, NearSortedSort};
-            use crate::traits::log_traits::{NoOpLogger, SortLogger};
-
-            const SORT_NAME: &str = const_format::concatcp!(
-                "circle sort (recursive sc: ", $S::NAME, ", ", $order_display, ")"
-            );
-            const PATH: &[&str] = &[
-                "circle sorts", "recursive, short circuit", $S::NAME, $order_display
-            ];
-
-            fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) {
-                drive_recursive::<$Order, ShortCircuit<$S>>(arr, logger);
-            }
-            fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) {
-                drive_recursive::<$Order, ShortCircuit<$S>>(arr, logger);
-            }
-            fn bench(arr: &mut [usize]) {
-                let mut l = NoOpLogger;
-                drive_recursive::<$Order, ShortCircuit<$S>>(arr, &mut l);
-            }
-
-            #[linkme::distributed_slice(CIRCLE_ENTRIES)]
-            static ENTRY: CircleEntry = CircleEntry {
-                name: SORT_NAME,
-                big_o: "O(N log\u{00B2} N)",
-                path: PATH,
-                sort_fn,
-                sort_vis,
-            };
-
-            #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
-            static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
-                crate::bench_registry::SortBenchEntry {
-                    name: SORT_NAME,
-                    big_o: "O(N log\u{00B2} N)",
-                    stable: false,
-                    run: bench,
-            };
-
-            #[cfg(test)]
-            mod sort_test {
-                #[test]
-                fn correctness() {
-                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
-                }
-            }
-        }
-    };
-}
-
-macro_rules! register_circle_bottom_up_sc {
-    ($mod:ident, $dir_display:literal, $Dir:ident, $S:ident) => {
-        mod $mod {
-            use super::{$Dir, $S, ShortCircuit, CircleEntry, CIRCLE_ENTRIES};
-            use crate::sorts::circle_sorts::finishing::{drive_bottom_up, NearSortedSort};
-            use crate::traits::log_traits::{NoOpLogger, SortLogger};
-
-            const SORT_NAME: &str = const_format::concatcp!(
-                "circle sort (bottom-up sc: ", $S::NAME, ", ", $dir_display, ")"
-            );
-            const PATH: &[&str] = &[
-                "circle sorts", "bottom-up, short circuit", $S::NAME, $dir_display
-            ];
-
-            fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) {
-                drive_bottom_up::<$Dir, ShortCircuit<$S>>(arr, logger);
-            }
-            fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) {
-                drive_bottom_up::<$Dir, ShortCircuit<$S>>(arr, logger);
-            }
-            fn bench(arr: &mut [usize]) {
-                let mut l = NoOpLogger;
-                drive_bottom_up::<$Dir, ShortCircuit<$S>>(arr, &mut l);
-            }
-
-            #[linkme::distributed_slice(CIRCLE_ENTRIES)]
-            static ENTRY: CircleEntry = CircleEntry {
-                name: SORT_NAME,
-                big_o: "O(N log\u{00B2} N)",
-                path: PATH,
-                sort_fn,
-                sort_vis,
-            };
-
-            #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
-            static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
-                crate::bench_registry::SortBenchEntry {
-                    name: SORT_NAME,
-                    big_o: "O(N log\u{00B2} N)",
-                    stable: false,
-                    run: bench,
-                };
-
-            #[cfg(test)]
-            mod sort_test {
-                #[test]
-                fn correctness() {
-                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
-                }
-            }
-        }
-    };
-}
-
-// Shaker recursive: non-generic over Order, registered inline.
-mod shaker_recursive {
-    use super::{CircleEntry, CIRCLE_ENTRIES};
-    use crate::sorts::circle_sorts::circle_sort_shaker_recursive::CircleSortShakerRecursive;
-    use crate::traits::log_traits::{NoOpLogger, SortLogger};
-
-    const SORT_NAME: &str = "circle sort (recursive shaker)";
-    const PATH: &[&str] = &["circle sorts", "recursive", "shaker"];
-
-    fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) {
-        CircleSortShakerRecursive::sort(arr, logger);
-    }
-    fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) {
-        CircleSortShakerRecursive::sort(arr, logger);
-    }
-    fn bench(arr: &mut [usize]) {
-        let mut l = NoOpLogger;
-        CircleSortShakerRecursive::sort(arr, &mut l);
-    }
-
-    #[linkme::distributed_slice(CIRCLE_ENTRIES)]
-    static ENTRY: CircleEntry = CircleEntry {
-        name: SORT_NAME,
-        big_o: "O(N log\u{00B2} N)",
-        path: PATH,
-        sort_fn,
-        sort_vis,
-    };
-
-    #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
-    static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
-        crate::bench_registry::SortBenchEntry {
-            name: SORT_NAME,
-            big_o: "O(N log\u{00B2} N)",
-            stable: false,
-            run: bench,
-        };
-
-    #[cfg(test)]
-    mod sort_test {
-        #[test]
-        fn correctness() {
-            crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
-        }
-    }
-}
+// Shaker recursive: non-generic, registered inline.
+register_circle!(
+    shaker_recursive,
+    "circle sort (recursive shaker)",
+    &["circle sorts", "recursive", "shaker"],
+    crate::sorts::circle_sorts::circle_sort_shaker_recursive::CircleSortShakerRecursive::sort
+);
 
 // ---------------------------------------------------------------------------
 // Recursive — convergence (run to completion)
 // ---------------------------------------------------------------------------
 
-register_circle_recursive!(
+register_circle!(
     pre_order, "circle sort (recursive pre-order)",
     &["circle sorts", "recursive", "pre-order"],
-    PreOrder
+    drive_recursive::<PreOrder, Convergence>
 );
-register_circle_recursive!(
+register_circle!(
     left_mid_right, "circle sort (recursive left-mid-right)",
     &["circle sorts", "recursive", "left-mid-right"],
-    LeftMidRight
+    drive_recursive::<LeftMidRight, Convergence>
 );
-register_circle_recursive!(
+register_circle!(
     right_mid_left, "circle sort (recursive right-mid-left)",
     &["circle sorts", "recursive", "right-mid-left"],
-    RightMidLeft
+    drive_recursive::<RightMidLeft, Convergence>
 );
-register_circle_recursive!(
+register_circle!(
     post_order, "circle sort (recursive post-order)",
     &["circle sorts", "recursive", "post-order"],
-    PostOrder
+    drive_recursive::<PostOrder, Convergence>
 );
 
 // ---------------------------------------------------------------------------
 // Recursive — short circuit (stop at log2(n), finish with S)
 // ---------------------------------------------------------------------------
 
-register_circle_recursive_sc!(sc_pre_order,      "pre-order",      PreOrder,      InsertionNearSort);
-register_circle_recursive_sc!(sc_left_mid_right,  "left-mid-right", LeftMidRight,  InsertionNearSort);
-register_circle_recursive_sc!(sc_right_mid_left,  "right-mid-left", RightMidLeft,  InsertionNearSort);
-register_circle_recursive_sc!(sc_post_order,      "post-order",     PostOrder,     InsertionNearSort);
+register_circle!(
+    sc_pre_order,
+    const_format::concatcp!("circle sort (recursive sc: ", InsertionNearSort::NAME, ", pre-order)"),
+    &["circle sorts", "recursive, short circuit", InsertionNearSort::NAME, "pre-order"],
+    drive_recursive::<PreOrder, ShortCircuit<InsertionNearSort>>
+);
+register_circle!(
+    sc_left_mid_right,
+    const_format::concatcp!("circle sort (recursive sc: ", InsertionNearSort::NAME, ", left-mid-right)"),
+    &["circle sorts", "recursive, short circuit", InsertionNearSort::NAME, "left-mid-right"],
+    drive_recursive::<LeftMidRight, ShortCircuit<InsertionNearSort>>
+);
+register_circle!(
+    sc_right_mid_left,
+    const_format::concatcp!("circle sort (recursive sc: ", InsertionNearSort::NAME, ", right-mid-left)"),
+    &["circle sorts", "recursive, short circuit", InsertionNearSort::NAME, "right-mid-left"],
+    drive_recursive::<RightMidLeft, ShortCircuit<InsertionNearSort>>
+);
+register_circle!(
+    sc_post_order,
+    const_format::concatcp!("circle sort (recursive sc: ", InsertionNearSort::NAME, ", post-order)"),
+    &["circle sorts", "recursive, short circuit", InsertionNearSort::NAME, "post-order"],
+    drive_recursive::<PostOrder, ShortCircuit<InsertionNearSort>>
+);
 
 // ---------------------------------------------------------------------------
 // Bottom-up — convergence (run to completion)
 // ---------------------------------------------------------------------------
 
-register_circle_bottom_up!(
+register_circle!(
     decreasing, "circle sort (bottom-up decreasing)",
     &["circle sorts", "bottom-up", "decreasing"],
-    Decreasing
+    drive_bottom_up::<Decreasing, Convergence>
 );
-register_circle_bottom_up!(
+register_circle!(
     increasing, "circle sort (bottom-up increasing)",
     &["circle sorts", "bottom-up", "increasing"],
-    Increasing
+    drive_bottom_up::<Increasing, Convergence>
 );
-register_circle_bottom_up!(
+register_circle!(
     shaker_dec_inc, "circle sort (bottom-up shaker dec\u{2192}inc)",
     &["circle sorts", "bottom-up", "shaker dec\u{2192}inc"],
-    ShakerDecInc
+    drive_bottom_up::<ShakerDecInc, Convergence>
 );
-register_circle_bottom_up!(
+register_circle!(
     shaker_inc_dec, "circle sort (bottom-up shaker inc\u{2192}dec)",
     &["circle sorts", "bottom-up", "shaker inc\u{2192}dec"],
-    ShakerIncDec
+    drive_bottom_up::<ShakerIncDec, Convergence>
 );
 
 // ---------------------------------------------------------------------------
 // Bottom-up — short circuit (stop at log2(n), finish with S)
 // ---------------------------------------------------------------------------
 
-register_circle_bottom_up_sc!(sc_decreasing,     "decreasing",            Decreasing,   InsertionNearSort);
-register_circle_bottom_up_sc!(sc_increasing,     "increasing",            Increasing,   InsertionNearSort);
-register_circle_bottom_up_sc!(sc_shaker_dec_inc, "shaker dec\u{2192}inc", ShakerDecInc, InsertionNearSort);
-register_circle_bottom_up_sc!(sc_shaker_inc_dec, "shaker inc\u{2192}dec", ShakerIncDec, InsertionNearSort);
+register_circle!(
+    sc_decreasing,
+    const_format::concatcp!("circle sort (bottom-up sc: ", InsertionNearSort::NAME, ", decreasing)"),
+    &["circle sorts", "bottom-up, short circuit", InsertionNearSort::NAME, "decreasing"],
+    drive_bottom_up::<Decreasing, ShortCircuit<InsertionNearSort>>
+);
+register_circle!(
+    sc_increasing,
+    const_format::concatcp!("circle sort (bottom-up sc: ", InsertionNearSort::NAME, ", increasing)"),
+    &["circle sorts", "bottom-up, short circuit", InsertionNearSort::NAME, "increasing"],
+    drive_bottom_up::<Increasing, ShortCircuit<InsertionNearSort>>
+);
+register_circle!(
+    sc_shaker_dec_inc,
+    const_format::concatcp!("circle sort (bottom-up sc: ", InsertionNearSort::NAME, ", shaker dec\u{2192}inc)"),
+    &["circle sorts", "bottom-up, short circuit", InsertionNearSort::NAME, "shaker dec\u{2192}inc"],
+    drive_bottom_up::<ShakerDecInc, ShortCircuit<InsertionNearSort>>
+);
+register_circle!(
+    sc_shaker_inc_dec,
+    const_format::concatcp!("circle sort (bottom-up sc: ", InsertionNearSort::NAME, ", shaker inc\u{2192}dec)"),
+    &["circle sorts", "bottom-up, short circuit", InsertionNearSort::NAME, "shaker inc\u{2192}dec"],
+    drive_bottom_up::<ShakerIncDec, ShortCircuit<InsertionNearSort>>
+);

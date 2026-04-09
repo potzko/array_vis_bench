@@ -12,12 +12,13 @@ pub mod insertion_sorts;
 pub mod rod_sorts;
 pub mod shell_sorts;
 
+pub mod quick_sorts;
+
 // Always-disconnected (future work):
 // pub mod annotations;
 // pub mod example_generic_sort;
 // pub mod fun_sorts;
 // pub mod heap_sort;
-// pub mod quick_sorts;
 
 pub fn fn_sort(
     arr: &mut [usize],

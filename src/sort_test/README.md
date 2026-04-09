@@ -1,13 +1,12 @@
 # sort_test
 
-Testing harness for validating sort correctness. Runs a sort against multiple test arrays and verifies both ordering and element preservation.
+Runtime testing harness for validating sort correctness. Looks up sorts by name in `BENCH_SORTS` and runs them against test arrays.
 
-## What it checks
+## Functions
 
-- The output is sorted (monotonically non-decreasing).
-- The output is a permutation of the input (no elements lost or duplicated).
+- `test_sort(choice)` — find the sort named by `choice` in `BENCH_SORTS` and run it against a set of test arrays. Returns `true` if all checks pass.
+- `test_all()` — run the test suite against every sort registered in `BENCH_SORTS`.
 
-## Files
+## Relationship to `#[test]` tests
 
-- `general_test.rs` — `test_sort(choice)` runs the sort identified by `choice` against a set of test arrays (random, ascending, descending, all-equal, etc.) and returns `true` if all checks pass.
-- `mod.rs` — re-exports `test_sort`.
+The primary sort test infrastructure lives in `bench_registry::test_helpers::check_sort`, which is called automatically by every sort registered via `create_sort!` or `sort_family!`. Those `#[test]` tests are more comprehensive (exhaustive small permutations, random arrays up to 5000, duplicate patterns, stability checks). This module is a lighter runtime alternative for use outside `cargo test`.

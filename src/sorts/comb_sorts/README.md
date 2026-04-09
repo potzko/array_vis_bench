@@ -22,4 +22,4 @@ The classic shrink factor is 1.3 (empirically optimal). Different gap sequences 
 
 ## Status
 
-Compiled but commented out of the active dispatch in `sorts/mod.rs`, pending migration to `sort_family!`.
+Active — wired into the dispatch tree in `sorts/mod.rs`. Uses distributed-slice registration.
