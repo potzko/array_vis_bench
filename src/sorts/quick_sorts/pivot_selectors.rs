@@ -10,6 +10,8 @@ pub struct LastElement;
 pub struct MedianOfThree;
 pub struct MedianOfMedians;
 pub struct Ninther;
+pub struct NintherLowerThird;
+pub struct NintherUpperThird;
 
 impl PivotSelector for FirstElement {
     fn select<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -77,6 +79,56 @@ impl PivotSelector for Ninther {
             0, len / 8, len / 4,              // Group A
             3 * len / 8, len / 2, 5 * len / 8, // Group B
             3 * len / 4, 7 * len / 8, len - 1, // Group C
+        ];
+        let m1 = median_index(arr, logger, s[0], s[1], s[2]);
+        let m2 = median_index(arr, logger, s[3], s[4], s[5]);
+        let m3 = median_index(arr, logger, s[6], s[7], s[8]);
+        median_index(arr, logger, m1, m2, m3)
+    }
+}
+
+/// Ninther-style pivot selector targeting the ~⅓ quantile.
+///
+/// Samples 9 positions evenly from the lower ⅔ of the array, groups them
+/// into three triples, computes each triple's median, then returns the
+/// median of those three medians. The result approximates the 33rd
+/// percentile, making it a good low pivot for dual-pivot quicksort.
+impl PivotSelector for NintherLowerThird {
+    fn select<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], logger: &mut U) -> usize {
+        let len = arr.len();
+        if len < 9 {
+            return median_index(arr, logger, 0, len / 3, 2 * len / 3);
+        }
+        // 9 samples spanning [0, 2n/3], three groups of three
+        let s = [
+            0,            len / 12,      len / 6,      // Group A: ≈ 0,     n/12, n/6
+            len / 4,      len / 3,       5 * len / 12, // Group B: ≈ n/4,   n/3,  5n/12
+            len / 2,      7 * len / 12,  2 * len / 3,  // Group C: ≈ n/2,  7n/12, 2n/3
+        ];
+        let m1 = median_index(arr, logger, s[0], s[1], s[2]);
+        let m2 = median_index(arr, logger, s[3], s[4], s[5]);
+        let m3 = median_index(arr, logger, s[6], s[7], s[8]);
+        median_index(arr, logger, m1, m2, m3)
+    }
+}
+
+/// Ninther-style pivot selector targeting the ~⅔ quantile.
+///
+/// Samples 9 positions evenly from the upper ⅔ of the array, groups them
+/// into three triples, computes each triple's median, then returns the
+/// median of those three medians. The result approximates the 67th
+/// percentile, making it a good high pivot for dual-pivot quicksort.
+impl PivotSelector for NintherUpperThird {
+    fn select<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], logger: &mut U) -> usize {
+        let len = arr.len();
+        if len < 9 {
+            return median_index(arr, logger, len / 3, 2 * len / 3, len - 1);
+        }
+        // 9 samples spanning [n/3, n-1], three groups of three
+        let s = [
+            len / 3,      5 * len / 12, len / 2,       // Group A: ≈ n/3,  5n/12, n/2
+            7 * len / 12, 2 * len / 3,  3 * len / 4,   // Group B: ≈ 7n/12, 2n/3, 3n/4
+            5 * len / 6,  11 * len / 12, len - 1,      // Group C: ≈ 5n/6, 11n/12, n-1
         ];
         let m1 = median_index(arr, logger, s[0], s[1], s[2]);
         let m2 = median_index(arr, logger, s[3], s[4], s[5]);

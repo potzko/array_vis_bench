@@ -8,7 +8,7 @@ use std::io::Write;
 use std::mem::size_of;
 use std::process::{Child, ChildStdin, Command, Stdio};
 
-const ACTIONS_PER_FRAME: usize = 100;
+const ACTIONS_PER_FRAME: usize = 15;
 const OUTPUT_WIDTH: u32 = 1920;
 const OUTPUT_HEIGHT: u32 = 1080;
 const FRAMERATE: u32 = 30;

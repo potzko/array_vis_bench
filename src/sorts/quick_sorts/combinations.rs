@@ -4,6 +4,7 @@ use crate::sorts::merge_sorts::small_sort::{
 use super::partitions::{Block, Hoare, Lomuto, MovingPivot, ThreeWay};
 use super::pivot_selectors::{
     FirstElement, LastElement, MedianOfMedians, MedianOfThree, MiddleElement, Ninther,
+    NintherLowerThird, NintherUpperThird,
 };
 use super::quick_sort::QuickSort;
 use super::dual_pivot_quick_sort::DualPivotQuickSort;
@@ -55,21 +56,25 @@ sort_registry_macro::sort_family! {
     type Sort = DualPivotQuickSort<{V1}, {V2}, {SS}>;
 
     V1 {
-        FirstElement    => "first"
-        MiddleElement   => "middle"
-        LastElement     => "last"
-        MedianOfThree   => "median of 3"
-        MedianOfMedians => "median of medians"
-        Ninther         => "ninther"
+        FirstElement       => "first"
+        MiddleElement      => "middle"
+        LastElement        => "last"
+        MedianOfThree      => "median of 3"
+        MedianOfMedians    => "median of medians"
+        Ninther            => "ninther"
+        NintherLowerThird  => "ninther lower third"
+        NintherUpperThird  => "ninther upper third"
     }
 
     V2 {
-        FirstElement    => "first"
-        MiddleElement   => "middle"
-        LastElement     => "last"
-        MedianOfThree   => "median of 3"
-        MedianOfMedians => "median of medians"
-        Ninther         => "ninther"
+        FirstElement       => "first"
+        MiddleElement      => "middle"
+        LastElement        => "last"
+        MedianOfThree      => "median of 3"
+        MedianOfMedians    => "median of medians"
+        Ninther            => "ninther"
+        NintherLowerThird  => "ninther lower third"
+        NintherUpperThird  => "ninther upper third"
     }
 
     SS {
