@@ -1,5 +1,13 @@
 use crate::traits::log_traits::SortLogger;
-use super::utils::insertion_sort;
+
+fn insertion_sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+    for i in 1..arr.len() {
+        let mut ii = i;
+        while ii > 0 && logger.cond_swap_lt(arr, ii, ii - 1) {
+            ii -= 1;
+        }
+    }
+}
 
 /// Strategy for sorting small sub-arrays before or during a merge sort pass.
 ///
@@ -17,6 +25,7 @@ pub trait SmallSort {
 
 /// No small-sort: recurse / iterate all the way down to subarrays of size 1.
 pub struct NoSmallSort;
+combo_codegen::component!(SmallSort, NoSmallSort, "no threshold");
 
 impl SmallSort for NoSmallSort {
     const THRESHOLD: usize = 0;
@@ -30,6 +39,8 @@ impl SmallSort for NoSmallSort {
 
 /// Insertion sort for subarrays of length ≤ N.
 pub struct InsertionSmallSort<const N: usize>;
+combo_codegen::component!(SmallSort, InsertionSmallSort<16>, "insertion: 16");
+combo_codegen::component!(SmallSort, InsertionSmallSort<32>, "insertion: 32");
 
 impl<const N: usize> SmallSort for InsertionSmallSort<N> {
     const THRESHOLD: usize = N;
@@ -46,6 +57,7 @@ impl<const N: usize> SmallSort for InsertionSmallSort<N> {
 /// Uses 19 compare-and-swap operations (optimal) when len == 8.
 /// Falls back to insertion sort for smaller sizes.
 pub struct NetworkSmallSort;
+combo_codegen::component!(SmallSort, NetworkSmallSort, "network: 8");
 
 impl SmallSort for NetworkSmallSort {
     const THRESHOLD: usize = 8;
@@ -65,6 +77,7 @@ impl SmallSort for NetworkSmallSort {
 /// merge sort network (63 comparators) for size 16.
 /// Falls back to insertion sort for other sizes.
 pub struct Network16SmallSort;
+combo_codegen::component!(SmallSort, Network16SmallSort, "network: 16");
 
 impl SmallSort for Network16SmallSort {
     const THRESHOLD: usize = 16;

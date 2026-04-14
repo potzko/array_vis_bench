@@ -1,7 +1,8 @@
 mod utils;
-pub mod small_sort;
 pub mod bottom_up;
-pub mod combinations;
+pub mod combinations {
+    include!(concat!(env!("OUT_DIR"), "/merge_sorts_combinations.rs"));
+}
 pub mod naive;
 pub mod natural;
 pub mod rotation;

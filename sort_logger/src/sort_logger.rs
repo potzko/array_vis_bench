@@ -3,11 +3,8 @@ use crate::sort_log::SortLog;
 
 /// Instrumentation trait for sort algorithms.
 ///
-/// All methods that operate on `T` (the sort element type) are non-generic and
-/// dyn-compatible.  The helper methods that accept a *different* element type
-/// `U` (e.g. for auxiliary arrays) are gated with `where Self: Sized` so they
-/// are only callable on concrete loggers — adding a new gap sequence or sort
-/// should never need those.
+/// All methods are dyn-compatible — the trait can be used as `dyn SortLogger<T>`
+/// without restriction.
 pub trait SortLogger<T: Copy + Ord> {
     fn log(&mut self, _: SortLog<T>) {}
 
@@ -35,10 +32,7 @@ pub trait SortLogger<T: Copy + Ord> {
         })
     }
     #[inline(always)]
-    fn copy_aux_arr_t(&mut self, arr: &[T]) -> Vec<T>
-    where
-        Self: Sized,
-    {
+    fn copy_aux_arr_t(&mut self, arr: &[T]) -> Vec<T> {
         let mut ret = Vec::<T>::with_capacity(arr.len());
         unsafe { ret.set_len(arr.len()) }
         self.log_aux_arr_t(&ret);
@@ -55,10 +49,7 @@ pub trait SortLogger<T: Copy + Ord> {
         ret
     }
     #[inline(always)]
-    fn copy_aux_arr(&mut self, arr: &[usize]) -> Vec<usize>
-    where
-        Self: Sized,
-    {
+    fn copy_aux_arr(&mut self, arr: &[usize]) -> Vec<usize> {
         let mut ret = Vec::<usize>::with_capacity(arr.len());
         unsafe { ret.set_len(arr.len()) }
         self.log_aux_arr_u(&ret);
@@ -88,15 +79,11 @@ pub trait SortLogger<T: Copy + Ord> {
     }
 
     /*----------------
-        Cmps — generic-over-U versions (for auxiliary/cross-type comparisons).
-        Gated with `where Self: Sized` so they are excluded from the dyn vtable.
+        Cmps
     --------------- */
 
     #[inline(always)]
-    fn cmp_eq<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool
-    where
-        Self: Sized,
-    {
+    fn cmp_eq(&mut self, arr: &[T], ind_a: usize, ind_b: usize) -> bool {
         let result = arr[ind_a] == arr[ind_b];
         self.log(SortLog::CmpInArr {
             name: arr_name!(arr),
@@ -107,10 +94,7 @@ pub trait SortLogger<T: Copy + Ord> {
         result
     }
     #[inline(always)]
-    fn cmp_neq<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool
-    where
-        Self: Sized,
-    {
+    fn cmp_neq(&mut self, arr: &[T], ind_a: usize, ind_b: usize) -> bool {
         let result = arr[ind_a] != arr[ind_b];
         self.log(SortLog::CmpInArr {
             name: arr_name!(arr),
@@ -121,10 +105,7 @@ pub trait SortLogger<T: Copy + Ord> {
         result
     }
     #[inline(always)]
-    fn cmp_lt<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool
-    where
-        Self: Sized,
-    {
+    fn cmp_lt(&mut self, arr: &[T], ind_a: usize, ind_b: usize) -> bool {
         let result = arr[ind_a] < arr[ind_b];
         self.log(SortLog::CmpInArr {
             name: arr_name!(arr),
@@ -135,10 +116,7 @@ pub trait SortLogger<T: Copy + Ord> {
         result
     }
     #[inline(always)]
-    fn cmp_le<U: Ord>(&mut self, arr: &[U], ind_a: usize, ind_b: usize) -> bool
-    where
-        Self: Sized,
-    {
+    fn cmp_le(&mut self, arr: &[T], ind_a: usize, ind_b: usize) -> bool {
         let result = arr[ind_a] <= arr[ind_b];
         self.log(SortLog::CmpInArr {
             name: arr_name!(arr),
@@ -148,8 +126,6 @@ pub trait SortLogger<T: Copy + Ord> {
         });
         result
     }
-
-    // T-specific comparisons — dyn-compatible (no extra type params).
     #[inline(always)]
     fn cmp_gt(&mut self, arr: &[T], ind_a: usize, ind_b: usize) -> bool {
         let result = arr[ind_a] > arr[ind_b];

@@ -1,0 +1,8 @@
+[package]
+name = "combo_codegen"
+version = "0.1.0"
+edition = "2021"
+description = "Build-time scanner and cross-product generator for annotated type components."
+
+[dependencies]
+walkdir = "2"

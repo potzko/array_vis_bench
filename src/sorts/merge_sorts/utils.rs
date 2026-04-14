@@ -37,16 +37,6 @@ pub fn copy_across<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     logger.copy_range(src, 0, dst, 0, src.len().min(dst.len()));
 }
 
-/// In-place insertion sort (dyn-compatible).
-pub fn insertion_sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    for i in 1..arr.len() {
-        let mut ii = i;
-        while ii > 0 && logger.cond_swap_lt(arr, ii, ii - 1) {
-            ii -= 1;
-        }
-    }
-}
-
 // ---------------------------------------------------------------------------
 // Binary search helpers
 // ---------------------------------------------------------------------------

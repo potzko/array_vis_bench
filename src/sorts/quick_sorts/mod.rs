@@ -2,4 +2,6 @@ pub mod pivot_selectors;
 pub mod partitions;
 pub mod quick_sort;
 pub mod dual_pivot_quick_sort;
-pub mod combinations;
+pub mod combinations {
+    include!(concat!(env!("OUT_DIR"), "/quick_sorts_combinations.rs"));
+}

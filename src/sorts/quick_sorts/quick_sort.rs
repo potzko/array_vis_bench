@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::sorts::merge_sorts::small_sort::SmallSort;
+use crate::utils::small_sort::SmallSort;
 use crate::traits::log_traits::SortLogger;
 
 use super::partitions::PartitionScheme;

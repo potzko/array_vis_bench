@@ -5,6 +5,7 @@ members = [
     "sort_vis",
     "sort_registry_core",
     "sort_registry_macro",
+    "combo_codegen",
 ]
 resolver = "2"
 
@@ -35,7 +36,11 @@ linkme = "0.3"
 const_format = "0.2"
 sort_logger = { path = "./sort_logger" }
 sort_vis = { path = "./sort_vis" }
+combo_codegen = { path = "./combo_codegen" }
 #gif = "0.13.1"
+
+[build-dependencies]
+combo_codegen = { path = "./combo_codegen" }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
