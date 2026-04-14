@@ -1,4 +1,5 @@
 pub mod array_gen;
+pub mod small_sort;
 pub mod check_utils;
 pub mod rotation;
 pub mod shell_branching;

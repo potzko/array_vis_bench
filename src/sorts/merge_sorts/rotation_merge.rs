@@ -134,7 +134,7 @@ mod tests {
     use crate::sorts::merge_sorts::rotation::{
         TopDownRotationMergeSort, BottomUpRotationMergeSort,
     };
-    use crate::sorts::merge_sorts::small_sort::NoSmallSort;
+    use crate::utils::small_sort::NoSmallSort;
 
     fn check_sort<S>(arr: &mut Vec<usize>, expected: &[usize])
     where

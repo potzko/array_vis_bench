@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use crate::traits::log_traits::SortLogger;
 use super::utils::{copy_across, merge_inplace};
-use super::small_sort::SmallSort;
+use crate::utils::small_sort::SmallSort;
 
 /// Top-down (recursive) merge sort.
 ///

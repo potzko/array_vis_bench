@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 use crate::traits::log_traits::SortLogger;
-use super::small_sort::SmallSort;
+use crate::utils::small_sort::SmallSort;
 
 /// Classic naive merge sort: allocates fresh left and right sub-arrays at
 /// every recursion level, sorts each half, then merges back into the original.
@@ -70,7 +70,7 @@ impl<S: SmallSort> NaiveMergeSort<S> {
 mod tests {
     use super::*;
     use crate::traits::log_traits::NoOpLogger;
-    use crate::sorts::merge_sorts::small_sort::{NoSmallSort, InsertionSmallSort};
+    use crate::utils::small_sort::{NoSmallSort, InsertionSmallSort};
 
     fn check<S: SmallSort>(arr: &mut Vec<usize>) {
         let mut expected = arr.clone();

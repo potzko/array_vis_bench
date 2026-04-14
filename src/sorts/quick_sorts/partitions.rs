@@ -19,6 +19,7 @@ pub trait PartitionScheme {
 /// Moves the pivot to the end, scans left-to-right placing small elements
 /// at the front, then swaps the pivot into its final position.
 pub struct Lomuto;
+combo_codegen::component!(Partition, Lomuto, "lomuto");
 
 impl PartitionScheme for Lomuto {
     fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -47,6 +48,7 @@ impl PartitionScheme for Lomuto {
 /// Moves the pivot to the start, scans inward from both ends, then swaps the
 /// pivot into its final position.
 pub struct Hoare;
+combo_codegen::component!(Partition, Hoare, "hoare");
 
 impl PartitionScheme for Hoare {
     fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -82,6 +84,7 @@ impl PartitionScheme for Hoare {
 /// Splits into three regions: `< pivot`, `== pivot`, `> pivot`.
 /// Equal elements are grouped in the middle and excluded from recursion.
 pub struct ThreeWay;
+combo_codegen::component!(Partition, ThreeWay, "three-way");
 
 impl PartitionScheme for ThreeWay {
     fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -122,6 +125,7 @@ impl PartitionScheme for ThreeWay {
 /// need to move (into offset buffers), then swaps them in a tight loop.
 /// Reduces branch mispredictions compared to Lomuto/Hoare.
 pub struct Block;
+combo_codegen::component!(Partition, Block, "block");
 
 impl PartitionScheme for Block {
     fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -195,6 +199,7 @@ impl PartitionScheme for Block {
 /// than the current head extend the low region, larger elements are swapped to
 /// the high end.
 pub struct MovingPivot;
+combo_codegen::component!(Partition, MovingPivot, "moving pivot");
 
 impl PartitionScheme for MovingPivot {
     fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(

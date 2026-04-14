@@ -78,6 +78,18 @@ pub use piston::PistonRotation;
 pub use reversal::ReversalRotation;
 pub use trinity::TrinityRotation;
 
+combo_codegen::component!(Rotation, ReversalRotation,   "reversal");
+combo_codegen::component!(Rotation, AuxiliaryRotation,  "auxiliary");
+combo_codegen::component!(Rotation, BridgeRotation,     "bridge");
+combo_codegen::component!(Rotation, ContrevRotation,    "contrev");
+combo_codegen::component!(Rotation, TrinityRotation,    "trinity");
+combo_codegen::component!(Rotation, GriesMillsRotation, "gries-mills");
+combo_codegen::component!(Rotation, GrailRotation,      "grail");
+combo_codegen::component!(Rotation, PistonRotation,     "piston");
+combo_codegen::component!(Rotation, HelixRotation,      "helix");
+combo_codegen::component!(Rotation, DrillRotation,      "drill");
+combo_codegen::component!(Rotation, JugglingRotation,   "juggling");
+
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
 #[inline(always)]
