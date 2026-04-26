@@ -3,6 +3,19 @@ use super::utils::{lower_bound, upper_bound, reverse};
 
 const MIN_GALLOP: usize = 7;
 
+combo_codegen::sort_family!(
+    type = TimSort<{Gallop}>,
+    uses = [
+        "crate::sorts::merge_sorts::timsort::TimSort",
+    ],
+    Gallop: inline [("false", ""), ("true", "gallop")],
+    name = "timsort",
+    big_o = "O(N log N)",
+    stable = true,
+    direct_sort = true,
+    path = ["merge sorts", "miscellaneous", "timsort", "{variant}"],
+);
+
 /// Timsort: adaptive, stable, hybrid merge/insertion sort.
 ///
 /// - `GALLOP`: enable galloping mode — exponential skipping when one run

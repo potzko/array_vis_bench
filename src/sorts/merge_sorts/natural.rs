@@ -1,6 +1,20 @@
 use crate::traits::log_traits::SortLogger;
 use super::utils::{copy_across, merge_inplace, reverse};
 
+combo_codegen::sort_family!(
+    type = NaturalMergeSort<{PP}, {EE}>,
+    uses = [
+        "crate::sorts::merge_sorts::natural::NaturalMergeSort",
+    ],
+    PP: inline [("false", ""), ("true", "ping-pong")],
+    EE: inline [("false", ""), ("true", "early-exit")],
+    name = "natural merge sort",
+    big_o = "O(N log N)",
+    stable = true,
+    direct_sort = true,
+    path = ["merge sorts", "classic", "natural", "{variant}"],
+);
+
 /// Natural merge sort: detects maximal sorted runs and uses them as seeds.
 ///
 /// Descending runs are reversed in-place. Best case O(n) on already-sorted input.

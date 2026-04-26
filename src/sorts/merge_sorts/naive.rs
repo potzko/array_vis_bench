@@ -2,6 +2,20 @@ use std::marker::PhantomData;
 use crate::traits::log_traits::SortLogger;
 use crate::utils::small_sort::SmallSort;
 
+combo_codegen::sort_family!(
+    type = NaiveMergeSort<{SS}>,
+    uses = [
+        "crate::sorts::merge_sorts::naive::NaiveMergeSort",
+        "crate::utils::small_sort::{NoSmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
+    ],
+    SS: SmallSort,
+    name = "naive merge sort",
+    big_o = "O(N log N)",
+    stable = true,
+    direct_sort = true,
+    path = ["merge sorts", "classic", "naive", "{variant}"],
+);
+
 /// Classic naive merge sort: allocates fresh left and right sub-arrays at
 /// every recursion level, sorts each half, then merges back into the original.
 ///

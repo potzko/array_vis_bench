@@ -3,6 +3,74 @@ use crate::traits::log_traits::SortLogger;
 use super::rotation_merge::RotationMerge;
 use crate::utils::small_sort::SmallSort;
 
+combo_codegen::sort_family!(
+    type = TopDownRotationMergeSort<{SS}, NaiveRotationMerge<{R}>, false>,
+    uses = [
+        "crate::sorts::merge_sorts::rotation::TopDownRotationMergeSort",
+        "crate::sorts::merge_sorts::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge}",
+        "crate::utils::rotation::{ReversalRotation, AuxiliaryRotation, BridgeRotation, ContrevRotation, TrinityRotation, GriesMillsRotation, GrailRotation, PistonRotation, HelixRotation, DrillRotation, JugglingRotation}",
+        "crate::utils::small_sort::{NoSmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
+    ],
+    R: Rotation,
+    SS: SmallSort,
+    name = "rotation merge sort",
+    big_o = "O(N log N)",
+    stable = true,
+    direct_sort = true,
+    path = ["merge sorts", "rotation", "top-down", "{R}", "{SS}"],
+);
+
+combo_codegen::sort_family!(
+    type = TopDownRotationMergeSort<{SS}, SmallerSideRotationMerge<{R}>, false>,
+    uses = [
+        "crate::sorts::merge_sorts::rotation::TopDownRotationMergeSort",
+        "crate::sorts::merge_sorts::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge}",
+        "crate::utils::rotation::{ReversalRotation, AuxiliaryRotation, BridgeRotation, ContrevRotation, TrinityRotation, GriesMillsRotation, GrailRotation, PistonRotation, HelixRotation, DrillRotation, JugglingRotation}",
+        "crate::utils::small_sort::{NoSmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
+    ],
+    R: Rotation,
+    SS: SmallSort,
+    name = "rotation merge sort<smaller-side>",
+    big_o = "O(N log N)",
+    stable = true,
+    direct_sort = true,
+    path = ["merge sorts", "rotation", "top-down smaller-side", "{R}", "{SS}"],
+);
+
+combo_codegen::sort_family!(
+    type = BottomUpRotationMergeSort<{SS}, NaiveRotationMerge<{R}>, false>,
+    uses = [
+        "crate::sorts::merge_sorts::rotation::BottomUpRotationMergeSort",
+        "crate::sorts::merge_sorts::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge}",
+        "crate::utils::rotation::{ReversalRotation, AuxiliaryRotation, BridgeRotation, ContrevRotation, TrinityRotation, GriesMillsRotation, GrailRotation, PistonRotation, HelixRotation, DrillRotation, JugglingRotation}",
+        "crate::utils::small_sort::{NoSmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
+    ],
+    R: Rotation,
+    SS: SmallSort,
+    name = "bottom-up rotation merge sort",
+    big_o = "O(N log N)",
+    stable = true,
+    direct_sort = true,
+    path = ["merge sorts", "rotation", "bottom-up", "{R}", "{SS}"],
+);
+
+combo_codegen::sort_family!(
+    type = BottomUpRotationMergeSort<{SS}, SmallerSideRotationMerge<{R}>, false>,
+    uses = [
+        "crate::sorts::merge_sorts::rotation::BottomUpRotationMergeSort",
+        "crate::sorts::merge_sorts::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge}",
+        "crate::utils::rotation::{ReversalRotation, AuxiliaryRotation, BridgeRotation, ContrevRotation, TrinityRotation, GriesMillsRotation, GrailRotation, PistonRotation, HelixRotation, DrillRotation, JugglingRotation}",
+        "crate::utils::small_sort::{NoSmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
+    ],
+    R: Rotation,
+    SS: SmallSort,
+    name = "bottom-up rotation merge sort<smaller-side>",
+    big_o = "O(N log N)",
+    stable = true,
+    direct_sort = true,
+    path = ["merge sorts", "rotation", "bottom-up smaller-side", "{R}", "{SS}"],
+);
+
 /// Top-down (recursive) rotation merge sort.
 ///
 /// Merges in-place using the `M` rotation strategy — no auxiliary array.

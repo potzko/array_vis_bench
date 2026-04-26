@@ -3,6 +3,22 @@ use crate::traits::log_traits::SortLogger;
 use super::utils::{copy_across, merge_inplace};
 use crate::utils::small_sort::SmallSort;
 
+combo_codegen::sort_family!(
+    type = TopDownMergeSort<{SS}, {PP}, {EE}>,
+    uses = [
+        "crate::sorts::merge_sorts::top_down::TopDownMergeSort",
+        "crate::utils::small_sort::{NoSmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
+    ],
+    SS: SmallSort,
+    PP: inline [("false", ""), ("true", "ping-pong")],
+    EE: inline [("false", ""), ("true", "early-exit")],
+    name = "merge sort",
+    big_o = "O(N log N)",
+    stable = true,
+    direct_sort = true,
+    path = ["merge sorts", "classic", "top-down", "{variant}"],
+);
+
 /// Top-down (recursive) merge sort.
 ///
 /// - `S`:          small-sort strategy (use `NoSmallSort` to recurse to size 1,
