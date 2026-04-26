@@ -1,19 +1,25 @@
-use crate::create_sort;
 use crate::traits::log_traits::SortLogger;
 
-create_sort!(sort, "bubble sort recursive", "O(N^2)", true);
+pub struct BubbleSortRecursive;
 
-fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    if arr.len() < 2 {
-        return;
+impl BubbleSortRecursive {
+    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        if arr.len() < 2 {
+            return;
+        }
+        for i in 1..arr.len() {
+            logger.cond_swap_le(arr, i, i - 1);
+        }
+        let len = arr.len();
+        Self::sort(&mut arr[..len - 1], logger);
     }
-    for i in 1..arr.len() {
-        logger.cond_swap_le(arr, i, i - 1);
-    }
-    let len = arr.len();
-    sort(&mut arr[..len - 1], logger);
 }
 
-pub fn sort_dyn(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) {
-    sort(arr, logger);
+sort_registry_macro::sort_family! {
+    type Sort = BubbleSortRecursive;
+    name        = "bubble sort recursive";
+    big_o       = "O(N^2)";
+    stable      = true;
+    direct_sort = true;
+    path        = ["bubble sorts", "bubble sort recursive"];
 }

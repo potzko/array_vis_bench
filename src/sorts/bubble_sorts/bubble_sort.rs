@@ -1,16 +1,22 @@
-use crate::create_sort;
 use crate::traits::log_traits::SortLogger;
 
-create_sort!(sort, "bubble sort", "O(N^2)", true);
+pub struct BubbleSort;
 
-fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    for ii in 0..arr.len() {
-        for i in 1..arr.len() - ii {
-            logger.cond_swap_lt(arr, i, i - 1);
+impl BubbleSort {
+    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        for i in 0..arr.len() {
+            for ii in 1..arr.len() - i {
+                logger.cond_swap_lt(arr, ii, ii - 1);
+            }
         }
     }
 }
 
-pub fn sort_dyn(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) {
-    sort(arr, logger);
+sort_registry_macro::sort_family! {
+    type Sort = BubbleSort;
+    name        = "bubble sort";
+    big_o       = "O(N^2)";
+    stable      = true;
+    direct_sort = true;
+    path        = ["bubble sorts", "bubble sort"];
 }

@@ -8,14 +8,16 @@ pub fn fn_sort(
     choice: &[String],
 ) -> Vec<String> {
     let name = choice.first().map(String::as_str).unwrap_or("");
-    cycle_sort::sort_dyn(arr, logger);
-    vec![format!("name: {}", name)]
+    if let Some(vis_fn) = crate::traits::SORT_VIS_REGISTRY.lock().unwrap().get(name).copied() {
+        vis_fn(arr, logger);
+        return vec![format!("name: {}", name)];
+    }
+    vec![format!("name: {} (not found)", name)]
 }
 
 pub fn sort_choice(name: &str) -> Option<Vec<String>> {
-    if name == "cycle sort" {
-        Some(vec!["cycle_sorts".to_string(), name.to_string()])
-    } else {
-        None
+    match name {
+        "cycle sort" => Some(vec!["cycle_sorts".to_string(), name.to_string()]),
+        _ => None,
     }
 }

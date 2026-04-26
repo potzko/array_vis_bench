@@ -1,10 +1,6 @@
 use lazy_static::lazy_static;
 use std::sync::Mutex;
 
-pub trait SortRegistry {
-    fn register();
-}
-
 lazy_static! {
     /// Each entry: (registered_name, navigation_path).
     /// The path drives the tree menu; the name is passed to dispatch.
@@ -15,21 +11,10 @@ lazy_static! {
 // Registration
 // ---------------------------------------------------------------------------
 
-/// Register a sort whose navigation path is derived from a raw category string.
-///
-/// Used by the `create_sort!` / `#[derive(SortRegistry)]` path, where the
-/// caller passes `module_path!()` (e.g. `"array_vis_bench::sorts::bubble_sorts::bubble_sort"`).
-/// The category is normalised to the sort-family name and the sort's own name
-/// is appended, yielding a two-element path `[family, sort_name]`.
-pub fn register_sort(name: &str, _big_o: &str, _stable: bool, category: &str) {
-    let family = normalise_family(category);
-    register_at_path(name, &[family.as_str(), name]);
-}
-
 /// Register a sort with an explicit navigation path.
 ///
-/// Used by shell/comb/rod sort macros so they can place sorts at arbitrary
-/// tree depth (e.g. `["shell sorts", "shell sort", "ciura"]`).
+/// Used by `sort_family!`-generated code so each combination places itself
+/// at arbitrary tree depth (e.g. `["shell sorts", "shell sort", "ciura"]`).
 pub fn register_sort_path(name: &str, _big_o: &str, _stable: bool, path: &[&str]) {
     register_at_path(name, path);
 }
@@ -49,21 +34,6 @@ fn register_at_path(name: &str, path: &[&str]) {
 pub fn register_tree_alias(name: &str, path: &[&str]) {
     let mut entries = SORT_ENTRIES.lock().unwrap();
     entries.push((name.to_string(), path.iter().map(|s| s.to_string()).collect()));
-}
-
-/// Normalise a raw category into a human-readable family name.
-///
-/// `module_path!()` → `"array_vis_bench::sorts::bubble_sorts::bubble_sort"`
-/// Extract the `…_sorts` component and replace `_` with space.
-fn normalise_family(raw: &str) -> String {
-    if raw.contains("::") {
-        raw.split("::")
-            .find(|s| s.ends_with("_sorts"))
-            .unwrap_or_else(|| { let parts: Vec<&str> = raw.split("::").collect(); parts.get(parts.len().saturating_sub(2)).copied().unwrap_or(raw) })
-            .replace('_', " ")
-    } else {
-        raw.replace('_', " ")
-    }
 }
 
 // ---------------------------------------------------------------------------

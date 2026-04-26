@@ -1,8 +1,8 @@
 use crate::traits::log_traits::SortLogger;
 use crate::utils::check_utils;
 
-// Migrated to sort_family! (new system):
 pub mod merge_sorts;
+pub mod quick_sorts;
 
 pub mod bubble_sorts;
 pub mod circle_sorts;
@@ -12,9 +12,7 @@ pub mod insertion_sorts;
 pub mod rod_sorts;
 pub mod shell_sorts;
 
-pub mod quick_sorts;
-
-// Always-disconnected (future work):
+// Disconnected — pending port to sort_family! codegen:
 // pub mod annotations;
 // pub mod example_generic_sort;
 // pub mod fun_sorts;

@@ -11,13 +11,11 @@ pub fn fn_sort(
     choice: &[String],
 ) -> Vec<String> {
     let name = choice.first().map(String::as_str).unwrap_or("");
-    match name {
-        "bubble sort recursive" => bubble_sort_recursive::sort_dyn(arr, logger),
-        "odd-even bubble sort"  => odd_even_bubble_sort::sort_dyn(arr, logger),
-        "shaker sort"           => shaker_sort::sort_dyn(arr, logger),
-        _                       => bubble_sort::sort_dyn(arr, logger),
+    if let Some(vis_fn) = crate::traits::SORT_VIS_REGISTRY.lock().unwrap().get(name).copied() {
+        vis_fn(arr, logger);
+        return vec![format!("name: {}", name)];
     }
-    vec![format!("name: {}", name)]
+    vec![format!("name: {} (not found)", name)]
 }
 
 pub fn sort_choice(name: &str) -> Option<Vec<String>> {
