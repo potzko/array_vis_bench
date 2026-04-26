@@ -3,6 +3,22 @@ use crate::traits::log_traits::SortLogger;
 use super::utils::{copy_across, merge_inplace};
 use crate::utils::small_sort::SmallSort;
 
+combo_codegen::sort_family!(
+    type = TopDownMirrorMergeSort<{SS}, {PP}, {EE}>,
+    uses = [
+        "crate::sorts::merge_sorts::top_down_mirror::TopDownMirrorMergeSort",
+        "crate::utils::small_sort::{NoSmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
+    ],
+    SS: SmallSort,
+    PP: inline [("false", ""), ("true", "ping-pong")],
+    EE: inline [("false", ""), ("true", "early-exit")],
+    name = "top-down mirror merge sort",
+    big_o = "O(N log N)",
+    stable = true,
+    direct_sort = true,
+    path = ["merge sorts", "classic", "top-down mirror", "{variant}"],
+);
+
 /// Bottom-up merge sort whose merge sequence mirrors top-down exactly.
 ///
 /// Uses a Bresenham-style fixed-point stepping algorithm to compute the same

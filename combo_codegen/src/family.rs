@@ -238,6 +238,114 @@ impl<'a> Combination<'a> {
     }
 }
 
+// ── AxisSpec ─────────────────────────────────────────────────────────────────
+
+/// Describes how to populate one axis of a [`SortFamilyDef`].
+#[derive(Debug, Clone)]
+pub enum AxisSpec {
+    /// Populate the axis from a named role in the [`ComponentRegistry`].
+    Role(String),
+    /// Cross-product of two roles, with optional extra entries appended.
+    Cross {
+        /// Left role name.
+        left: String,
+        /// Right role name.
+        right: String,
+        /// Type-expression template; `{0}` and `{1}` are the pair's type exprs.
+        type_tmpl: String,
+        /// Label template; `{0}` and `{1}` are the pair's labels.
+        label_tmpl: String,
+        /// Entries appended after the cross-product.
+        extras: Vec<ComponentDef>,
+    },
+    /// A hand-written list of `(type_expr, label)` pairs.
+    Inline(Vec<ComponentDef>),
+}
+
+// ── SortFamilyDef ─────────────────────────────────────────────────────────────
+
+/// A fully-parsed `sort_family!(…)` annotation found in a source file.
+///
+/// The annotation declares everything the code generator needs to emit one
+/// `sort_registry_macro::sort_family! { … }` invocation.
+#[derive(Debug, Clone)]
+pub struct SortFamilyDef {
+    /// Generic type template with `{VAR}` placeholders, e.g.
+    /// `"QuickSort<{P}, {V}, {SS}>"`.
+    pub type_template: String,
+    /// Axis definitions in declaration order: `(variable_name, spec)`.
+    pub axes: Vec<(String, AxisSpec)>,
+    /// `use` paths needed in the generated file (without the `use` keyword).
+    pub uses: Vec<String>,
+    pub name: String,
+    pub big_o: String,
+    pub stable: bool,
+    pub direct_sort: bool,
+    /// Path segments; each will be wrapped in `"…"` in the generated code.
+    /// Segments may contain `{VAR}` placeholders (e.g. `"{P}"`).
+    pub path: Vec<String>,
+    /// Parent-directory name of the annotated source file; used to determine
+    /// which `*_combinations.rs` file to write (e.g. `"quick_sorts"`).
+    pub source_module: String,
+}
+
+impl SortFamilyDef {
+    /// Resolve axes against `registry` and append one
+    /// `sort_registry_macro::sort_family! { … }` block to `out`.
+    pub fn render(&self, out: &mut String, registry: &ComponentRegistry) {
+        use std::fmt::Write as _;
+
+        out.push_str("sort_registry_macro::sort_family! {\n");
+        writeln!(out, "    type Sort = {};", self.type_template).unwrap();
+        out.push('\n');
+
+        for (var, spec) in &self.axes {
+            let components = resolve_axis_spec(spec, registry);
+            writeln!(out, "    {var} {{").unwrap();
+            for comp in &components {
+                writeln!(out, "        {} => \"{}\"", comp.type_expr, comp.label).unwrap();
+            }
+            out.push_str("    }\n");
+        }
+
+        out.push('\n');
+        writeln!(out, "    name        = \"{}\";", self.name).unwrap();
+        writeln!(out, "    big_o       = \"{}\";", self.big_o).unwrap();
+        writeln!(out, "    stable      = {};", self.stable).unwrap();
+        writeln!(out, "    direct_sort = {};", self.direct_sort).unwrap();
+
+        let path_str = self
+            .path
+            .iter()
+            .map(|p| format!("\"{}\"", p))
+            .collect::<Vec<_>>()
+            .join(", ");
+        writeln!(out, "    path        = [{path_str}];").unwrap();
+
+        out.push_str("}\n\n");
+    }
+}
+
+/// Resolve an [`AxisSpec`] to a concrete list of [`ComponentDef`]s.
+fn resolve_axis_spec(spec: &AxisSpec, registry: &ComponentRegistry) -> Vec<ComponentDef> {
+    match spec {
+        AxisSpec::Role(role) => registry.role(role).to_vec(),
+        AxisSpec::Cross { left, right, type_tmpl, label_tmpl, extras } => {
+            let tt = type_tmpl.as_str();
+            let lt = label_tmpl.as_str();
+            let mut result = cross_axis(
+                registry.role(left),
+                registry.role(right),
+                |l, r| tt.replace("{0}", &l.type_expr).replace("{1}", &r.type_expr),
+                |l, r| lt.replace("{0}", &l.label).replace("{1}", &r.label),
+            );
+            result.extend_from_slice(extras);
+            result
+        }
+        AxisSpec::Inline(items) => items.clone(),
+    }
+}
+
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]

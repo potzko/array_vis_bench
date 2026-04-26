@@ -1,6 +1,6 @@
 use crate::traits::log_traits::SortLogger;
 
-fn insertion_sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+pub(crate) fn insertion_sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
     for i in 1..arr.len() {
         let mut ii = i;
         while ii > 0 && logger.cond_swap_lt(arr, ii, ii - 1) {
@@ -197,4 +197,23 @@ fn sort_network_16<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logg
     logger.cond_swap_gt(arr, 9, 10);
     logger.cond_swap_gt(arr, 11, 12);
     logger.cond_swap_gt(arr, 13, 14);
+}
+
+// ---------------------------------------------------------------------------
+
+/// Marks a threshold at which quicksort stops recursing, leaving small
+/// sub-arrays unsorted. After the full recursion the caller runs a single
+/// insertion sort pass over the entire array.
+pub trait DeferredSmallSort {
+    const THRESHOLD: usize;
+}
+
+/// Deferred-insertion threshold of N: quicksort stops at sub-arrays of
+/// length ≤ N and lets a final insertion sort pass clean up.
+pub struct DeferredInsertion<const N: usize>;
+combo_codegen::component!(DeferredSmallSort, DeferredInsertion<16>, "deferred insertion: 16");
+combo_codegen::component!(DeferredSmallSort, DeferredInsertion<32>, "deferred insertion: 32");
+
+impl<const N: usize> DeferredSmallSort for DeferredInsertion<N> {
+    const THRESHOLD: usize = N;
 }

@@ -15,39 +15,44 @@
 //! combo_codegen::component!(SmallSort, InsertionSmallSort<16>, "insertion: 16");
 //! ```
 //!
-//! The macro expands to nothing — it is purely a marker for the build scanner.
-//!
-//! ## 2. Scan and generate in `build.rs`
+//! ## 2. Annotate sort families next to their struct definitions
 //!
 //! ```rust,ignore
-//! use combo_codegen::{scan, Family, inline};
+//! combo_codegen::sort_family!(
+//!     type = QuickSort<{P}, {V}, {SS}>,
+//!     uses = [
+//!         "super::partitions::{Lomuto, Hoare}",
+//!         "super::pivot_selectors::FirstElement",
+//!         "super::quick_sort::QuickSort",
+//!     ],
+//!     P: Partition,
+//!     V: PivotSelector,
+//!     SS: SmallSort,
+//!     name = "quick sort",
+//!     big_o = "O(N log N)",
+//!     stable = false,
+//!     direct_sort = true,
+//!     path = ["quick sorts", "{P}", "{V}", "{SS}"],
+//! );
+//! ```
+//!
+//! Both macros **expand to nothing** — they are purely markers for the build scanner.
+//!
+//! ## 3. Scan and generate in `build.rs`
+//!
+//! ```rust,ignore
+//! use std::path::PathBuf;
 //!
 //! fn main() {
-//!     let result = scan("src/").unwrap();
-//!     result.emit_rerun();          // cargo:rerun-if-changed for every .rs file
-//!
-//!     let family = Family::new("QuickSort<{P}, {V}, {SS}>")
-//!         .axis("P",  result.registry.role("Partition"))
-//!         .axis("V",  result.registry.role("PivotSelector"))
-//!         .axis("SS", result.registry.role("SmallSort"));
-//!
-//!     // Iterate axes to produce whatever output format you need:
-//!     let mut code = String::new();
-//!     for axis in family.axes() {
-//!         for comp in &axis.components {
-//!             code += &format!("{} => \"{}\"\n", comp.type_expr, comp.label);
-//!         }
-//!     }
-//!
-//!     // Or iterate every combination:
-//!     for combo in family.combinations() {
-//!         println!("{}", combo.instantiated_type());
-//!         // e.g. "QuickSort<Lomuto, FirstElement, NoSmallSort>"
-//!     }
+//!     let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
+//!     let result = combo_codegen::scan("src/").unwrap();
+//!     result.emit_rerun();
+//!     println!("cargo:rerun-if-changed=build.rs");
+//!     result.emit_sort_families(&out_dir).unwrap();
 //! }
 //! ```
 //!
-//! ## 3. Consume the generated file
+//! ## 4. Consume the generated file
 //!
 //! ```rust,ignore
 //! // quick_sorts/mod.rs
@@ -59,7 +64,10 @@
 pub mod family;
 pub mod scanner;
 
-pub use family::{Axis, Combination, ComponentDef, ComponentRegistry, Family, cross_axis, inline};
+pub use family::{
+    Axis, AxisSpec, Combination, ComponentDef, ComponentRegistry, Family, SortFamilyDef,
+    cross_axis, inline,
+};
 pub use scanner::{scan, ScanResult};
 
 // ── component! macro ─────────────────────────────────────────────────────────
@@ -87,4 +95,34 @@ pub use scanner::{scan, ScanResult};
 #[macro_export]
 macro_rules! component {
     ($role:ident, $ty:ty, $label:literal) => {};
+}
+
+// ── sort_family! macro ────────────────────────────────────────────────────────
+
+/// Declare a sort family inline, next to the sort's struct definition.
+///
+/// This macro **expands to nothing**. It exists solely as a marker that the
+/// build-script scanner ([`scan`]) recognises and uses to generate
+/// `*_combinations.rs` files via [`ScanResult::emit_sort_families`].
+///
+/// # Syntax
+///
+/// ```rust,ignore
+/// combo_codegen::sort_family!(
+///     type = SortType<{A}, {B}>,
+///     uses = ["path::to::SortType", "path::to::ComponentA"],
+///     A: RoleA,                             // simple role axis
+///     B: inline [("TypeX", "x"), ("TypeY", "y")],  // inline axis
+///     // For cross-product axes:
+///     // DPS: cross(Role1, Role2, "Wrapper<{0},{1}>", "{0}/{1}") + [("Extra","extra")],
+///     name = "my sort",
+///     big_o = "O(N log N)",
+///     stable = true,
+///     direct_sort = true,
+///     path = ["category", "{A}", "{B}"],
+/// );
+/// ```
+#[macro_export]
+macro_rules! sort_family {
+    ($($tt:tt)*) => {};
 }

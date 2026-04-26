@@ -6,6 +6,24 @@ use crate::traits::log_traits::SortLogger;
 use super::partitions::PartitionScheme;
 use super::pivot_selectors::PivotSelector;
 
+combo_codegen::sort_family!(
+    type = QuickSort<{P}, {V}, {SS}>,
+    uses = [
+        "crate::utils::small_sort::{InsertionSmallSort, Network16SmallSort, NetworkSmallSort, NoSmallSort}",
+        "super::partitions::{Block, Hoare, Lomuto, MovingPivot, ThreeWay}",
+        "super::pivot_selectors::{FirstElement, LastElement, MedianOfMedians, MedianOfThree, MiddleElement, Ninther, CombinedSelector, NintherDualPivot}",
+        "super::quick_sort::QuickSort",
+    ],
+    P: Partition,
+    V: PivotSelector,
+    SS: SmallSort,
+    name = "quick sort classic",
+    big_o = "O(N Log(N))",
+    stable = false,
+    direct_sort = true,
+    path = ["quick sorts", "classic", "{P}", "{V}", "{SS}"],
+);
+
 pub struct QuickSort<P: PartitionScheme, V: PivotSelector, SS: SmallSort>(
     PhantomData<(P, V, SS)>,
 );
