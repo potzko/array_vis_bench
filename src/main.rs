@@ -168,9 +168,6 @@ fn validate_sort_routing() {
     }
 }
 
-// Quick sort name parsing removed — will be reimplemented in Phase 2.
-// See REFACTOR_PLAN.md.
-
 /// Navigate the sort tree interactively and return the chosen sort's registered name.
 ///
 /// At each level the user sees a numbered list of sub-trees (categories) and

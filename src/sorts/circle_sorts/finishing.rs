@@ -49,7 +49,7 @@ impl NearSortedSort for InsertionNearSort {
     const NAME: &'static str = "insertion";
 
     fn sort(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) {
-        crate::sorts::insertion_sorts::insertion_sort::sort_dyn(arr, logger);
+        crate::utils::small_sort::insertion_sort(arr, logger);
     }
 }
 

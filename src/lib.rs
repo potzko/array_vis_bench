@@ -1,4 +1,3 @@
-pub mod rotations;
 pub mod sort_test;
 pub mod sorts;
 pub mod traits;
