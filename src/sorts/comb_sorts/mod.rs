@@ -1,7 +1,11 @@
 pub mod comb_sort;
 pub mod comb_sort_ratio;
-pub mod combinations;
+pub mod register_sequences;
 pub mod sequences;
+
+pub mod combinations {
+    include!(concat!(env!("OUT_DIR"), "/comb_sorts_combinations.rs"));
+}
 
 use crate::traits::log_traits::SortLogger;
 use sequences::COMB_SEQUENCES;

@@ -7,7 +7,7 @@ combo_codegen::sort_family!(
     type = BottomUpMergeSort<{SS}, {PP}, {EE}>,
     uses = [
         "crate::sorts::merge_sorts::bottom_up::BottomUpMergeSort",
-        "crate::utils::small_sort::{NoSmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
+        "crate::utils::small_sort::{NoSmallSort, Size1SmallSort, Size2SmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
     ],
     SS: SmallSort,
     PP: inline [("false", ""), ("true", "ping-pong")],

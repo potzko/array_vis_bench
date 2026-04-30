@@ -142,6 +142,7 @@ fn create_sort_choice(sort_name: &str) -> Vec<String> {
     if let Some(c) = sorts::insertion_sorts::sort_choice(sort_name) { return c; }
     if let Some(c) = sorts::rod_sorts::sort_choice(sort_name) { return c; }
     if let Some(c) = sorts::shell_sorts::sort_choice(sort_name) { return c; }
+    if let Some(c) = sorts::heap_sort::sort_choice(sort_name) { return c; }
 
     panic!(
         "\n\

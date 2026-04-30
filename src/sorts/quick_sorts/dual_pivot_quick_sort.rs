@@ -8,7 +8,7 @@ use super::pivot_selectors::DualPivotSelector;
 combo_codegen::sort_family!(
     type = DualPivotQuickSort<{DPS}, {SS}>,
     uses = [
-        "crate::utils::small_sort::{InsertionSmallSort, Network16SmallSort, NetworkSmallSort, NoSmallSort}",
+        "crate::utils::small_sort::{InsertionSmallSort, Network16SmallSort, NetworkSmallSort, NoSmallSort, Size1SmallSort, Size2SmallSort}",
         "super::pivot_selectors::{FirstElement, LastElement, MedianOfMedians, MedianOfThree, MiddleElement, Ninther, CombinedSelector, NintherDualPivot}",
         "super::dual_pivot_quick_sort::DualPivotQuickSort",
     ],

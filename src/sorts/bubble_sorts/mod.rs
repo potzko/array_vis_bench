@@ -3,6 +3,10 @@ pub mod bubble_sort_recursive;
 pub mod odd_even_bubble_sort;
 pub mod shaker_sort;
 
+pub mod combinations {
+    include!(concat!(env!("OUT_DIR"), "/bubble_sorts_combinations.rs"));
+}
+
 use crate::traits::log_traits::SortLogger;
 
 pub fn fn_sort(
@@ -19,11 +23,11 @@ pub fn fn_sort(
 }
 
 pub fn sort_choice(name: &str) -> Option<Vec<String>> {
-    match name {
-        "bubble sort"
-        | "bubble sort recursive"
-        | "odd-even bubble sort"
-        | "shaker sort" => Some(vec!["bubble_sorts".to_string(), name.to_string()]),
-        _ => None,
+    if name.starts_with("bubble sort")
+        || name.starts_with("odd-even bubble sort")
+        || name.starts_with("shaker sort")
+    {
+        return Some(vec!["bubble_sorts".to_string(), name.to_string()]);
     }
+    None
 }

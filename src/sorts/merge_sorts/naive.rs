@@ -6,7 +6,7 @@ combo_codegen::sort_family!(
     type = NaiveMergeSort<{SS}>,
     uses = [
         "crate::sorts::merge_sorts::naive::NaiveMergeSort",
-        "crate::utils::small_sort::{NoSmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
+        "crate::utils::small_sort::{NoSmallSort, Size1SmallSort, Size2SmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
     ],
     SS: SmallSort,
     name = "naive merge sort",

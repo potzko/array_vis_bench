@@ -11,6 +11,7 @@ pub mod cycle_sorts;
 pub mod insertion_sorts;
 pub mod rod_sorts;
 pub mod shell_sorts;
+pub mod heap_sort;
 
 // Disconnected — pending port to sort_family! codegen:
 // pub mod annotations;
@@ -36,6 +37,7 @@ pub fn fn_sort(
             "insertion_sorts" => insertion_sorts::fn_sort(arr, logger, &choice[1..]),
             "rod_sorts" => rod_sorts::fn_sort(arr, logger, &choice[1..]),
             "shell_sorts" => shell_sorts::fn_sort(arr, logger, &choice[1..]),
+            "heap_sorts" => heap_sort::fn_sort(arr, logger, &choice[1..]),
             _ => vec![format!("unknown sort family: {}", choice[0])],
         }
     };
