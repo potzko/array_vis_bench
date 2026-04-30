@@ -290,9 +290,116 @@ pub struct SortFamilyDef {
 }
 
 impl SortFamilyDef {
-    /// Resolve axes against `registry` and append one
-    /// `sort_registry_macro::sort_family! { … }` block to `out`.
+    /// Resolve axes against `registry` and append `sort_registry_macro::sort_family!`
+    /// blocks to `out`.
+    ///
+    /// Two structural transforms happen here:
+    ///
+    /// 1. **Cross-with-extras splits.** A `cross(...) + extras` axis is rendered as
+    ///    two separate blocks: one with just the cross-product, one with just the
+    ///    extras. The extras block gets a `"specialty <role>"` literal inserted
+    ///    before its axis placeholder so it surfaces as a sibling sub-branch in
+    ///    the menu instead of mixing flat with the cross-product entries.
+    ///
+    /// 2. **Smallest-axis-first path reorder.** Pure-placeholder path elements
+    ///    are reordered by their axis cardinality so each menu step branches on
+    ///    the smallest available axis. Literals stay pinned.
     pub fn render(&self, out: &mut String, registry: &ComponentRegistry) {
+        self.render_recursive(out, registry, self.path.clone());
+    }
+
+    fn render_recursive(
+        &self,
+        out: &mut String,
+        registry: &ComponentRegistry,
+        path: Vec<String>,
+    ) {
+        // Phase 1: split out any Cross-with-extras into two passes — one for
+        // the cross-product, one for the extras under a "specialty <role>"
+        // sub-branch.
+        let split = self.axes.iter().enumerate().find_map(|(i, (var, spec))| {
+            match spec {
+                AxisSpec::Cross { extras, left, right, type_tmpl, label_tmpl }
+                    if !extras.is_empty() =>
+                {
+                    let cross_only = AxisSpec::Cross {
+                        left: left.clone(),
+                        right: right.clone(),
+                        type_tmpl: type_tmpl.clone(),
+                        label_tmpl: label_tmpl.clone(),
+                        extras: Vec::new(),
+                    };
+                    let extras_only = AxisSpec::Inline(extras.clone());
+                    Some((i, var.clone(), left.clone(), cross_only, extras_only))
+                }
+                _ => None,
+            }
+        });
+
+        if let Some((idx, var, left_role, cross, extras)) = split {
+            let mut main = self.clone();
+            main.axes[idx].1 = cross;
+            main.render_recursive(out, registry, path.clone());
+
+            let mut spec = self.clone();
+            spec.axes[idx].1 = extras;
+            let placeholder = format!("{{{var}}}");
+            let marker = format!("specialty {}", humanize_role(&left_role));
+            let mut new_path = path;
+            if let Some(p) = new_path.iter().position(|s| s == &placeholder) {
+                new_path.insert(p, marker);
+            }
+            spec.render_recursive(out, registry, new_path);
+            return;
+        }
+
+        // Phase 2: any remaining Cross axes (extras already stripped) are
+        // unrolled into pairs of independent role axes so each side of the
+        // cross becomes its own menu level. The original `{var}` slot in the
+        // type template is rewritten via the cross's `type_tmpl`, and the
+        // path placeholder `{var}` expands into two adjacent placeholders.
+        let (transformed, transformed_path) = self.split_crosses_into_role_pairs(&path);
+        transformed.render_single(out, registry, &transformed_path);
+    }
+
+    fn split_crosses_into_role_pairs(&self, path: &[String]) -> (SortFamilyDef, Vec<String>) {
+        let mut type_template = self.type_template.clone();
+        let mut new_path = path.to_vec();
+        let mut new_axes: Vec<(String, AxisSpec)> = Vec::new();
+
+        for (var, spec) in self.axes.iter().cloned() {
+            match spec {
+                AxisSpec::Cross { left, right, type_tmpl, .. } => {
+                    let left_var = format!("{var}__0");
+                    let right_var = format!("{var}__1");
+
+                    let combined = type_tmpl
+                        .replace("{0}", &format!("{{{left_var}}}"))
+                        .replace("{1}", &format!("{{{right_var}}}"));
+                    let placeholder = format!("{{{var}}}");
+                    type_template = type_template.replace(&placeholder, &combined);
+
+                    if let Some(p) = new_path.iter().position(|s| s == &placeholder) {
+                        new_path.splice(
+                            p..p + 1,
+                            [format!("{{{left_var}}}"), format!("{{{right_var}}}")],
+                        );
+                    }
+
+                    new_axes.push((left_var, AxisSpec::Role(left)));
+                    new_axes.push((right_var, AxisSpec::Role(right)));
+                }
+                other => new_axes.push((var, other)),
+            }
+        }
+
+        let mut new_family = self.clone();
+        new_family.type_template = type_template;
+        new_family.axes = new_axes;
+        (new_family, new_path)
+    }
+
+    fn render_single(&self, out: &mut String, registry: &ComponentRegistry, path: &[String]) {
         use std::fmt::Write as _;
 
         out.push_str("sort_registry_macro::sort_family! {\n");
@@ -314,8 +421,8 @@ impl SortFamilyDef {
         writeln!(out, "    stable      = {};", self.stable).unwrap();
         writeln!(out, "    direct_sort = {};", self.direct_sort).unwrap();
 
-        let path_str = self
-            .path
+        let reordered = reorder_path_by_axis_size(path, &self.axes, registry);
+        let path_str = reordered
             .iter()
             .map(|p| format!("\"{}\"", p))
             .collect::<Vec<_>>()
@@ -324,6 +431,69 @@ impl SortFamilyDef {
 
         out.push_str("}\n\n");
     }
+}
+
+/// Convert a Rust trait name like `PivotSelector` to `"pivot selector"` —
+/// inserts a space before each interior uppercase letter and lowercases.
+fn humanize_role(role: &str) -> String {
+    let mut out = String::new();
+    for (i, c) in role.char_indices() {
+        if c.is_uppercase() && i > 0 {
+            out.push(' ');
+        }
+        out.push(c.to_ascii_lowercase());
+    }
+    out
+}
+
+/// Cardinality of an axis after resolving it against `registry`.
+fn axis_count(spec: &AxisSpec, registry: &ComponentRegistry) -> usize {
+    match spec {
+        AxisSpec::Role(role) => registry.role(role).len(),
+        AxisSpec::Cross { left, right, extras, .. } => {
+            registry.role(left).len() * registry.role(right).len() + extras.len()
+        }
+        AxisSpec::Inline(items) => items.len(),
+    }
+}
+
+/// Reorder pure-placeholder path elements so axes with fewer variants come
+/// first. Literal elements keep their declared positions; special
+/// placeholders that don't match a declared axis (e.g. `{variant}`) are
+/// also treated as literals.
+fn reorder_path_by_axis_size(
+    path: &[String],
+    axes: &[(String, AxisSpec)],
+    registry: &ComponentRegistry,
+) -> Vec<String> {
+    let positions: Vec<usize> = path
+        .iter()
+        .enumerate()
+        .filter_map(|(i, e)| {
+            let slot = e.strip_prefix('{').and_then(|s| s.strip_suffix('}'))?;
+            if axes.iter().any(|(n, _)| n == slot) { Some(i) } else { None }
+        })
+        .collect();
+
+    if positions.len() < 2 {
+        return path.to_vec();
+    }
+
+    let mut slots: Vec<(&str, usize)> = positions
+        .iter()
+        .map(|&i| {
+            let slot = path[i].strip_prefix('{').unwrap().strip_suffix('}').unwrap();
+            let (_, spec) = axes.iter().find(|(n, _)| n == slot).unwrap();
+            (slot, axis_count(spec, registry))
+        })
+        .collect();
+    slots.sort_by_key(|&(_, c)| c);
+
+    let mut out = path.to_vec();
+    for (&pos, (slot, _)) in positions.iter().zip(slots.iter()) {
+        out[pos] = format!("{{{}}}", slot);
+    }
+    out
 }
 
 /// Resolve an [`AxisSpec`] to a concrete list of [`ComponentDef`]s.
