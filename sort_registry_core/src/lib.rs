@@ -1,10 +1,17 @@
 use lazy_static::lazy_static;
 use std::sync::Mutex;
 
+/// One row in the menu/registry: (registered name, navigation path).
+///
+/// Display order is derived from the resulting tree, not stored: each
+/// `SortTree` level is sorted by subtree leaf count so specialised
+/// (small-group) sorts surface ahead of large cross-products. There's no
+/// need for callers to declare or even know the group size — it falls
+/// out of how many siblings share the same parent path.
+type Entry = (String, Vec<String>);
+
 lazy_static! {
-    /// Each entry: (registered_name, navigation_path).
-    /// The path drives the tree menu; the name is passed to dispatch.
-    static ref SORT_ENTRIES: Mutex<Vec<(String, Vec<String>)>> = Mutex::new(Vec::new());
+    static ref SORT_ENTRIES: Mutex<Vec<Entry>> = Mutex::new(Vec::new());
 }
 
 // ---------------------------------------------------------------------------
@@ -16,10 +23,6 @@ lazy_static! {
 /// Used by `sort_family!`-generated code so each combination places itself
 /// at arbitrary tree depth (e.g. `["shell sorts", "shell sort", "ciura"]`).
 pub fn register_sort_path(name: &str, _big_o: &str, _stable: bool, path: &[&str]) {
-    register_at_path(name, path);
-}
-
-fn register_at_path(name: &str, path: &[&str]) {
     let mut entries = SORT_ENTRIES.lock().unwrap();
     if !entries.iter().any(|(n, _)| n == name) {
         entries.push((name.to_string(), path.iter().map(|s| s.to_string()).collect()));
@@ -29,7 +32,7 @@ fn register_at_path(name: &str, path: &[&str]) {
 /// Place an already-registered sort at an additional navigation path.
 ///
 /// Unlike [`register_sort_path`], this does not deduplicate on `name` — the
-/// same sort can appear at multiple positions in the navigation tree.  Only
+/// same sort can appear at multiple positions in the navigation tree. Only
 /// adds a tree entry; does not touch `SORT_REGISTRY`.
 pub fn register_tree_alias(name: &str, path: &[&str]) {
     let mut entries = SORT_ENTRIES.lock().unwrap();
@@ -40,23 +43,31 @@ pub fn register_tree_alias(name: &str, path: &[&str]) {
 // Queries
 // ---------------------------------------------------------------------------
 
-/// All registered sort names in registration order, deduplicated.
+/// All registered sort names in display order (depth-first traversal of the
+/// sorted tree), deduplicated.
 ///
 /// Deduplication is needed because the same name may appear multiple times
 /// when registered at several tree positions via [`register_tree_alias`].
 pub fn get_registered_sorts() -> Vec<String> {
-    let entries = SORT_ENTRIES.lock().unwrap();
+    let mut out = Vec::new();
     let mut seen = std::collections::HashSet::new();
-    entries
-        .iter()
-        .filter_map(|(name, _)| {
-            if seen.insert(name.clone()) {
-                Some(name.clone())
-            } else {
-                None
-            }
-        })
-        .collect()
+    flatten_tree(&get_sort_tree(), &mut out, &mut seen);
+    out
+}
+
+fn flatten_tree(
+    tree: &SortTree,
+    out: &mut Vec<String>,
+    seen: &mut std::collections::HashSet<String>,
+) {
+    for (_, child) in &tree.children {
+        flatten_tree(child, out, seen);
+    }
+    for (_, name) in &tree.leaves {
+        if seen.insert(name.clone()) {
+            out.push(name.clone());
+        }
+    }
 }
 
 /// A node in the sort navigation tree.
@@ -86,14 +97,37 @@ impl SortTree {
             }
         }
     }
+
+    /// Total number of leaves in this subtree (recursive).
+    pub fn count_leaves(&self) -> usize {
+        self.leaves.len()
+            + self.children.iter().map(|(_, c)| c.count_leaves()).sum::<usize>()
+    }
+
+    /// Recursively reorder every level so smaller subtrees appear before
+    /// larger ones. Children are ordered by `(subtree_size, label)`; leaves
+    /// at the same level are ordered alphabetically by display label.
+    /// Specialised (small-group) sorts naturally surface first.
+    fn sort_recursive(&mut self) {
+        for (_, child) in &mut self.children {
+            child.sort_recursive();
+        }
+        self.children
+            .sort_by(|a, b| (a.1.count_leaves(), &a.0).cmp(&(b.1.count_leaves(), &b.0)));
+        self.leaves.sort_by(|a, b| a.0.cmp(&b.0));
+    }
 }
 
-/// Build the full navigation tree from all registered sorts.
+/// Build the full navigation tree from all registered sorts. Each level is
+/// sorted by subtree size (smaller first) so specialised sorts surface
+/// ahead of large cross-products without any caller-supplied ordering.
 pub fn get_sort_tree() -> SortTree {
     let entries = SORT_ENTRIES.lock().unwrap();
     let mut root = SortTree::default();
     for (name, path) in entries.iter() {
         root.insert(path, name);
     }
+    drop(entries);
+    root.sort_recursive();
     root
 }
