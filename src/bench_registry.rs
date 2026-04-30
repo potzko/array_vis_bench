@@ -10,8 +10,27 @@ pub struct SortBenchEntry {
 #[distributed_slice]
 pub static BENCH_SORTS: [SortBenchEntry] = [..];
 
+/// All registered bench entries in canonical menu order — depth-first
+/// traversal of the registry's tree, which sorts each level by subtree
+/// size so specialised (small-group) sorts surface first.
+///
+/// `linkme` makes no guarantee about link-time ordering, so consumers that
+/// produce user-visible output should iterate this instead of `BENCH_SORTS`
+/// directly. Bench output and UI menu therefore surface variants in the
+/// same order without either side having to declare it.
+pub fn sorted() -> Vec<&'static SortBenchEntry> {
+    let order: std::collections::HashMap<String, usize> = sort_registry_core::get_registered_sorts()
+        .into_iter()
+        .enumerate()
+        .map(|(i, n)| (n, i))
+        .collect();
+    let mut v: Vec<&'static SortBenchEntry> = BENCH_SORTS.iter().collect();
+    v.sort_by_key(|e| (order.get(e.name).copied().unwrap_or(usize::MAX), e.name));
+    v
+}
+
 pub fn for_each<F: FnMut(&'static SortBenchEntry)>(mut f: F) {
-    for entry in BENCH_SORTS {
+    for entry in sorted() {
         f(entry);
     }
 }

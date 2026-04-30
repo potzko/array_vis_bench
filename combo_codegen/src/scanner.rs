@@ -34,7 +34,8 @@ impl ScanResult {
     /// Families are grouped by their [`SortFamilyDef::source_module`].  Within
     /// each group, `use` declarations are deduplicated (first-occurrence order)
     /// and the resolved `sort_registry_macro::sort_family! { … }` blocks are
-    /// appended.
+    /// appended. Each block carries its `group_size` (leaf count) so the
+    /// runtime can surface specialised (small-group) sorts first.
     pub fn emit_sort_families(&self, out_dir: &Path) -> Result<(), std::io::Error> {
         // Collect unique module names in first-occurrence order.
         let mut modules: Vec<&str> = Vec::new();
@@ -84,24 +85,31 @@ impl ScanResult {
 
 /// Recursively walk `dir`, parse every `.rs` file for `component!(...)` and
 /// `sort_family!(...)` calls, and return the aggregated [`ScanResult`].
+///
+/// Files are visited in lexicographic path order so the scan — and every
+/// downstream piece of generated code — is reproducible across machines and
+/// filesystems.
 pub fn scan(dir: impl AsRef<Path>) -> Result<ScanResult, std::io::Error> {
     let mut registry = ComponentRegistry::default();
     let mut families = Vec::new();
     let mut scanned_files = Vec::new();
 
-    for entry in walkdir::WalkDir::new(dir)
+    let mut paths: Vec<PathBuf> = walkdir::WalkDir::new(dir)
         .follow_links(true)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.path().extension().map_or(false, |ext| ext == "rs"))
-    {
-        let path = entry.path();
-        let content = std::fs::read_to_string(path)?;
+        .map(|e| e.path().to_path_buf())
+        .collect();
+    paths.sort();
+
+    for path in paths {
+        let content = std::fs::read_to_string(&path)?;
         for comp in scan_components(&content) {
             registry.add(comp.role, comp.type_expr, comp.label);
         }
-        families.extend(scan_families(&content, path));
-        scanned_files.push(path.to_path_buf());
+        families.extend(scan_families(&content, &path));
+        scanned_files.push(path);
     }
 
     Ok(ScanResult { registry, families, scanned_files })
