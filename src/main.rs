@@ -175,6 +175,10 @@ fn validate_sort_routing() {
 /// leaf sorts combined.  Picking a sub-tree recurses deeper; picking a leaf
 /// returns the sort name.  Works for any tree depth.
 fn select_sort(tree: &sort_registry_core::SortTree) -> String {
+    select_sort_inner(tree, &[])
+}
+
+fn select_sort_inner(tree: &sort_registry_core::SortTree, picks: &[String]) -> String {
     use sort_registry_core::SortTree;
 
     // Collect this level's options: branches first, then leaves.
@@ -192,14 +196,21 @@ fn select_sort(tree: &sort_registry_core::SortTree) -> String {
         opts.push(Opt::Leaf(display, name));
     }
 
-    // Auto-select if there is exactly one option at this level.
+    // Auto-select if there is exactly one option at this level — but still
+    // record the pick so the progressive type expression keeps growing.
     if opts.len() == 1 {
         return match &opts[0] {
-            Opt::Branch(_, subtree) => select_sort(subtree),
+            Opt::Branch(label, subtree) => {
+                let mut next = picks.to_vec();
+                next.push(label.to_string());
+                select_sort_inner(subtree, &next)
+            }
             Opt::Leaf(_, name) => name.to_string(),
         };
     }
 
+    println!();
+    println!("  filling: {}", render_progressive_type(picks, false));
     println!();
     for (i, opt) in opts.iter().enumerate() {
         match opt {
@@ -216,7 +227,11 @@ fn select_sort(tree: &sort_registry_core::SortTree) -> String {
 
     let sel = get_user_selection("Select", 1, opts.len()) - 1;
     match &opts[sel] {
-        Opt::Branch(_, subtree) => select_sort(subtree),
+        Opt::Branch(label, subtree) => {
+            let mut next = picks.to_vec();
+            next.push(label.to_string());
+            select_sort_inner(subtree, &next)
+        }
         Opt::Leaf(_, name) => name.to_string(),
     }
 }
@@ -224,4 +239,32 @@ fn select_sort(tree: &sort_registry_core::SortTree) -> String {
 fn count_leaves(tree: &sort_registry_core::SortTree) -> usize {
     tree.leaves.len()
         + tree.children.iter().map(|(_, c)| count_leaves(c)).sum::<usize>()
+}
+
+/// Build a nested-generic display from a sequence of menu picks. Each pick
+/// becomes a wrapper around the next; an unfilled trailing slot is shown
+/// as `_` (omitted for leaves). Labels are used verbatim.
+///
+/// `picks=["quick sorts", "dual pivot"]`, non-leaf →
+///   `"quick sorts<dual pivot<_>>"`
+fn render_progressive_type(picks: &[String], is_leaf: bool) -> String {
+    if picks.is_empty() {
+        return if is_leaf { String::new() } else { "_".to_string() };
+    }
+    let mut s = picks[0].clone();
+    let mut depth = 0;
+    for p in picks.iter().skip(1) {
+        s.push('<');
+        s.push_str(p);
+        depth += 1;
+    }
+    if !is_leaf {
+        s.push('<');
+        s.push('_');
+        depth += 1;
+    }
+    for _ in 0..depth {
+        s.push('>');
+    }
+    s
 }
