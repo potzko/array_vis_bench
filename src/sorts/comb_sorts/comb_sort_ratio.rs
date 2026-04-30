@@ -12,6 +12,13 @@ use crate::traits::sort_traits::SortAlgo;
 /// shrink factor, so `gaps_next = gap * NUM / DEN`.
 pub struct CombSortRatio<const NUM: usize, const DEN: usize>;
 
+combo_codegen::component!(CombRatio, CombSortRatio<10, 13>, "1.3");
+combo_codegen::component!(CombRatio, CombSortRatio<70, 99>, "√2 ≈ 1.414");
+combo_codegen::component!(CombRatio, CombSortRatio<55, 89>, "φ ≈ 1.618");
+combo_codegen::component!(CombRatio, CombSortRatio<3, 4>, "4/3");
+combo_codegen::component!(CombRatio, CombSortRatio<8, 11>, "11/8");
+combo_codegen::component!(CombRatio, CombSortRatio<4, 5>, "5/4");
+
 impl<const NUM: usize, const DEN: usize> CombSortRatio<NUM, DEN> {
     fn gaps(n: usize) -> Vec<usize> {
         let mut g = n;

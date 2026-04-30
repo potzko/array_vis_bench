@@ -84,22 +84,15 @@ register_comb_vis!(five_fourths,      "5/4",           4,  5);
 // The sort name format matches the COMB_SEQUENCES names exactly so that the
 // interactive UI and benchmarks refer to the same sort.
 // ---------------------------------------------------------------------------
-use crate::sorts::comb_sorts::comb_sort_ratio::CombSortRatio;
-
-sort_registry_macro::sort_family! {
-    type Sort = {R};
-
-    R {
-        CombSortRatio<10, 13> => "1.3"
-        CombSortRatio<70, 99> => "√2 ≈ 1.414"
-        CombSortRatio<55, 89> => "φ ≈ 1.618"
-        CombSortRatio<3,  4>  => "4/3"
-        CombSortRatio<8, 11>  => "11/8"
-        CombSortRatio<4,  5>  => "5/4"
-    }
-
-    name   = "comb sort";
-    big_o  = "O(N^2)";
-    stable = false;
-    path   = ["comb sorts", "{R}"];
-}
+combo_codegen::sort_family!(
+    type = {R},
+    uses = [
+        "crate::sorts::comb_sorts::comb_sort_ratio::CombSortRatio",
+    ],
+    R: CombRatio,
+    name = "comb sort",
+    big_o = "O(N^2)",
+    stable = false,
+    direct_sort = false,
+    path = ["comb sorts", "{R}"],
+);

@@ -1,54 +1,33 @@
-pub mod classic_heap_sorts;
-pub mod heap_quick_sort;
-pub mod quick_heap_sorts;
-pub mod weak_heap_sort;
+pub mod arity;
+pub mod arity_heap;
+pub mod compare;
+pub mod direction;
+pub mod heap;
+pub mod heap_sort;
+pub mod layout;
 
-use crate::traits::{SortAlgo, SortLogger};
-
-pub fn fn_sort<T: Ord + Copy, U: SortLogger<T>>(
-    arr: &mut [T],
-    logger: &mut U,
-    choice: &[String],
-) -> Vec<String> {
-    if choice.is_empty() {
-        classic_heap_sorts::fn_sort(arr, logger, choice)
-    } else {
-        #[allow(clippy::wildcard_in_or_patterns)]
-        match choice[0].as_str() {
-            "weak_heap_sort" => {
-                type Sort<A, B> = weak_heap_sort::SortImp<A, B>;
-                Sort::<T, U>::sort(arr, logger);
-                vec![format!("name: {}", Sort::<T, U>::name())]
-            }
-            "heap_quick_sort" => {
-                type Sort<A, B> = heap_quick_sort::SortImp<A, B>;
-                Sort::<T, U>::sort(arr, logger);
-                vec![format!("name: {}", Sort::<T, U>::name())]
-            }
-            "quick_heap_sorts" => quick_heap_sorts::fn_sort(arr, logger, &choice[1..]),
-
-            "classic_heap_sorts" | _ => classic_heap_sorts::fn_sort(arr, logger, &choice[1..]),
-        }
-    }
+pub mod combinations {
+    include!(concat!(env!("OUT_DIR"), "/heap_sort_combinations.rs"));
 }
 
-pub fn options(choice: &[String]) -> Vec<String> {
-    if choice.is_empty() {
-        [
-            "weak_heap_sort",
-            "quick_heap_sorts",
-            "classic_heap_sorts",
-            "heap_quick_sort",
-        ]
-        .iter()
-        .map(|i| i.to_string())
-        .collect()
-    } else {
-        #[allow(clippy::wildcard_in_or_patterns)]
-        match choice[0].as_str() {
-            "quick_heap_sorts" => quick_heap_sorts::options(&choice[1..]),
-            "classic_heap_sorts" => classic_heap_sorts::options(&choice[1..]),
-            _ => vec![],
-        }
+use crate::traits::log_traits::SortLogger;
+
+pub fn fn_sort(
+    arr: &mut [usize],
+    logger: &mut dyn SortLogger<usize>,
+    choice: &[String],
+) -> Vec<String> {
+    let name = choice.first().map(String::as_str).unwrap_or("");
+    if let Some(vis_fn) = crate::traits::SORT_VIS_REGISTRY.lock().unwrap().get(name).copied() {
+        vis_fn(arr, logger);
+        return vec![format!("name: {}", name)];
     }
+    vec![format!("name: {} (not found)", name)]
+}
+
+pub fn sort_choice(name: &str) -> Option<Vec<String>> {
+    if name.starts_with("heap sort") {
+        return Some(vec!["heap_sorts".to_string(), name.to_string()]);
+    }
+    None
 }

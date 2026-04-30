@@ -9,7 +9,7 @@ use super::pivot_selectors::PivotSelector;
 combo_codegen::sort_family!(
     type = QuickSort<{P}, {V}, {SS}>,
     uses = [
-        "crate::utils::small_sort::{InsertionSmallSort, Network16SmallSort, NetworkSmallSort, NoSmallSort}",
+        "crate::utils::small_sort::{InsertionSmallSort, Network16SmallSort, NetworkSmallSort, NoSmallSort, Size1SmallSort, Size2SmallSort}",
         "super::partitions::{Block, Hoare, Lomuto, MovingPivot, ThreeWay}",
         "super::pivot_selectors::{FirstElement, LastElement, MedianOfMedians, MedianOfThree, MiddleElement, Ninther, CombinedSelector, NintherDualPivot}",
         "super::quick_sort::QuickSort",
