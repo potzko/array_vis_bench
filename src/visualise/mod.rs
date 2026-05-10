@@ -1,11 +1,11 @@
 use crate::traits::log_traits::VisualizerLogger;
-use sort_vis::{Mp4Config, Mp4Visualizer, Pacing, Visualizer};
+use sort_vis::{Mp4Config, Mp4Visualizer, Visualizer};
 
 pub fn visualise_sort(
     arr: &mut [usize],
     logger: &mut VisualizerLogger<usize>,
     choice: &[String],
-    duration_secs: Option<f64>,
+    config: Mp4Config,
 ) {
     let mut original_arr = Vec::with_capacity(arr.len());
     arr.clone_into(&mut original_arr);
@@ -15,10 +15,6 @@ pub fn visualise_sort(
         choice,
     );
 
-    let config = match duration_secs {
-        Some(s) => Mp4Config { pacing: Pacing::DurationSeconds(s), ..Default::default() },
-        None => Mp4Config::default(),
-    };
     let mut viz = Mp4Visualizer::new(config);
     viz.render(&original_arr, arr.as_ptr() as usize, &logger.log);
 

@@ -37,27 +37,19 @@ pub struct Mp4Config {
     pub output_path: String,
 }
 
-impl Default for Mp4Config {
-    fn default() -> Self {
-        Self {
-            output_width: 1920,
-            output_height: 1080,
-            framerate: 120,
-            pacing: Pacing::DurationSeconds(120.0),
-            encoding: Encoding::Fast,
-            output_path: "output.mp4".into(),
-        }
-    }
-}
+/// Common video resolutions: `(width, height, label)`.
+pub const COMMON_RESOLUTIONS: &[(u32, u32, &str)] = &[
+    (1280, 720,  "720p (HD)"),
+    (1920, 1080, "1080p (Full HD / 2K)"),
+    (2560, 1440, "1440p (QHD)"),
+    (3840, 2160, "2160p (4K UHD)"),
+];
+
+/// Common frame rates.
+pub const COMMON_FRAMERATES: &[u32] = &[30, 60, 120];
 
 pub struct Mp4Visualizer {
     pub config: Mp4Config,
-}
-
-impl Default for Mp4Visualizer {
-    fn default() -> Self {
-        Self::new(Mp4Config::default())
-    }
 }
 
 const WHITE: [u8; 3] = [0xff, 0xff, 0xff];
@@ -242,10 +234,6 @@ impl Visualizer for Mp4Visualizer {
             eprintln!("ffmpeg exited with status: {status}");
         }
     }
-}
-
-pub fn render_gif(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
-    Mp4Visualizer::default().render(arr, name, actions);
 }
 
 // ---------------------------------------------------------------------------
