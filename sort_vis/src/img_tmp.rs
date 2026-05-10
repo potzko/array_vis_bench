@@ -1,41 +1,69 @@
 #![allow(dead_code)]
 
-use crate::sub_image::SubImg;
+use crate::sub_image::{Framebuffer, SubImg};
+use crate::Visualizer;
 use sort_logger::SortLog;
-use image::{DynamicImage, GenericImage, ImageBuffer, Rgba};
 use std::hash::Hash;
 use std::io::Write;
 use std::mem::size_of;
-use std::process::{Child, ChildStdin, Command, Stdio};
-
-const ACTIONS_PER_FRAME: usize = 100;
-const OUTPUT_WIDTH: u32 = 1920;
-const OUTPUT_HEIGHT: u32 = 1080;
-const FRAMERATE: u32 = 30;
-
-/// Switch encoding target by uncommenting one line:
-// const ENCODING: Encoding = Encoding::Lossless;
-// const ENCODING: Encoding = Encoding::Lossy;
-const ENCODING: Encoding = Encoding::Fast;
+use std::process::{Child, Command, Stdio};
 
 /// Lossless — perfect quality, large file, moderate encode speed.
 /// Lossy     — good quality (CRF 23), small file, moderate encode speed.
 /// Fast      — lower quality (CRF 28), small file, fastest encode.
-enum Encoding {
+pub enum Encoding {
     Lossless,
     Lossy,
     Fast,
 }
 
-const WHITE: Rgba<u8> = Rgba([0xff, 0xff, 0xff, 0xff]);
-const BLACK: Rgba<u8> = Rgba([0x0, 0x0, 0x0, 0xff]);
-const GREEN: Rgba<u8> = Rgba([0x0, 0xa0, 0x60, 0xff]);
-const BLUE: Rgba<u8> = Rgba([0x0, 0x30, 0xff, 0xff]);
-
-enum VisualAction {
-    Draw,
-    Color,
+/// How `SortLog` actions are paced into video frames.
+pub enum Pacing {
+    /// Fixed: this many actions per rendered frame. Larger value → faster
+    /// visualisation (more action per frame, fewer frames overall).
+    ActionsPerFrame(usize),
+    /// Target the full animation to take this long; `actions_per_frame`
+    /// is computed at render time from `framerate * seconds` and the
+    /// total log length.
+    DurationSeconds(f64),
 }
+
+pub struct Mp4Config {
+    pub output_width: u32,
+    pub output_height: u32,
+    pub framerate: u32,
+    pub pacing: Pacing,
+    pub encoding: Encoding,
+    pub output_path: String,
+}
+
+impl Default for Mp4Config {
+    fn default() -> Self {
+        Self {
+            output_width: 1920,
+            output_height: 1080,
+            framerate: 120,
+            pacing: Pacing::DurationSeconds(120.0),
+            encoding: Encoding::Fast,
+            output_path: "output.mp4".into(),
+        }
+    }
+}
+
+pub struct Mp4Visualizer {
+    pub config: Mp4Config,
+}
+
+impl Default for Mp4Visualizer {
+    fn default() -> Self {
+        Self::new(Mp4Config::default())
+    }
+}
+
+const WHITE: [u8; 3] = [0xff, 0xff, 0xff];
+const BLACK: [u8; 3] = [0x00, 0x00, 0x00];
+const GREEN: [u8; 3] = [0x00, 0xa0, 0x60];
+const BLUE:  [u8; 3] = [0x00, 0x30, 0xff];
 
 fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
     let height = view.height / amount;
@@ -44,171 +72,180 @@ fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
         .collect()
 }
 
-fn spawn_ffmpeg() -> Child {
-    let video_size = format!("{}x{}", OUTPUT_WIDTH, OUTPUT_HEIGHT);
-    let framerate = FRAMERATE.to_string();
-
-    // Args shared by all modes: input spec
-    let mut args: Vec<&str> = vec![
-        "-loglevel", "error",
-        "-y",
-        "-f", "rawvideo",
-        "-pixel_format", "rgb24",
-        "-video_size", &video_size,
-        "-framerate", &framerate,
-        "-i", "pipe:0",
-    ];
-
-    // Mode-specific output args
-    match ENCODING {
-        Encoding::Lossless => args.extend([
-            // libx264rgb stores raw RGB — no YUV conversion, no quality loss.
-            // colormatrix=GBR signals to players not to apply a YUV matrix on playback.
-            "-c:v", "libx264rgb",
-            "-crf", "0",
-            "-preset", "medium",
-            "-x264-params", "colormatrix=GBR:colorprim=bt709:transfer=bt709",
-        ]),
-        Encoding::Lossy => args.extend([
-            "-c:v", "libx264",
-            "-pix_fmt", "yuv444p",  // 4:4:4 avoids chroma blur on sharp edges
-            "-crf", "23",
-            "-preset", "medium",
-        ]),
-        Encoding::Fast => args.extend([
-            "-c:v", "libx264",
-            "-pix_fmt", "yuv420p",
-            "-crf", "28",
-            "-preset", "ultrafast",
-        ]),
+impl Mp4Visualizer {
+    pub fn new(config: Mp4Config) -> Self {
+        Self { config }
     }
 
-    args.push("output.mp4");
+    fn spawn_ffmpeg(&self) -> Child {
+        let video_size = format!("{}x{}", self.config.output_width, self.config.output_height);
+        let framerate = self.config.framerate.to_string();
 
-    Command::new("ffmpeg")
-        .args(&args)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::null())
-        .stderr(Stdio::inherit())
-        .spawn()
-        .expect("failed to spawn ffmpeg — is it installed?")
+        // Args shared by all modes: input spec
+        let mut args: Vec<&str> = vec![
+            "-loglevel", "error",
+            "-y",
+            "-f", "rawvideo",
+            "-pixel_format", "rgb24",
+            "-video_size", &video_size,
+            "-framerate", &framerate,
+            "-i", "pipe:0",
+        ];
+
+        // Mode-specific output args
+        match self.config.encoding {
+            Encoding::Lossless => args.extend([
+                // libx264rgb stores raw RGB — no YUV conversion, no quality loss.
+                // colormatrix=GBR signals to players not to apply a YUV matrix on playback.
+                "-c:v", "libx264rgb",
+                "-crf", "0",
+                "-preset", "medium",
+                "-x264-params", "colormatrix=GBR:colorprim=bt709:transfer=bt709",
+            ]),
+            Encoding::Lossy => args.extend([
+                "-c:v", "libx264",
+                "-pix_fmt", "yuv444p",  // 4:4:4 avoids chroma blur on sharp edges
+                "-crf", "23",
+                "-preset", "medium",
+            ]),
+            Encoding::Fast => args.extend([
+                "-c:v", "libx264",
+                "-pix_fmt", "yuv420p",
+                "-crf", "28",
+                "-preset", "ultrafast",
+            ]),
+        }
+
+        args.push(&self.config.output_path);
+
+        Command::new("ffmpeg")
+            .args(&args)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::inherit())
+            .spawn()
+            .expect("failed to spawn ffmpeg — is it installed?")
+    }
 }
 
-fn push_frame(stdin: &mut ChildStdin, image: &ImageBuffer<Rgba<u8>, Vec<u8>>) {
-    let resized = DynamicImage::ImageRgba8(image.clone())
-        .resize_exact(OUTPUT_WIDTH, OUTPUT_HEIGHT, image::imageops::FilterType::Nearest)
-        .to_rgb8();
-    stdin.write_all(resized.as_raw()).unwrap();
+impl Visualizer for Mp4Visualizer {
+    fn render(&mut self, arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
+        let actions_per_frame = match self.config.pacing {
+            Pacing::ActionsPerFrame(n) => n.max(1),
+            Pacing::DurationSeconds(s) => {
+                let target_frames = (s * self.config.framerate as f64).round() as usize;
+                (actions.len() / target_frames.max(1)).max(1)
+            }
+        };
+        let arr = arr.to_vec();
+
+        let mut inplace = true;
+        for ev in actions {
+            match ev {
+                SortLog::CreateAuxArr { .. } | SortLog::CreateAuxArrT { .. } => {
+                    inplace = false;
+                    break;
+                }
+                _ => {}
+            }
+        }
+
+        let out_w = self.config.output_width;
+        let out_h = self.config.output_height;
+        println!(
+            "{} frames to generate",
+            actions.len() / actions_per_frame + 3
+        );
+
+        let mut fb = Framebuffer::new(out_w, out_h);
+
+        let view = SubImg {
+            x: 0,
+            y: if inplace { 0 } else { out_h / 2 },
+            width: out_w,
+            height: if inplace { out_h } else { out_h / 2 },
+        };
+        let aux_view = SubImg {
+            x: 0,
+            y: 0,
+            width: out_w,
+            height: out_h / 2,
+        };
+        let mut store = ArrStore::new(ArrActions::new(arr, view, name));
+        // Paint the main array's initial state into the framebuffer.
+        store.arrs[0].force_full_redraw(&mut fb);
+
+        let mut ffmpeg = self.spawn_ffmpeg();
+        let stdin = ffmpeg.stdin.as_mut().expect("ffmpeg stdin not available");
+
+        let mut i = 1;
+        while i * actions_per_frame - actions_per_frame < actions.len() {
+            let mut split_points: Vec<usize> = vec![i * actions_per_frame - actions_per_frame];
+            #[allow(clippy::needless_range_loop)]
+            for ii in i * actions_per_frame - actions_per_frame
+                ..std::cmp::min(i * actions_per_frame, actions.len())
+            {
+                match actions[ii] {
+                    SortLog::CreateAuxArr { .. } => split_points.push(ii),
+                    SortLog::CreateAuxArrT { .. } => split_points.push(ii),
+                    SortLog::FreeAuxArr { .. } => split_points.push(ii),
+                    _ => {}
+                }
+            }
+            for ii in 1..split_points.len() {
+                store.update(&actions[split_points[ii - 1]..split_points[ii]], &mut fb);
+                stdin.write_all(&fb.data).unwrap();
+
+                match actions[split_points[ii]] {
+                    SortLog::CreateAuxArrT { name, length }
+                    | SortLog::CreateAuxArr { name, length } => {
+                        aux_view.rect(&mut fb, 0, 0, aux_view.width, aux_view.height, BLACK);
+                        let n_aux = store.aux_count();
+                        let views = get_views(&aux_view, n_aux as u32);
+                        store.insert(ArrActions::new(
+                            vec![0; length],
+                            SubImg { x: 0, y: 0, width: 0, height: 0 },
+                            name,
+                        ));
+                        // Re-assign views for all aux arrays (indices 1..) and force
+                        // a full redraw — they may have shifted on screen.
+                        let aux_views_count = views.len();
+                        for iii in 0..aux_views_count {
+                            store.aux_mut(iii).set_view(views[iii]);
+                            store.aux_mut(iii).force_full_redraw(&mut fb);
+                        }
+                    }
+                    SortLog::FreeAuxArr { name } => {
+                        store.remove(name);
+                    }
+                    _ => {}
+                }
+            }
+
+            store.update(
+                &actions[*split_points.last().unwrap()
+                    ..std::cmp::min(i * actions_per_frame, actions.len())],
+                &mut fb,
+            );
+            stdin.write_all(&fb.data).unwrap();
+
+            i += 1;
+            if i % 100 == 0 {
+                println!("{i} of {}", actions.len() / actions_per_frame + 3);
+            }
+        }
+
+        // Close stdin so ffmpeg knows the stream is done
+        drop(ffmpeg.stdin.take());
+        let status = ffmpeg.wait().expect("failed to wait on ffmpeg");
+        if !status.success() {
+            eprintln!("ffmpeg exited with status: {status}");
+        }
+    }
 }
 
 pub fn render_gif(arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
-    let arr = arr.to_vec();
-
-    let mut inplace = true;
-    let mut arrs: Vec<(usize, usize)> = Vec::new();
-    let mut ind_arrs: Vec<(usize, usize)> = Vec::new();
-    for i in actions {
-        match i {
-            SortLog::CreateAuxArr { name, length } => {
-                ind_arrs.push((*name, *length));
-                inplace = false;
-            }
-            SortLog::CreateAuxArrT { name, length } => {
-                arrs.push((*name, *length));
-                inplace = false;
-            }
-            _ => {}
-        }
-    }
-
-    let width: u32 = arr.len() as u32;
-    let height = (width as f64 / 16.0 * 9.0) as u32;
-    println!(
-        "{} frames to generate",
-        actions.len() / ACTIONS_PER_FRAME + 3
-    );
-    let mut img: ImageBuffer<Rgba<u8>, Vec<u8>> =
-        ImageBuffer::from_fn(width, height, |_, _| Rgba::<u8>([0x00, 0x00, 0x00, 0xff]));
-
-    let view = SubImg {
-        x: 0,
-        y: if inplace { 0 } else { height / 2 },
-        width,
-        height: if inplace { height } else { height / 2 },
-    };
-    let aux_view = SubImg {
-        x: 0,
-        y: 0,
-        width,
-        height: height / 2,
-    };
-    let mut store = ArrStore::new(ArrActions::new(arr, view, name));
-
-    let mut ffmpeg = spawn_ffmpeg();
-    let stdin = ffmpeg.stdin.as_mut().expect("ffmpeg stdin not available");
-
-    let mut i = 1;
-    while i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME < actions.len() {
-        let mut split_points: Vec<usize> = vec![i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME];
-        #[allow(clippy::needless_range_loop)]
-        for ii in i * ACTIONS_PER_FRAME - ACTIONS_PER_FRAME
-            ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())
-        {
-            match actions[ii] {
-                SortLog::CreateAuxArr { .. } => split_points.push(ii),
-                SortLog::CreateAuxArrT { .. } => split_points.push(ii),
-                SortLog::FreeAuxArr { .. } => split_points.push(ii),
-                _ => {}
-            }
-        }
-        for ii in 1..split_points.len() {
-            store.update(&actions[split_points[ii - 1]..split_points[ii]], &mut img);
-            push_frame(stdin, &img);
-
-            match actions[split_points[ii]] {
-                SortLog::CreateAuxArrT { name, length }
-                | SortLog::CreateAuxArr { name, length } => {
-                    aux_view.rect(&mut img, 0, 0, aux_view.width, aux_view.height, BLACK);
-                    let n_aux = store.aux_count();
-                    let views = get_views(&aux_view, n_aux as u32);
-                    store.insert(ArrActions::new(
-                        vec![0; length],
-                        SubImg { x: 0, y: 0, width: 0, height: 0 },
-                        name,
-                    ));
-                    // Re-assign views for all aux arrays (indices 1..)
-                    let aux_views_count = views.len();
-                    for iii in 0..aux_views_count {
-                        store.aux_mut(iii).view = views[iii];
-                        store.aux_mut(iii).full_render_vec(&mut img, BLACK, WHITE);
-                    }
-                }
-                SortLog::FreeAuxArr { name } => {
-                    store.remove(name);
-                }
-                _ => {}
-            }
-        }
-
-        store.update(
-            &actions[*split_points.last().unwrap()
-                ..std::cmp::min(i * ACTIONS_PER_FRAME, actions.len())],
-            &mut img,
-        );
-        push_frame(stdin, &img);
-
-        i += 1;
-        if i % 100 == 0 {
-            println!("{i} of {}", actions.len() / ACTIONS_PER_FRAME + 3);
-        }
-    }
-
-    // Close stdin so ffmpeg knows the stream is done
-    drop(ffmpeg.stdin.take());
-    let status = ffmpeg.wait().expect("failed to wait on ffmpeg");
-    if !status.success() {
-        eprintln!("ffmpeg exited with status: {status}");
-    }
+    Mp4Visualizer::default().render(arr, name, actions);
 }
 
 // ---------------------------------------------------------------------------
@@ -232,7 +269,6 @@ impl ArrStore {
     /// Returns `(index_in_arrs, element_offset)` or `None`.
     fn lookup(&self, addr: usize) -> Option<(usize, usize)> {
         let size_t = size_of::<usize>();
-        // Largest index whose name <= addr
         let pos = self.arrs.partition_point(|a| a.name <= addr);
         if pos == 0 {
             return None;
@@ -245,37 +281,28 @@ impl ArrStore {
         }
     }
 
-    /// Insert a new array, maintaining sorted order by name.
     fn insert(&mut self, entry: ArrActions) {
         let pos = self.arrs.partition_point(|a| a.name <= entry.name);
         self.arrs.insert(pos, entry);
     }
 
-    /// Remove the array with the given base pointer.
     fn remove(&mut self, name: usize) {
         if let Ok(i) = self.arrs.binary_search_by_key(&name, |a| a.name) {
             self.arrs.remove(i);
         }
     }
 
-    /// Number of aux arrays (everything after index 0).
     fn aux_count(&self) -> usize {
         self.arrs.len()
     }
 
-    /// Mutable ref to the iii-th aux array (0-indexed among aux arrays).
     fn aux_mut(&mut self, iii: usize) -> &mut ArrActions {
-        // aux arrays are at indices 1.. but their sorted position may vary;
-        // skip index 0 (main array) by taking arrs[1..][iii].
         &mut self.arrs[1 + iii]
     }
 
-    /// Dispatch all actions to the correct array in O(A log N) total.
-    fn update(
-        &mut self,
-        actions: &[SortLog<usize>],
-        img: &mut impl GenericImage<Pixel = Rgba<u8>>,
-    ) {
+    /// Apply all actions (mark dirty / colored on the right array), then have
+    /// every array repaint just the columns whose visible state changed.
+    fn update(&mut self, actions: &[SortLog<usize>], fb: &mut Framebuffer) {
         for action in actions {
             match action {
                 SortLog::Swap { name, ind_a, ind_b } => {
@@ -284,8 +311,8 @@ impl ArrStore {
                         let ia = ind_a + off;
                         let ib = ind_b + off;
                         a.arr.swap(ia, ib);
-                        a.draw[ia] = true;
-                        a.draw[ib] = true;
+                        a.mark_dirty(ia);
+                        a.mark_dirty(ib);
                     }
                 }
                 SortLog::WriteData { name, ind, data } => {
@@ -293,7 +320,7 @@ impl ArrStore {
                         let a = &mut self.arrs[i];
                         let idx = ind + off;
                         a.arr[idx] = *data;
-                        a.draw[idx] = true;
+                        a.mark_dirty(idx);
                         let v = *data as f64;
                         if v < a.min { a.min = v; }
                         if v > a.max { a.max = v; }
@@ -304,7 +331,7 @@ impl ArrStore {
                         let a = &mut self.arrs[i];
                         let idx = ind + off;
                         a.arr[idx] = *data;
-                        a.draw[idx] = true;
+                        a.mark_dirty(idx);
                         let v = *data as f64;
                         if v < a.min { a.min = v; }
                         if v > a.max { a.max = v; }
@@ -316,40 +343,40 @@ impl ArrStore {
                         let ia = ind_a + off;
                         let ib = ind_b + off;
                         a.arr[ia] = a.arr[ib];
-                        a.draw[ia] = true;
-                        a.draw[ib] = true;
+                        a.mark_dirty(ia);
+                        a.mark_dirty(ib);
                     }
                 }
                 SortLog::CmpInArr { name, ind_a, ind_b, result: _ } => {
                     if let Some((i, off)) = self.lookup(*name) {
                         let a = &mut self.arrs[i];
-                        a.color[ind_a + off] = true;
-                        a.color[ind_b + off] = true;
+                        a.mark_color(ind_a + off);
+                        a.mark_color(ind_b + off);
                     }
                 }
                 SortLog::CmpData { name, ind, data: _, result: _ } => {
                     if let Some((i, off)) = self.lookup(*name) {
-                        self.arrs[i].color[ind + off] = true;
+                        self.arrs[i].mark_color(ind + off);
                     }
                 }
                 SortLog::CmpDataU { name, ind, data: _, result: _ } => {
                     if let Some((i, off)) = self.lookup(*name) {
-                        self.arrs[i].color[ind + off] = true;
+                        self.arrs[i].mark_color(ind + off);
                     }
                 }
                 SortLog::CmpAcrossArrs { name_a, ind_a, name_b, ind_b, result: _ } => {
                     if let Some((i, off)) = self.lookup(*name_a) {
-                        self.arrs[i].color[ind_a + off] = true;
+                        self.arrs[i].mark_color(ind_a + off);
                     }
                     if let Some((i, off)) = self.lookup(*name_b) {
-                        self.arrs[i].color[ind_b + off] = true;
+                        self.arrs[i].mark_color(ind_b + off);
                     }
                 }
                 _ => {}
             }
         }
         for a in self.arrs.iter_mut() {
-            a.finalize_frame(img);
+            a.finalize_frame(fb);
         }
     }
 }
@@ -357,12 +384,54 @@ impl ArrStore {
 // ---------------------------------------------------------------------------
 // ArrActions — per-array state and rendering
 // ---------------------------------------------------------------------------
+//
+// Rendering uses a per-pixel-column density approach so no array values are
+// ever dropped:
+//   * Each pixel column `x` owns a *range* of array indices `[a_x, b_x)`.
+//     For `n <= W` the range has length 1 and is repeated across the
+//     pixel-columns owned by that index. For `n > W` each pixel column owns
+//     two-or-so indices and they all contribute to that column's render.
+//   * Each row `y` of a column shows `(bars_in_col_reaching_y / k)` blended
+//     between BLACK and WHITE, with GREEN tinting added for the share of
+//     bars reaching `y` that are flagged as currently being compared.
+//   * Counts per row are computed in `O(k + H)` per column via a "diff"
+//     array: each bar contributes `+1` at its top row, then the running
+//     prefix sum as we walk down gives the cover count at every row.
 
 struct ArrActions {
     arr: Vec<usize>,
+
+    /// Per-index "marked colored this frame" boolean. Doubles as the dedup
+    /// flag for `color_indices`.
     color: Vec<bool>,
-    old_color: Vec<bool>,
-    draw: Vec<bool>,
+    color_indices: Vec<usize>,
+    /// Indices that were colored last frame — re-marked dirty so the
+    /// transition back to uncoloured is repainted.
+    prev_color_indices: Vec<usize>,
+
+    /// Indices touched this frame (write or color). Deduped via `dirty_flag`.
+    dirty: Vec<usize>,
+    dirty_flag: Vec<bool>,
+
+    /// Pixel column → index range mapping. `col_indices_start[x]..col_indices_end[x]`
+    /// is the half-open index range owned by pixel column `x`.
+    col_indices_start: Vec<u32>,
+    col_indices_end: Vec<u32>,
+    /// Index → pixel column range mapping. `index_pixels_start[i]..index_pixels_end[i]`
+    /// is the half-open pixel-column range that index `i` contributes to.
+    index_pixels_start: Vec<u32>,
+    index_pixels_end: Vec<u32>,
+
+    /// Pixel columns flagged for repaint this frame, deduped via `dirty_col_flag`.
+    dirty_cols: Vec<u32>,
+    dirty_col_flag: Vec<bool>,
+
+    /// Scratch buffers reused across `redraw_pixel_col` calls. Sized to
+    /// `view.height + 1`. `diff_total[y]` = number of bars whose top row is
+    /// exactly `y`; prefix sum gives "bars covering row y".
+    diff_total: Vec<u32>,
+    diff_colored: Vec<u32>,
+
     view: SubImg,
     name: usize,
     min: f64,
@@ -380,67 +449,238 @@ impl ArrActions {
         let min = *arr.iter().min().unwrap_or(&0);
         let max = *arr.iter().max().unwrap_or(&0);
         let len = arr.len();
-        ArrActions {
+        let mut a = ArrActions {
             arr,
             color: vec![false; len],
-            old_color: vec![false; len],
-            draw: vec![true; len],
-            view,
+            color_indices: Vec::new(),
+            prev_color_indices: Vec::new(),
+            dirty: Vec::new(),
+            dirty_flag: vec![false; len],
+            col_indices_start: Vec::new(),
+            col_indices_end: Vec::new(),
+            index_pixels_start: vec![0; len],
+            index_pixels_end: vec![0; len],
+            dirty_cols: Vec::new(),
+            dirty_col_flag: Vec::new(),
+            diff_total: Vec::new(),
+            diff_colored: Vec::new(),
+            view: SubImg { x: 0, y: 0, width: 0, height: 0 },
             name,
             min: min as f64,
             max: max as f64,
-        }
+        };
+        a.set_view(view);
+        a
     }
 
-    /// Apply accumulated draw/color state to the image buffer and reset flags.
-    fn finalize_frame(&mut self, img: &mut impl GenericImage<Pixel = Rgba<u8>>) {
-        for i in 0..self.arr.len() {
-            self.draw[i] = (self.draw[i] | self.old_color[i]) && !self.color[i];
-        }
-        self.update_arr_view(img, BLACK, WHITE, &self.draw.clone());
-        self.update_arr_view(img, BLACK, GREEN, &self.color.clone());
-        self.old_color = self.color.clone();
-        self.draw = vec![false; self.arr.len()];
-        self.color = vec![false; self.arr.len()];
-    }
+    /// Reassign the view rectangle and rebuild all pixel↔index mappings and
+    /// scratch buffers. Caller is responsible for repainting (`force_full_redraw`).
+    fn set_view(&mut self, view: SubImg) {
+        self.view = view;
+        let n = self.arr.len();
+        let big_w = view.width as u64;
+        let big_h = view.height as usize;
 
-    fn update_arr_view(
-        &mut self,
-        img: &mut impl GenericImage<Pixel = Rgba<u8>>,
-        color_bg: Rgba<u8>,
-        color: Rgba<u8>,
-        draw_inds: &[bool],
-    ) {
-        for (ind, val) in draw_inds.iter().enumerate() {
-            if *val {
-                self.view.rect(
-                    img,
-                    ind as u32 * (self.view.width / self.arr.len() as u32),
-                    0,
-                    self.view.width / self.arr.len() as u32,
-                    self.view.height
-                        - ((self.arr[ind] as f64 / self.max) * self.view.height as f64) as u32,
-                    color_bg,
-                );
-                self.view.rect(
-                    img,
-                    ind as u32 * (self.view.width / self.arr.len() as u32),
-                    self.view.height
-                        - ((self.arr[ind] as f64 / self.max) * self.view.height as f64) as u32,
-                    self.view.width / self.arr.len() as u32,
-                    ((self.arr[ind] as f64 / self.max) * self.view.height as f64) as u32,
-                    color,
-                );
+        // Per-pixel-column buffers.
+        self.col_indices_start = vec![0u32; view.width as usize];
+        self.col_indices_end = vec![0u32; view.width as usize];
+        self.dirty_col_flag = vec![false; view.width as usize];
+        self.dirty_cols.clear();
+
+        // Per-row scratch buffers.
+        self.diff_total = vec![0u32; big_h + 1];
+        self.diff_colored = vec![0u32; big_h + 1];
+
+        // Per-index buffers.
+        self.index_pixels_start = vec![0u32; n];
+        self.index_pixels_end = vec![0u32; n];
+
+        if n == 0 || big_w == 0 {
+            return;
+        }
+
+        if (n as u64) <= big_w {
+            // n <= W: each index owns a span of pixels; each pixel has exactly
+            // one owning index.
+            for i in 0..n {
+                let s = (i as u64 * big_w / n as u64) as u32;
+                let e = ((i as u64 + 1) * big_w / n as u64) as u32;
+                self.index_pixels_start[i] = s;
+                self.index_pixels_end[i] = e;
+                for x in s..e {
+                    self.col_indices_start[x as usize] = i as u32;
+                    self.col_indices_end[x as usize] = (i + 1) as u32;
+                }
+            }
+        } else {
+            // n > W: each pixel owns multiple indices; each index belongs to
+            // exactly one pixel.
+            for x in 0..view.width {
+                let a = (x as u64 * n as u64 / big_w) as u32;
+                let mut e = ((x as u64 + 1) * n as u64 / big_w) as u32;
+                if e <= a {
+                    e = a + 1;
+                }
+                if e as usize > n {
+                    e = n as u32;
+                }
+                self.col_indices_start[x as usize] = a;
+                self.col_indices_end[x as usize] = e;
+                for i in a..e {
+                    self.index_pixels_start[i as usize] = x;
+                    self.index_pixels_end[i as usize] = x + 1;
+                }
             }
         }
     }
 
-    fn full_render_vec(
-        &mut self,
-        img: &mut impl GenericImage<Pixel = Rgba<u8>>,
-        color: Rgba<u8>,
-        color_bg: Rgba<u8>,
-    ) {
-        self.update_arr_view(img, color, color_bg, &vec![true; self.arr.len()]);
+    #[inline]
+    fn mark_dirty(&mut self, i: usize) {
+        if !self.dirty_flag[i] {
+            self.dirty_flag[i] = true;
+            self.dirty.push(i);
+        }
+    }
+
+    #[inline]
+    fn mark_color(&mut self, i: usize) {
+        if !self.color[i] {
+            self.color[i] = true;
+            self.color_indices.push(i);
+        }
+    }
+
+    /// Collapse the per-index dirty/color sets onto pixel columns and repaint
+    /// every column that has any contributing index changed.
+    fn finalize_frame(&mut self, fb: &mut Framebuffer) {
+        // Build the per-index candidate set: dirty ∪ color_indices ∪ prev_color_indices.
+        for k in 0..self.color_indices.len() {
+            let i = self.color_indices[k];
+            if !self.dirty_flag[i] {
+                self.dirty_flag[i] = true;
+                self.dirty.push(i);
+            }
+        }
+        for k in 0..self.prev_color_indices.len() {
+            let i = self.prev_color_indices[k];
+            if !self.dirty_flag[i] {
+                self.dirty_flag[i] = true;
+                self.dirty.push(i);
+            }
+        }
+
+        // Promote each dirty index to its pixel-column range.
+        for k in 0..self.dirty.len() {
+            let i = self.dirty[k];
+            let s = self.index_pixels_start[i] as usize;
+            let e = self.index_pixels_end[i] as usize;
+            for x in s..e {
+                if !self.dirty_col_flag[x] {
+                    self.dirty_col_flag[x] = true;
+                    self.dirty_cols.push(x as u32);
+                }
+            }
+        }
+
+        // Repaint every dirty pixel column.
+        for k in 0..self.dirty_cols.len() {
+            let x = self.dirty_cols[k];
+            self.redraw_pixel_col(fb, x);
+        }
+
+        // Reset per-pixel-column flags.
+        for k in 0..self.dirty_cols.len() {
+            self.dirty_col_flag[self.dirty_cols[k] as usize] = false;
+        }
+        self.dirty_cols.clear();
+
+        // Reset per-index dirty flags.
+        for k in 0..self.dirty.len() {
+            self.dirty_flag[self.dirty[k]] = false;
+        }
+        self.dirty.clear();
+
+        // Clear `color` for next frame, then carry this frame's coloured
+        // indices into prev_color_indices for transition tracking.
+        for k in 0..self.color_indices.len() {
+            self.color[self.color_indices[k]] = false;
+        }
+        std::mem::swap(&mut self.color_indices, &mut self.prev_color_indices);
+        self.color_indices.clear();
+    }
+
+    /// Repaint every pixel column. Used after `set_view` since the cached
+    /// framebuffer state no longer reflects the screen.
+    fn force_full_redraw(&mut self, fb: &mut Framebuffer) {
+        for x in 0..self.view.width {
+            self.redraw_pixel_col(fb, x);
+        }
+    }
+
+    /// Rasterise a single pixel column using density blending across the bars
+    /// owned by that column. Cost: `O(k + H)` per call.
+    fn redraw_pixel_col(&mut self, fb: &mut Framebuffer, x: u32) {
+        let h = self.view.height;
+        if h == 0 {
+            return;
+        }
+        let stride = fb.width as usize * 3;
+        let off_base = self.view.y as usize * stride + (self.view.x + x) as usize * 3;
+
+        let i_start = self.col_indices_start[x as usize] as usize;
+        let i_end = self.col_indices_end[x as usize] as usize;
+        let k = i_end - i_start;
+
+        if k == 0 {
+            // No bars in this column (can happen for n > W on the very edge).
+            // Wipe to black.
+            for y in 0..h as usize {
+                let off = off_base + y * stride;
+                fb.data[off] = 0;
+                fb.data[off + 1] = 0;
+                fb.data[off + 2] = 0;
+            }
+            return;
+        }
+
+        // Reset diff scratch buffers up to row h (top of bars never goes
+        // beyond `h` since we clamp bar_h to `h`).
+        let h_plus_1 = (h + 1) as usize;
+        self.diff_total[..h_plus_1].fill(0);
+        self.diff_colored[..h_plus_1].fill(0);
+
+        // For each bar in this column, mark its top row in the diff buffers.
+        // Walking diff_total down the column gives the running cover-count.
+        if self.max > 0.0 {
+            for i in i_start..i_end {
+                let bar_h = ((self.arr[i] as f64 / self.max) * h as f64) as u32;
+                let bar_h = bar_h.min(h);
+                if bar_h > 0 {
+                    let top_row = (h - bar_h) as usize;
+                    self.diff_total[top_row] += 1;
+                    if self.color[i] {
+                        self.diff_colored[top_row] += 1;
+                    }
+                }
+            }
+        }
+
+        // Walk rows top to bottom, blending each pixel from the running counts.
+        // Pixel = (white_count * WHITE + colored_count * GREEN) / k.
+        let k_u32 = k as u32;
+        let mut total: u32 = 0;
+        let mut colored: u32 = 0;
+        for y in 0..h as usize {
+            total += self.diff_total[y];
+            colored += self.diff_colored[y];
+            let white = total - colored;
+            let r = (WHITE[0] as u32 * white + GREEN[0] as u32 * colored) / k_u32;
+            let g = (WHITE[1] as u32 * white + GREEN[1] as u32 * colored) / k_u32;
+            let b = (WHITE[2] as u32 * white + GREEN[2] as u32 * colored) / k_u32;
+            let off = off_base + y * stride;
+            fb.data[off] = r as u8;
+            fb.data[off + 1] = g as u8;
+            fb.data[off + 2] = b as u8;
+        }
     }
 }
