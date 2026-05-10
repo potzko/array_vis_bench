@@ -7,4 +7,6 @@ pub trait Visualizer {
     fn render(&mut self, arr: &[usize], name: usize, actions: &[SortLog<usize>]);
 }
 
-pub use img_tmp::{render_gif, Encoding, Mp4Config, Mp4Visualizer, Pacing};
+pub use img_tmp::{
+    Encoding, Mp4Config, Mp4Visualizer, Pacing, COMMON_FRAMERATES, COMMON_RESOLUTIONS,
+};

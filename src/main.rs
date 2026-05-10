@@ -3,6 +3,7 @@ use array_vis_bench::traits::get_sort_tree;
 use array_vis_bench::traits::log_traits::VisualizerLogger;
 use array_vis_bench::visualise::visualise_sort;
 use array_vis_bench::utils::array_gen::{get_rand_arr, get_rand_arr_in_range, get_arr, get_reversed_arr};
+use sort_vis::{Encoding, Mp4Config, Pacing, COMMON_FRAMERATES, COMMON_RESOLUTIONS};
 use std::io::{self, Write};
 
 fn main() {
@@ -77,14 +78,40 @@ fn main() {
     // Create sort selection format that the system expects
     let sort_choice = create_sort_choice(&sort_name);
     
-    print!("\nHow long should the visualization be (seconds, blank for default): ");
+    println!("\nVideo resolution:");
+    for (i, (w, h, label)) in COMMON_RESOLUTIONS.iter().enumerate() {
+        println!("  {}: {}x{} ({})", i + 1, w, h, label);
+    }
+    let res_idx = get_user_selection("Select resolution", 1, COMMON_RESOLUTIONS.len()) - 1;
+    let (output_width, output_height, _) = COMMON_RESOLUTIONS[res_idx];
+
+    println!("\nFrame rate:");
+    for (i, fr) in COMMON_FRAMERATES.iter().enumerate() {
+        println!("  {}: {} fps", i + 1, fr);
+    }
+    let fr_idx = get_user_selection("Select frame rate", 1, COMMON_FRAMERATES.len()) - 1;
+    let framerate = COMMON_FRAMERATES[fr_idx];
+
+    print!("\nHow long should the visualization be (seconds): ");
     io::stdout().flush().unwrap();
     let mut duration_input = String::new();
     io::stdin().read_line(&mut duration_input).unwrap();
-    let duration_secs: Option<f64> = duration_input.trim().parse().ok();
+    let duration_secs: f64 = duration_input.trim().parse().unwrap_or_else(|_| {
+        println!("Invalid input, defaulting to 60s.");
+        60.0
+    });
+
+    let config = Mp4Config {
+        output_width,
+        output_height,
+        framerate,
+        pacing: Pacing::DurationSeconds(duration_secs),
+        encoding: Encoding::Fast,
+        output_path: "output.mp4".into(),
+    };
 
     println!("\nGenerating visualization...");
-    visualise_sort(&mut arr, &mut logger, &sort_choice, duration_secs);
+    visualise_sort(&mut arr, &mut logger, &sort_choice, config);
     
     println!("Sorted array (first 20 elements): {:?}", 
              if arr.len() > 20 { &arr[..20] } else { &arr });
