@@ -1,21 +1,103 @@
+use std::marker::PhantomData;
+
 use crate::traits::log_traits::SortLogger;
 
-/// Insertion sort. Returns `true` if the array was mutated (any swap
-/// happened), `false` if it was already sorted.
-#[inline(always)]
-pub(crate) fn insertion_sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-    arr: &mut [T],
-    logger: &mut U,
-) -> bool {
-    let mut mutated = false;
-    for i in 1..arr.len() {
+// ---------------------------------------------------------------------------
+
+/// Strategy for placing one element of a sorted prefix.
+///
+/// Given `arr[..i]` already sorted and `arr[i]` the new element, an
+/// implementor moves `arr[i]` to its correct position within `arr[..=i]`.
+/// Returns `true` if the array was mutated.
+pub trait InsertionStrategy {
+    fn insert_one<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        i: usize,
+        logger: &mut U,
+    ) -> bool;
+}
+
+/// Linear insertion: walk left, swapping each out-of-order pair until the
+/// element settles. `O(d)` work where `d` is the displacement.
+pub struct LinearInsertion;
+combo_codegen::component!(InsertionStrategy, LinearInsertion, "linear");
+
+impl InsertionStrategy for LinearInsertion {
+    #[inline(always)]
+    fn insert_one<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        i: usize,
+        logger: &mut U,
+    ) -> bool {
+        let mut mutated = false;
         let mut ii = i;
         while ii > 0 && logger.cond_swap_lt(arr, ii, ii - 1) {
             mutated = true;
             ii -= 1;
         }
+        mutated
+    }
+}
+
+/// Binary insertion: binary-search the sorted prefix for the destination,
+/// then shift the gap open with adjacent swaps. `O(log d)` compares,
+/// still `O(d)` swaps.
+pub struct BinaryInsertion;
+combo_codegen::component!(InsertionStrategy, BinaryInsertion, "binary");
+
+impl InsertionStrategy for BinaryInsertion {
+    #[inline(always)]
+    fn insert_one<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        i: usize,
+        logger: &mut U,
+    ) -> bool {
+        // Find leftmost index `lo` in `0..i` with arr[lo] > arr[i].
+        let mut lo = 0;
+        let mut hi = i;
+        while lo < hi {
+            let mid = lo + (hi - lo) / 2;
+            if logger.cmp_gt(arr, mid, i) {
+                hi = mid;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        if lo == i {
+            return false;
+        }
+        let mut ii = i;
+        while ii > lo {
+            logger.swap(arr, ii, ii - 1);
+            ii -= 1;
+        }
+        true
+    }
+}
+
+/// Run a full insertion sort using the chosen [`InsertionStrategy`].
+/// Returns `true` if any swap happened.
+#[inline(always)]
+pub fn insertion_sort_with<S: InsertionStrategy, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    logger: &mut U,
+) -> bool {
+    let mut mutated = false;
+    for i in 1..arr.len() {
+        mutated |= S::insert_one(arr, i, logger);
     }
     mutated
+}
+
+/// Linear insertion sort over the whole array. Kept as a free function
+/// because several call sites (circle sorts, etc.) want it without
+/// committing to a strategy parameter.
+#[inline(always)]
+pub(crate) fn insertion_sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    logger: &mut U,
+) -> bool {
+    insertion_sort_with::<LinearInsertion, _, _>(arr, logger)
 }
 
 /// Strategy for sorting small sub-arrays before or during a merge / quick /
@@ -102,21 +184,26 @@ impl NonTrivialSmallSort for Size2SmallSort {}
 
 // ---------------------------------------------------------------------------
 
-/// Insertion sort for subarrays of length ≤ N.
-pub struct InsertionSmallSort<const N: usize>;
-combo_codegen::component!(SmallSort, InsertionSmallSort<16>, "insertion: 16");
-combo_codegen::component!(SmallSort, InsertionSmallSort<32>, "insertion: 32");
-combo_codegen::component!(NonTrivialSmallSort, InsertionSmallSort<16>, "insertion: 16");
-combo_codegen::component!(NonTrivialSmallSort, InsertionSmallSort<32>, "insertion: 32");
+/// Insertion sort for subarrays of length ≤ N, dispatched via an
+/// [`InsertionStrategy`] (linear or binary).
+pub struct InsertionSmallSort<S: InsertionStrategy, const N: usize>(PhantomData<S>);
+combo_codegen::component!(SmallSort, InsertionSmallSort<LinearInsertion, 16>, "insertion: 16");
+combo_codegen::component!(SmallSort, InsertionSmallSort<LinearInsertion, 32>, "insertion: 32");
+combo_codegen::component!(SmallSort, InsertionSmallSort<BinaryInsertion, 16>, "binary insertion: 16");
+combo_codegen::component!(SmallSort, InsertionSmallSort<BinaryInsertion, 32>, "binary insertion: 32");
+combo_codegen::component!(NonTrivialSmallSort, InsertionSmallSort<LinearInsertion, 16>, "insertion: 16");
+combo_codegen::component!(NonTrivialSmallSort, InsertionSmallSort<LinearInsertion, 32>, "insertion: 32");
+combo_codegen::component!(NonTrivialSmallSort, InsertionSmallSort<BinaryInsertion, 16>, "binary insertion: 16");
+combo_codegen::component!(NonTrivialSmallSort, InsertionSmallSort<BinaryInsertion, 32>, "binary insertion: 32");
 
-impl<const N: usize> SmallSort for InsertionSmallSort<N> {
+impl<S: InsertionStrategy, const N: usize> SmallSort for InsertionSmallSort<S, N> {
     const THRESHOLD: usize = N;
     #[inline(always)]
     fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) -> bool {
-        insertion_sort(arr, logger)
+        insertion_sort_with::<S, _, _>(arr, logger)
     }
 }
-impl<const N: usize> NonTrivialSmallSort for InsertionSmallSort<N> {}
+impl<S: InsertionStrategy, const N: usize> NonTrivialSmallSort for InsertionSmallSort<S, N> {}
 
 // ---------------------------------------------------------------------------
 
@@ -316,18 +403,26 @@ impl<const N: usize, S: SmallSort> SetSizeSmallSort<N> for SmallSortAdapter<S> {
 // ---------------------------------------------------------------------------
 
 /// Marks a threshold at which quicksort stops recursing, leaving small
-/// sub-arrays unsorted. After the full recursion the caller runs a single
-/// insertion sort pass over the entire array.
+/// sub-arrays unsorted. After the full recursion the caller invokes
+/// [`Self::final_pass`], which sweeps the whole array once and finishes
+/// the sort in `O(N · THRESHOLD)`.
 pub trait DeferredSmallSort {
     const THRESHOLD: usize;
+    fn final_pass<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U);
 }
 
-/// Deferred-insertion threshold of N: quicksort stops at sub-arrays of
-/// length ≤ N and lets a final insertion sort pass clean up.
-pub struct DeferredInsertion<const N: usize>;
-combo_codegen::component!(DeferredSmallSort, DeferredInsertion<16>, "deferred insertion: 16");
-combo_codegen::component!(DeferredSmallSort, DeferredInsertion<32>, "deferred insertion: 32");
+/// Deferred insertion: quicksort stops at sub-arrays of length ≤ N and
+/// lets a single final insertion-sort pass (using strategy `S`) clean up.
+pub struct DeferredInsertion<S: InsertionStrategy, const N: usize>(PhantomData<S>);
+combo_codegen::component!(DeferredSmallSort, DeferredInsertion<LinearInsertion, 16>, "deferred insertion: 16");
+combo_codegen::component!(DeferredSmallSort, DeferredInsertion<LinearInsertion, 32>, "deferred insertion: 32");
+combo_codegen::component!(DeferredSmallSort, DeferredInsertion<BinaryInsertion, 16>, "deferred binary insertion: 16");
+combo_codegen::component!(DeferredSmallSort, DeferredInsertion<BinaryInsertion, 32>, "deferred binary insertion: 32");
 
-impl<const N: usize> DeferredSmallSort for DeferredInsertion<N> {
+impl<S: InsertionStrategy, const N: usize> DeferredSmallSort for DeferredInsertion<S, N> {
     const THRESHOLD: usize = N;
+    #[inline(always)]
+    fn final_pass<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        let _ = insertion_sort_with::<S, _, _>(arr, logger);
+    }
 }

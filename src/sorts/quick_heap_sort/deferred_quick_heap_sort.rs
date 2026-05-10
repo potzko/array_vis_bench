@@ -19,7 +19,7 @@ use crate::sorts::heap_sort::direction::{MaxForward, MinReverse};
 use crate::sorts::heap_sort::heap_algorithm::HeapAlgorithm;
 use crate::sorts::heap_sort::heap_sort::HeapSort;
 use crate::traits::log_traits::SortLogger;
-use crate::utils::small_sort::{insertion_sort, DeferredSmallSort};
+use crate::utils::small_sort::DeferredSmallSort;
 
 type LeftHeap<A> = HeapSort<ArityHeap<A, MaxForward>, Iterative>;
 type RightHeap<A> = HeapSort<ArityHeap<A, MinReverse>, Iterative>;
@@ -31,7 +31,7 @@ pub struct DeferredQuickHeapSort<A: Arity, DSS: DeferredSmallSort> {
 impl<A: Arity, DSS: DeferredSmallSort> DeferredQuickHeapSort<A, DSS> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         deferred_recurse::<T, U, A, DSS>(arr, false, false, logger);
-        insertion_sort(arr, logger);
+        DSS::final_pass(arr, logger);
     }
 }
 
@@ -93,6 +93,7 @@ combo_codegen::sort_family!(
     uses = [
         "crate::sorts::heap_sort::arity::{Binary, Ternary, Base16, Base256}",
         "crate::utils::small_sort::DeferredInsertion",
+        "crate::utils::small_sort::{LinearInsertion, BinaryInsertion}",
         "crate::sorts::quick_heap_sort::deferred_quick_heap_sort::DeferredQuickHeapSort",
     ],
     A: Arity,

@@ -36,6 +36,7 @@ combo_codegen::sort_family!(
     type = OddEvenBubbleSort<{S}>,
     uses = [
         "crate::utils::small_sort::{Size2SmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
+        "crate::utils::small_sort::{LinearInsertion, BinaryInsertion}",
         "crate::sorts::bubble_sorts::odd_even_bubble_sort::OddEvenBubbleSort",
     ],
     S: NonTrivialSmallSort,

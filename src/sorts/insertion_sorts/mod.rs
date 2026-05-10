@@ -1,4 +1,7 @@
 pub mod insertion_sort;
+pub mod combinations {
+    include!(concat!(env!("OUT_DIR"), "/insertion_sorts_combinations.rs"));
+}
 
 use crate::traits::log_traits::SortLogger;
 
@@ -17,7 +20,9 @@ pub fn fn_sort(
 
 pub fn sort_choice(name: &str) -> Option<Vec<String>> {
     match name {
-        "insertion sort" => Some(vec!["insertion_sorts".to_string(), name.to_string()]),
+        "insertion sort<linear>" | "insertion sort<binary>" => {
+            Some(vec!["insertion_sorts".to_string(), name.to_string()])
+        }
         _ => None,
     }
 }

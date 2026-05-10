@@ -42,9 +42,6 @@ combo_codegen = { path = "./combo_codegen" }
 [build-dependencies]
 combo_codegen = { path = "./combo_codegen" }
 
-[dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
-
 [[bench]]
 name = "sorts"
 harness = false

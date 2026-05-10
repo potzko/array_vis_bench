@@ -114,6 +114,7 @@ combo_codegen::sort_family!(
     uses = [
         "crate::sorts::heap_sort::arity::{Binary, Ternary, Base16, Base256}",
         "crate::utils::small_sort::{InsertionSmallSort, Network16SmallSort, NetworkSmallSort, NoSmallSort, Size1SmallSort, Size2SmallSort}",
+        "crate::utils::small_sort::{LinearInsertion, BinaryInsertion}",
         "crate::sorts::quick_heap_sort::quick_heap_sort::QuickHeapSort",
     ],
     A: Arity,

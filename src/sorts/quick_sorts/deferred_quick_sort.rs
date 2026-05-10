@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::utils::small_sort::{insertion_sort, DeferredSmallSort};
+use crate::utils::small_sort::DeferredSmallSort;
 use crate::traits::log_traits::SortLogger;
 
 use super::partitions::PartitionScheme;
@@ -10,6 +10,7 @@ combo_codegen::sort_family!(
     type = DeferredQuickSort<{P}, {V}, {DSS}>,
     uses = [
         "crate::utils::small_sort::DeferredInsertion",
+        "crate::utils::small_sort::{LinearInsertion, BinaryInsertion}",
         "super::partitions::{Block, Hoare, Lomuto, MovingPivot, ThreeWay}",
         "super::pivot_selectors::{FirstElement, LastElement, MedianOfMedians, MedianOfThree, MiddleElement, Ninther, CombinedSelector, NintherDualPivot}",
         "super::deferred_quick_sort::DeferredQuickSort",
@@ -31,7 +32,7 @@ pub struct DeferredQuickSort<P: PartitionScheme, V: PivotSelector, DSS: Deferred
 impl<P: PartitionScheme, V: PivotSelector, DSS: DeferredSmallSort> DeferredQuickSort<P, V, DSS> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         deferred_recursive::<T, U, P, V, DSS>(arr, logger);
-        insertion_sort(arr, logger);
+        DSS::final_pass(arr, logger);
     }
 }
 

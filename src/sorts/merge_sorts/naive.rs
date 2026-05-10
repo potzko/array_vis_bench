@@ -7,6 +7,7 @@ combo_codegen::sort_family!(
     uses = [
         "crate::sorts::merge_sorts::naive::NaiveMergeSort",
         "crate::utils::small_sort::{NoSmallSort, Size1SmallSort, Size2SmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
+        "crate::utils::small_sort::{LinearInsertion, BinaryInsertion}",
     ],
     SS: SmallSort,
     name = "naive merge sort",
@@ -84,7 +85,7 @@ impl<S: SmallSort> NaiveMergeSort<S> {
 mod tests {
     use super::*;
     use crate::traits::log_traits::NoOpLogger;
-    use crate::utils::small_sort::{NoSmallSort, InsertionSmallSort};
+    use crate::utils::small_sort::{NoSmallSort, InsertionSmallSort, LinearInsertion};
 
     fn check<S: SmallSort>(arr: &mut Vec<usize>) {
         let mut expected = arr.clone();
@@ -100,5 +101,5 @@ mod tests {
     #[test] fn reversed_32() { check::<NoSmallSort>(&mut (0..32usize).rev().collect()); }
     #[test] fn same_32()     { check::<NoSmallSort>(&mut vec![42; 32]); }
     #[test] fn large_100()   { check::<NoSmallSort>(&mut (0..100).map(|i| (i * 37 + 13) % 100).collect()); }
-    #[test] fn threshold_32(){ check::<InsertionSmallSort<32>>(&mut (0..100).map(|i| (i * 37 + 13) % 100).collect()); }
+    #[test] fn threshold_32(){ check::<InsertionSmallSort<LinearInsertion, 32>>(&mut (0..100).map(|i| (i * 37 + 13) % 100).collect()); }
 }

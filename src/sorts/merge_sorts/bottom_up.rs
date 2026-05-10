@@ -8,6 +8,7 @@ combo_codegen::sort_family!(
     uses = [
         "crate::sorts::merge_sorts::bottom_up::BottomUpMergeSort",
         "crate::utils::small_sort::{NoSmallSort, Size1SmallSort, Size2SmallSort, InsertionSmallSort, NetworkSmallSort, Network16SmallSort}",
+        "crate::utils::small_sort::{LinearInsertion, BinaryInsertion}",
     ],
     SS: SmallSort,
     PP: inline [("false", ""), ("true", "ping-pong")],
