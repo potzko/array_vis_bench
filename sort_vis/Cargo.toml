@@ -9,4 +9,3 @@ path = "src/lib.rs"
 
 [dependencies]
 sort_logger = { path = "../sort_logger" }
-image = "0.24"

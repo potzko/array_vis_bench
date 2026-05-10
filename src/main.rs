@@ -77,10 +77,14 @@ fn main() {
     // Create sort selection format that the system expects
     let sort_choice = create_sort_choice(&sort_name);
     
+    print!("\nHow long should the visualization be (seconds, blank for default): ");
+    io::stdout().flush().unwrap();
+    let mut duration_input = String::new();
+    io::stdin().read_line(&mut duration_input).unwrap();
+    let duration_secs: Option<f64> = duration_input.trim().parse().ok();
+
     println!("\nGenerating visualization...");
-    
-    // Use the existing visualization system to create a GIF
-    visualise_sort(&mut arr, &mut logger, &sort_choice);
+    visualise_sort(&mut arr, &mut logger, &sort_choice, duration_secs);
     
     println!("Sorted array (first 20 elements): {:?}", 
              if arr.len() > 20 { &arr[..20] } else { &arr });
