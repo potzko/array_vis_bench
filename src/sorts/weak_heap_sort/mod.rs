@@ -1,15 +1,7 @@
-pub mod arity;
-pub mod arity_heap;
-pub mod compare;
-pub mod deep_heapify;
-pub mod direction;
-pub mod heap;
-pub mod heap_algorithm;
-pub mod heap_sort;
-pub mod layout;
+pub mod weak_heap_sort;
 
 pub mod combinations {
-    include!(concat!(env!("OUT_DIR"), "/heap_sort_combinations.rs"));
+    include!(concat!(env!("OUT_DIR"), "/weak_heap_sort_combinations.rs"));
 }
 
 use crate::traits::log_traits::SortLogger;
@@ -28,8 +20,8 @@ pub fn fn_sort(
 }
 
 pub fn sort_choice(name: &str) -> Option<Vec<String>> {
-    if name.starts_with("heap sort") {
-        return Some(vec!["heap_sorts".to_string(), name.to_string()]);
+    if name.starts_with("weak heap sort") {
+        return Some(vec!["weak_heap_sorts".to_string(), name.to_string()]);
     }
     None
 }
