@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::utils::small_sort::{insertion_sort, DeferredSmallSort};
+use crate::utils::small_sort::DeferredSmallSort;
 use crate::traits::log_traits::SortLogger;
 
 use super::pivot_selectors::DualPivotSelector;
@@ -9,6 +9,7 @@ combo_codegen::sort_family!(
     type = DeferredDualPivotQuickSort<{DPS}, {DSS}>,
     uses = [
         "crate::utils::small_sort::DeferredInsertion",
+        "crate::utils::small_sort::{LinearInsertion, BinaryInsertion}",
         "super::pivot_selectors::{FirstElement, LastElement, MedianOfMedians, MedianOfThree, MiddleElement, Ninther, CombinedSelector, NintherDualPivot}",
         "super::deferred_dual_pivot_quick_sort::DeferredDualPivotQuickSort",
     ],
@@ -29,7 +30,7 @@ pub struct DeferredDualPivotQuickSort<DPS: DualPivotSelector, DSS: DeferredSmall
 impl<DPS: DualPivotSelector, DSS: DeferredSmallSort> DeferredDualPivotQuickSort<DPS, DSS> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         deferred_dual_pivot_recursive::<T, U, DPS, DSS>(arr, logger);
-        insertion_sort(arr, logger);
+        DSS::final_pass(arr, logger);
     }
 }
 

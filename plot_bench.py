@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Parse criterion benchmark output and generate an interactive N-scaling chart.
+Parse the bench archive emitted by `cargo bench --bench sorts` and
+generate an interactive N-scaling chart.
 
 Usage:
-    python3 plot_bench.py [target/criterion]   # default: target/criterion
+    python3 plot_bench.py [target/bench_archive.json]
     # Then open bench_report.html in a browser.
 """
 
@@ -13,43 +14,22 @@ from pathlib import Path
 from collections import defaultdict
 
 
-def parse(criterion_dir: Path) -> dict:
+def parse(archive_path: Path) -> dict:
     """
     Returns {sort_name: [(n, mean_ns, std_err_ns), ...]} sorted by n.
-    Expects:  criterion_dir/sorts/n=<N>/<sort_name>/new/estimates.json
+    Expects a JSON file of the form:
+        {"results": [{"name": ..., "n": ..., "mean_ns": ..., "stderr_ns": ...}, ...]}
     """
-    data = defaultdict(list)
-
-    # Criterion creates dirs like "sorts_n=80", "sorts_n=5120", etc.
-    n_dirs = [d for d in criterion_dir.iterdir()
-              if d.is_dir() and d.name.startswith("sorts_n=")]
-
-    if not n_dirs:
-        print(f"No benchmark data found in {criterion_dir}", file=sys.stderr)
+    if not archive_path.exists():
+        print(f"No benchmark archive at {archive_path}", file=sys.stderr)
         return {}
 
-    for n_dir in n_dirs:
-        try:
-            n = int(n_dir.name.split("n=", 1)[1])
-        except ValueError:
-            continue
+    with open(archive_path) as f:
+        archive = json.load(f)
 
-        for sort_dir in n_dir.iterdir():
-            if not sort_dir.is_dir():
-                continue
-            est_file = sort_dir / "new" / "estimates.json"
-            if not est_file.exists():
-                continue
-            try:
-                with open(est_file) as f:
-                    est = json.load(f)
-                data[sort_dir.name].append((
-                    n,
-                    est["mean"]["point_estimate"],
-                    est["mean"]["standard_error"],
-                ))
-            except (KeyError, json.JSONDecodeError) as e:
-                print(f"Warning: skipping {est_file}: {e}", file=sys.stderr)
+    data = defaultdict(list)
+    for r in archive.get("results", []):
+        data[r["name"]].append((r["n"], r["mean_ns"], r["stderr_ns"]))
 
     for name in data:
         data[name].sort(key=lambda t: t[0])
@@ -168,8 +148,8 @@ function updateCount() {{
 
 
 def main():
-    criterion_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("target/criterion")
-    data = parse(criterion_dir)
+    archive = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("target/bench_archive.json")
+    data = parse(archive)
 
     if not data:
         print("No data found. Run `cargo bench --bench sorts` first.")
