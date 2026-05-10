@@ -39,4 +39,8 @@ pub trait Heap {
         j: usize,
         logger: &mut U,
     );
+
+    /// Physical array index for logical heap index `i` over an array of
+    /// length `n`. Forward layout returns `i`; reverse returns `n - 1 - i`.
+    fn phys(i: usize, n: usize) -> usize;
 }

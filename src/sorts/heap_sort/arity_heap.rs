@@ -73,4 +73,9 @@ impl<A: Arity, D: Direction> Heap for ArityHeap<A, D> {
         let j_phys = <D::Layout as Layout>::phys(j, n);
         logger.swap(arr, i_phys, j_phys);
     }
+
+    #[inline(always)]
+    fn phys(i: usize, n: usize) -> usize {
+        <D::Layout as Layout>::phys(i, n)
+    }
 }

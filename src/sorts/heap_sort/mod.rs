@@ -1,8 +1,10 @@
 pub mod arity;
 pub mod arity_heap;
 pub mod compare;
+pub mod deep_heapify;
 pub mod direction;
 pub mod heap;
+pub mod heap_algorithm;
 pub mod heap_sort;
 pub mod layout;
 
