@@ -29,11 +29,21 @@ pub struct WeakHeapSort<D: Direction> {
 
 impl<D: Direction> HeapAlgorithm for WeakHeapSort<D> {
     /// Per-node reverse bits — the heart of the weak heap representation.
-    type State = Vec<bool>;
+    /// Stored as `Vec<u8>` (one byte per node, value 0 or 1) so the buffer
+    /// can be registered with the visualiser via the logger's `_u8` aux
+    /// family — flips are observable as `WriteDataU` events.
+    type State = Vec<u8>;
 
     #[inline]
-    fn new_state(n: usize) -> Vec<bool> {
-        vec![false; n]
+    fn new_state<T: Ord + Copy, U: ?Sized + SortLogger<T>>(n: usize, logger: &mut U) -> Vec<u8> {
+        let reverse = vec![0u8; n];
+        logger.log_aux_arr_u8(&reverse);
+        reverse
+    }
+
+    #[inline]
+    fn drop_state<T: Ord + Copy, U: ?Sized + SortLogger<T>>(state: Vec<u8>, logger: &mut U) {
+        logger.free_aux_arr_u8(&state);
     }
 
     #[inline(always)]
@@ -43,7 +53,7 @@ impl<D: Direction> HeapAlgorithm for WeakHeapSort<D> {
 
     fn build<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
-        reverse: &mut Vec<bool>,
+        reverse: &mut Vec<u8>,
         logger: &mut U,
     ) {
         let n = arr.len();
@@ -59,7 +69,7 @@ impl<D: Direction> HeapAlgorithm for WeakHeapSort<D> {
     #[inline]
     fn swap_root_to_end<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
-        _state: &mut Vec<bool>,
+        _state: &mut Vec<u8>,
         heap_size: usize,
         logger: &mut U,
     ) {
@@ -71,7 +81,7 @@ impl<D: Direction> HeapAlgorithm for WeakHeapSort<D> {
 
     fn push_down<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
-        reverse: &mut Vec<bool>,
+        reverse: &mut Vec<u8>,
         heap_size: usize,
         logger: &mut U,
     ) {
@@ -107,10 +117,10 @@ impl<D: Direction> WeakHeapSort<D> {
 /// Find the distinguished ancestor of `i`: walk up while `i` is a left
 /// child (in the reverse-bit-flipped scheme), then take one more step.
 #[inline]
-fn gparent(mut i: usize, reverse: &[bool]) -> usize {
+fn gparent(mut i: usize, reverse: &[u8]) -> usize {
     while i > 1 {
         let p = i / 2;
-        if (i & 1) == (reverse[p] as usize) {
+        if (i & 1) as u8 == reverse[p] {
             i = p;
         } else {
             break;
@@ -121,11 +131,12 @@ fn gparent(mut i: usize, reverse: &[bool]) -> usize {
 
 /// If `arr[j]` outranks `arr[i]` under the chosen direction, swap them
 /// and flip `reverse[j]`. Post-merge, `arr[i]` dominates the right
-/// subtree rooted at `j`.
+/// subtree rooted at `j`. The flip is routed through `write_data_u8` so
+/// the visualiser observes the bit change.
 #[inline]
 fn merge<T, U, D>(
     arr: &mut [T],
-    reverse: &mut [bool],
+    reverse: &mut [u8],
     i: usize,
     j: usize,
     n: usize,
@@ -139,7 +150,7 @@ fn merge<T, U, D>(
     let j_phys = <D::Layout as Layout>::phys(j, n);
     if <D::Compare as Compare>::comes_first(logger, arr, j_phys, i_phys) {
         logger.swap(arr, i_phys, j_phys);
-        reverse[j] = !reverse[j];
+        logger.write_data_u8(reverse, j, reverse[j] ^ 1);
     }
 }
 

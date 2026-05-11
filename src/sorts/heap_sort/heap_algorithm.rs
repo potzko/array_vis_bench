@@ -13,11 +13,24 @@ use crate::traits::log_traits::SortLogger;
 
 pub trait HeapAlgorithm {
     /// Per-sort scratch state. `()` for sorts that need none; the weak
-    /// heap stores its `Vec<bool>` of reverse bits here.
+    /// heap stores its `Vec<u8>` of reverse bits here.
     type State;
 
-    /// Allocate fresh scratch state for an array of length `n`.
-    fn new_state(n: usize) -> Self::State;
+    /// Allocate fresh scratch state for an array of length `n`. Receives the
+    /// logger so impls can register the allocation as an aux array.
+    fn new_state<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        n: usize,
+        logger: &mut U,
+    ) -> Self::State;
+
+    /// Release the scratch state. Default just drops it; impls override to
+    /// emit a `FreeAuxArr` event for any logger-registered allocation.
+    #[inline(always)]
+    fn drop_state<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        _state: Self::State,
+        _logger: &mut U,
+    ) {
+    }
 
     /// Physical array index of the logical root of a heap of size `n`.
     /// Forward layouts return `0`; reverse layouts return `n - 1`.
@@ -59,11 +72,12 @@ pub trait HeapAlgorithm {
         if n < 2 {
             return;
         }
-        let mut state = Self::new_state(n);
+        let mut state = Self::new_state::<T, U>(n, logger);
         Self::build(arr, &mut state, logger);
         for heap_size in (2..=n).rev() {
             Self::swap_root_to_end(arr, &mut state, heap_size, logger);
             Self::push_down(arr, &mut state, heap_size - 1, logger);
         }
+        Self::drop_state::<T, U>(state, logger);
     }
 }

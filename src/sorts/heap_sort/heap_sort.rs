@@ -26,7 +26,7 @@ impl<H: Heap, DH: DeepHeapify> HeapAlgorithm for HeapSort<H, DH> {
     type State = ();
 
     #[inline(always)]
-    fn new_state(_n: usize) -> () {}
+    fn new_state<T: Ord + Copy, U: ?Sized + SortLogger<T>>(_n: usize, _logger: &mut U) {}
 
     #[inline(always)]
     fn root_phys(n: usize) -> usize {

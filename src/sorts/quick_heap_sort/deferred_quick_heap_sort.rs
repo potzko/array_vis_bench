@@ -56,8 +56,8 @@ fn deferred_recurse<
     let left_len = mid;
     let right_len = arr.len() - mid;
 
-    let mut left_state = <LeftHeap<A> as HeapAlgorithm>::new_state(left_len);
-    let mut right_state = <RightHeap<A> as HeapAlgorithm>::new_state(right_len);
+    let mut left_state = <LeftHeap<A> as HeapAlgorithm>::new_state::<T, U>(left_len, logger);
+    let mut right_state = <RightHeap<A> as HeapAlgorithm>::new_state::<T, U>(right_len, logger);
 
     if !left_built {
         <LeftHeap<A> as HeapAlgorithm>::build(&mut arr[..mid], &mut left_state, logger);
