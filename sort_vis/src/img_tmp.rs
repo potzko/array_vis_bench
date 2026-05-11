@@ -194,23 +194,16 @@ impl Visualizer for Mp4Visualizer {
                 match actions[split_points[ii]] {
                     SortLog::CreateAuxArrT { name, length }
                     | SortLog::CreateAuxArr { name, length } => {
-                        aux_view.rect(&mut fb, 0, 0, aux_view.width, aux_view.height, BLACK);
                         store.insert(ArrActions::new(
                             vec![0; length],
                             SubImg { x: 0, y: 0, width: 0, height: 0 },
                             name,
                         ));
-                        // Re-assign views for all aux arrays and force a full
-                        // redraw — they may have shifted on screen.
-                        let aux_count = store.aux_count();
-                        let views = get_views(&aux_view, aux_count as u32);
-                        for (aux, view) in store.aux_iter_mut().zip(views.into_iter()) {
-                            aux.set_view(view);
-                            aux.force_full_redraw(&mut fb);
-                        }
+                        redistribute_aux_views(&mut store, &aux_view, &mut fb);
                     }
                     SortLog::FreeAuxArr { name } => {
                         store.remove(name);
+                        redistribute_aux_views(&mut store, &aux_view, &mut fb);
                     }
                     _ => {}
                 }
@@ -235,6 +228,23 @@ impl Visualizer for Mp4Visualizer {
         if !status.success() {
             eprintln!("ffmpeg exited with status: {status}");
         }
+    }
+}
+
+/// Blank the aux region and repaint every surviving aux array across a fresh
+/// equal-share split of `aux_view`. Used after both create and free events so
+/// freed auxes don't leave residual pixels on screen and surviving auxes
+/// always occupy the full aux region.
+fn redistribute_aux_views(store: &mut ArrStore, aux_view: &SubImg, fb: &mut Framebuffer) {
+    aux_view.rect(fb, 0, 0, aux_view.width, aux_view.height, BLACK);
+    let aux_count = store.aux_count();
+    if aux_count == 0 {
+        return;
+    }
+    let views = get_views(aux_view, aux_count as u32);
+    for (aux, view) in store.aux_iter_mut().zip(views.into_iter()) {
+        aux.set_view(view);
+        aux.force_full_redraw(fb);
     }
 }
 
