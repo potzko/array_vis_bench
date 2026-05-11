@@ -1,6 +1,46 @@
 use crate::arr_name;
 use crate::sort_log::SortLog;
 
+/// Generate the four-method int-typed aux-array family
+/// (`$log` / `$create` / `$free` / `$write_data`) for one concrete integer
+/// element type `$ty`. All variants share the same `SortLog` events
+/// (`CreateAuxArr` / `FreeAuxArr` / `WriteDataU` with `data as usize`), so the
+/// visualiser handles any integer width uniformly. Each expansion produces
+/// non-generic methods, preserving trait dyn-compatibility.
+macro_rules! int_aux_family {
+    ($ty:ty, $log:ident, $create:ident, $free:ident, $write_data:ident) => {
+        #[inline(always)]
+        fn $log(&mut self, arr: &[$ty]) {
+            self.log(SortLog::CreateAuxArr {
+                name: arr_name!(arr),
+                length: arr.len(),
+            })
+        }
+        #[inline(always)]
+        fn $create(&mut self, len: usize) -> Vec<$ty> {
+            let mut ret = Vec::<$ty>::with_capacity(len);
+            unsafe { ret.set_len(len) }
+            self.$log(&ret);
+            ret
+        }
+        #[inline(always)]
+        fn $free(&mut self, arr: &[$ty]) {
+            self.log(SortLog::FreeAuxArr {
+                name: arr_name!(arr),
+            })
+        }
+        #[inline(always)]
+        fn $write_data(&mut self, arr: &mut [$ty], ind: usize, data: $ty) {
+            self.log(SortLog::WriteDataU {
+                name: arr_name!(arr),
+                ind,
+                data: data as usize,
+            });
+            arr[ind] = data;
+        }
+    };
+}
+
 /// Instrumentation trait for sort algorithms.
 ///
 /// All methods are dyn-compatible — the trait can be used as `dyn SortLogger<T>`
@@ -20,13 +60,6 @@ pub trait SortLogger<T: Copy + Ord> {
     #[inline(always)]
     fn log_aux_arr_t(&mut self, arr: &[T]) {
         self.log(SortLog::CreateAuxArrT {
-            name: arr_name!(arr),
-            length: arr.len(),
-        })
-    }
-    #[inline(always)]
-    fn log_aux_arr_u(&mut self, arr: &[usize]) {
-        self.log(SortLog::CreateAuxArr {
             name: arr_name!(arr),
             length: arr.len(),
         })
@@ -59,24 +92,15 @@ pub trait SortLogger<T: Copy + Ord> {
         ret
     }
     #[inline(always)]
-    fn create_aux_arr(&mut self, len: usize) -> Vec<usize> {
-        let mut ret = Vec::<usize>::with_capacity(len);
-        unsafe { ret.set_len(len) }
-        self.log_aux_arr_u(&ret);
-        ret
-    }
-    #[inline(always)]
     fn free_aux_arr_t(&mut self, arr: &[T]) {
         self.log(SortLog::FreeAuxArr {
             name: arr_name!(arr),
         })
     }
-    #[inline(always)]
-    fn free_aux_arr(&mut self, arr: &[usize]) {
-        self.log(SortLog::FreeAuxArr {
-            name: arr_name!(arr),
-        })
-    }
+    // Integer-typed aux array families. Adding a new width is one line:
+    //     int_aux_family!(u16, log_aux_arr_u16, create_aux_arr_u16, ...);
+    int_aux_family!(usize, log_aux_arr_u, create_aux_arr, free_aux_arr, write_data_u);
+    int_aux_family!(u8, log_aux_arr_u8, create_aux_arr_u8, free_aux_arr_u8, write_data_u8);
 
     /*----------------
         Cmps
@@ -286,15 +310,6 @@ pub trait SortLogger<T: Copy + Ord> {
     #[inline(always)]
     fn write_data(&mut self, arr: &mut [T], ind: usize, data: T) {
         self.log(SortLog::WriteData {
-            name: arr_name!(arr),
-            ind,
-            data,
-        });
-        arr[ind] = data;
-    }
-    #[inline(always)]
-    fn write_data_u(&mut self, arr: &mut [usize], ind: usize, data: usize) {
-        self.log(SortLog::WriteDataU {
             name: arr_name!(arr),
             ind,
             data,
