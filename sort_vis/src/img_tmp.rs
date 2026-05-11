@@ -3,6 +3,7 @@
 use crate::sub_image::{Framebuffer, SubImg};
 use crate::Visualizer;
 use sort_logger::SortLog;
+use std::collections::BTreeMap;
 use std::hash::Hash;
 use std::io::Write;
 use std::mem::size_of;
@@ -145,8 +146,10 @@ impl Visualizer for Mp4Visualizer {
         let out_w = self.config.output_width;
         let out_h = self.config.output_height;
         println!(
-            "{} frames to generate",
-            actions.len() / actions_per_frame + 3
+            "{} frames to generate ({} actions, {} actions/frame)",
+            actions.len() / actions_per_frame + 3,
+            actions.len(),
+            actions_per_frame
         );
 
         let mut fb = Framebuffer::new(out_w, out_h);
@@ -165,7 +168,7 @@ impl Visualizer for Mp4Visualizer {
         };
         let mut store = ArrStore::new(ArrActions::new(arr, view, name));
         // Paint the main array's initial state into the framebuffer.
-        store.arrs[0].force_full_redraw(&mut fb);
+        store.main_mut().force_full_redraw(&mut fb);
 
         let mut ffmpeg = self.spawn_ffmpeg();
         let stdin = ffmpeg.stdin.as_mut().expect("ffmpeg stdin not available");
@@ -192,19 +195,18 @@ impl Visualizer for Mp4Visualizer {
                     SortLog::CreateAuxArrT { name, length }
                     | SortLog::CreateAuxArr { name, length } => {
                         aux_view.rect(&mut fb, 0, 0, aux_view.width, aux_view.height, BLACK);
-                        let n_aux = store.aux_count();
-                        let views = get_views(&aux_view, n_aux as u32);
                         store.insert(ArrActions::new(
                             vec![0; length],
                             SubImg { x: 0, y: 0, width: 0, height: 0 },
                             name,
                         ));
-                        // Re-assign views for all aux arrays (indices 1..) and force
-                        // a full redraw — they may have shifted on screen.
-                        let aux_views_count = views.len();
-                        for iii in 0..aux_views_count {
-                            store.aux_mut(iii).set_view(views[iii]);
-                            store.aux_mut(iii).force_full_redraw(&mut fb);
+                        // Re-assign views for all aux arrays and force a full
+                        // redraw — they may have shifted on screen.
+                        let aux_count = store.aux_count();
+                        let views = get_views(&aux_view, aux_count as u32);
+                        for (aux, view) in store.aux_iter_mut().zip(views.into_iter()) {
+                            aux.set_view(view);
+                            aux.force_full_redraw(&mut fb);
                         }
                     }
                     SortLog::FreeAuxArr { name } => {
@@ -237,55 +239,65 @@ impl Visualizer for Mp4Visualizer {
 }
 
 // ---------------------------------------------------------------------------
-// ArrStore — sorted-by-name collection; O(log N) dispatch per action
+// ArrStore — address-keyed BTreeMap; O(log N) dispatch per action
 // ---------------------------------------------------------------------------
 
-/// Holds all tracked arrays sorted by base pointer so that any event address
-/// can be resolved to the owning array with a single binary search.
+/// Holds all tracked arrays keyed by their base pointer (address). Any event
+/// address is resolved to the owning array via `range(..=addr).next_back()`
+/// — the array with the largest base ≤ the event address — followed by a
+/// bounds check against that array's length.
+///
+/// The main sort array is identified by its base address (`main_addr`), not
+/// by position in the container: aux allocations may land at addresses below
+/// the main, so we cannot assume the main lives at any particular slot.
 struct ArrStore {
-    /// arrs[0] is always the main sort array; arrs[1..] are aux arrays, also
-    /// kept in sorted order by `name` so partition_point works correctly.
-    arrs: Vec<ArrActions>,
+    arrs: BTreeMap<usize, ArrActions>,
+    main_addr: usize,
 }
 
 impl ArrStore {
     fn new(main: ArrActions) -> Self {
-        ArrStore { arrs: vec![main] }
+        let main_addr = main.name;
+        let mut arrs = BTreeMap::new();
+        arrs.insert(main_addr, main);
+        ArrStore { arrs, main_addr }
     }
 
-    /// Binary-search for the array whose memory range contains `addr`.
-    /// Returns `(index_in_arrs, element_offset)` or `None`.
-    fn lookup(&self, addr: usize) -> Option<(usize, usize)> {
+    /// Find the array whose memory range contains `addr`. Returns a mutable
+    /// reference to it and the element offset within it.
+    fn lookup_mut(&mut self, addr: usize) -> Option<(&mut ArrActions, usize)> {
         let size_t = size_of::<usize>();
-        let pos = self.arrs.partition_point(|a| a.name <= addr);
-        if pos == 0 {
-            return None;
-        }
-        let a = &self.arrs[pos - 1];
-        if addr < a.name + a.arr.len() * size_t {
-            Some((pos - 1, (addr - a.name) / size_t))
+        let (&base, a) = self.arrs.range_mut(..=addr).next_back()?;
+        if addr < base + a.arr.len() * size_t {
+            Some((a, (addr - base) / size_t))
         } else {
             None
         }
     }
 
+    fn main_mut(&mut self) -> &mut ArrActions {
+        self.arrs.get_mut(&self.main_addr).expect("main array missing")
+    }
+
     fn insert(&mut self, entry: ArrActions) {
-        let pos = self.arrs.partition_point(|a| a.name <= entry.name);
-        self.arrs.insert(pos, entry);
+        self.arrs.insert(entry.name, entry);
     }
 
     fn remove(&mut self, name: usize) {
-        if let Ok(i) = self.arrs.binary_search_by_key(&name, |a| a.name) {
-            self.arrs.remove(i);
-        }
+        self.arrs.remove(&name);
     }
 
+    /// Number of aux arrays (excludes the main).
     fn aux_count(&self) -> usize {
-        self.arrs.len()
+        self.arrs.len() - 1
     }
 
-    fn aux_mut(&mut self, iii: usize) -> &mut ArrActions {
-        &mut self.arrs[1 + iii]
+    /// Iterator over aux arrays only, in address order.
+    fn aux_iter_mut(&mut self) -> impl Iterator<Item = &mut ArrActions> + '_ {
+        let main_addr = self.main_addr;
+        self.arrs
+            .iter_mut()
+            .filter_map(move |(addr, a)| if *addr == main_addr { None } else { Some(a) })
     }
 
     /// Apply all actions (mark dirty / colored on the right array), then have
@@ -294,8 +306,7 @@ impl ArrStore {
         for action in actions {
             match action {
                 SortLog::Swap { name, ind_a, ind_b } => {
-                    if let Some((i, off)) = self.lookup(*name) {
-                        let a = &mut self.arrs[i];
+                    if let Some((a, off)) = self.lookup_mut(*name) {
                         let ia = ind_a + off;
                         let ib = ind_b + off;
                         a.arr.swap(ia, ib);
@@ -304,8 +315,7 @@ impl ArrStore {
                     }
                 }
                 SortLog::WriteData { name, ind, data } => {
-                    if let Some((i, off)) = self.lookup(*name) {
-                        let a = &mut self.arrs[i];
+                    if let Some((a, off)) = self.lookup_mut(*name) {
                         let idx = ind + off;
                         a.arr[idx] = *data;
                         a.mark_dirty(idx);
@@ -315,8 +325,7 @@ impl ArrStore {
                     }
                 }
                 SortLog::WriteDataU { name, ind, data } => {
-                    if let Some((i, off)) = self.lookup(*name) {
-                        let a = &mut self.arrs[i];
+                    if let Some((a, off)) = self.lookup_mut(*name) {
                         let idx = ind + off;
                         a.arr[idx] = *data;
                         a.mark_dirty(idx);
@@ -326,8 +335,7 @@ impl ArrStore {
                     }
                 }
                 SortLog::WriteInArr { name, ind_a, ind_b } => {
-                    if let Some((i, off)) = self.lookup(*name) {
-                        let a = &mut self.arrs[i];
+                    if let Some((a, off)) = self.lookup_mut(*name) {
                         let ia = ind_a + off;
                         let ib = ind_b + off;
                         a.arr[ia] = a.arr[ib];
@@ -336,34 +344,33 @@ impl ArrStore {
                     }
                 }
                 SortLog::CmpInArr { name, ind_a, ind_b, result: _ } => {
-                    if let Some((i, off)) = self.lookup(*name) {
-                        let a = &mut self.arrs[i];
+                    if let Some((a, off)) = self.lookup_mut(*name) {
                         a.mark_color(ind_a + off);
                         a.mark_color(ind_b + off);
                     }
                 }
                 SortLog::CmpData { name, ind, data: _, result: _ } => {
-                    if let Some((i, off)) = self.lookup(*name) {
-                        self.arrs[i].mark_color(ind + off);
+                    if let Some((a, off)) = self.lookup_mut(*name) {
+                        a.mark_color(ind + off);
                     }
                 }
                 SortLog::CmpDataU { name, ind, data: _, result: _ } => {
-                    if let Some((i, off)) = self.lookup(*name) {
-                        self.arrs[i].mark_color(ind + off);
+                    if let Some((a, off)) = self.lookup_mut(*name) {
+                        a.mark_color(ind + off);
                     }
                 }
                 SortLog::CmpAcrossArrs { name_a, ind_a, name_b, ind_b, result: _ } => {
-                    if let Some((i, off)) = self.lookup(*name_a) {
-                        self.arrs[i].mark_color(ind_a + off);
+                    if let Some((a, off)) = self.lookup_mut(*name_a) {
+                        a.mark_color(ind_a + off);
                     }
-                    if let Some((i, off)) = self.lookup(*name_b) {
-                        self.arrs[i].mark_color(ind_b + off);
+                    if let Some((a, off)) = self.lookup_mut(*name_b) {
+                        a.mark_color(ind_b + off);
                     }
                 }
                 _ => {}
             }
         }
-        for a in self.arrs.iter_mut() {
+        for a in self.arrs.values_mut() {
             a.finalize_frame(fb);
         }
     }
