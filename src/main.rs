@@ -176,6 +176,7 @@ fn create_sort_choice(sort_name: &str) -> Vec<String> {
     if let Some(c) = sorts::heap_sort::sort_choice(sort_name) { return c; }
     if let Some(c) = sorts::quick_heap_sort::sort_choice(sort_name) { return c; }
     if let Some(c) = sorts::weak_heap_sort::sort_choice(sort_name) { return c; }
+    if let Some(c) = sorts::fun_sorts::sort_choice(sort_name) { return c; }
 
     panic!(
         "\n\

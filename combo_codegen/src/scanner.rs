@@ -231,6 +231,7 @@ fn parse_sort_family_body(body: &str, source_module: String) -> Option<SortFamil
     let mut stable: Option<bool> = None;
     let mut direct_sort: Option<bool> = None;
     let mut path: Option<Vec<String>> = None;
+    let mut max_n_for_tests: Option<u64> = None;
 
     for field in fields {
         let field = field.trim();
@@ -250,6 +251,7 @@ fn parse_sort_family_body(body: &str, source_module: String) -> Option<SortFamil
             "stable" => stable = Some(value == "true"),
             "direct_sort" => direct_sort = Some(value == "true"),
             "path" => path = Some(parse_string_array(value)?),
+            "max_n_for_tests" => max_n_for_tests = Some(value.trim().parse().ok()?),
             var => {
                 let spec = parse_axis_spec(value)?;
                 axes.push((var.to_string(), spec));
@@ -266,6 +268,7 @@ fn parse_sort_family_body(body: &str, source_module: String) -> Option<SortFamil
         stable: stable?,
         direct_sort: direct_sort?,
         path: path?,
+        max_n_for_tests,
         source_module,
     })
 }

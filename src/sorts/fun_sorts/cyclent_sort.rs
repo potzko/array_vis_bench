@@ -1,46 +1,62 @@
-use crate::create_sort;
+//! Cyclent sort — plain variant (v0).
+//!
+//! Runs **right to left**: for each `i` descending from `n-1`, repeatedly
+//! partition `arr[0..=i]` with `arr[i]` as the pivot until the pivot's
+//! range reaches the slice's end (no elements remain `>` it). Each
+//! partition that finds something larger surfaces it at position `i`,
+//! shrinking the search. When the partition's `right_start` equals the
+//! slice length, `arr[i]` is the max of the slice — advance `i`.
+//!
+//! Right-to-left flip is what lets us reuse the quick-sort partitions
+//! verbatim. Their `≤` semantics (equal elements go *left*) means the
+//! pivot's range can extend through to the slice's end on duplicate-heavy
+//! input, which is exactly the convergence condition.
+//!
+//! No memory across iterations; every inner partition scans `arr[0..=i]`
+//! from scratch. The optimized variant narrows the lower bound.
 
-create_sort!(sort, "cyclent sort", "O(N^3?)", false);
+use std::marker::PhantomData;
 
-fn partition<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    logger: &mut U,
-) -> usize {
-    let pivot = arr[0];
-    let mut low = 0;
-    let mut high = arr.len() - 1;
-    while high > 0 && logger.cmp_ge_data(arr, high, pivot) {
-        high -= 1
-    }
-    if high == 0 {
-        return 0;
-    }
-    while low >= arr.len() && logger.cmp_lt_data(arr, 0, pivot) {
-        low += 1;
-    }
-    while low <= high {
-        logger.swap(arr, low, high);
-        // Increment low pointer while the element at low is less than or equal to the pivot
-        while low <= high && !logger.cmp_gt(arr, low, 0) {
-            low += 1;
-        }
+use crate::sorts::quick_sorts::partitions::PartitionScheme;
+use crate::traits::log_traits::SortLogger;
 
-        // Decrement high pointer while the element at high is greater than the pivot
-        while logger.cmp_gt(arr, high, 0) {
-            high -= 1;
-        }
-    }
+pub struct CyclentSort<P: PartitionScheme>(PhantomData<P>);
 
-    // Position the pivot correctly by swapping it with the element at 'high'
-    logger.swap(arr, 0, high);
-    high
-}
-
-fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    for i in 0..arr.len() {
-        let mut tmp = arr.len();
-        while tmp != i {
-            tmp = partition(&mut arr[i..tmp], logger) + i;
+impl<P: PartitionScheme> CyclentSort<P> {
+    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        let n = arr.len();
+        for i in (0..n).rev() {
+            loop {
+                let slice_len = i + 1;
+                if slice_len < 2 {
+                    break;
+                }
+                let (_l, r) = P::partition(&mut arr[..slice_len], logger, slice_len - 1);
+                if r == slice_len {
+                    break;
+                }
+            }
         }
     }
 }
+
+// MovingPivot is excluded — it returns `(high, high)` with `high < len` always,
+// so the convergence check `r == slice_len` would never fire (infinite loop).
+combo_codegen::sort_family!(
+    type = CyclentSort<{P}>,
+    uses = [
+        "crate::sorts::quick_sorts::partitions::{Block, Hoare, Lomuto, ThreeWay}",
+        "super::cyclent_sort::CyclentSort",
+    ],
+    P: inline [
+        ("Lomuto", "lomuto"),
+        ("Hoare", "hoare"),
+        ("ThreeWay", "three-way"),
+        ("Block", "block"),
+    ],
+    name = "cyclent sort",
+    big_o = "O(N^3?)",
+    stable = false,
+    direct_sort = true,
+    path = ["fun sorts", "cyclent sort", "{P}"],
+);

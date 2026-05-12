@@ -26,6 +26,9 @@ pub(crate) struct SortFamilyInput {
     /// When false (default): call via `<ConcreteType as SortAlgo<usize, NoOpLogger>>::sort`.
     /// Use for sorts that implement `SortAlgo`.
     direct_sort: bool,
+    /// Optional upper bound on random-input array size in correctness tests.
+    /// Slow sorts set this to skip pathological cases.
+    max_n_for_tests: Option<u64>,
 }
 
 struct AxisDef {
@@ -166,6 +169,7 @@ impl Parse for SortFamilyInput {
         let mut stable: Option<bool> = None;
         let mut path_template: Vec<String> = vec![];
         let mut direct_sort: bool = false;
+        let mut max_n_for_tests: Option<u64> = None;
 
         while !input.is_empty() {
             if input.peek(Ident) && input.peek2(syn::token::Brace) {
@@ -198,11 +202,15 @@ impl Parse for SortFamilyInput {
                         direct_sort = input.parse::<LitBool>()?.value();
                         let _: Token![;] = input.parse()?;
                     }
+                    "max_n_for_tests" => {
+                        max_n_for_tests = Some(input.parse::<LitInt>()?.base10_parse::<u64>()?);
+                        let _: Token![;] = input.parse()?;
+                    }
                     other => {
                         return Err(syn::Error::new(
                             field.span(),
                             format!(
-                                "Unknown field `{other}`. Expected: name, big_o, stable, path, direct_sort"
+                                "Unknown field `{other}`. Expected: name, big_o, stable, path, direct_sort, max_n_for_tests"
                             ),
                         ));
                     }
@@ -228,6 +236,7 @@ impl Parse for SortFamilyInput {
             })?,
             path_template,
             direct_sort,
+            max_n_for_tests,
         })
     }
 }
@@ -434,8 +443,27 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
     };
 
     let st_test_mod = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_test");
+    let st_cap      = format_ident!(
+        "__SF_{}_{}_{}_CAP",
+        fam_s.to_uppercase(),
+        idx,
+        lbl_s.to_uppercase()
+    );
+
+    let cap_static = match family.max_n_for_tests {
+        Some(n) => {
+            let lit = proc_macro2::Literal::u64_unsuffixed(n);
+            quote! {
+                #[linkme::distributed_slice(crate::bench_registry::SORT_TEST_CAPS)]
+                #[allow(non_upper_case_globals)]
+                static #st_cap: (&'static str, usize) = (#sort_name, #lit as usize);
+            }
+        }
+        None => quote! {},
+    };
 
     let base = quote! {
+        #cap_static
         #[allow(non_snake_case, dead_code)]
         fn #fn_sort(
             arr: &mut [usize],
@@ -465,7 +493,10 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
         mod #st_test_mod {
             #[test]
             fn correctness() {
-                crate::bench_registry::test_helpers::check_sort(&super::#st_bench);
+                crate::bench_registry::test_helpers::check_sort_subprocess_assert(
+                    &super::#st_bench,
+                    crate::bench_registry::test_helpers::DEFAULT_TIMEOUT,
+                );
             }
         }
     };

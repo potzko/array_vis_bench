@@ -14,12 +14,11 @@ pub mod shell_sorts;
 pub mod heap_sort;
 pub mod quick_heap_sort;
 pub mod weak_heap_sort;
+pub mod fun_sorts;
 
 // Disconnected — pending port to sort_family! codegen:
 // pub mod annotations;
 // pub mod example_generic_sort;
-// pub mod fun_sorts;
-// pub mod heap_sort;
 
 pub fn fn_sort(
     arr: &mut [usize],
@@ -42,6 +41,7 @@ pub fn fn_sort(
             "heap_sorts" => heap_sort::fn_sort(arr, logger, &choice[1..]),
             "quick_heap_sorts" => quick_heap_sort::fn_sort(arr, logger, &choice[1..]),
             "weak_heap_sorts" => weak_heap_sort::fn_sort(arr, logger, &choice[1..]),
+            "fun_sorts" => fun_sorts::fn_sort(arr, logger, &choice[1..]),
             _ => vec![format!("unknown sort family: {}", choice[0])],
         }
     };

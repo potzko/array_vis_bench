@@ -1,46 +1,69 @@
-use crate::create_sort;
+//! Cyclent sort — iterative quicksort (v3).
+//!
+//! The limit of the cyclent / stack chain: instead of tracking a running
+//! `i` plus a stack of lower bounds, store the actual sub-problems as
+//! `(lo, hi)` frames on a stack. Pop a frame, partition its slice with
+//! the last element as pivot, push the two halves. Continue until the
+//! stack is empty.
+//!
+//! Behaviourally this is plain iterative quicksort; the cyclent
+//! framing's right-to-left `i` pointer has dissolved into "always work
+//! on whatever frame is on top". The stack-optimized variant
+//! (`CyclentSortStackOptimized`) is the same algorithm dressed up to
+//! preserve the `i` pointer — useful for visualisation, but equivalent
+//! work.
 
-create_sort!(sort, "cyclent sort stack", "O(N^3?)", false);
+use std::marker::PhantomData;
 
-fn partition<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(
-    arr: &mut [T],
-    logger: &mut U,
-) -> usize {
-    let pivot = arr[0];
-    let mut low = 0;
-    let mut high = arr.len() - 1;
-    while high > 0 && logger.cmp_ge_data(arr, high, pivot) {
-        high -= 1
-    }
-    if high == 0 {
-        return 0;
-    }
-    while low >= arr.len() && logger.cmp_lt_data(arr, 0, pivot) {
-        low += 1;
-    }
-    while low <= high {
-        logger.swap(arr, low, high);
-        // Increment low pointer while the element at low is less than or equal to the pivot
-        while low <= high && !logger.cmp_gt(arr, low, 0) {
-            low += 1;
+use crate::sorts::quick_sorts::partitions::PartitionScheme;
+use crate::traits::log_traits::SortLogger;
+
+pub struct CyclentSortStack<P: PartitionScheme>(PhantomData<P>);
+
+impl<P: PartitionScheme> CyclentSortStack<P> {
+    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        let n = arr.len();
+        let mut stack: Vec<(usize, usize)> = Vec::new();
+        if n >= 2 {
+            stack.push((0, n));
         }
-
-        // Decrement high pointer while the element at high is greater than the pivot
-        while logger.cmp_gt(arr, high, 0) {
-            high -= 1;
+        while let Some((lo, hi)) = stack.pop() {
+            if hi - lo < 2 {
+                continue;
+            }
+            let slice_len = hi - lo;
+            let (l, r) = P::partition(&mut arr[lo..hi], logger, slice_len - 1);
+            let pivot_end = lo + l;
+            let right_start = lo + r;
+            // Push right half first so the left half is processed next
+            // (LIFO) — keeps the recursion shape similar to the
+            // cyclent-framed variants.
+            if right_start < hi {
+                stack.push((right_start, hi));
+            }
+            if lo < pivot_end {
+                stack.push((lo, pivot_end));
+            }
         }
     }
-
-    // Position the pivot correctly by swapping it with the element at 'high'
-    logger.swap(arr, 0, high);
-    high
 }
 
-fn sort<T: Ord + Copy, U: crate::traits::log_traits::SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    for i in 0..arr.len() {
-        let mut tmp = arr.len();
-        while tmp != i {
-            tmp = partition(&mut arr[i..tmp], logger) + i;
-        }
-    }
-}
+// MovingPivot is excluded — see cyclent_sort.rs for rationale.
+combo_codegen::sort_family!(
+    type = CyclentSortStack<{P}>,
+    uses = [
+        "crate::sorts::quick_sorts::partitions::{Block, Hoare, Lomuto, ThreeWay}",
+        "super::cyclent_sort_stack::CyclentSortStack",
+    ],
+    P: inline [
+        ("Lomuto", "lomuto"),
+        ("Hoare", "hoare"),
+        ("ThreeWay", "three-way"),
+        ("Block", "block"),
+    ],
+    name = "cyclent sort stack",
+    big_o = "O(N log N)",
+    stable = false,
+    direct_sort = true,
+    path = ["fun sorts", "cyclent sort stack", "{P}"],
+);

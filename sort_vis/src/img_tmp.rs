@@ -187,9 +187,13 @@ impl Visualizer for Mp4Visualizer {
                     _ => {}
                 }
             }
+            // Process all events up to and including each create/free split,
+            // applying the layout change in place, but *without* emitting a
+            // frame at the split. Transient auxes (created and freed within
+            // the same batch) get their layout side-effects applied but never
+            // claim a dedicated frame — only the end-of-batch state is shown.
             for ii in 1..split_points.len() {
                 store.update(&actions[split_points[ii - 1]..split_points[ii]], &mut fb);
-                stdin.write_all(&fb.data).unwrap();
 
                 match actions[split_points[ii]] {
                     SortLog::CreateAuxArrT { name, length }
