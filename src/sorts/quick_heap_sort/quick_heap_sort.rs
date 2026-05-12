@@ -28,35 +28,36 @@
 //!
 //! Weak heap doesn't fit this optimization (the per-node `reverse` bit
 //! state can't be sliced across recursive boundaries), so the family is
-//! restricted to `ArityHeap` — one variant per arity. Build is hardcoded
-//! to `Iterative` since the optimization slots into the textbook
-//! bottom-up build cleanly.
+//! restricted to `ArityHeap` — one variant per arity. The DeepHeapify
+//! axis is plumbed through so each recursive call's heap build can use
+//! any DH strategy (textbook `Iterative` and the quickselect-based
+//! `quick_deep_heapify` variants).
 
 use std::marker::PhantomData;
 
 use crate::sorts::heap_sort::arity::Arity;
 use crate::sorts::heap_sort::arity_heap::ArityHeap;
-use crate::sorts::heap_sort::deep_heapify::Iterative;
+use crate::sorts::heap_sort::deep_heapify::DeepHeapify;
 use crate::sorts::heap_sort::direction::{MaxForward, MinReverse};
 use crate::sorts::heap_sort::heap_algorithm::HeapAlgorithm;
 use crate::sorts::heap_sort::heap_sort::HeapSort;
 use crate::traits::log_traits::SortLogger;
 use crate::utils::small_sort::SmallSort;
 
-type LeftHeap<A> = HeapSort<ArityHeap<A, MaxForward>, Iterative>;
-type RightHeap<A> = HeapSort<ArityHeap<A, MinReverse>, Iterative>;
+type LeftHeap<A, DH> = HeapSort<ArityHeap<A, MaxForward>, DH>;
+type RightHeap<A, DH> = HeapSort<ArityHeap<A, MinReverse>, DH>;
 
-pub struct QuickHeapSort<A: Arity, SS: SmallSort> {
-    _phantom: PhantomData<(A, SS)>,
+pub struct QuickHeapSort<A: Arity, DH: DeepHeapify, SS: SmallSort> {
+    _phantom: PhantomData<(A, DH, SS)>,
 }
 
-impl<A: Arity, SS: SmallSort> QuickHeapSort<A, SS> {
+impl<A: Arity, DH: DeepHeapify, SS: SmallSort> QuickHeapSort<A, DH, SS> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        recurse::<T, U, A, SS>(arr, false, false, logger);
+        recurse::<T, U, A, DH, SS>(arr, false, false, logger);
     }
 }
 
-fn recurse<T: Ord + Copy, U: ?Sized + SortLogger<T>, A: Arity, SS: SmallSort>(
+fn recurse<T: Ord + Copy, U: ?Sized + SortLogger<T>, A: Arity, DH: DeepHeapify, SS: SmallSort>(
     arr: &mut [T],
     left_built: bool,
     right_built: bool,
@@ -73,27 +74,27 @@ fn recurse<T: Ord + Copy, U: ?Sized + SortLogger<T>, A: Arity, SS: SmallSort>(
     let left_len = mid;
     let right_len = arr.len() - mid;
 
-    let mut left_state = <LeftHeap<A> as HeapAlgorithm>::new_state::<T, U>(left_len, logger);
-    let mut right_state = <RightHeap<A> as HeapAlgorithm>::new_state::<T, U>(right_len, logger);
+    let mut left_state = <LeftHeap<A, DH> as HeapAlgorithm>::new_state::<T, U>(left_len, logger);
+    let mut right_state = <RightHeap<A, DH> as HeapAlgorithm>::new_state::<T, U>(right_len, logger);
 
     if !left_built {
-        <LeftHeap<A> as HeapAlgorithm>::build(&mut arr[..mid], &mut left_state, logger);
+        <LeftHeap<A, DH> as HeapAlgorithm>::build(&mut arr[..mid], &mut left_state, logger);
     }
     if !right_built {
-        <RightHeap<A> as HeapAlgorithm>::build(&mut arr[mid..], &mut right_state, logger);
+        <RightHeap<A, DH> as HeapAlgorithm>::build(&mut arr[mid..], &mut right_state, logger);
     }
 
-    let left_root = <LeftHeap<A> as HeapAlgorithm>::root_phys(left_len);
-    let right_root = mid + <RightHeap<A> as HeapAlgorithm>::root_phys(right_len);
+    let left_root = <LeftHeap<A, DH> as HeapAlgorithm>::root_phys(left_len);
+    let right_root = mid + <RightHeap<A, DH> as HeapAlgorithm>::root_phys(right_len);
 
     while logger.cond_swap_gt(arr, left_root, right_root) {
-        <LeftHeap<A> as HeapAlgorithm>::push_down(
+        <LeftHeap<A, DH> as HeapAlgorithm>::push_down(
             &mut arr[..mid],
             &mut left_state,
             left_len,
             logger,
         );
-        <RightHeap<A> as HeapAlgorithm>::push_down(
+        <RightHeap<A, DH> as HeapAlgorithm>::push_down(
             &mut arr[mid..],
             &mut right_state,
             right_len,
@@ -105,14 +106,17 @@ fn recurse<T: Ord + Copy, U: ?Sized + SortLogger<T>, A: Arity, SS: SmallSort>(
     // max-forward heap → already a max-forward heap. The outer-right of
     // the right recursion is the upper half of right's min-reverse heap
     // → already a min-reverse heap. Both inner halves need a fresh build.
-    recurse::<T, U, A, SS>(&mut arr[..mid], true, false, logger);
-    recurse::<T, U, A, SS>(&mut arr[mid..], false, true, logger);
+    recurse::<T, U, A, DH, SS>(&mut arr[..mid], true, false, logger);
+    recurse::<T, U, A, DH, SS>(&mut arr[mid..], false, true, logger);
 }
 
+// Classic family: build hardcoded to `Iterative` (textbook bottom-up
+// sift-down). Preserves the original `quick heap sort` lineup.
 combo_codegen::sort_family!(
-    type = QuickHeapSort<{A}, {SS}>,
+    type = QuickHeapSort<{A}, Iterative, {SS}>,
     uses = [
         "crate::sorts::heap_sort::arity::{Binary, Ternary, Base16, Base256}",
+        "crate::sorts::heap_sort::deep_heapify::Iterative",
         "crate::utils::small_sort::{InsertionSmallSort, Network16SmallSort, NetworkSmallSort, NoSmallSort, Size1SmallSort, Size2SmallSort}",
         "crate::utils::small_sort::{LinearInsertion, BinaryInsertion}",
         "crate::sorts::quick_heap_sort::quick_heap_sort::QuickHeapSort",
@@ -124,4 +128,40 @@ combo_codegen::sort_family!(
     stable = false,
     direct_sort = true,
     path = ["quick heap sorts", "classic", "{A}", "{SS}"],
+);
+
+// Quick-build family: DH is one of the quickselect-based build strategies
+// from `quick_deep_heapify`, parametrised over `HeapPartition` and
+// `PivotSelector`. SS and V are intentionally restricted here to keep the
+// menu navigable — the cross-product is already 4 × 3 × 3 × 4 × 3 = 432.
+combo_codegen::sort_family!(
+    type = QuickHeapSort<{A}, {QDH}<{HP}, {V}>, {SS}>,
+    uses = [
+        "crate::sorts::heap_sort::arity::{Binary, Ternary, Base16, Base256}",
+        "crate::sorts::heap_sort::quick_deep_heapify::{RecursivePartialQuickDeepHeapify, SequentialQuickDeepHeapify, StackPartialQuickDeepHeapify}",
+        "crate::sorts::heap_sort::heap_partition::{Block, Hoare, Lomuto}",
+        "crate::utils::small_sort::{InsertionSmallSort, Network16SmallSort, NetworkSmallSort, NoSmallSort, Size1SmallSort, Size2SmallSort}",
+        "crate::utils::small_sort::{LinearInsertion, BinaryInsertion}",
+        "crate::sorts::quick_sorts::pivot_selectors::{FirstElement, MedianOfMedians, MedianOfThree, MiddleElement}",
+        "crate::sorts::quick_heap_sort::quick_heap_sort::QuickHeapSort",
+    ],
+    A: Arity,
+    QDH: QuickDeepHeapify,
+    HP: HeapPartition,
+    V: inline [
+        ("FirstElement",    "first"),
+        ("MiddleElement",   "middle"),
+        ("MedianOfThree",   "median of 3"),
+        ("MedianOfMedians", "median of medians"),
+    ],
+    SS: inline [
+        ("NoSmallSort",                            "no threshold"),
+        ("InsertionSmallSort<LinearInsertion, 32>", "insertion: 32"),
+        ("NetworkSmallSort",                        "network: 8"),
+    ],
+    name = "quick heap sort",
+    big_o = "O(N log N)",
+    stable = false,
+    direct_sort = true,
+    path = ["quick heap sorts", "quick build", "{A}", "{QDH}", "{HP}", "{V}", "{SS}"],
 );

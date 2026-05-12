@@ -53,7 +53,9 @@ struct VariantNode {
 /// or integer literals (const generic parameters).
 enum TypeExpr {
     Named(Ident, Vec<TypeExprArg>),
-    Slot(String),
+    /// `{Slot}` or `{Slot}<arg, …>` — the slot's bound type is wrapped in
+    /// the trailing generic args (if any) at substitution time.
+    Slot(String, Vec<TypeExprArg>),
     Bool(bool),
     Int(LitInt),
 }
@@ -70,12 +72,27 @@ enum TypeExprArg {
 // ============================================================
 
 fn parse_type_expr(input: ParseStream) -> Result<TypeExpr> {
-    // A type expression either starts with `{` (bare slot), a bool/int literal, or an Ident
+    // A type expression either starts with `{` (bare slot, optionally
+    // followed by generic args), a bool/int literal, or an Ident.
     if input.peek(syn::token::Brace) {
         let content;
         braced!(content in input);
         let slot: Ident = content.parse()?;
-        return Ok(TypeExpr::Slot(slot.to_string()));
+        let args = if input.peek(Token![<]) {
+            let _: Token![<] = input.parse()?;
+            let mut args = vec![];
+            while !input.peek(Token![>]) {
+                args.push(parse_type_expr_arg(input)?);
+                if input.peek(Token![,]) {
+                    let _: Token![,] = input.parse()?;
+                }
+            }
+            let _: Token![>] = input.parse()?;
+            args
+        } else {
+            vec![]
+        };
+        return Ok(TypeExpr::Slot(slot.to_string(), args));
     }
 
     if input.peek(LitBool) {
@@ -109,10 +126,24 @@ fn parse_type_expr(input: ParseStream) -> Result<TypeExpr> {
 
 fn parse_type_expr_arg(input: ParseStream) -> Result<TypeExprArg> {
     if input.peek(syn::token::Brace) {
-        // {SlotName}
         let content;
         braced!(content in input);
         let slot: Ident = content.parse()?;
+        // Bare `{Slot}` becomes TypeExprArg::Slot; `{Slot}<args>` is
+        // wrapped as TypeExprArg::Type(TypeExpr::Slot(name, args)) so the
+        // trailing generics ride along through render_type.
+        if input.peek(Token![<]) {
+            let _: Token![<] = input.parse()?;
+            let mut args = vec![];
+            while !input.peek(Token![>]) {
+                args.push(parse_type_expr_arg(input)?);
+                if input.peek(Token![,]) {
+                    let _: Token![,] = input.parse()?;
+                }
+            }
+            let _: Token![>] = input.parse()?;
+            return Ok(TypeExprArg::Type(TypeExpr::Slot(slot.to_string(), args)));
+        }
         Ok(TypeExprArg::Slot(slot.to_string()))
     } else if input.peek(LitBool) {
         let b: LitBool = input.parse()?;
@@ -256,10 +287,18 @@ struct Leaf {
 
 fn render_type(ty: &TypeExpr, bindings: &HashMap<String, TokenStream2>) -> TokenStream2 {
     match ty {
-        TypeExpr::Slot(s) => bindings
-            .get(s)
-            .cloned()
-            .unwrap_or_else(|| quote! { compile_error!("sort_family!: unresolved slot") }),
+        TypeExpr::Slot(s, args) => {
+            let base = bindings
+                .get(s)
+                .cloned()
+                .unwrap_or_else(|| quote! { compile_error!("sort_family!: unresolved slot") });
+            if args.is_empty() {
+                base
+            } else {
+                let rendered: Vec<_> = args.iter().map(|a| render_arg(a, bindings)).collect();
+                quote! { #base < #(#rendered),* > }
+            }
+        }
         TypeExpr::Named(name, args) => {
             if args.is_empty() {
                 quote! { #name }

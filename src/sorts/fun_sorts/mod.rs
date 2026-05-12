@@ -8,6 +8,8 @@ pub mod slow_sort;
 pub mod stooge_sort;
 pub mod cyclent_sort_opt;
 pub mod slow_sort_potzko;
+pub mod quick_surrender;
+pub mod quick_surrender_optimised;
 
 pub mod combinations {
     include!(concat!(env!("OUT_DIR"), "/fun_sorts_combinations.rs"));
@@ -38,6 +40,7 @@ pub fn sort_choice(name: &str) -> Option<Vec<String>> {
         || name.starts_with("slow sort")
         || name.starts_with("slow sort potzko")
         || name.starts_with("stooge sort")
+        || name.starts_with("quick surrender")
     {
         return Some(vec!["fun_sorts".to_string(), name.to_string()]);
     }

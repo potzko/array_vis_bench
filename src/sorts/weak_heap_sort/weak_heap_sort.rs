@@ -19,12 +19,26 @@ use std::marker::PhantomData;
 
 use crate::sorts::heap_sort::compare::Compare;
 use crate::sorts::heap_sort::direction::Direction;
+use crate::sorts::heap_sort::heap::HeapLayout;
 use crate::sorts::heap_sort::heap_algorithm::HeapAlgorithm;
 use crate::sorts::heap_sort::layout::Layout;
 use crate::traits::log_traits::SortLogger;
 
 pub struct WeakHeapSort<D: Direction> {
     _phantom: PhantomData<D>,
+}
+
+// Layout-only `Heap` membership: lets partition-style code that only
+// needs `(Compare, phys)` accept a weak heap as "a heap" even though its
+// build / sift-down operations are stateful (`Vec<u8>` reverse bits) and
+// therefore live on [`HeapAlgorithm`] instead of [`super::super::heap_sort::heap::Heap`].
+impl<D: Direction> HeapLayout for WeakHeapSort<D> {
+    type Compare = D::Compare;
+
+    #[inline(always)]
+    fn phys(i: usize, n: usize) -> usize {
+        <D::Layout as Layout>::phys(i, n)
+    }
 }
 
 impl<D: Direction> HeapAlgorithm for WeakHeapSort<D> {

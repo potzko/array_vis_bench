@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 use super::arity::Arity;
 use super::compare::Compare;
 use super::direction::Direction;
-use super::heap::Heap;
+use super::heap::{Heap, HeapLayout};
 use super::layout::Layout;
 use crate::traits::log_traits::SortLogger;
 
@@ -16,9 +16,16 @@ pub struct ArityHeap<A: Arity, D: Direction> {
     _phantom: PhantomData<(A, D)>,
 }
 
-impl<A: Arity, D: Direction> Heap for ArityHeap<A, D> {
-    type Arity = A;
+impl<A: Arity, D: Direction> HeapLayout for ArityHeap<A, D> {
+    type Compare = D::Compare;
 
+    #[inline(always)]
+    fn phys(i: usize, n: usize) -> usize {
+        <D::Layout as Layout>::phys(i, n)
+    }
+}
+
+impl<A: Arity, D: Direction> Heap for ArityHeap<A, D> {
     fn heapify<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         heap_size: usize,
@@ -62,20 +69,25 @@ impl<A: Arity, D: Direction> Heap for ArityHeap<A, D> {
         Self::heapify(arr, heap_size, i, logger);
     }
 
-    fn swap<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-        arr: &mut [T],
-        i: usize,
-        j: usize,
-        logger: &mut U,
-    ) {
-        let n = arr.len();
-        let i_phys = <D::Layout as Layout>::phys(i, n);
-        let j_phys = <D::Layout as Layout>::phys(j, n);
-        logger.swap(arr, i_phys, j_phys);
+    #[inline]
+    fn last_internal_node(n: usize) -> usize {
+        // Parent of the last leaf. For an A-ary heap children of `i` live
+        // at `A*i+1..=A*i+A`, so parent of node `k` is `(k - 1) / A` and
+        // parent of the final leaf `n - 1` is `(n - 2) / A`.
+        (n - 2) / A::N
     }
 
-    #[inline(always)]
-    fn phys(i: usize, n: usize) -> usize {
-        <D::Layout as Layout>::phys(i, n)
+    fn layer_boundaries(n: usize) -> Vec<usize> {
+        // B_0 = 1; B_k = B_{k-1} + A^k. Stop once the next boundary would
+        // overshoot `n`.
+        let mut boundaries = Vec::new();
+        let mut b = 1usize;
+        let mut layer_size = 1usize;
+        while b < n {
+            boundaries.push(b);
+            layer_size = layer_size.saturating_mul(A::N);
+            b = b.saturating_add(layer_size);
+        }
+        boundaries
     }
 }
