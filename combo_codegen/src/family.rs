@@ -284,6 +284,10 @@ pub struct SortFamilyDef {
     /// Path segments; each will be wrapped in `"…"` in the generated code.
     /// Segments may contain `{VAR}` placeholders (e.g. `"{P}"`).
     pub path: Vec<String>,
+    /// Optional upper bound on random-input array size in correctness tests.
+    /// Forwarded to the generated `sort_registry_macro::sort_family! { … }`
+    /// invocation as `max_n_for_tests = N;` when set.
+    pub max_n_for_tests: Option<u64>,
     /// Parent-directory name of the annotated source file; used to determine
     /// which `*_combinations.rs` file to write (e.g. `"quick_sorts"`).
     pub source_module: String,
@@ -420,6 +424,9 @@ impl SortFamilyDef {
         writeln!(out, "    big_o       = \"{}\";", self.big_o).unwrap();
         writeln!(out, "    stable      = {};", self.stable).unwrap();
         writeln!(out, "    direct_sort = {};", self.direct_sort).unwrap();
+        if let Some(n) = self.max_n_for_tests {
+            writeln!(out, "    max_n_for_tests = {n};").unwrap();
+        }
 
         let reordered = reorder_path_by_axis_size(path, &self.axes, registry);
         let path_str = reordered

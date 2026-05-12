@@ -56,7 +56,7 @@ macro_rules! register_shell_variant {
             mod sort_test {
                 #[test]
                 fn correctness() {
-                    crate::bench_registry::test_helpers::check_sort(&super::BENCH_ENTRY);
+                    crate::bench_registry::test_helpers::check_sort_subprocess_assert(&super::BENCH_ENTRY, crate::bench_registry::test_helpers::DEFAULT_TIMEOUT);
                 }
             }
         }
