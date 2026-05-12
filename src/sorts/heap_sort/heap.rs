@@ -1,20 +1,53 @@
-//! Heap data structure abstraction.
+//! Heap traits — split into a minimal *layout* surface and a richer
+//! *operations* surface on top of it.
 //!
-//! Implementors expose three primitive operations heap-using sorts need:
-//! [`Heap::heapify`] (single sift-down), [`Heap::deep_heapify`] (recursive
-//! subtree build), and [`Heap::swap`] (swap two logical heap positions —
-//! lets the caller stay layout-agnostic). The arity is encoded in the impl
-//! via the associated `Arity` type.
+//! - [`HeapLayout`]: the bare minimum that makes something "a heap" for
+//!   layout-aware code (partitions, direction-aware compares). Holds the
+//!   compare direction and the logical→physical mapping. Default-impls
+//!   `swap` because that's just `swap(phys(i), phys(j))` over the logger.
+//!   Weak heap, n-ary heap, beap heap and any future array-laid-out heap
+//!   should impl this.
+//!
+//! - [`Heap: HeapLayout`]: adds the operations that *layered* heaps share —
+//!   single-node sift-down (`heapify`), recursive subtree build
+//!   (`deep_heapify`), and the layer-structure constants
+//!   (`last_internal_node`, `layer_boundaries`) the build strategies in
+//!   [`super::deep_heapify`] and [`super::quick_deep_heapify`] consume.
+//!   Weak heap deliberately doesn't impl this — its operations need state
+//!   (`Vec<u8>` reverse bits) and live on
+//!   [`super::heap_algorithm::HeapAlgorithm`] instead.
 
-use super::arity::Arity;
+use super::compare::Compare;
 use crate::traits::log_traits::SortLogger;
 
-pub trait Heap {
-    type Arity: Arity;
+pub trait HeapLayout {
+    /// Direction (Min vs Max) used to decide rootward-ness. Exposed so
+    /// direction-aware code (heap partitions, quickselect-based builds)
+    /// can pick up the right compare without re-deriving it.
+    type Compare: Compare;
 
-    /// Single-node sift-down. Assume each child's subtree is already a heap;
-    /// move logical node `i` toward the leaves until the heap invariant
-    /// holds at `i`.
+    /// Physical array index for logical heap index `i` over an array of
+    /// length `n`. Forward layout returns `i`; reverse returns `n - 1 - i`.
+    fn phys(i: usize, n: usize) -> usize;
+
+    /// Swap two logical heap positions. Default-impl routes both indices
+    /// through `phys` so each layout-specific override is unnecessary.
+    #[inline(always)]
+    fn swap<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        i: usize,
+        j: usize,
+        logger: &mut U,
+    ) {
+        let n = arr.len();
+        logger.swap(arr, Self::phys(i, n), Self::phys(j, n));
+    }
+}
+
+pub trait Heap: HeapLayout {
+    /// Single-node sift-down. Assume each child's subtree already
+    /// satisfies the heap predicate; move logical node `i` toward the
+    /// leaves until the invariant holds at `i`.
     fn heapify<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         heap_size: usize,
@@ -30,17 +63,14 @@ pub trait Heap {
         logger: &mut U,
     );
 
-    /// Swap two logical heap positions. Each impl translates logical to
-    /// physical via its layout (identity for forward, `n - 1 - i` for
-    /// reverse), so callers don't have to know the layout.
-    fn swap<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-        arr: &mut [T],
-        i: usize,
-        j: usize,
-        logger: &mut U,
-    );
+    /// Largest logical index that has at least one child in a heap of
+    /// length `n`. Iterative bottom-up build iterates this down to 0.
+    fn last_internal_node(n: usize) -> usize;
 
-    /// Physical array index for logical heap index `i` over an array of
-    /// length `n`. Forward layout returns `i`; reverse returns `n - 1 - i`.
-    fn phys(i: usize, n: usize) -> usize;
+    /// Layer-boundary logical indices in ascending order:
+    /// `[1, B_1, B_2, …]`. Each entry is the index of the *first* node of
+    /// some non-root layer (equivalently, one past the last node of the
+    /// previous layer). Excludes 0 and any boundary ≥ n. Used by the
+    /// quickselect-based build strategies in [`super::quick_deep_heapify`].
+    fn layer_boundaries(n: usize) -> Vec<usize>;
 }

@@ -11,7 +11,6 @@
 //!
 //! Both are O(n), but produce visibly different traces.
 
-use super::arity::Arity;
 use super::heap::Heap;
 use crate::traits::log_traits::SortLogger;
 
@@ -48,12 +47,10 @@ impl DeepHeapify for Iterative {
         if n < 2 {
             return;
         }
-        // Last internal node = parent of the last leaf. For an A-ary heap
-        // children of `i` live at `A*i+1 ..= A*i+A`, so the parent of node
-        // `k` is `(k - 1) / A` and the parent of the final leaf `n - 1` is
-        // `(n - 2) / A`.
-        let arity = <H::Arity as Arity>::N;
-        let last_internal = (n - 2) / arity;
+        // Each Heap impl knows its own "deepest internal node" formula —
+        // n-ary heap uses `(n - 2) / A`, beap uses `T_L - 1` (last index of
+        // the deepest fully-internal layer), etc.
+        let last_internal = H::last_internal_node(n);
         for i in (0..=last_internal).rev() {
             H::heapify(arr, n, i, logger);
         }
