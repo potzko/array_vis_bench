@@ -1,28 +1,29 @@
+use crate::bench_registry::{AlgorithmEntry, RunConfig, ALGORITHMS};
 use crate::traits::log_traits::{SortLogger, VisualizerLogger};
-use sort_logger::SortLog;
 use sort_vis::{Mp4Config, Mp4Visualizer, Visualizer};
 
-pub fn visualise_sort(
-    arr: &mut [usize],
+/// Find an algorithm by exact name. Returns `None` if no entry matches.
+pub fn find(name: &str) -> Option<&'static AlgorithmEntry> {
+    ALGORITHMS.iter().find(|e| e.name == name)
+}
+
+/// Run the named algorithm against the named input and render the
+/// resulting log to an MP4. The input must be registered in the input
+/// registry matching the algorithm's category; the algorithm emits all
+/// events (CreateArr + initial Writes + sort operations) on `logger`,
+/// so the log alone describes the full visualisation.
+pub fn visualise(
+    algorithm_name: &str,
+    input_name: &str,
+    config: &RunConfig,
     logger: &mut VisualizerLogger<usize>,
-    choice: &[String],
-    config: Mp4Config,
+    mp4_config: Mp4Config,
 ) {
-    // Drive the input array's creation through the same logger events any
-    // other array uses: one CreateAuxArrT for the slice's pointer, then
-    // one WriteData per element to populate. The visualiser then needs no
-    // back-channel — the log alone describes the full timeline including
-    // the starting state.
-    logger.log_aux_arr_t(arr);
-    let name = arr.as_ptr() as usize;
-    for (i, &v) in arr.iter().enumerate() {
-        logger.log(SortLog::WriteData { name, ind: i, data: v });
-    }
+    let entry = find(algorithm_name).unwrap_or_else(|| {
+        panic!("algorithm '{}' not in ALGORITHMS registry", algorithm_name)
+    });
+    (entry.run_with_input)(input_name, config, logger as &mut dyn SortLogger<usize>);
 
-    let values = crate::sorts::fn_sort(arr, logger as &mut dyn SortLogger<usize>, choice);
-
-    let mut viz = Mp4Visualizer::new(config);
+    let mut viz = Mp4Visualizer::new(mp4_config);
     viz.render(&logger.log);
-
-    println!("{:?}", values);
 }

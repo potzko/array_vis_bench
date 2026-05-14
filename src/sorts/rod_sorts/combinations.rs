@@ -5,10 +5,8 @@
 /// adding new variants — edit `branching.rs` only.
 #[ctor::ctor]
 fn register_rod_sorts() {
-    let mut registry = crate::traits::SORT_REGISTRY.lock().unwrap();
-
     for entry in crate::sorts::rod_sorts::branching::ROD_STRATEGIES {
-        registry.insert(entry.name.to_string(), entry.sort_fn);
-        sort_registry_core::register_sort_path(entry.name, entry.big_o, false, entry.path);
+        let full: Vec<&str> = std::iter::once("sorts").chain(entry.path.iter().copied()).collect();
+        sort_registry_core::register_sort_path(entry.name, entry.big_o, false, &full);
     }
 }

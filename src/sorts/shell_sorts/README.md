@@ -20,16 +20,17 @@ Same algorithm, different traversal: fully sorts one `g`-spaced subsequence (sta
 
 ## Registration
 
-All variants self-register at startup via a `#[ctor]` in `combinations.rs`. The `sequences.rs` file defines a `GAP_SEQUENCES` distributed slice where each gap sequence registers its shell-sort and shell-sort-ordered variants.
+`sequences.rs` defines a `GAP_SEQUENCES` distributed slice; each gap
+sequence pushes one entry per variant (plain + ordered) plus the matching
+`AlgorithmEntry` for `bench_registry::ALGORITHMS`. `combinations.rs` is a
+single `#[ctor]` that walks `GAP_SEQUENCES` and registers each variant's
+tree path under `sorts/shell sorts/…`.
 
 ## Files
 
-- `shell_sort.rs` -- generic `ShellSort<Seq>`.
-- `shell_sort_ordered.rs` -- generic `ShellSortOrdered<Seq>`.
-- `sequences.rs` -- `GAP_SEQUENCES` slice and per-sequence registration entries.
-- `combinations.rs` -- `#[ctor]` that registers all variants into `SORT_REGISTRY`.
-- `classic_shell_sorts/` -- legacy hand-written shell sort variants (pre-generic system). See [classic_shell_sorts/README.md](classic_shell_sorts/README.md).
-
-## Status
-
-Active — wired into the dispatch tree in `sorts/mod.rs`. Uses distributed-slice registration.
+- `shell_sort.rs` — generic `ShellSort<Seq>`.
+- `shell_sort_ordered.rs` — generic `ShellSortOrdered<Seq>`.
+- `sequences.rs` — `GAP_SEQUENCES` slice and the per-sequence
+  `register_sequence!` invocations that populate it.
+- `combinations.rs` — `#[ctor]` that adds each registered variant to the
+  navigation tree.

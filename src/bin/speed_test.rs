@@ -14,10 +14,12 @@
 
 use std::time::Instant;
 
-use array_vis_bench::bench_registry::BENCH_SORTS;
+use array_vis_bench::bench_registry::{primary_input, ALGORITHMS, Category, RunConfig};
+use array_vis_bench::traits::log_traits::NoOpLogger;
 use array_vis_bench::utils::array_gen::get_rand_arr;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
+use sort_logger::SortLogger;
 
 fn median_ns(times: &mut Vec<u64>) -> u64 {
     times.sort_unstable();
@@ -42,12 +44,24 @@ fn main() {
     let mut buf = get_rand_arr(n);
     let mut results: Vec<(&'static str, u64)> = Vec::new();
 
-    for entry in BENCH_SORTS {
+    let cfg = RunConfig { size: n, seed: 0 };
+    for entry in ALGORITHMS {
+        // Only sorts have a "time how long to sort this array"
+        // interpretation. Other categories run via `run_correctness`-style
+        // harnesses that aren't a single timed call.
+        if entry.category != Category::Sort {
+            continue;
+        }
         let mut times = Vec::with_capacity(runs);
         for _ in 0..runs {
             buf.shuffle(&mut rng);
             let t = Instant::now();
-            (entry.run)(&mut buf);
+            let mut logger = NoOpLogger;
+            (entry.run_with_input)(
+                primary_input(Category::Sort),
+                &cfg,
+                &mut logger as &mut dyn SortLogger<usize>,
+            );
             times.push(t.elapsed().as_nanos() as u64);
         }
         let med = median_ns(&mut times);

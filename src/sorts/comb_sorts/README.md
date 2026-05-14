@@ -11,15 +11,12 @@ The classic shrink factor is 1.3 (empirically optimal). Different gap sequences 
 ## Variants
 
 - `comb_sort.rs` — **CombSort**: takes a pre-computed gap sequence and runs one forward pass per gap, then converges with gap-1 passes.
-- `comb_sort_ratio.rs` — **CombSortRatio**: generates gaps from a configurable shrink ratio (e.g. 1.3, 1.5, etc.).
-- `comb_classic.rs` — pre-built classic variant with shrink factor 1.3.
-- `comb_random_gaps.rs` — experimental variant using randomly generated gap sequences.
+- `comb_sort_ratio.rs` — **CombSortRatio<NUM, DEN>**: generic over the shrink ratio (1.3, √2, φ, 4/3, 11/8, 5/4 are all registered). The `family!` invocation enumerates the ratio set into the algorithm registry.
 
 ## Registration
 
-- `sequences.rs` — `COMB_SEQUENCES` distributed slice with one entry per shrink factor.
-- `combinations.rs` — generates and registers all variant combinations.
-
-## Status
-
-Active — wired into the dispatch tree in `sorts/mod.rs`. Uses distributed-slice registration.
+- `sequences.rs` — `COMB_SEQUENCES` distributed slice that the per-ratio
+  registration entries live in. Drives the `combo_codegen::family!`
+  expansion in `comb_sort_ratio.rs`.
+- `register_sequences.rs` — `#[ctor]` that loops over `COMB_SEQUENCES`
+  and adds each to the navigation tree under `sorts/comb sorts/`.

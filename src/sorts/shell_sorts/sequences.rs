@@ -32,7 +32,19 @@ macro_rules! register_shell_variant {
 
             fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) { $call(arr, logger) }
             fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) { $call(arr, logger) }
-            fn bench(arr: &mut [usize]) { $call(arr, &mut NoOpLogger) }
+
+            fn run_with_input(
+                input_name: &str,
+                config: &crate::bench_registry::RunConfig,
+                logger: &mut dyn SortLogger<usize>,
+            ) {
+                crate::bench_registry::run_sort_with_input(input_name, config, sort_vis, logger);
+            }
+
+            fn run_correctness() {
+                crate::bench_registry::correctness::sort_battery(sort_fn, SORT_NAME);
+                crate::bench_registry::correctness::sort_stability_battery(sort_fn, SORT_NAME, false);
+            }
 
             #[linkme::distributed_slice(GAP_SEQUENCES)]
             static ENTRY: GapSequenceEntry = GapSequenceEntry {
@@ -43,20 +55,23 @@ macro_rules! register_shell_variant {
                 sort_vis,
             };
 
-            #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
-            static BENCH_ENTRY: crate::bench_registry::SortBenchEntry =
-                crate::bench_registry::SortBenchEntry {
+            #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
+            static ALGO_ENTRY: crate::bench_registry::AlgorithmEntry =
+                crate::bench_registry::AlgorithmEntry {
                     name: SORT_NAME,
+                    category: crate::bench_registry::Category::Sort,
                     big_o: $big_o,
                     stable: false,
-                    run: bench,
+                    max_input_size: None,
+                    run_with_input,
+                    run_correctness,
                 };
 
             #[cfg(test)]
             mod sort_test {
                 #[test]
                 fn correctness() {
-                    crate::bench_registry::test_helpers::check_sort_subprocess_assert(&super::BENCH_ENTRY, crate::bench_registry::test_helpers::DEFAULT_TIMEOUT);
+                    crate::bench_registry::test_helpers::check_sort_subprocess_assert(&super::ALGO_ENTRY, crate::bench_registry::test_helpers::DEFAULT_TIMEOUT);
                 }
             }
         }

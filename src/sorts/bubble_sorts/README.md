@@ -15,6 +15,8 @@ Simple and stable, but O(N^2) — mainly useful as a baseline and for visualisat
 - `odd_even_bubble_sort.rs` — **Odd-even bubble sort** (brick sort): alternates between comparing odd-indexed pairs (1-2, 3-4, ...) and even-indexed pairs (0-1, 2-3, ...). All comparisons in one phase are independent, making this parallelisable (though this implementation is sequential).
 - `shaker_sort.rs` — **Shaker sort** (cocktail sort): bidirectional bubble sort — alternates forward and backward passes. Handles "turtles" (small elements near the end) better than unidirectional bubble sort.
 
-## Status
+## Registration
 
-Active — wired into the dispatch tree in `sorts/mod.rs`. Uses `create_sort!` registration.
+Each variant declares itself via `combo_codegen::family!` at the bottom of
+its file. Bubble sort proper has no generic parameters, so its family! is
+a single-leaf invocation; the other variants do the same.

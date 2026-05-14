@@ -1,95 +1,46 @@
-use array_vis_bench::traits::get_registered_sorts;
+use array_vis_bench::bench_registry::{list_inputs, RunConfig};
 use array_vis_bench::traits::get_sort_tree;
 use array_vis_bench::traits::log_traits::VisualizerLogger;
-use array_vis_bench::visualise::visualise_sort;
-use array_vis_bench::utils::array_gen::{get_rand_arr, get_rand_arr_in_range, get_arr, get_reversed_arr};
+use array_vis_bench::visualise::{find, visualise};
 use sort_vis::{Encoding, Mp4Config, Pacing, COMMON_FRAMERATES, COMMON_RESOLUTIONS};
 use std::io::{self, Write};
 
 fn main() {
-    // Verify that every registered sort has a visualization dispatch route.
-    // This panics at startup — before any user interaction — if a sort was
-    // added to the registry but create_sort_choice() doesn't know how to
-    // route it.
-    validate_sort_routing();
-
     println!("Array Visualization Benchmark");
     println!("==============================");
-    
-    // Step 1: Select sorting algorithm via decision tree
+
     let tree = get_sort_tree();
     let sort_name = select_sort(&tree);
-    println!("Selected: {}", sort_name);
-    
-    // Step 2: Select array type
-    println!("\nArray Types:");
-    println!("  1: Random");
-    println!("  2: Ascending (0, 1, 2, ...)");
-    println!("  3: Descending (n-1, n-2, ..., 0)");
-    println!("  4: Random in range (0 to size-1)");
-    
-    let array_type = get_user_selection("Select array type", 1, 4);
-    
-    // Step 3: Select array size
-    println!("\nEnter array size");
-    io::stdout().flush().unwrap();
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).unwrap();
-    let size: usize = input.trim().parse().unwrap_or(500);
-    
-    println!("Array size: {}", size);
-    
-    // Generate array based on user selection
-    let mut arr = match array_type {
-        1 => {
-            println!("Generating random array...");
-            get_rand_arr(size)
-        },
-        2 => {
-            println!("Generating ascending array...");
-            get_arr(size)
-        },
-        3 => {
-            println!("Generating descending array...");
-            get_reversed_arr(size)
-        },
-        4 => {
-            println!("Generating random array in range...");
-            get_rand_arr_in_range(size, 0, size)
-        },
-        _ => {
-            println!("Defaulting to random array...");
-            get_rand_arr(size)
-        }
-    };
-    
-    println!("Original array (first 20 elements): {:?}", 
-             if arr.len() > 20 { &arr[..20] } else { &arr });
-    if arr.len() > 20 {
-        println!("   ... and {} more elements", arr.len() - 20);
-    }
-    
-    // Create visualizer logger
-    let mut logger = VisualizerLogger {
-        log: Vec::new(),
-        type_ghost: std::marker::PhantomData,
-    };
-    
-    // Create sort selection format that the system expects
-    let sort_choice = create_sort_choice(&sort_name);
-    
+    println!("Selected: {sort_name}");
+
+    let entry = find(&sort_name).unwrap_or_else(|| {
+        panic!("algorithm '{}' not registered in ALGORITHMS", sort_name)
+    });
+    let input_name = select_input(entry.category);
+    println!("Input: {input_name}");
+    let size = read_size_with_cap(500, entry.max_input_size);
+
     println!("\nVideo resolution:");
     for (i, (w, h, label)) in COMMON_RESOLUTIONS.iter().enumerate() {
         println!("  {}: {}x{} ({})", i + 1, w, h, label);
     }
-    let res_idx = get_user_selection("Select resolution", 1, COMMON_RESOLUTIONS.len()) - 1;
+    // 1080p (index 2) is the right default for almost every preview —
+    // 720p loses too much detail at high element counts, the higher
+    // tiers are slow without a meaningful gain on a laptop screen.
+    let res_idx = get_user_selection_with_default(
+        "Select resolution", 1, COMMON_RESOLUTIONS.len(), 2,
+    ) - 1;
     let (output_width, output_height, _) = COMMON_RESOLUTIONS[res_idx];
 
     println!("\nFrame rate:");
     for (i, fr) in COMMON_FRAMERATES.iter().enumerate() {
         println!("  {}: {} fps", i + 1, fr);
     }
-    let fr_idx = get_user_selection("Select frame rate", 1, COMMON_FRAMERATES.len()) - 1;
+    // 60 fps (index 2): smooth playback without doubling the file
+    // size you'd get at 120.
+    let fr_idx = get_user_selection_with_default(
+        "Select frame rate", 1, COMMON_FRAMERATES.len(), 2,
+    ) - 1;
     let framerate = COMMON_FRAMERATES[fr_idx];
 
     print!("\nHow long should the visualization be (seconds): ");
@@ -101,7 +52,7 @@ fn main() {
         60.0
     });
 
-    let config = Mp4Config {
+    let mp4_config = Mp4Config {
         output_width,
         output_height,
         framerate,
@@ -110,195 +61,140 @@ fn main() {
         output_path: "output.mp4".into(),
     };
 
+    let run_config = RunConfig { size, seed: 0 };
+
+    let mut logger = VisualizerLogger {
+        log: Vec::new(),
+        type_ghost: std::marker::PhantomData,
+    };
+
     println!("\nGenerating visualization...");
-    visualise_sort(&mut arr, &mut logger, &sort_choice, config);
-    
-    println!("Sorted array (first 20 elements): {:?}", 
-             if arr.len() > 20 { &arr[..20] } else { &arr });
-    if arr.len() > 20 {
-        println!("   ... and {} more elements", arr.len() - 20);
-    }
-    
-    println!("Statistics:");
-    println!("  - Array size: {}", arr.len());
+    visualise(&sort_name, &input_name, &run_config, &mut logger, mp4_config);
+
     println!("  - Operations logged: {}", logger.log.len());
-    println!("  - GIF saved as: output.mp4");
-    
+    println!("  - Output saved as: output.mp4");
     println!("\nVisualization complete!");
 }
 
+/// Show the registered inputs for `category` and let the user pick one.
+fn select_input(category: array_vis_bench::bench_registry::Category) -> String {
+    let names = list_inputs(category);
+    assert!(
+        !names.is_empty(),
+        "no inputs registered for category {:?}",
+        category
+    );
+    println!("\nInput shapes for {}:", category.as_str());
+    for (i, name) in names.iter().enumerate() {
+        println!("  {}: {}", i + 1, name);
+    }
+    let idx = get_user_selection("Select input", 1, names.len()) - 1;
+    names[idx].to_string()
+}
+
+/// Prompt for array size. If `cap` is `Some(n)`, the prompt advertises
+/// the cap and clamps both the default and any user-supplied size to
+/// `n` — small-sorts and other contract-bounded algorithms register a
+/// cap so the visualiser doesn't ask for sizes the algorithm refuses
+/// to handle.
+fn read_size_with_cap(default: usize, cap: Option<usize>) -> usize {
+    let effective_default = cap.map(|c| default.min(c)).unwrap_or(default);
+    let prompt_suffix = match cap {
+        Some(c) => format!(" [default {effective_default}, max {c}]"),
+        None => format!(" [default {effective_default}]"),
+    };
+    print!("\nArray size{prompt_suffix}: ");
+    io::stdout().flush().unwrap();
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
+    let raw = input.trim().parse().unwrap_or(effective_default);
+    cap.map(|c| raw.min(c)).unwrap_or(raw)
+}
+
 fn get_user_selection(prompt: &str, min: usize, max: usize) -> usize {
+    get_user_selection_inner(prompt, min, max, None)
+}
+
+/// Like `get_user_selection`, but an empty line accepts `default`
+/// instead of looping. The prompt advertises the default in brackets.
+fn get_user_selection_with_default(
+    prompt: &str,
+    min: usize,
+    max: usize,
+    default: usize,
+) -> usize {
+    get_user_selection_inner(prompt, min, max, Some(default))
+}
+
+fn get_user_selection_inner(
+    prompt: &str,
+    min: usize,
+    max: usize,
+    default: Option<usize>,
+) -> usize {
     loop {
-        print!("\n{} ({} to {}): ", prompt, min, max);
+        match default {
+            Some(d) => print!("\n{prompt} ({min} to {max}) [default {d}]: "),
+            None => print!("\n{prompt} ({min} to {max}): "),
+        }
         io::stdout().flush().unwrap();
-        
+
         let mut input = String::new();
-        match io::stdin().read_line(&mut input) {
-            Ok(_) => {
-                let trimmed = input.trim();
-                if trimmed.is_empty() {
-                    println!("Error: Please enter a number.");
-                    continue;
-                }
-                
-                match trimmed.parse::<usize>() {
-                    Ok(selection) => {
-                        if selection >= min && selection <= max {
-                            return selection;
-                        } else {
-                            println!("Error: Number {} is out of range. Please enter a number between {} and {}.", selection, min, max);
-                        }
-                    },
-                    Err(_) => {
-                        println!("Error: '{}' is not a valid number. Please enter a number between {} and {}.", trimmed, min, max);
-                    }
-                }
-            },
-            Err(_) => {
-                println!("Error: Error reading input. Please try again.");
-                continue;
+        if io::stdin().read_line(&mut input).is_err() {
+            println!("Error reading input; try again.");
+            continue;
+        }
+        let trimmed = input.trim();
+        if trimmed.is_empty() {
+            if let Some(d) = default {
+                return d;
             }
+            println!("Error: please enter a number.");
+            continue;
+        }
+        match trimmed.parse::<usize>() {
+            Ok(n) if n >= min && n <= max => return n,
+            Ok(n) => println!("Error: {n} is out of range [{min}, {max}]."),
+            Err(_) => println!("Error: '{trimmed}' is not a number."),
         }
     }
 }
 
-fn create_sort_choice(sort_name: &str) -> Vec<String> {
-    use array_vis_bench::sorts;
-
-    if let Some(c) = sorts::merge_sorts::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::bubble_sorts::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::circle_sorts::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::comb_sorts::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::cycle_sorts::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::insertion_sorts::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::rod_sorts::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::shell_sorts::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::heap_sort::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::quick_heap_sort::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::weak_heap_sort::sort_choice(sort_name) { return c; }
-    if let Some(c) = sorts::fun_sorts::sort_choice(sort_name) { return c; }
-
-    panic!(
-        "\n\
-         ┌─────────────────────────────────────────────────────────┐\n\
-         │              SORT DISPATCH BUG DETECTED                 │\n\
-         └─────────────────────────────────────────────────────────┘\n\
-         Sort '{}' is registered in SORT_REGISTRY but has no\n\
-         visualization dispatch route in create_sort_choice().\n\
-         \n\
-         To fix: migrate this sort to family!(... direct_sort = true; ...)\n\
-         or add a sort_choice() route in the sort's module.\n",
-        sort_name
-    )
-}
-
-/// Panics at startup if any registered sort lacks a visualization route.
-///
-/// Runs before any user interaction so the bug is caught immediately on
-/// launch, not silently mid-session.
-fn validate_sort_routing() {
-    for sort_name in get_registered_sorts() {
-        // This will panic with a clear message if the route is missing.
-        create_sort_choice(&sort_name);
-    }
-}
-
-/// Navigate the sort tree interactively and return the chosen sort's registered name.
-///
-/// At each level the user sees a numbered list of sub-trees (categories) and
-/// leaf sorts combined.  Picking a sub-tree recurses deeper; picking a leaf
-/// returns the sort name.  Works for any tree depth.
 fn select_sort(tree: &sort_registry_core::SortTree) -> String {
-    select_sort_inner(tree, &[])
+    select_sort_inner(tree)
 }
 
-fn select_sort_inner(tree: &sort_registry_core::SortTree, picks: &[String]) -> String {
-    use sort_registry_core::SortTree;
-
-    // Collect this level's options: branches first, then leaves.
-    // Each option is either a (label, &subtree) or a (display_label, sort_name).
+fn select_sort_inner(tree: &sort_registry_core::SortTree) -> String {
     enum Opt<'a> {
-        Branch(&'a str, &'a SortTree),
+        Branch(&'a str, &'a sort_registry_core::SortTree),
         Leaf(&'a str, &'a str),
     }
-
     let mut opts: Vec<Opt> = Vec::new();
-    for (label, subtree) in &tree.children {
-        opts.push(Opt::Branch(label, subtree));
+    for (label, sub) in &tree.children {
+        opts.push(Opt::Branch(label, sub));
     }
     for (display, name) in &tree.leaves {
         opts.push(Opt::Leaf(display, name));
     }
-
-    // Auto-select if there is exactly one option at this level — but still
-    // record the pick so the progressive type expression keeps growing.
     if opts.len() == 1 {
         return match &opts[0] {
-            Opt::Branch(label, subtree) => {
-                let mut next = picks.to_vec();
-                next.push(label.to_string());
-                select_sort_inner(subtree, &next)
-            }
+            Opt::Branch(_, sub) => select_sort_inner(sub),
             Opt::Leaf(_, name) => name.to_string(),
         };
     }
-
-    println!();
-    println!("  filling: {}", render_progressive_type(picks, false));
     println!();
     for (i, opt) in opts.iter().enumerate() {
         match opt {
-            Opt::Branch(label, subtree) => {
-                let count = count_leaves(subtree);
-                println!("  {}: {} ({} sort{})", i + 1, label, count,
-                    if count == 1 { "" } else { "s" });
+            Opt::Branch(label, sub) => {
+                let n = sub.count_leaves();
+                println!("  {}: {} ({} variant{})", i + 1, label, n, if n == 1 { "" } else { "s" });
             }
-            Opt::Leaf(display, _) => {
-                println!("  {}: {}", i + 1, display);
-            }
+            Opt::Leaf(display, _) => println!("  {}: {}", i + 1, display),
         }
     }
-
     let sel = get_user_selection("Select", 1, opts.len()) - 1;
     match &opts[sel] {
-        Opt::Branch(label, subtree) => {
-            let mut next = picks.to_vec();
-            next.push(label.to_string());
-            select_sort_inner(subtree, &next)
-        }
+        Opt::Branch(_, sub) => select_sort_inner(sub),
         Opt::Leaf(_, name) => name.to_string(),
     }
-}
-
-fn count_leaves(tree: &sort_registry_core::SortTree) -> usize {
-    tree.leaves.len()
-        + tree.children.iter().map(|(_, c)| count_leaves(c)).sum::<usize>()
-}
-
-/// Build a nested-generic display from a sequence of menu picks. Each pick
-/// becomes a wrapper around the next; an unfilled trailing slot is shown
-/// as `_` (omitted for leaves). Labels are used verbatim.
-///
-/// `picks=["quick sorts", "dual pivot"]`, non-leaf →
-///   `"quick sorts<dual pivot<_>>"`
-fn render_progressive_type(picks: &[String], is_leaf: bool) -> String {
-    if picks.is_empty() {
-        return if is_leaf { String::new() } else { "_".to_string() };
-    }
-    let mut s = picks[0].clone();
-    let mut depth = 0;
-    for p in picks.iter().skip(1) {
-        s.push('<');
-        s.push_str(p);
-        depth += 1;
-    }
-    if !is_leaf {
-        s.push('<');
-        s.push('_');
-        depth += 1;
-    }
-    for _ in 0..depth {
-        s.push('>');
-    }
-    s
 }

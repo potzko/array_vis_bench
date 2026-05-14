@@ -39,38 +39,3 @@ pub mod directions;
 pub mod finishing;
 pub mod orderings;
 pub mod sequences;
-
-use crate::traits::log_traits::SortLogger;
-use sequences::CIRCLE_ENTRIES;
-
-pub fn fn_sort(
-    arr: &mut [usize],
-    logger: &mut dyn SortLogger<usize>,
-    choice: &[String],
-) -> Vec<String> {
-    let name = choice.first().map(String::as_str).unwrap_or("");
-
-    for entry in CIRCLE_ENTRIES {
-        if entry.name == name {
-            (entry.sort_vis)(arr, logger);
-            return vec![format!("name: {}", name)];
-        }
-    }
-
-    // Default: pre-order recursive
-    use circle_sort_recursive::CircleSortRecursive;
-    use orderings::PreOrder;
-    CircleSortRecursive::<PreOrder>::sort(arr, logger);
-    vec![format!("name: circle sort (recursive pre-order)")]
-}
-
-/// Returns the choice vec for `fn_sort` dispatch if `name` is a registered
-/// circle-sort variant, otherwise `None`.
-pub fn sort_choice(name: &str) -> Option<Vec<String>> {
-    for entry in CIRCLE_ENTRIES {
-        if entry.name == name {
-            return Some(vec!["circle_sorts".to_string(), name.to_string()]);
-        }
-    }
-    None
-}

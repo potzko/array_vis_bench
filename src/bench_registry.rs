@@ -1,15 +1,5 @@
 use linkme::distributed_slice;
 
-pub struct SortBenchEntry {
-    pub name: &'static str,
-    pub big_o: &'static str,
-    pub stable: bool,
-    pub run: fn(&mut [usize]),
-}
-
-#[distributed_slice]
-pub static BENCH_SORTS: [SortBenchEntry] = [..];
-
 // ── Generic algorithm registry ───────────────────────────────────────────────
 //
 // `AlgorithmEntry` covers every algorithm category (sorts, rotations,
@@ -24,13 +14,14 @@ pub static BENCH_SORTS: [SortBenchEntry] = [..];
 // enum exists only for menu grouping and category-specific verification
 // logic (which lives inside `run_correctness`, NOT in the harness).
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Category {
     Sort,
     Rotation,
     Partition,
     Merge,
     SmallSort,
+    QuickSelect,
 }
 
 impl Category {
@@ -41,32 +32,418 @@ impl Category {
             Category::Partition => "partition",
             Category::Merge => "merge",
             Category::SmallSort => "small-sort",
+            Category::QuickSelect => "quick-select",
         }
     }
 }
 
-/// Tunable knobs for a single run. Categories that don't need a knob
-/// ignore it. `Default::default()` is good enough for "pick algorithm,
-/// run with category-default input".
+/// Tunable knobs for a single run. Each category's input list interprets
+/// these knobs as it pleases — most use just `size` and `seed`.
 #[derive(Clone, Debug)]
 pub struct RunConfig {
     pub size: usize,
-    pub pattern: InputPattern,
     pub seed: u64,
 }
 
 impl Default for RunConfig {
     fn default() -> Self {
-        RunConfig { size: 500, pattern: InputPattern::Random, seed: 0 }
+        RunConfig { size: 500, seed: 0 }
     }
 }
 
-#[derive(Copy, Clone, Debug)]
-pub enum InputPattern {
-    Random,
-    Ascending,
-    Descending,
-    AllSame,
+// ── Per-category input traits ────────────────────────────────────────────────
+//
+// Each category has one trait that registered input types implement. The
+// trait's only job is `generate` — translate a `RunConfig` into the
+// natural-shape input the algorithm wants. Concrete `*Input` types
+// register themselves into the matching distributed slice via the
+// `register_input!` macros below, so they're selectable by name at
+// runtime without giving up the typed `generate` signature.
+
+pub trait SortInput {
+    fn generate(config: &RunConfig) -> Vec<usize>;
+}
+
+pub trait RotationInput {
+    /// Returns (array, split index).
+    fn generate(config: &RunConfig) -> (Vec<usize>, usize);
+}
+
+pub trait MergeInput {
+    /// Returns (array, mid). `arr[..mid]` and `arr[mid..]` are each sorted.
+    fn generate(config: &RunConfig) -> (Vec<usize>, usize);
+}
+
+pub trait SmallSortInput {
+    fn generate(config: &RunConfig) -> Vec<usize>;
+}
+
+pub trait QuickSelectInput {
+    /// Returns (array, target index). Quickselect reorders `arr` so
+    /// that the value which would land at `target` after a full sort
+    /// lands there. Different target positions stress different
+    /// recursion paths (mid = balanced, first = always recurse left,
+    /// last = always recurse right).
+    fn generate(config: &RunConfig) -> (Vec<usize>, usize);
+}
+
+// ── Per-category input registries ────────────────────────────────────────────
+//
+// Inputs are first-class registered things, on par with algorithms. Each
+// category gets a distributed slice keyed by the natural-shape signature
+// of its `generate` fn pointer. UI / harness code iterates the slice for
+// the algorithm's category to populate input pickers / lookups by name.
+
+pub struct SortInputEntry {
+    pub name: &'static str,
+    pub generate: fn(&RunConfig) -> Vec<usize>,
+    /// Exactly one entry per category is `primary = true`. Harness code
+    /// that needs a sensible default without prompting the user picks
+    /// the primary. Multiple primaries → startup panic; zero primaries
+    /// → also a startup panic.
+    pub primary: bool,
+}
+
+pub struct RotationInputEntry {
+    pub name: &'static str,
+    pub generate: fn(&RunConfig) -> (Vec<usize>, usize),
+    pub primary: bool,
+}
+
+pub struct MergeInputEntry {
+    pub name: &'static str,
+    pub generate: fn(&RunConfig) -> (Vec<usize>, usize),
+    pub primary: bool,
+}
+
+pub struct SmallSortInputEntry {
+    pub name: &'static str,
+    pub generate: fn(&RunConfig) -> Vec<usize>,
+    pub primary: bool,
+}
+
+pub struct QuickSelectInputEntry {
+    pub name: &'static str,
+    pub generate: fn(&RunConfig) -> (Vec<usize>, usize),
+    pub primary: bool,
+}
+
+#[distributed_slice] pub static SORT_INPUTS:         [SortInputEntry] = [..];
+#[distributed_slice] pub static ROTATION_INPUTS:     [RotationInputEntry] = [..];
+#[distributed_slice] pub static MERGE_INPUTS:        [MergeInputEntry] = [..];
+#[distributed_slice] pub static SMALL_SORT_INPUTS:   [SmallSortInputEntry] = [..];
+#[distributed_slice] pub static QUICK_SELECT_INPUTS: [QuickSelectInputEntry] = [..];
+
+/// All registered input names for `category`, in registry order.
+///
+/// `Partition` shares the `Sort` input registry: a partition algorithm
+/// (with internal pivot selection) takes the same shape of input as a
+/// sort — a single `Vec<usize>` — so any sort input is meaningful for
+/// it. No need for a parallel partition-input registry.
+pub fn list_inputs(category: Category) -> Vec<&'static str> {
+    match category {
+        Category::Sort | Category::Partition => SORT_INPUTS.iter().map(|e| e.name).collect(),
+        Category::Rotation => ROTATION_INPUTS.iter().map(|e| e.name).collect(),
+        Category::Merge => MERGE_INPUTS.iter().map(|e| e.name).collect(),
+        Category::SmallSort => SMALL_SORT_INPUTS.iter().map(|e| e.name).collect(),
+        Category::QuickSelect => QUICK_SELECT_INPUTS.iter().map(|e| e.name).collect(),
+    }
+}
+
+/// The primary input for `category` — the one harness code uses as a
+/// sensible default when there's no explicit user pick. Each category
+/// must have exactly one primary; uniqueness is enforced at startup by
+/// [`validate_registries`].
+pub fn primary_input(category: Category) -> &'static str {
+    match category {
+        Category::Sort | Category::Partition => {
+            SORT_INPUTS.iter().find(|e| e.primary).map(|e| e.name)
+        }
+        Category::Rotation => ROTATION_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
+        Category::Merge => MERGE_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
+        Category::SmallSort => SMALL_SORT_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
+        Category::QuickSelect => QUICK_SELECT_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
+    }
+    .unwrap_or_else(|| panic!("no primary input registered for category {:?}", category))
+}
+
+/// Validate the registries at startup. Runs once via [`#[ctor::ctor]`]
+/// (see `validate_at_startup` below). The checks are deliberately strict
+/// so any drift — a duplicated algorithm name, two primary inputs in the
+/// same category, an empty input registry for a category that has
+/// algorithm entries — fails fast with a precise message at process
+/// start instead of confusing the user later.
+pub fn validate_registries() -> Result<(), String> {
+    let mut errors: Vec<String> = Vec::new();
+
+    // ── Algorithm name uniqueness (per-category scope) ───────────────
+    //
+    // Names live in a category-scoped namespace: a sort and a partition
+    // can both be called "lomuto" without colliding (in practice they
+    // won't because the rotation/partition/small-sort macros bake a
+    // category-prefix into the name anyway, but the check enforces it
+    // independent of that convention). Two algorithms in the *same*
+    // category with the same name → hard error.
+    {
+        let mut seen_per_cat: std::collections::HashMap<
+            (Category, &'static str),
+            usize,
+        > = Default::default();
+        for entry in ALGORITHMS {
+            *seen_per_cat.entry((entry.category, entry.name)).or_insert(0) += 1;
+        }
+        for ((cat, name), count) in &seen_per_cat {
+            if *count > 1 {
+                errors.push(format!(
+                    "duplicate algorithm name '{}' in category {:?} ({} registrations)",
+                    name, cat, count
+                ));
+            }
+        }
+    }
+
+    // ── Tree path uniqueness ─────────────────────────────────────────
+    //
+    // The interactive picker walks `sort_registry_core`'s tree and
+    // expects one entry per algorithm. If the same name registers a
+    // path twice (e.g. two ctors emitting the same family! call), the
+    // tree picks one arbitrarily and the duplicate becomes invisible.
+    // Catch that here rather than silently shipping a half-broken menu.
+    {
+        let entries = sort_registry_core::registered_path_entries();
+        let mut by_name: std::collections::HashMap<String, Vec<Vec<String>>> =
+            Default::default();
+        for (name, path) in entries {
+            by_name.entry(name).or_default().push(path);
+        }
+        for (name, paths) in &by_name {
+            if paths.len() > 1 {
+                let formatted: Vec<String> =
+                    paths.iter().map(|p| format!("[{}]", p.join("/"))).collect();
+                errors.push(format!(
+                    "algorithm '{}' registered at {} distinct tree paths: {}",
+                    name,
+                    paths.len(),
+                    formatted.join(", ")
+                ));
+            }
+        }
+    }
+
+    // ── Per-category input checks ────────────────────────────────────
+    fn check_inputs<E, NF, PF>(
+        category: Category,
+        entries: &[E],
+        name_of: NF,
+        primary_of: PF,
+        algorithms_in_category: usize,
+        errors: &mut Vec<String>,
+    ) where
+        NF: Fn(&E) -> &'static str,
+        PF: Fn(&E) -> bool,
+    {
+        let mut seen: std::collections::HashSet<&'static str> = Default::default();
+        for e in entries {
+            if !seen.insert(name_of(e)) {
+                errors.push(format!(
+                    "duplicate input name '{}' in category {:?}",
+                    name_of(e), category
+                ));
+            }
+        }
+        let primaries: Vec<&'static str> =
+            entries.iter().filter(|e| primary_of(e)).map(&name_of).collect();
+        if entries.is_empty() && algorithms_in_category > 0 {
+            errors.push(format!(
+                "no inputs registered for category {:?} (but {} algorithm(s) need one)",
+                category, algorithms_in_category
+            ));
+        } else if !entries.is_empty() {
+            match primaries.len() {
+                0 => errors.push(format!(
+                    "no primary input for category {:?}; mark one entry with `primary: true`",
+                    category
+                )),
+                1 => {}
+                _ => errors.push(format!(
+                    "multiple primary inputs for category {:?}: {:?}",
+                    category, primaries
+                )),
+            }
+        }
+    }
+
+    // Partitions reuse SORT_INPUTS, so they're not validated as a
+    // separate registry. The "sort inputs exist when sort or partition
+    // algorithms exist" check rolls partition count into the sort
+    // category's expected-non-empty assertion.
+    let sort_or_partition_count =
+        ALGORITHMS.iter().filter(|e| matches!(e.category, Category::Sort | Category::Partition)).count();
+    let count = |cat: Category| ALGORITHMS.iter().filter(|e| e.category == cat).count();
+    let sort_inputs: &[SortInputEntry] = &SORT_INPUTS;
+    let rotation_inputs: &[RotationInputEntry] = &ROTATION_INPUTS;
+    let merge_inputs: &[MergeInputEntry] = &MERGE_INPUTS;
+    let small_inputs: &[SmallSortInputEntry] = &SMALL_SORT_INPUTS;
+    let qsel_inputs: &[QuickSelectInputEntry] = &QUICK_SELECT_INPUTS;
+    check_inputs(Category::Sort,        sort_inputs,     |e| e.name, |e| e.primary, sort_or_partition_count,       &mut errors);
+    check_inputs(Category::Rotation,    rotation_inputs, |e| e.name, |e| e.primary, count(Category::Rotation),     &mut errors);
+    check_inputs(Category::Merge,       merge_inputs,    |e| e.name, |e| e.primary, count(Category::Merge),        &mut errors);
+    check_inputs(Category::SmallSort,   small_inputs,    |e| e.name, |e| e.primary, count(Category::SmallSort),    &mut errors);
+    check_inputs(Category::QuickSelect, qsel_inputs,     |e| e.name, |e| e.primary, count(Category::QuickSelect),  &mut errors);
+
+    if errors.is_empty() { Ok(()) } else { Err(errors.join("\n")) }
+}
+
+/// Ctor-style early-init that runs [`validate_registries`] before
+/// anything else. A registry-shape error here panics at process start —
+/// no test, viz, or bench gets to observe the inconsistent state.
+#[ctor::ctor]
+fn validate_at_startup() {
+    if let Err(msg) = validate_registries() {
+        // Skip validation when the binary was re-execed as the
+        // subprocess test runner — that ctor (`subprocess_dispatch`)
+        // runs after this one and has its own exit path. Panicking
+        // here would mask its more-useful error message.
+        if std::env::var(SUBPROCESS_ENV_VAR).is_ok() {
+            return;
+        }
+        panic!("bench_registry validation failed:\n{msg}");
+    }
+}
+
+// ── Shared per-category dispatchers ──────────────────────────────────────────
+//
+// The macro-generated `run_with_input` in every algorithm entry is a
+// one-liner around the matching helper below. Putting the
+// init-event-emitting code in a single place keeps the generated code
+// small and centralises the visualiser contract ("CreateArr + N
+// WriteData fully describes the initial state").
+
+/// Run a sort against a named input. Looks the input up in
+/// [`SORT_INPUTS`], generates the array via the registered `generate`
+/// fn, emits the initial-state events on `logger`, then calls
+/// `sort_fn(arr, logger)`.
+pub fn run_sort_with_input(
+    input_name: &str,
+    config: &RunConfig,
+    sort_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
+    logger: &mut dyn sort_logger::SortLogger<usize>,
+) {
+    let input = SORT_INPUTS
+        .iter()
+        .find(|e| e.name == input_name)
+        .unwrap_or_else(|| panic!("sort input '{input_name}' not registered"));
+    let mut arr = (input.generate)(config);
+    emit_init_events(&arr, logger);
+    sort_fn(&mut arr, logger);
+}
+
+/// Run a rotation against a named input. Returns the (arr, split) tuple
+/// from the input registry; rotates with `rotate_fn(arr, split, logger)`.
+pub fn run_rotation_with_input(
+    input_name: &str,
+    config: &RunConfig,
+    rotate_fn: fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>),
+    logger: &mut dyn sort_logger::SortLogger<usize>,
+) {
+    let input = ROTATION_INPUTS
+        .iter()
+        .find(|e| e.name == input_name)
+        .unwrap_or_else(|| panic!("rotation input '{input_name}' not registered"));
+    let (mut arr, split) = (input.generate)(config);
+    emit_init_events(&arr, logger);
+    rotate_fn(&mut arr, split, logger);
+}
+
+/// Run a partition against a named input. Partitions register with
+/// their pivot selector baked in, so the standalone partition fn
+/// signature matches a sort's — `(&mut [usize], &mut dyn SortLogger)`
+/// — and the input registry is just `SORT_INPUTS`. The (left_end,
+/// right_start) tuple a partition returns isn't useful to the
+/// visualiser; tests use the `PartitionFnPtr` variant that keeps the
+/// return value.
+pub fn run_partition_with_input(
+    input_name: &str,
+    config: &RunConfig,
+    partition_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
+    logger: &mut dyn sort_logger::SortLogger<usize>,
+) {
+    let input = SORT_INPUTS
+        .iter()
+        .find(|e| e.name == input_name)
+        .unwrap_or_else(|| panic!("sort input '{input_name}' not registered"));
+    let mut arr = (input.generate)(config);
+    emit_init_events(&arr, logger);
+    partition_fn(&mut arr, logger);
+}
+
+/// Run a merge against a named input. The registry guarantees both
+/// halves of `arr` are individually sorted before merge.
+pub fn run_merge_with_input(
+    input_name: &str,
+    config: &RunConfig,
+    merge_fn: fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>),
+    logger: &mut dyn sort_logger::SortLogger<usize>,
+) {
+    let input = MERGE_INPUTS
+        .iter()
+        .find(|e| e.name == input_name)
+        .unwrap_or_else(|| panic!("merge input '{input_name}' not registered"));
+    let (mut arr, mid) = (input.generate)(config);
+    emit_init_events(&arr, logger);
+    merge_fn(&mut arr, mid, logger);
+}
+
+/// Run a quick-select against a named input. The input supplies both
+/// the array and the target index; the algorithm reorders the array so
+/// `arr[target]` ends up as the value it would have after a full sort.
+pub fn run_quick_select_with_input(
+    input_name: &str,
+    config: &RunConfig,
+    quick_select_fn: fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>),
+    logger: &mut dyn sort_logger::SortLogger<usize>,
+) {
+    let input = QUICK_SELECT_INPUTS
+        .iter()
+        .find(|e| e.name == input_name)
+        .unwrap_or_else(|| panic!("quick-select input '{input_name}' not registered"));
+    let (mut arr, target) = (input.generate)(config);
+    emit_init_events(&arr, logger);
+    quick_select_fn(&mut arr, target, logger);
+}
+
+/// Run a small-sort against a named input. Mirrors `run_sort_with_input`
+/// but pulls from [`SMALL_SORT_INPUTS`].
+pub fn run_small_sort_with_input(
+    input_name: &str,
+    config: &RunConfig,
+    sort_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
+    logger: &mut dyn sort_logger::SortLogger<usize>,
+) {
+    let input = SMALL_SORT_INPUTS
+        .iter()
+        .find(|e| e.name == input_name)
+        .unwrap_or_else(|| panic!("small-sort input '{input_name}' not registered"));
+    let mut arr = (input.generate)(config);
+    emit_init_events(&arr, logger);
+    sort_fn(&mut arr, logger);
+}
+
+/// Emit the visualiser's "this array exists with these initial values"
+/// event sequence: one CreateAuxArrT + one SetScale (so the visualiser
+/// fixes its bar-height scale before the writes arrive) + one WriteData
+/// per element. Without the SetScale, ascending init sequences like
+/// `0..n` trigger an O(n²) cascade of full-redraws because each write
+/// becomes the new max. The log alone fully describes the initial state.
+fn emit_init_events(arr: &[usize], logger: &mut dyn sort_logger::SortLogger<usize>) {
+    logger.log_aux_arr_t(arr);
+    if let Some(&max) = arr.iter().max() {
+        logger.set_scale(arr, max);
+    }
+    let name = arr.as_ptr() as usize;
+    for (i, &v) in arr.iter().enumerate() {
+        logger.log(sort_logger::SortLog::WriteData { name, ind: i, data: v });
+    }
 }
 
 pub struct AlgorithmEntry {
@@ -75,11 +452,20 @@ pub struct AlgorithmEntry {
     pub big_o: &'static str,
     /// Sort-relevant flag; ignored for non-sort categories.
     pub stable: bool,
-    /// Build a category-appropriate input from `config`, emit its
-    /// CreateArr + Writes init events on the supplied logger, then run
-    /// the algorithm's natural-signature method. The log produced is
-    /// enough to drive the visualiser end-to-end.
-    pub run_default: fn(&RunConfig, &mut dyn sort_logger::SortLogger<usize>),
+    /// Optional contract-defined upper bound on input size. `None` =
+    /// unbounded (every general-purpose sort/rotation/partition/merge).
+    /// `Some(n)` means inputs larger than `n` are out-of-contract —
+    /// e.g. a small-sort with `THRESHOLD = 32`. The interactive picker
+    /// uses this to cap the size prompt; `run_with_input` does its own
+    /// defensive clamp so misuse from elsewhere is still safe.
+    pub max_input_size: Option<usize>,
+    /// Run the algorithm against the named input. The input must be
+    /// registered in the input registry matching `category`. The
+    /// algorithm emits all events (including CreateArr + N WriteData
+    /// for the input) on `logger` — the log alone fully describes the
+    /// visualisation.
+    pub run_with_input:
+        fn(input_name: &str, config: &RunConfig, &mut dyn sort_logger::SortLogger<usize>),
     /// Run the category-appropriate correctness battery (multiple inputs
     /// + verifier per input). Panics on failure. Uses `NoOpLogger`
     /// internally; never emits visualiser events.
@@ -124,122 +510,123 @@ macro_rules! register_test_cap {
     };
 }
 
-/// All registered bench entries in canonical menu order — depth-first
+/// All registered algorithm entries in canonical menu order — depth-first
 /// traversal of the registry's tree, which sorts each level by subtree
-/// size so specialised (small-group) sorts surface first.
+/// size so specialised (small-group) entries surface first.
 ///
-/// `linkme` makes no guarantee about link-time ordering, so consumers that
-/// produce user-visible output should iterate this instead of `BENCH_SORTS`
-/// directly. Bench output and UI menu therefore surface variants in the
-/// same order without either side having to declare it.
-pub fn sorted() -> Vec<&'static SortBenchEntry> {
-    let order: std::collections::HashMap<String, usize> = sort_registry_core::get_registered_sorts()
-        .into_iter()
-        .enumerate()
-        .map(|(i, n)| (n, i))
-        .collect();
-    let mut v: Vec<&'static SortBenchEntry> = BENCH_SORTS.iter().collect();
+/// `linkme` makes no guarantee about link-time ordering, so consumers
+/// that produce user-visible output should iterate this instead of
+/// `ALGORITHMS` directly. Bench output and UI menu therefore surface
+/// variants in the same order without either side having to declare it.
+pub fn sorted() -> Vec<&'static AlgorithmEntry> {
+    let order: std::collections::HashMap<String, usize> =
+        sort_registry_core::get_registered_sorts()
+            .into_iter()
+            .enumerate()
+            .map(|(i, n)| (n, i))
+            .collect();
+    let mut v: Vec<&'static AlgorithmEntry> = ALGORITHMS.iter().collect();
     v.sort_by_key(|e| (order.get(e.name).copied().unwrap_or(usize::MAX), e.name));
     v
 }
 
-pub fn for_each<F: FnMut(&'static SortBenchEntry)>(mut f: F) {
+pub fn for_each<F: FnMut(&'static AlgorithmEntry)>(mut f: F) {
     for entry in sorted() {
         f(entry);
     }
 }
 
-#[macro_export]
-macro_rules! for_each_bench_sort {
-    ($entry:ident, $body:block) => {
-        for $entry in $crate::bench_registry::BENCH_SORTS {
-            $body
-        }
-    };
-}
-
 /// Environment variable name used to put a subprocess into
-/// "run check_sort and exit" mode (see [`subprocess_dispatch`]).
+/// "run correctness battery for one algorithm and exit" mode.
 const SUBPROCESS_ENV_VAR: &str = "AVB_RUN_CHECK_SORT";
 
 /// Ctor-style early-init that hijacks the process before libtest's main
-/// runs. When the parent sets `AVB_RUN_CHECK_SORT=<sort name>` and
-/// re-execs the same binary, the child enters here, looks the sort up
-/// in `BENCH_SORTS`, runs `check_sort`, and exits — never reaching the
-/// test runner at all. The result: the subprocess always shares the
-/// parent's exact build, so a freshly-added sort is immediately
-/// available without rebuilding a separate runner binary.
+/// runs. When the parent sets `AVB_RUN_CHECK_SORT=<algorithm name>` and
+/// re-execs the same binary, the child enters here, looks the algorithm
+/// up in `ALGORITHMS`, runs its category battery via `run_correctness`,
+/// and exits — never reaching the test runner at all. The subprocess
+/// always shares the parent's exact build, so a freshly-added algorithm
+/// is immediately available without rebuilding a separate runner.
 #[ctor::ctor]
 fn subprocess_dispatch() {
-    let Ok(sort_name) = std::env::var(SUBPROCESS_ENV_VAR) else { return };
-    let entry = BENCH_SORTS
-        .iter()
-        .find(|e| e.name == sort_name)
-        .unwrap_or_else(|| {
-            eprintln!("sort not registered: {sort_name}");
-            std::process::exit(2);
-        });
-    correctness::check_sort(entry);
+    let Ok(name) = std::env::var(SUBPROCESS_ENV_VAR) else { return };
+    let entry = ALGORITHMS.iter().find(|e| e.name == name).unwrap_or_else(|| {
+        eprintln!("algorithm not registered: {name}");
+        std::process::exit(2);
+    });
+    (entry.run_correctness)();
     std::process::exit(0);
 }
 
 /// Correctness-test runner. Public so the subprocess dispatch above can
 /// call it; not `#[cfg(test)]` for the same reason.
+///
+/// Each category exposes one generic *battery* function that takes the
+/// algorithm's natural-signature fn pointer and the algorithm's name.
+/// The per-leaf `run_correctness` emitted by every `*_family!` macro
+/// calls into the matching battery, so the test logic is written once
+/// per category rather than inlined per leaf.
 pub mod correctness {
-    use super::SortBenchEntry;
+    use super::max_n_for_tests;
+    use crate::traits::log_traits::NoOpLogger;
     use crate::utils::array_gen::{get_arr, get_reversed_arr, get_rand_arr, get_rand_arr_in_range};
     use rand::Rng;
     use rand::seq::SliceRandom;
     use rand::thread_rng;
 
-    /// Run a sort on `arr` and verify the result is a sorted permutation
-    /// of the input. Panics on mismatch. Emits a `RUNNING: <label>` line
-    /// to stderr before each call so that — when the subprocess is killed
-    /// by an outer timeout — the parent can drain stderr and recover the
-    /// exact input that was in flight.
-    fn run_and_verify(entry: &SortBenchEntry, arr: &mut Vec<usize>, label: &str) {
+    /// Type alias for the natural-signature sort entry the macros emit
+    /// (`<Sort>::sort(arr, logger)` constrained to `usize` + `NoOpLogger`
+    /// for the test path).
+    pub type SortFnPtr = fn(&mut [usize], &mut NoOpLogger);
+
+    pub type RotationFnPtr = fn(&mut [usize], usize, &mut NoOpLogger);
+    /// Standalone-partition fn pointer for tests. The pivot selector
+    /// is baked into the registered partition, so callers don't pass
+    /// one — but the (left_end, right_start) tuple is still returned
+    /// so the battery can verify the partition contract.
+    pub type PartitionFnPtr = fn(&mut [usize], &mut NoOpLogger) -> (usize, usize);
+    pub type MergeFnPtr = fn(&mut [usize], usize, &mut NoOpLogger);
+    pub type SmallSortFnPtr = fn(&mut [usize], &mut NoOpLogger);
+    pub type QuickSelectFnPtr = fn(&mut [usize], usize, &mut NoOpLogger);
+
+    /// Run `sort_fn` on `arr` and verify it produces a sorted permutation.
+    /// Emits a `RUNNING: …` stderr line so subprocess TLE diagnostics can
+    /// recover the in-flight input.
+    fn sort_run_and_verify(
+        sort_fn: SortFnPtr,
+        name: &str,
+        arr: &mut Vec<usize>,
+        label: &str,
+    ) {
         use std::io::Write;
-        let _ = writeln!(
-            std::io::stderr(),
-            "RUNNING: '{}' (n={})",
-            label,
-            arr.len()
-        );
+        let _ = writeln!(std::io::stderr(), "RUNNING: '{}' (n={})", label, arr.len());
         let _ = std::io::stderr().flush();
         let mut expected = arr.clone();
         expected.sort();
-        (entry.run)(arr);
+        let mut logger = NoOpLogger;
+        sort_fn(arr, &mut logger);
         assert_eq!(
             arr, &expected,
             "{}: failed on '{}' (n={})",
-            entry.name, label, expected.len()
+            name, label, expected.len()
         );
     }
 
-    /// Comprehensive correctness test for a single sort.
-    ///
-    /// Random-input sizes are capped at `entry.max_n_for_tests` (default
-    /// `usize::MAX`); structured patterns always run. Runs synchronously
-    /// in-process — wall-clock timeout / killing on TLE is handled by the
-    /// subprocess wrapper that calls this.
-    pub fn check_sort(entry: &SortBenchEntry) {
+    /// Generic sort correctness battery. Pattern bank is identical to the
+    /// pre-refactor `check_sort` — same inputs, same caps, same assertions
+    /// — just with the sort_fn passed in instead of an entry.
+    pub fn sort_battery(sort_fn: SortFnPtr, name: &str) {
         let mut rng = thread_rng();
-        let cap = super::max_n_for_tests(entry.name).unwrap_or(usize::MAX);
+        let cap = max_n_for_tests(name).unwrap_or(usize::MAX);
 
-        // Skip inputs larger than the sort's declared cap (applies to
-        // both random and structured patterns — for a sort that can't
-        // handle n=500, that's true regardless of input shape). Small
-        // trivial cases (empty, single, pairs, perms of n<=5) always
-        // run.
         macro_rules! check {
             ($arr:expr, $label:expr) => {{
                 let arr_vec: Vec<usize> = $arr.into_iter().collect();
                 if arr_vec.len() <= cap {
-                    run_and_verify(entry, &mut { arr_vec }, $label)
+                    sort_run_and_verify(sort_fn, name, &mut { arr_vec }, $label)
                 }
             }};
         }
-        // Alias kept for readability at the random-input call sites.
         macro_rules! check_rand {
             ($n:expr, $arr:expr, $label:expr) => {
                 check!($arr, $label);
@@ -318,13 +705,12 @@ pub mod correctness {
         check_rand!(5000, get_rand_arr(5000), "random 5000");
     }
 
-    /// Verify that a stable sort preserves relative order of equal elements.
-    ///
-    /// Encodes (value, original_index) pairs where comparison is by value only
-    /// (value in high bits, index in low bits). After sorting, equal-valued
-    /// elements must appear in ascending original-index order.
-    pub fn check_sort_stable(entry: &SortBenchEntry) {
-        if !entry.stable {
+    /// Stability battery — runs only on sorts that claim `stable = true`.
+    /// Encodes (value, original_index) pairs where comparison is by value
+    /// only (value in high bits, index in low bits). After sorting,
+    /// equal-valued elements must appear in ascending original-index order.
+    pub fn sort_stability_battery(sort_fn: SortFnPtr, name: &str, stable: bool) {
+        if !stable {
             return;
         }
         let value_bits = 32;
@@ -345,25 +731,224 @@ pub mod correctness {
                 .enumerate()
                 .map(|(i, &v)| encode(v, i))
                 .collect();
-            (entry.run)(&mut arr);
+            let mut logger = NoOpLogger;
+            sort_fn(&mut arr, &mut logger);
 
             for i in 1..arr.len() {
                 assert!(
                     decode_value(arr[i - 1]) <= decode_value(arr[i]),
                     "{}: stability '{}' — not sorted at position {}",
-                    entry.name, label, i
+                    name, label, i
                 );
                 if decode_value(arr[i - 1]) == decode_value(arr[i]) {
                     assert!(
                         decode_index(arr[i - 1]) < decode_index(arr[i]),
                         "{}: stability '{}' — order violated at position {} \
                          (value={}, indices {} then {})",
-                        entry.name, label, i,
+                        name, label, i,
                         decode_value(arr[i]),
                         decode_index(arr[i - 1]),
                         decode_index(arr[i]),
                     );
                 }
+            }
+        }
+    }
+
+    // ── Component batteries (rotation/partition/merge/small-sort) ────────────
+    //
+    // These are lighter than the sort battery — each category has a few
+    // canonical inputs that exercise its contract. The generated
+    // `run_correctness` per family calls into the matching battery.
+
+    /// Verify a rotation produces `arr[split..] ++ arr[..split]` (left
+    /// rotation by `split` positions, equivalently: split-point moves to
+    /// front).
+    pub fn rotation_battery(rotate_fn: RotationFnPtr, name: &str) {
+        let cases: Vec<(usize, usize, &str)> = vec![
+            (8, 0, "n=8 split=0"),
+            (8, 1, "n=8 split=1"),
+            (8, 4, "n=8 split=mid"),
+            (8, 7, "n=8 split=n-1"),
+            (8, 8, "n=8 split=n"),
+            (100, 33, "n=100 split=33"),
+            (100, 67, "n=100 split=67"),
+            (1000, 500, "n=1000 split=mid"),
+        ];
+        for (n, split, label) in cases {
+            let original: Vec<usize> = (0..n).collect();
+            let mut arr = original.clone();
+            let mut logger = NoOpLogger;
+            rotate_fn(&mut arr, split, &mut logger);
+            let mut expected: Vec<usize> = original[split..].to_vec();
+            expected.extend_from_slice(&original[..split]);
+            assert_eq!(
+                arr, expected,
+                "{}: rotation failed on '{}'",
+                name, label
+            );
+        }
+    }
+
+    /// Verify a partition (with pivot selection baked in) produces a
+    /// left region of "≤ x" and a right region of "≥ x" for some
+    /// boundary value `x` — equivalent to:
+    /// `max(arr[..left_end]) ≤ min(arr[right_start..])`. Also checks
+    /// the result is a permutation of the input so no element was
+    /// dropped or duplicated.
+    pub fn partition_battery(partition_fn: PartitionFnPtr, name: &str) {
+        // Variety of shapes the cross-product (P × V) has to handle:
+        // reverse-sorted (stresses pivot landing), random, already
+        // sorted, all-equal, and a small case. Sizes ≥ 16 so that
+        // every pivot selector (including MedianOfMedians which wants
+        // n ≥ 5 and Ninther which wants n ≥ 9) operates in-band.
+        let mut cases: Vec<(Vec<usize>, &str)> = Vec::new();
+        cases.push(((0..16).rev().collect(),     "n=16 reverse"));
+        cases.push(((0..100).rev().collect(),    "n=100 reverse"));
+        cases.push(((0..500).rev().collect(),    "n=500 reverse"));
+        cases.push(((0..100).collect(),          "n=100 sorted"));
+        cases.push((vec![42usize; 50],           "n=50 all-equal"));
+        cases.push((
+            (0..200).map(|i| (i * 37 + 13) % 200).collect(),
+            "n=200 random-ish",
+        ));
+        for (mut arr, label) in cases {
+            let mut sorted_original = arr.clone();
+            sorted_original.sort();
+            let mut logger = NoOpLogger;
+            let (left_end, right_start) = partition_fn(&mut arr, &mut logger);
+            assert!(
+                left_end <= right_start,
+                "{}: partition '{}' — left_end={} > right_start={}",
+                name, label, left_end, right_start
+            );
+            let max_left = arr[..left_end].iter().copied().max().unwrap_or(usize::MIN);
+            let min_right = arr[right_start..].iter().copied().min().unwrap_or(usize::MAX);
+            assert!(
+                max_left <= min_right,
+                "{}: partition '{}' — max_left={} > min_right={} (left_end={}, right_start={})",
+                name, label, max_left, min_right, left_end, right_start
+            );
+            let mut sorted_arr = arr.clone();
+            sorted_arr.sort();
+            assert_eq!(
+                sorted_arr, sorted_original,
+                "{}: partition '{}' — output is not a permutation of input",
+                name, label
+            );
+        }
+    }
+
+    /// Verify a merge produces a sorted array from two pre-sorted halves
+    /// (left = `arr[..mid]`, right = `arr[mid..]`).
+    pub fn merge_battery(merge_fn: MergeFnPtr, name: &str) {
+        let cases: Vec<(usize, usize, &str)> = vec![
+            (8, 4, "n=8 mid=4"),
+            (9, 4, "n=9 mid=4"),
+            (9, 5, "n=9 mid=5"),
+            (100, 50, "n=100 mid=50"),
+            (500, 250, "n=500 mid=250"),
+        ];
+        for (n, mid, label) in cases {
+            let mut arr: Vec<usize> = Vec::with_capacity(n);
+            arr.extend((0..mid).map(|i| 2 * i));
+            arr.extend((0..n - mid).map(|i| 2 * i + 1));
+            let mut expected = arr.clone();
+            expected.sort();
+            let mut logger = NoOpLogger;
+            merge_fn(&mut arr, mid, &mut logger);
+            assert_eq!(arr, expected, "{}: merge failed on '{}'", name, label);
+        }
+    }
+
+    /// Verify a quick-select places the target-rank element at
+    /// `arr[target]` and leaves the surrounding partitions in the
+    /// "all-≤ on the left, all-≥ on the right" shape. Tests several
+    /// shapes (reverse, random, all-equal, sorted) and a few target
+    /// positions per shape.
+    pub fn quick_select_battery(quick_select_fn: QuickSelectFnPtr, name: &str) {
+        let shapes: Vec<(Vec<usize>, &str)> = vec![
+            ((0..16).rev().collect(),                                     "n=16 reverse"),
+            ((0..100).rev().collect(),                                    "n=100 reverse"),
+            ((0..200).map(|i| (i * 37 + 13) % 200).collect::<Vec<_>>(),   "n=200 random-ish"),
+            ((0..50).chain(0..50).collect::<Vec<_>>(),                    "n=100 dups"),
+            (vec![42usize; 50],                                           "n=50 all-equal"),
+            ((0..100).collect(),                                          "n=100 sorted"),
+        ];
+        for (arr_seed, shape_label) in shapes {
+            let n = arr_seed.len();
+            if n == 0 {
+                continue;
+            }
+            let mut sorted_reference = arr_seed.clone();
+            sorted_reference.sort();
+            // Pick several target positions per shape — first, last,
+            // mid, and a tail-end one — so a one-sided recursion bug
+            // surfaces from at least one case.
+            let targets: Vec<usize> = if n <= 1 {
+                vec![0]
+            } else {
+                vec![0, n / 2, n - 1, n / 3]
+            };
+            for target in targets {
+                let mut arr = arr_seed.clone();
+                let mut logger = NoOpLogger;
+                quick_select_fn(&mut arr, target, &mut logger);
+                let expected = sorted_reference[target];
+                assert_eq!(
+                    arr[target], expected,
+                    "{}: quick-select '{}' target={} — arr[target]={} expected={}",
+                    name, shape_label, target, arr[target], expected
+                );
+                for (i, &v) in arr[..target].iter().enumerate() {
+                    assert!(
+                        v <= expected,
+                        "{}: quick-select '{}' target={} — arr[{}]={} > pivot={}",
+                        name, shape_label, target, i, v, expected
+                    );
+                }
+                for (i, &v) in arr[target + 1..].iter().enumerate() {
+                    assert!(
+                        v >= expected,
+                        "{}: quick-select '{}' target={} — arr[{}]={} < pivot={}",
+                        name, shape_label, target, target + 1 + i, v, expected
+                    );
+                }
+                let mut sorted_arr = arr.clone();
+                sorted_arr.sort();
+                assert_eq!(
+                    sorted_arr, sorted_reference,
+                    "{}: quick-select '{}' target={} — not a permutation",
+                    name, shape_label, target
+                );
+            }
+        }
+    }
+
+    /// Small-sort battery — only tests sizes within the algorithm's
+    /// declared threshold. A small-sort's contract is "len ≤ THRESHOLD";
+    /// running it past that is out-of-contract, not a failure of the
+    /// algorithm.
+    pub fn small_sort_battery(sort_fn: SmallSortFnPtr, name: &str, threshold: usize) {
+        for n in 0..=threshold {
+            let mut arr: Vec<usize> = (0..n).rev().collect();
+            let mut expected = arr.clone();
+            expected.sort();
+            let mut logger = NoOpLogger;
+            sort_fn(&mut arr, &mut logger);
+            assert_eq!(arr, expected, "{}: small-sort failed on n={}", name, n);
+        }
+        // A few random permutations at the upper end.
+        if threshold >= 2 {
+            let mut rng = thread_rng();
+            for trial in 0..10 {
+                let mut arr: Vec<usize> = (0..threshold).collect();
+                arr.shuffle(&mut rng);
+                let mut expected = arr.clone();
+                expected.sort();
+                let mut logger = NoOpLogger;
+                sort_fn(&mut arr, &mut logger);
+                assert_eq!(arr, expected, "{}: small-sort random trial {}", name, trial);
             }
         }
     }
@@ -394,39 +979,37 @@ pub mod correctness {
 
 #[cfg(test)]
 pub(crate) mod test_helpers {
-    use super::{SortBenchEntry, SUBPROCESS_ENV_VAR};
+    use super::{AlgorithmEntry, SUBPROCESS_ENV_VAR};
     use std::process::{Command, Stdio};
     use std::thread;
     use std::time::{Duration, Instant};
 
-    /// Default wall-clock budget per sort. With `max_n_for_tests` caps in
-    /// place, this is purely a safety net for genuinely-hung sorts —
-    /// well-behaved sorts finish in well under a second.
+    /// Default wall-clock budget per algorithm. With `max_n_for_tests`
+    /// caps in place, this is purely a safety net for genuinely-hung
+    /// algorithms — well-behaved ones finish in well under a second.
     pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(2);
 
     /// Global serialisation lock for subprocess spawns. Cargo test runs
     /// `#[test]` functions on a thread pool by default, so without this
-    /// every per-sort test plus the aggregate test would each spawn a
-    /// child concurrently — defeating the "one-at-a-time, name printed,
-    /// killed if stuck" debugging experience. The mutex makes subprocess
-    /// spawn-to-completion atomic across all tests in the same
-    /// `cargo test` process.
+    /// every per-algorithm test plus the aggregate test would each spawn
+    /// a child concurrently — defeating the "one-at-a-time, name
+    /// printed, killed if stuck" debugging experience. The mutex makes
+    /// subprocess spawn-to-completion atomic across all tests in the
+    /// same `cargo test` process.
     static SUBPROCESS_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
-    /// Run `check_sort` for one entry in an isolated subprocess with a
-    /// wall-clock timeout. The subprocess is just the current test
-    /// binary re-executed with `AVB_RUN_CHECK_SORT=<sort name>`; the
-    /// ctor in `bench_registry.rs` intercepts that env var, runs
-    /// `check_sort`, and exits before libtest's main can touch
-    /// anything. This means the subprocess always carries the same
-    /// `BENCH_SORTS` linkme slice as the parent — no stale-binary risk.
+    /// Run the category battery for one entry in an isolated subprocess
+    /// with a wall-clock timeout. The subprocess is just the current
+    /// test binary re-executed with `AVB_RUN_CHECK_SORT=<algorithm name>`;
+    /// the ctor in `bench_registry.rs` intercepts that env var, runs the
+    /// entry's `run_correctness`, and exits before libtest's main can
+    /// touch anything. The subprocess always carries the same
+    /// `ALGORITHMS` linkme slice as the parent — no stale-binary risk.
     ///
-    /// On TLE the subprocess is killed (real OS-level kill, no leaked
-    /// threads). Returns `Ok(())` on success or `Err(message)` on TLE /
-    /// non-zero exit / spawn failure; callers decide whether to panic
-    /// (per-sort tests) or accumulate failures (the aggregate test).
+    /// On TLE the subprocess is killed. Returns `Ok(())` on success or
+    /// `Err(message)` on TLE / non-zero exit / spawn failure.
     pub fn check_sort_subprocess(
-        entry: &SortBenchEntry,
+        entry: &AlgorithmEntry,
         timeout: Duration,
     ) -> Result<(), String> {
         // Serialise across all tests in this process so output stays
@@ -454,7 +1037,7 @@ pub(crate) mod test_helpers {
                     }
                     let output = child.wait_with_output().expect("wait_with_output");
                     return Err(format!(
-                        "{}: check_sort failed (exit {:?}).\nstderr:\n{}",
+                        "{}: correctness failed (exit {:?}).\nstderr:\n{}",
                         entry.name,
                         status.code(),
                         String::from_utf8_lossy(&output.stderr).trim()
@@ -493,10 +1076,10 @@ pub(crate) mod test_helpers {
     }
 
     /// Panic-on-failure wrapper around `check_sort_subprocess`. Used by
-    /// the per-sort `__sf_*_test::correctness` tests where each test is
-    /// independent and a TLE means that one test fails (cleanly, without
-    /// blocking the rest of the run).
-    pub fn check_sort_subprocess_assert(entry: &SortBenchEntry, timeout: Duration) {
+    /// the per-algorithm `__sf_*_test::correctness` tests where each
+    /// test is independent and a TLE means that one test fails
+    /// (cleanly, without blocking the rest of the run).
+    pub fn check_sort_subprocess_assert(entry: &AlgorithmEntry, timeout: Duration) {
         if let Err(msg) = check_sort_subprocess(entry, timeout) {
             panic!("{msg}");
         }
@@ -508,18 +1091,18 @@ mod tests {
     use super::*;
     use super::test_helpers::{check_sort_subprocess, DEFAULT_TIMEOUT};
 
-    /// Run check_sort (in subprocess) on every registered sort. Each
-    /// sort prints `[i/N] sort name … ok|FAIL|TLE` on its own line so
-    /// progress is visible in real time; failures accumulate into a
-    /// summary panic at the end so one bad sort doesn't mask others.
+    /// Run the category battery (in subprocess) for every registered
+    /// algorithm. Each prints `[i/N] name … ok|FAIL|TLE` so progress is
+    /// visible in real time; failures accumulate into a summary panic at
+    /// the end so one bad entry doesn't mask others.
     #[test]
-    fn all_registered_sorts_are_correct() {
+    fn all_registered_algorithms_are_correct() {
         use std::io::Write;
-        let total = BENCH_SORTS.len();
-        let mut failures: Vec<(String, String)> = Vec::new(); // (sort name, error message)
+        let total = ALGORITHMS.len();
+        let mut failures: Vec<(String, String)> = Vec::new();
         let mut stderr = std::io::stderr();
         let suite_start = std::time::Instant::now();
-        for (idx, entry) in BENCH_SORTS.iter().enumerate() {
+        for (idx, entry) in ALGORITHMS.iter().enumerate() {
             let prefix = format!("[{}/{}] {}", idx + 1, total, entry.name);
             let _ = write!(stderr, "  {prefix} ... ");
             let _ = stderr.flush();
@@ -535,7 +1118,7 @@ mod tests {
                 }
             }
         }
-        assert!(total > 0, "No sorts registered in BENCH_SORTS");
+        assert!(total > 0, "No algorithms registered in ALGORITHMS");
 
         let elapsed = suite_start.elapsed();
         let _ = writeln!(
@@ -547,12 +1130,12 @@ mod tests {
             elapsed
         );
         if !failures.is_empty() {
-            let _ = writeln!(stderr, "Failed sorts:");
+            let _ = writeln!(stderr, "Failed:");
             for (name, _) in &failures {
                 let _ = writeln!(stderr, "  ✘ {name}");
             }
             panic!(
-                "{} of {} sorts failed correctness check:\n\n{}",
+                "{} of {} algorithms failed correctness check:\n\n{}",
                 failures.len(),
                 total,
                 failures
@@ -561,16 +1144,6 @@ mod tests {
                     .collect::<Vec<_>>()
                     .join("\n\n")
             );
-        }
-    }
-
-    /// Verify stability for every sort that claims to be stable. Runs
-    /// in-process (no subprocess) — stability tests use only small,
-    /// fast inputs.
-    #[test]
-    fn all_stable_sorts_are_stable() {
-        for entry in BENCH_SORTS.iter() {
-            super::correctness::check_sort_stable(entry);
         }
     }
 }

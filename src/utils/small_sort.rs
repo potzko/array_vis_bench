@@ -128,6 +128,88 @@ pub trait SmallSort {
     fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) -> bool;
 }
 
+/// Register a `SmallSort` impl as a standalone algorithm. Sentinel
+/// small-sorts (those with `THRESHOLD = 0`) should NOT call this —
+/// they're glue, not algorithms.
+macro_rules! register_small_sort {
+    ($mod:ident, $ty:ty, $variant_name:expr) => {
+        mod $mod {
+            use super::*;
+            use crate::traits::log_traits::{NoOpLogger, SortLogger};
+
+            const NAME: &str = const_format::concatcp!("small-sort: ", $variant_name);
+
+            fn sort_dyn(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) {
+                let _ = <$ty as crate::utils::small_sort::SmallSort>::sort(arr, logger);
+            }
+            fn sort_noop(arr: &mut [usize], logger: &mut NoOpLogger) {
+                let _ = <$ty as crate::utils::small_sort::SmallSort>::sort(arr, logger);
+            }
+
+            fn run_with_input(
+                input_name: &str,
+                config: &crate::bench_registry::RunConfig,
+                logger: &mut dyn SortLogger<usize>,
+            ) {
+                // Clamp input size to the small-sort's declared
+                // threshold; behaviour above-threshold is undefined per
+                // the trait's contract.
+                let threshold = <$ty as crate::utils::small_sort::SmallSort>::THRESHOLD;
+                let clamped = crate::bench_registry::RunConfig {
+                    size: config.size.min(threshold),
+                    seed: config.seed,
+                };
+                crate::bench_registry::run_small_sort_with_input(
+                    input_name, &clamped, sort_dyn, logger,
+                );
+            }
+
+            fn run_correctness() {
+                crate::bench_registry::correctness::small_sort_battery(
+                    sort_noop,
+                    NAME,
+                    <$ty as crate::utils::small_sort::SmallSort>::THRESHOLD,
+                );
+            }
+
+            #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
+            pub(super) static ENTRY: crate::bench_registry::AlgorithmEntry =
+                crate::bench_registry::AlgorithmEntry {
+                    name: NAME,
+                    category: crate::bench_registry::Category::SmallSort,
+                    big_o: "O(K)",
+                    stable: false,
+                    max_input_size: Some(
+                        <$ty as crate::utils::small_sort::SmallSort>::THRESHOLD,
+                    ),
+                    run_with_input,
+                    run_correctness,
+                };
+
+            #[ctor::ctor]
+            fn register_path() {
+                sort_registry_core::register_sort_path(
+                    NAME,
+                    "O(K)",
+                    false,
+                    &["small-sorts", $variant_name],
+                );
+            }
+
+            #[cfg(test)]
+            mod small_sort_test {
+                #[test]
+                fn correctness() {
+                    crate::bench_registry::test_helpers::check_sort_subprocess_assert(
+                        &super::ENTRY,
+                        crate::bench_registry::test_helpers::DEFAULT_TIMEOUT,
+                    );
+                }
+            }
+        }
+    };
+}
+
 /// Subtrait of [`SmallSort`] for variants whose threshold is strictly
 /// above 1 — i.e. they actually do sorting work for arrays larger than a
 /// single element. Use this bound on sorts whose algorithm relies on the
@@ -168,6 +250,7 @@ impl SmallSort for Size1SmallSort {
 pub struct Size2SmallSort;
 combo_codegen::component!(SmallSort, Size2SmallSort, "size: 2");
 combo_codegen::component!(NonTrivialSmallSort, Size2SmallSort, "size: 2");
+register_small_sort!(register_size2, Size2SmallSort, "size: 2");
 
 impl SmallSort for Size2SmallSort {
     const THRESHOLD: usize = 2;
@@ -195,6 +278,10 @@ combo_codegen::component!(NonTrivialSmallSort, InsertionSmallSort<LinearInsertio
 combo_codegen::component!(NonTrivialSmallSort, InsertionSmallSort<LinearInsertion, 32>, "insertion: 32");
 combo_codegen::component!(NonTrivialSmallSort, InsertionSmallSort<BinaryInsertion, 16>, "binary insertion: 16");
 combo_codegen::component!(NonTrivialSmallSort, InsertionSmallSort<BinaryInsertion, 32>, "binary insertion: 32");
+register_small_sort!(register_ins_linear_16, InsertionSmallSort<LinearInsertion, 16>, "insertion: 16");
+register_small_sort!(register_ins_linear_32, InsertionSmallSort<LinearInsertion, 32>, "insertion: 32");
+register_small_sort!(register_ins_binary_16, InsertionSmallSort<BinaryInsertion, 16>, "binary insertion: 16");
+register_small_sort!(register_ins_binary_32, InsertionSmallSort<BinaryInsertion, 32>, "binary insertion: 32");
 
 impl<S: InsertionStrategy, const N: usize> SmallSort for InsertionSmallSort<S, N> {
     const THRESHOLD: usize = N;
@@ -214,6 +301,7 @@ impl<S: InsertionStrategy, const N: usize> NonTrivialSmallSort for InsertionSmal
 pub struct NetworkSmallSort;
 combo_codegen::component!(SmallSort, NetworkSmallSort, "network: 8");
 combo_codegen::component!(NonTrivialSmallSort, NetworkSmallSort, "network: 8");
+register_small_sort!(register_network_8, NetworkSmallSort, "network: 8");
 
 impl SmallSort for NetworkSmallSort {
     const THRESHOLD: usize = 8;
@@ -238,6 +326,7 @@ impl NonTrivialSmallSort for NetworkSmallSort {}
 pub struct Network16SmallSort;
 combo_codegen::component!(SmallSort, Network16SmallSort, "network: 16");
 combo_codegen::component!(NonTrivialSmallSort, Network16SmallSort, "network: 16");
+register_small_sort!(register_network_16, Network16SmallSort, "network: 16");
 
 impl SmallSort for Network16SmallSort {
     const THRESHOLD: usize = 16;

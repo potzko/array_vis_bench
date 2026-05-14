@@ -1,41 +1,77 @@
 # array_vis_bench
 
-A sorting algorithm benchmark and visualisation framework. Implements 50+ sorting algorithms across 11 families, with animated GIF visualisation and Criterion-based benchmarking.
+A benchmark and visualisation framework for ordered-data algorithms — sorts
+and their building blocks (rotations, partitions, merges, quick-selects,
+small-sorts). Cross-products of generic parameter slots are auto-enumerated
+into one flat registry; the same registry feeds the interactive
+visualiser, the speed-test binary, and the correctness test harness.
 
 ## Binaries
 
-- **`array_vis_bench`** (default) — interactive visualiser. Presents a tree menu to pick a sort, array type (random/ascending/descending), and size. Runs the sort with a `VisualizerLogger` that captures every comparison and swap, then renders an animated GIF.
-- **`speed_test`** (`cargo run --bin speed_test`) — lightweight speed comparison. Runs every registered sort against a shuffled array, measures median wall-clock time, prints results fastest-first. No Criterion overhead.
-- **Benchmarks** (`cargo bench --bench sorts`) — full Criterion benchmarks with adaptive thresholding that drops slow sorts at larger array sizes.
+- **`array_vis_bench`** (default) — interactive visualiser. Walks a
+  category → family → variant menu, asks for an input shape and array
+  size, then renders an MP4 of the resulting `SortLog` stream.
+- **`speed_test`** (`cargo run --bin speed_test`) — runs every registered
+  algorithm against the primary input for its category and prints
+  median wall-clock times, fastest-first.
+- **Benchmarks** (`cargo bench --bench sorts`) — Criterion benchmarks with
+  adaptive thresholding for the slow algorithms.
+
+## Algorithm categories
+
+Every registered algorithm belongs to one of six categories
+(`bench_registry::Category`). The top-level menu groups by category:
+
+| Category    | Where it's registered                                  |
+|-------------|--------------------------------------------------------|
+| sorts       | every family folder in `src/sorts/`                    |
+| rotations   | `src/utils/rotation/`                                  |
+| partitions  | `src/sorts/quick_sorts/partitions_standalone.rs`       |
+| merges      | `src/sorts/merge_sorts/standalone_registry.rs`         |
+| quick-selects | `src/sorts/quick_selects/standalone_registry.rs`     |
+| small-sorts | `src/utils/small_sort.rs`                              |
+
+Inputs are also per-category: `bench_registry::SORT_INPUTS`,
+`ROTATION_INPUTS`, etc. Each input registry has exactly one entry marked
+`primary: true` — the default the harness picks when nothing is specified.
 
 ## Project structure
 
 ```
 src/
   sorts/            — sort algorithm implementations, organised by family
-    merge_sorts/    — the actively developed family (sort_family! system)
-    shell_sorts/    — shell sort, shell-shell sort, gap sequences
-    quick_sorts/    — quicksort partition/pivot strategy variants
     bubble_sorts/   — bubble, shaker, odd-even
+    beap_sort/      — beap (bi-parental) heap sort + quick-build variants
     circle_sorts/   — recursive and bottom-up circle sorts
-    comb_sorts/     — comb sort with configurable shrink factors
+    comb_sorts/     — comb sort, parameterised over shrink ratio
     cycle_sorts/    — write-optimal cycle sort
-    heap_sort/      — binary/ternary/n-ary heaps, heap-quick hybrids
+    fun_sorts/      — slow sort, stooge sort, quick surrender, …
+    heap_sort/      — N-ary heap sort + quick-build variants
     insertion_sorts/ — baseline insertion sort
-    rod_sorts/      — rod sort (branching-strategy parameterised)
-    fun_sorts/      — slow sort, stooge sort, quick surrender, etc.
-    merge_sorts_old/ — legacy hand-written merge sorts (superseded)
+    merge_sorts/    — merge sort variants + standalone merge algorithms
+    quick_sorts/    — quicksort + standalone partition algorithms
+    quick_selects/  — quickselect (single and dual pivot) + standalone
+    quick_heap_sort/ — quick-heap hybrid sorts
+    rod_sorts/      — rod sort, parameterised over branching strategy
+    shell_sorts/    — shell sort + shell-shell sort, parameterised over
+                       gap sequence
+    weak_heap_sort/ — weak heap sort
   utils/            — shared building blocks
-    rotation/       — 11 array rotation algorithms (reversal, juggling, trinity, etc.)
-    shell_sequences/ — gap sequence generators (Knuth, Sedgewick, Ciura, Pratt, etc.)
-    shell_branching/ — branching strategies for shell-shell/rod sort
-  traits/           — SortAlgo trait, global registries, create_sort! macro
-  rotations/        — convenience re-exports from utils/rotation
-  visualise/        — GIF rendering bridge (delegates to sort_vis crate)
-  sort_test/        — correctness validation harness
-  bench_registry.rs — linkme distributed slice for benchmark entries
-  main.rs           — interactive CLI with tree-based sort selection
-  bin/speed_test.rs — lightweight speed comparison binary
+    rotation/       — 11 array rotation algorithms (reversal, juggling,
+                       trinity, drill, helix, piston, grail, gries-mills,
+                       bridge, contrev, auxiliary)
+    shell_sequences/ — gap sequence generators (Knuth, Sedgewick, Ciura,
+                       Pratt, …)
+    shell_branching/ — branching strategies for shell-shell / rod sort
+    small_sort.rs   — small-sort threshold strategies
+  traits/           — SortLogger re-exports + the legacy SortAlgo trait
+  visualise/        — MP4 rendering bridge (delegates to sort_vis crate)
+  inputs.rs         — per-category input definitions (shuffled, ascending,
+                       all-same, …)
+  bench_registry.rs — Category enum, ALGORITHMS distributed slice,
+                       per-category input slices and dispatchers
+  main.rs           — interactive CLI
+  bin/speed_test.rs — speed comparison binary
 benches/
   sorts.rs          — Criterion benchmark with adaptive thresholding
 ```
@@ -44,20 +80,35 @@ benches/
 
 | Crate | Purpose |
 |---|---|
-| `sort_logger` | `SortLogger<T>` trait + `NoOpLogger`/`VisualizerLogger`. Zero-cost instrumentation for every sort operation. |
-| `sort_vis` | GIF renderer. Replays a `Vec<SortLog>` into an animated image. |
-| `sort_registry_core` | Sort metadata registry and navigation-tree builder (`SortTree`). |
-| `sort_registry_macro` | `#[derive(SortRegistry)]` and `sort_family!` proc macros for automatic registration. |
+| `sort_logger` | `SortLogger<T>` trait, `SortLog<T>` event enum, `NoOpLogger`, `VisualizerLogger`. |
+| `sort_vis` | MP4 / framebuffer renderer. Replays a `Vec<SortLog>` into an animation. |
+| `sort_registry_core` | Navigation-tree builder (`SortTree`) and the per-leaf `register_sort_path` hook. |
+| `sort_registry_macro` | `sort_family!` proc-macro that expands a declarative cross-product into one `AlgorithmEntry` per leaf. |
+| `combo_codegen` | Build-script driver that scans `component!` and `family!` invocations and emits the generated combinations files under `OUT_DIR`. |
 
-## Sort self-registration
+## Self-registration
 
-Sorts register themselves at program startup — there is no central list to maintain. Two mechanisms coexist:
+There is no central list to maintain. Every algorithm declares itself via
+one of:
 
-1. **`create_sort!` + `#[derive(SortRegistry)]`** — generates a monomorphic wrapper, a `linkme` distributed-slice entry for benchmarks, and a `#[ctor]` hook for the runtime registry.
-2. **`sort_family!`** — declarative variant-tree macro. Defines generic slots and their concrete types, generates all combinations automatically. Used by merge sorts to register 80+ variants from one invocation.
+- **`combo_codegen::family!`** — declarative variant-tree macro. One
+  invocation per family enumerates every cross-product of generic slot ×
+  concrete type into the `bench_registry::ALGORITHMS` distributed-slice.
+- **Per-category registration macros** — `register_rotation!`,
+  `register_partition!`, `register_merge!`, `register_aux_merge!`,
+  `register_quick_select_single!`, `register_quick_select_dual!`,
+  `register_small_sort!`. Each is the non-sort sibling of `family!`,
+  emitting an `AlgorithmEntry` with the matching `Category::*`. The
+  hand-rolled cross-products invoke them once per leaf.
+
+Both paths end with the same per-leaf `#[ctor]` that calls
+`sort_registry_core::register_sort_path` so the variant shows up in the
+interactive menu tree.
 
 See `docs/` for detailed architecture documentation.
 
 ## Note for LLMs
 
-If you are an LLM working on this project, read `docs/llm/` before making changes. It contains a context-loading guide, key files to always index, patterns to follow, and instructions for keeping documentation up to date.
+If you are an LLM working on this project, read `docs/llm/` before making
+changes. It contains a context-loading guide, key files to always index,
+patterns to follow, and instructions for keeping documentation up to date.

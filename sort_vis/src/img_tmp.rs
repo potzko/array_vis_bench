@@ -326,20 +326,56 @@ impl ArrStore {
                     if let Some((a, off)) = self.lookup_mut(*name) {
                         let idx = ind + off;
                         a.arr[idx] = *data;
-                        a.mark_dirty(idx);
                         let v = *data as f64;
                         if v < a.min { a.min = v; }
-                        if v > a.max { a.max = v; }
+                        // Growing max changes the scale every previously-drawn
+                        // column was rasterised at. Without invalidating those
+                        // columns, their pixels stay at the old, smaller-max
+                        // height — which means every column drawn before the
+                        // current write reads as "full bar" relative to the
+                        // value at write time. The CreateAuxArrT + N×WriteData
+                        // init sequence triggers this on every visualisation
+                        // (each write is the new max), so the array begins
+                        // entirely white. Mark every index dirty whenever max
+                        // grows; `idx` is included by that pass.
+                        if v > a.max {
+                            a.max = v;
+                            a.mark_all_dirty();
+                        } else {
+                            a.mark_dirty(idx);
+                        }
                     }
                 }
                 SortLog::WriteDataU { name, ind, data } => {
                     if let Some((a, off)) = self.lookup_mut(*name) {
                         let idx = ind + off;
                         a.arr[idx] = *data;
-                        a.mark_dirty(idx);
                         let v = *data as f64;
                         if v < a.min { a.min = v; }
-                        if v > a.max { a.max = v; }
+                        if v > a.max {
+                            a.max = v;
+                            a.mark_all_dirty();
+                        } else {
+                            a.mark_dirty(idx);
+                        }
+                    }
+                }
+                SortLog::SetScale { name, max } => {
+                    if let Some((a, _off)) = self.lookup_mut(*name) {
+                        let v = *max as f64;
+                        if v != a.max {
+                            a.max = v;
+                            a.mark_all_dirty();
+                        }
+                    }
+                }
+                SortLog::SetScaleU { name, max } => {
+                    if let Some((a, _off)) = self.lookup_mut(*name) {
+                        let v = *max as f64;
+                        if v != a.max {
+                            a.max = v;
+                            a.mark_all_dirty();
+                        }
                     }
                 }
                 SortLog::WriteInArr { name, ind_a, ind_b } => {
@@ -542,6 +578,18 @@ impl ArrActions {
         if !self.dirty_flag[i] {
             self.dirty_flag[i] = true;
             self.dirty.push(i);
+        }
+    }
+
+    /// Mark every index dirty. Called when the rendering scale changes
+    /// (max grew) so that finalize_frame repaints every column at the
+    /// new scale rather than leaving stale, too-tall bars behind.
+    fn mark_all_dirty(&mut self) {
+        for i in 0..self.arr.len() {
+            if !self.dirty_flag[i] {
+                self.dirty_flag[i] = true;
+                self.dirty.push(i);
+            }
         }
     }
 

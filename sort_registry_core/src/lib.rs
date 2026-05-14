@@ -18,23 +18,18 @@ lazy_static! {
 // Registration
 // ---------------------------------------------------------------------------
 
-/// Register a sort with an explicit navigation path.
+/// Register an algorithm with an explicit navigation path.
 ///
-/// Used by `sort_family!`-generated code so each combination places itself
-/// at arbitrary tree depth (e.g. `["shell sorts", "shell sort", "ciura"]`).
+/// Used by `sort_family!`-generated code (and the rotation / partition /
+/// small-sort registration macros) so each combination places itself at
+/// arbitrary tree depth (e.g. `["sorts", "shell sorts", "ciura"]`).
+///
+/// Always appends — duplicate-name detection is the validator's job.
+/// Silently dropping a re-registration here would let two different
+/// algorithms share a name without anyone ever noticing; the validator
+/// (called from `bench_registry::validate_registries`) surfaces them
+/// at process start so misnamed entries fail loud.
 pub fn register_sort_path(name: &str, _big_o: &str, _stable: bool, path: &[&str]) {
-    let mut entries = SORT_ENTRIES.lock().unwrap();
-    if !entries.iter().any(|(n, _)| n == name) {
-        entries.push((name.to_string(), path.iter().map(|s| s.to_string()).collect()));
-    }
-}
-
-/// Place an already-registered sort at an additional navigation path.
-///
-/// Unlike [`register_sort_path`], this does not deduplicate on `name` — the
-/// same sort can appear at multiple positions in the navigation tree. Only
-/// adds a tree entry; does not touch `SORT_REGISTRY`.
-pub fn register_tree_alias(name: &str, path: &[&str]) {
     let mut entries = SORT_ENTRIES.lock().unwrap();
     entries.push((name.to_string(), path.iter().map(|s| s.to_string()).collect()));
 }
@@ -44,10 +39,9 @@ pub fn register_tree_alias(name: &str, path: &[&str]) {
 // ---------------------------------------------------------------------------
 
 /// All registered sort names in display order (depth-first traversal of the
-/// sorted tree), deduplicated.
-///
-/// Deduplication is needed because the same name may appear multiple times
-/// when registered at several tree positions via [`register_tree_alias`].
+/// sorted tree). Each name appears at most once — the tree itself is the
+/// dedup mechanism, since duplicate-name registrations are flagged by the
+/// validator and never make it past process start in a valid build.
 pub fn get_registered_sorts() -> Vec<String> {
     let mut out = Vec::new();
     let mut seen = std::collections::HashSet::new();
@@ -68,6 +62,14 @@ fn flatten_tree(
             out.push(name.clone());
         }
     }
+}
+
+/// Snapshot of every `(name, path)` pair registered so far. The validator
+/// in `bench_registry::validate_registries` uses this to detect names
+/// registered more than once — silent dedup at registration time would
+/// hide that, so we hand the raw list out and let the validator decide.
+pub fn registered_path_entries() -> Vec<(String, Vec<String>)> {
+    SORT_ENTRIES.lock().unwrap().clone()
 }
 
 /// A node in the sort navigation tree.
