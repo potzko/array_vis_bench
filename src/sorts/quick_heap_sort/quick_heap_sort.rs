@@ -112,7 +112,7 @@ fn recurse<T: Ord + Copy, U: ?Sized + SortLogger<T>, A: Arity, DH: DeepHeapify, 
 
 // Classic family: build hardcoded to `Iterative` (textbook bottom-up
 // sift-down). Preserves the original `quick heap sort` lineup.
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = QuickHeapSort<{A}, Iterative, {SS}>,
     uses = [
         "crate::sorts::heap_sort::arity::{Binary, Ternary, Base16, Base256}",
@@ -134,7 +134,7 @@ combo_codegen::sort_family!(
 // from `quick_deep_heapify`, parametrised over `HeapPartition` and
 // `PivotSelector`. SS and V are intentionally restricted here to keep the
 // menu navigable — the cross-product is already 4 × 3 × 3 × 4 × 3 = 432.
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = QuickHeapSort<{A}, {QDH}<{HP}, {V}>, {SS}>,
     uses = [
         "crate::sorts::heap_sort::arity::{Binary, Ternary, Base16, Base256}",
@@ -164,4 +164,29 @@ combo_codegen::sort_family!(
     stable = false,
     direct_sort = true,
     path = ["quick heap sorts", "quick build", "{A}", "{QDH}", "{HP}", "{V}", "{SS}"],
+);
+
+combo_codegen::family!(
+    type = QuickHeapSort<{A}, {QDH}<{DPS}>, {SS}>,
+    uses = [
+        "crate::sorts::heap_sort::quick_deep_heapify::StackDualPivotPartialQuickDeepHeapify",
+        "crate::sorts::quick_sorts::pivot_selectors::{CombinedSelector, NintherDualPivot}",
+    ],
+    A: Arity,
+    QDH: DualPivotQuickDeepHeapify,
+    DPS: inline [
+        ("CombinedSelector<FirstElement, FirstElement>",   "first"),
+        ("CombinedSelector<MiddleElement, MiddleElement>", "middle"),
+        ("NintherDualPivot",                               "ninther 1/3 + 2/3"),
+    ],
+    SS: inline [
+        ("NoSmallSort",                            "no threshold"),
+        ("InsertionSmallSort<LinearInsertion, 32>", "insertion: 32"),
+        ("NetworkSmallSort",                        "network: 8"),
+    ],
+    name = "quick heap sort dual pivot",
+    big_o = "O(N log N)",
+    stable = false,
+    direct_sort = true,
+    path = ["quick heap sorts", "quick build", "dual pivot", "{A}", "{QDH}", "{DPS}", "{SS}"],
 );

@@ -5,7 +5,7 @@
 //! build-then-extract loop is the default implementation on
 //! [`HeapAlgorithm`]; this type only supplies the primitives.
 //!
-//! The `sort_family!` call below cross-products `Arity` × `HeapDirection` ×
+//! The `family!` call below cross-products `Arity` × `HeapDirection` ×
 //! `DeepHeapify` to register every ascending-producing variant.
 //! `HeapDirection` only has component! markers on `MinReverse` and
 //! `MaxForward`, so the other two directions (which would sort to
@@ -65,14 +65,14 @@ impl<H: Heap, DH: DeepHeapify> HeapAlgorithm for HeapSort<H, DH> {
 
 impl<H: Heap, DH: DeepHeapify> HeapSort<H, DH> {
     /// Inherent thin delegate so `<HeapSort<...>>::sort(arr, logger)` keeps
-    /// working from `sort_family!`-generated code without needing the
+    /// working from `family!`-generated code without needing the
     /// `HeapAlgorithm` trait in scope at the call site.
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         <Self as HeapAlgorithm>::sort(arr, logger)
     }
 }
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = HeapSort<ArityHeap<{A}, {D}>, {DH}>,
     uses = [
         "crate::sorts::heap_sort::arity::{Binary, Ternary, Base16, Base256}",

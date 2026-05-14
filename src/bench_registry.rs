@@ -10,6 +10,85 @@ pub struct SortBenchEntry {
 #[distributed_slice]
 pub static BENCH_SORTS: [SortBenchEntry] = [..];
 
+// ── Generic algorithm registry ───────────────────────────────────────────────
+//
+// `AlgorithmEntry` covers every algorithm category (sorts, rotations,
+// partitions, merges, small-sorts). Each per-category `*_family!` macro
+// emits one entry per concrete instantiation, bundling:
+//   - the natural-signature entry point (typed via `run_default`),
+//   - the category's correctness battery (typed via `run_correctness`),
+//   - shared metadata (name, big-O, stability where applicable).
+//
+// The registry layer is intentionally type-erased: the harness — vis,
+// bench, tests — sees one shape regardless of category. The category
+// enum exists only for menu grouping and category-specific verification
+// logic (which lives inside `run_correctness`, NOT in the harness).
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum Category {
+    Sort,
+    Rotation,
+    Partition,
+    Merge,
+    SmallSort,
+}
+
+impl Category {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Category::Sort => "sort",
+            Category::Rotation => "rotation",
+            Category::Partition => "partition",
+            Category::Merge => "merge",
+            Category::SmallSort => "small-sort",
+        }
+    }
+}
+
+/// Tunable knobs for a single run. Categories that don't need a knob
+/// ignore it. `Default::default()` is good enough for "pick algorithm,
+/// run with category-default input".
+#[derive(Clone, Debug)]
+pub struct RunConfig {
+    pub size: usize,
+    pub pattern: InputPattern,
+    pub seed: u64,
+}
+
+impl Default for RunConfig {
+    fn default() -> Self {
+        RunConfig { size: 500, pattern: InputPattern::Random, seed: 0 }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum InputPattern {
+    Random,
+    Ascending,
+    Descending,
+    AllSame,
+}
+
+pub struct AlgorithmEntry {
+    pub name: &'static str,
+    pub category: Category,
+    pub big_o: &'static str,
+    /// Sort-relevant flag; ignored for non-sort categories.
+    pub stable: bool,
+    /// Build a category-appropriate input from `config`, emit its
+    /// CreateArr + Writes init events on the supplied logger, then run
+    /// the algorithm's natural-signature method. The log produced is
+    /// enough to drive the visualiser end-to-end.
+    pub run_default: fn(&RunConfig, &mut dyn sort_logger::SortLogger<usize>),
+    /// Run the category-appropriate correctness battery (multiple inputs
+    /// + verifier per input). Panics on failure. Uses `NoOpLogger`
+    /// internally; never emits visualiser events.
+    pub run_correctness: fn(),
+}
+
+#[distributed_slice]
+pub static ALGORITHMS: [AlgorithmEntry] = [..];
+
 /// Opt-in cap registry: `(sort_name, max_n_for_random_inputs)` pairs.
 /// Sorts that can't handle large random inputs in reasonable time add
 /// themselves via `register_test_cap!` (or a manual `distributed_slice`
@@ -29,7 +108,7 @@ pub fn max_n_for_tests(sort_name: &str) -> Option<usize> {
 }
 
 /// Declare a random-input size cap for a sort. Place near the sort's
-/// `sort_family!` invocation:
+/// `family!` invocation:
 ///
 /// ```text
 /// register_test_cap!("bad heap sort", 1000);
@@ -402,7 +481,7 @@ pub(crate) mod test_helpers {
                         return Err(format!(
                             "{}: TLE on {} (timeout {:?}). If this sort is \
                              genuinely slow on large inputs, set \
-                             `max_n_for_tests = N` in its `sort_family!` \
+                             `max_n_for_tests = N` in its `family!` \
                              invocation to skip oversized random arrays.",
                             entry.name, in_flight, timeout
                         ));

@@ -41,7 +41,7 @@ impl<T: Ord + Copy, U: SortLogger<T>, const NUM: usize, const DEN: usize>
         "O(N^2)"
     }
     fn name() -> &'static str {
-        "comb sort ratio" // overridden by sort_family! registered name
+        "comb sort ratio" // overridden by family! registered name
     }
     fn sort(arr: &mut [T], logger: &mut U) {
         CombSort::sort_with_gaps(arr, logger, Self::gaps(arr.len()));

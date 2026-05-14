@@ -45,7 +45,7 @@ where
     }
 }
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = StoogeSort<{SS}>,
     uses = [
         "crate::utils::small_sort::{InsertionSmallSort, Network16SmallSort, NetworkSmallSort}",

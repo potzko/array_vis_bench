@@ -11,7 +11,7 @@
 //! [`Compare`] (min vs max ordering) and [`Layout`] (forward vs reverse
 //! placement in the array) are paired by [`Direction`]. Only the two
 //! ascending-output combinations carry the `HeapDirection` `component!`
-//! marker, so `sort_family!` registers two variants. The build/swap/push-
+//! marker, so `family!` registers two variants. The build/swap/push-
 //! down primitives feed the [`HeapAlgorithm`] default `sort`, so weak heap
 //! plugs into anything that consumes a `HeapAlgorithm` (e.g. introsort).
 
@@ -121,7 +121,7 @@ impl<D: Direction> HeapAlgorithm for WeakHeapSort<D> {
 
 impl<D: Direction> WeakHeapSort<D> {
     /// Inherent thin delegate so `<WeakHeapSort<...>>::sort(arr, logger)`
-    /// keeps working from `sort_family!`-generated code without needing
+    /// keeps working from `family!`-generated code without needing
     /// the `HeapAlgorithm` trait in scope at the call site.
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         <Self as HeapAlgorithm>::sort(arr, logger)
@@ -168,7 +168,7 @@ fn merge<T, U, D>(
     }
 }
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = WeakHeapSort<{D}>,
     uses = [
         "crate::sorts::heap_sort::direction::{MinReverse, MaxForward}",

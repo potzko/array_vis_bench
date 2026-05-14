@@ -15,10 +15,10 @@
 //! combo_codegen::component!(SmallSort, InsertionSmallSort<16>, "insertion: 16");
 //! ```
 //!
-//! ## 2. Annotate sort families next to their struct definitions
+//! ## 2. Annotate families next to their struct definitions
 //!
 //! ```rust,ignore
-//! combo_codegen::sort_family!(
+//! combo_codegen::family!(
 //!     type = QuickSort<{P}, {V}, {SS}>,
 //!     uses = [
 //!         "super::partitions::{Lomuto, Hoare}",
@@ -36,7 +36,10 @@
 //! );
 //! ```
 //!
-//! Both macros **expand to nothing** — they are purely markers for the build scanner.
+//! Both macros **expand to nothing** — they are purely markers for the build
+//! scanner. The legacy [`sort_family!`] name is also accepted (the
+//! `CodegenConfig::for_sort_families` preset selects it as the scanner
+//! marker).
 //!
 //! ## 3. Scan and generate in `build.rs`
 //!
@@ -45,17 +48,25 @@
 //!
 //! fn main() {
 //!     let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-//!     let result = combo_codegen::scan("src/").unwrap();
+//!     let config = combo_codegen::CodegenConfig::for_sort_families();
+//!     let result = combo_codegen::scan("src/", &config).unwrap();
 //!     result.emit_rerun();
 //!     println!("cargo:rerun-if-changed=build.rs");
-//!     result.emit_sort_families(&out_dir).unwrap();
+//!     result.emit_families(&out_dir).unwrap();
 //! }
+//! ```
+//!
+//! For a non-sort use case, build your own [`CodegenConfig`]:
+//!
+//! ```rust,ignore
+//! let config = combo_codegen::CodegenConfig::new("my_family", "my_crate::my_macro")
+//!     .with_type_prefix("type Target = ")
+//!     .with_path_field("menu");
 //! ```
 //!
 //! ## 4. Consume the generated file
 //!
 //! ```rust,ignore
-//! // quick_sorts/mod.rs
 //! pub mod combinations {
 //!     include!(concat!(env!("OUT_DIR"), "/quick_sorts_combinations.rs"));
 //! }
@@ -65,8 +76,8 @@ pub mod family;
 pub mod scanner;
 
 pub use family::{
-    Axis, AxisSpec, Combination, ComponentDef, ComponentRegistry, Family, SortFamilyDef,
-    cross_axis, inline,
+    cross_axis, inline, Axis, AxisSpec, CodegenConfig, Combination, ComponentDef,
+    ComponentRegistry, Family, FamilyDef, FieldValue,
 };
 pub use scanner::{scan, ScanResult};
 
@@ -85,44 +96,20 @@ pub use scanner::{scan, ScanResult};
 /// | 1 | Role identifier | `Partition` |
 /// | 2 | Type expression | `InsertionSmallSort<16>` |
 /// | 3 | Human-readable label | `"insertion: 16"` |
-///
-/// # Example
-///
-/// ```rust,ignore
-/// combo_codegen::component!(Partition, Lomuto, "lomuto");
-/// combo_codegen::component!(SmallSort, InsertionSmallSort<16>, "insertion: 16");
-/// ```
 #[macro_export]
 macro_rules! component {
     ($role:ident, $ty:ty, $label:literal) => {};
 }
 
-// ── sort_family! macro ────────────────────────────────────────────────────────
+// ── family! / sort_family! markers ───────────────────────────────────────────
 
-/// Declare a sort family inline, next to the sort's struct definition.
+/// Declare a family inline, next to its struct definition.
 ///
 /// This macro **expands to nothing**. It exists solely as a marker that the
 /// build-script scanner ([`scan`]) recognises and uses to generate
-/// `*_combinations.rs` files via [`ScanResult::emit_sort_families`].
-///
-/// # Syntax
-///
-/// ```rust,ignore
-/// combo_codegen::sort_family!(
-///     type = SortType<{A}, {B}>,
-///     uses = ["path::to::SortType", "path::to::ComponentA"],
-///     A: RoleA,                             // simple role axis
-///     B: inline [("TypeX", "x"), ("TypeY", "y")],  // inline axis
-///     // For cross-product axes:
-///     // DPS: cross(Role1, Role2, "Wrapper<{0},{1}>", "{0}/{1}") + [("Extra","extra")],
-///     name = "my sort",
-///     big_o = "O(N log N)",
-///     stable = true,
-///     direct_sort = true,
-///     path = ["category", "{A}", "{B}"],
-/// );
-/// ```
+/// `<module><config.filename_suffix>` files via
+/// [`ScanResult::emit_families`].
 #[macro_export]
-macro_rules! sort_family {
+macro_rules! family {
     ($($tt:tt)*) => {};
 }

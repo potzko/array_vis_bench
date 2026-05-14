@@ -6,7 +6,7 @@ use crate::traits::log_traits::SortLogger;
 use super::partitions::PartitionScheme;
 use super::pivot_selectors::PivotSelector;
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = QuickSort<{P}, {V}, {SS}>,
     uses = [
         "crate::utils::small_sort::{InsertionSmallSort, Network16SmallSort, NetworkSmallSort, NoSmallSort, Size1SmallSort, Size2SmallSort}",

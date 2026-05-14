@@ -18,8 +18,7 @@ macro_rules! int_aux_family {
         }
         #[inline(always)]
         fn $create(&mut self, len: usize) -> Vec<$ty> {
-            let mut ret = Vec::<$ty>::with_capacity(len);
-            unsafe { ret.set_len(len) }
+            let ret = vec![0 as $ty; len];
             self.$log(&ret);
             ret
         }

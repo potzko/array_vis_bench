@@ -26,7 +26,7 @@ impl<QS: QuickSelect> QuickSurrender<QS> {
     }
 }
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = QuickSurrender<{Alg}<{P}, {V}>>,
     uses = [
         "crate::sorts::quick_sorts::partitions::{Block, Hoare, Lomuto, ThreeWay}",
@@ -47,5 +47,25 @@ combo_codegen::sort_family!(
     stable = false,
     direct_sort = true,
     path = ["fun sorts", "quick surrender", "{Alg}", "{P}", "{V}"],
+    max_n_for_tests = 500,
+);
+
+combo_codegen::family!(
+    type = QuickSurrender<{Alg}<{DPS}>>,
+    uses = [
+        "crate::sorts::quick_sorts::pivot_selectors::{CombinedSelector, NintherDualPivot}",
+        "crate::sorts::quick_selects::dual_pivot_quick_select::{IterativeDualPivotQuickSelect, RecursiveDualPivotQuickSelect}",
+    ],
+    Alg: DualPivotQuickSelectAlg,
+    DPS: inline [
+        ("CombinedSelector<FirstElement, FirstElement>",   "first"),
+        ("CombinedSelector<MiddleElement, MiddleElement>", "middle"),
+        ("NintherDualPivot",                               "ninther 1/3 + 2/3"),
+    ],
+    name = "quick surrender dual pivot",
+    big_o = "O(N^2)",
+    stable = false,
+    direct_sort = true,
+    path = ["fun sorts", "quick surrender", "dual pivot {Alg}", "{DPS}"],
     max_n_for_tests = 500,
 );

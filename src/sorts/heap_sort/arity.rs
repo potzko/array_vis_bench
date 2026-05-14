@@ -1,7 +1,7 @@
 //! Heap arity — number of children per heap node.
 //!
 //! Used as a type-level parameter for `HeapSort<A>` so each arity produces a
-//! distinct monomorphized sort via `sort_family!`. Implementors expose the
+//! distinct monomorphized sort via `family!`. Implementors expose the
 //! arity as an associated const so the sort can branch on it at compile time.
 
 pub trait Arity {

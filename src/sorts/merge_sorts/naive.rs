@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 use crate::traits::log_traits::SortLogger;
 use crate::utils::small_sort::SmallSort;
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = NaiveMergeSort<{SS}>,
     uses = [
         "crate::sorts::merge_sorts::naive::NaiveMergeSort",

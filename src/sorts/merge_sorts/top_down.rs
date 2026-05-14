@@ -3,7 +3,7 @@ use crate::traits::log_traits::SortLogger;
 use super::utils::{copy_across, merge_inplace};
 use crate::utils::small_sort::SmallSort;
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = TopDownMergeSort<{SS}, {PP}, {EE}>,
     uses = [
         "crate::sorts::merge_sorts::top_down::TopDownMergeSort",

@@ -122,7 +122,7 @@ impl Mp4Visualizer {
 }
 
 impl Visualizer for Mp4Visualizer {
-    fn render(&mut self, arr: &[usize], name: usize, actions: &[SortLog<usize>]) {
+    fn render(&mut self, actions: &[SortLog<usize>]) {
         let actions_per_frame = match self.config.pacing {
             Pacing::ActionsPerFrame(n) => n.max(1),
             Pacing::DurationSeconds(s) => {
@@ -130,18 +130,6 @@ impl Visualizer for Mp4Visualizer {
                 (actions.len() / target_frames.max(1)).max(1)
             }
         };
-        let arr = arr.to_vec();
-
-        let mut inplace = true;
-        for ev in actions {
-            match ev {
-                SortLog::CreateAuxArr { .. } | SortLog::CreateAuxArrT { .. } => {
-                    inplace = false;
-                    break;
-                }
-                _ => {}
-            }
-        }
 
         let out_w = self.config.output_width;
         let out_h = self.config.output_height;
@@ -153,25 +141,16 @@ impl Visualizer for Mp4Visualizer {
         );
 
         let mut fb = Framebuffer::new(out_w, out_h);
-
-        let view = SubImg {
-            x: 0,
-            y: if inplace { 0 } else { out_h / 2 },
-            width: out_w,
-            height: if inplace { out_h } else { out_h / 2 },
-        };
-        let aux_view = SubImg {
-            x: 0,
-            y: 0,
-            width: out_w,
-            height: out_h / 2,
-        };
-        let mut store = ArrStore::new(ArrActions::new(arr, view, name));
-        // Paint the main array's initial state into the framebuffer.
-        store.main_mut().force_full_redraw(&mut fb);
+        let screen_view = SubImg { x: 0, y: 0, width: out_w, height: out_h };
+        let mut store = ArrStore::new();
 
         let mut ffmpeg = self.spawn_ffmpeg();
         let stdin = ffmpeg.stdin.as_mut().expect("ffmpeg stdin not available");
+
+        // Emit one BLANK opening frame so the GIF starts at "nothing here
+        // yet" before any event runs. `fb` is freshly zero-initialised,
+        // which renders as black.
+        stdin.write_all(&fb.data).unwrap();
 
         let mut i = 1;
         while i * actions_per_frame - actions_per_frame < actions.len() {
@@ -188,10 +167,9 @@ impl Visualizer for Mp4Visualizer {
                 }
             }
             // Process all events up to and including each create/free split,
-            // applying the layout change in place, but *without* emitting a
-            // frame at the split. Transient auxes (created and freed within
-            // the same batch) get their layout side-effects applied but never
-            // claim a dedicated frame — only the end-of-batch state is shown.
+            // applying the layout change in place. Transient arrays (created
+            // and freed within the same frame) re-tile twice without ever
+            // claiming a dedicated frame — only the end-of-batch state ships.
             for ii in 1..split_points.len() {
                 store.update(&actions[split_points[ii - 1]..split_points[ii]], &mut fb);
 
@@ -203,11 +181,11 @@ impl Visualizer for Mp4Visualizer {
                             SubImg { x: 0, y: 0, width: 0, height: 0 },
                             name,
                         ));
-                        redistribute_aux_views(&mut store, &aux_view, &mut fb);
+                        redistribute(&mut store, &screen_view, &mut fb);
                     }
                     SortLog::FreeAuxArr { name } => {
                         store.remove(name);
-                        redistribute_aux_views(&mut store, &aux_view, &mut fb);
+                        redistribute(&mut store, &screen_view, &mut fb);
                     }
                     _ => {}
                 }
@@ -226,6 +204,11 @@ impl Visualizer for Mp4Visualizer {
             }
         }
 
+        // Emit one closing frame so the GIF holds on the final state
+        // (no further events applied). Same `fb` as the last loop
+        // iteration left it.
+        stdin.write_all(&fb.data).unwrap();
+
         // Close stdin so ffmpeg knows the stream is done
         drop(ffmpeg.stdin.take());
         let status = ffmpeg.wait().expect("failed to wait on ffmpeg");
@@ -235,20 +218,22 @@ impl Visualizer for Mp4Visualizer {
     }
 }
 
-/// Blank the aux region and repaint every surviving aux array across a fresh
-/// equal-share split of `aux_view`. Used after both create and free events so
-/// freed auxes don't leave residual pixels on screen and surviving auxes
-/// always occupy the full aux region.
-fn redistribute_aux_views(store: &mut ArrStore, aux_view: &SubImg, fb: &mut Framebuffer) {
-    aux_view.rect(fb, 0, 0, aux_view.width, aux_view.height, BLACK);
-    let aux_count = store.aux_count();
-    if aux_count == 0 {
+/// Re-layout the framebuffer after every Create/Free split point. All
+/// live arrays tile the screen vertically, uniformly, in creation order
+/// (oldest at the bottom). If no array is live, the screen is BLACK.
+fn redistribute(store: &mut ArrStore, screen_view: &SubImg, fb: &mut Framebuffer) {
+    screen_view.rect(fb, 0, 0, screen_view.width, screen_view.height, BLACK);
+    let n = store.len();
+    if n == 0 {
         return;
     }
-    let views = get_views(aux_view, aux_count as u32);
-    for (aux, view) in store.aux_iter_mut().zip(views.into_iter()) {
-        aux.set_view(view);
-        aux.force_full_redraw(fb);
+    let views = get_views(screen_view, n as u32);
+    // `views` is returned top-to-bottom (views[0] is the top tile). We
+    // want oldest-first to sit at the BOTTOM, so pair newest-first with
+    // the top tiles.
+    for (arr, view) in store.iter_creation_order_mut().into_iter().rev().zip(views.into_iter()) {
+        arr.set_view(view);
+        arr.force_full_redraw(fb);
     }
 }
 
@@ -261,20 +246,18 @@ fn redistribute_aux_views(store: &mut ArrStore, aux_view: &SubImg, fb: &mut Fram
 /// — the array with the largest base ≤ the event address — followed by a
 /// bounds check against that array's length.
 ///
-/// The main sort array is identified by its base address (`main_addr`), not
-/// by position in the container: aux allocations may land at addresses below
-/// the main, so we cannot assume the main lives at any particular slot.
+/// Every array is an equal citizen — there's no privileged "main" slot.
+/// Creation order is preserved separately in `order` so the layout can
+/// place oldest-first at the bottom of the screen regardless of where
+/// each array's pointer happens to land in address space.
 struct ArrStore {
     arrs: BTreeMap<usize, ArrActions>,
-    main_addr: usize,
+    order: Vec<usize>,
 }
 
 impl ArrStore {
-    fn new(main: ArrActions) -> Self {
-        let main_addr = main.name;
-        let mut arrs = BTreeMap::new();
-        arrs.insert(main_addr, main);
-        ArrStore { arrs, main_addr }
+    fn new() -> Self {
+        ArrStore { arrs: BTreeMap::new(), order: Vec::new() }
     }
 
     /// Find the array whose memory range contains `addr`. Returns a mutable
@@ -289,29 +272,40 @@ impl ArrStore {
         }
     }
 
-    fn main_mut(&mut self) -> &mut ArrActions {
-        self.arrs.get_mut(&self.main_addr).expect("main array missing")
-    }
-
     fn insert(&mut self, entry: ArrActions) {
-        self.arrs.insert(entry.name, entry);
+        let name = entry.name;
+        if self.arrs.insert(name, entry).is_none() {
+            self.order.push(name);
+        }
     }
 
     fn remove(&mut self, name: usize) {
         self.arrs.remove(&name);
+        self.order.retain(|&n| n != name);
     }
 
-    /// Number of aux arrays (excludes the main).
-    fn aux_count(&self) -> usize {
-        self.arrs.len() - 1
+    fn len(&self) -> usize {
+        self.arrs.len()
     }
 
-    /// Iterator over aux arrays only, in address order.
-    fn aux_iter_mut(&mut self) -> impl Iterator<Item = &mut ArrActions> + '_ {
-        let main_addr = self.main_addr;
-        self.arrs
+    /// Live arrays in the order they were inserted (oldest first). Returned
+    /// as a `Vec` so the caller gets a real `DoubleEndedIterator` without
+    /// needing unsafe re-borrows.
+    fn iter_creation_order_mut(&mut self) -> Vec<&mut ArrActions> {
+        let order = &self.order;
+        let mut by_creation_index: Vec<(usize, &mut ArrActions)> = self
+            .arrs
             .iter_mut()
-            .filter_map(move |(addr, a)| if *addr == main_addr { None } else { Some(a) })
+            .map(|(name, a)| {
+                let idx = order
+                    .iter()
+                    .position(|n| n == name)
+                    .expect("every array in arrs must appear in order");
+                (idx, a)
+            })
+            .collect();
+        by_creation_index.sort_by_key(|(i, _)| *i);
+        by_creation_index.into_iter().map(|(_, a)| a).collect()
     }
 
     /// Apply all actions (mark dirty / colored on the right array), then have

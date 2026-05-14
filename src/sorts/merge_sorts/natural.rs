@@ -1,7 +1,7 @@
 use crate::traits::log_traits::SortLogger;
 use super::utils::{copy_across, merge_inplace, reverse};
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = NaturalMergeSort<{PP}, {EE}>,
     uses = [
         "crate::sorts::merge_sorts::natural::NaturalMergeSort",

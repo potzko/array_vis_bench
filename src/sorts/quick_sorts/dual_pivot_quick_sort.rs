@@ -5,7 +5,7 @@ use crate::traits::log_traits::SortLogger;
 
 use super::pivot_selectors::DualPivotSelector;
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = DualPivotQuickSort<{DPS}, {SS}>,
     uses = [
         "crate::utils::small_sort::{InsertionSmallSort, Network16SmallSort, NetworkSmallSort, NoSmallSort, Size1SmallSort, Size2SmallSort}",

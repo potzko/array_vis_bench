@@ -4,7 +4,12 @@ mod sub_image;
 use sort_logger::SortLog;
 
 pub trait Visualizer {
-    fn render(&mut self, arr: &[usize], name: usize, actions: &[SortLog<usize>]);
+    /// Render the given event stream end-to-end. The log alone must fully
+    /// describe what to display — no back-channel for "initial state" or
+    /// privileged "main" array. The first `CreateAuxArr*` event in the
+    /// log creates the first array; subsequent events populate / mutate
+    /// it; tile layout falls out of which arrays are currently live.
+    fn render(&mut self, actions: &[SortLog<usize>]);
 }
 
 pub use img_tmp::{
