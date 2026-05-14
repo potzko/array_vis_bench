@@ -1,6 +1,9 @@
 use crate::traits::log_traits::SortLogger;
 
 pub trait PartitionScheme {
+    /// Display name used both in the `Partition` component slot and in
+    /// the per-algorithm path the menu builds at startup.
+    const NAME: &'static str;
     /// Partition `arr` with the pivot originally at `pivot_idx`.
     ///
     /// Returns `(left_end, right_start)`:
@@ -22,6 +25,7 @@ pub struct Lomuto;
 combo_codegen::component!(Partition, Lomuto, "lomuto");
 
 impl PartitionScheme for Lomuto {
+    const NAME: &'static str = "lomuto";
     fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         logger: &mut U,
@@ -51,6 +55,7 @@ pub struct Hoare;
 combo_codegen::component!(Partition, Hoare, "hoare");
 
 impl PartitionScheme for Hoare {
+    const NAME: &'static str = "hoare";
     fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         logger: &mut U,
@@ -87,6 +92,7 @@ pub struct ThreeWay;
 combo_codegen::component!(Partition, ThreeWay, "three-way");
 
 impl PartitionScheme for ThreeWay {
+    const NAME: &'static str = "three-way";
     fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         logger: &mut U,
@@ -128,6 +134,7 @@ pub struct Block;
 combo_codegen::component!(Partition, Block, "block");
 
 impl PartitionScheme for Block {
+    const NAME: &'static str = "block";
     fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         logger: &mut U,
@@ -202,6 +209,7 @@ pub struct MovingPivot;
 combo_codegen::component!(Partition, MovingPivot, "moving pivot");
 
 impl PartitionScheme for MovingPivot {
+    const NAME: &'static str = "moving pivot";
     fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         logger: &mut U,

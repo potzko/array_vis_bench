@@ -1,15 +1,13 @@
-/// Circle sort registration.
+/// Circle sort menu-tree registration.
 ///
-/// Iterates `CIRCLE_ENTRIES` at startup and registers every variant into
-/// `SORT_REGISTRY` and `sort_registry_core`.  No changes needed here when
-/// adding new variants — edit `orderings.rs` / `directions.rs` and call the
-/// appropriate macro in `sequences.rs` only.
+/// Iterates `CIRCLE_ENTRIES` at startup and registers each variant's path
+/// with `sort_registry_core` so the interactive menu can navigate to it.
+/// Algorithm dispatch itself happens through `bench_registry::ALGORITHMS`
+/// (populated by the same per-variant entry in `sequences.rs`).
 #[ctor::ctor]
 fn register_circle_sorts() {
-    let mut registry = crate::traits::SORT_REGISTRY.lock().unwrap();
-
     for entry in crate::sorts::circle_sorts::sequences::CIRCLE_ENTRIES {
-        registry.insert(entry.name.to_string(), entry.sort_fn);
-        sort_registry_core::register_sort_path(entry.name, entry.big_o, false, entry.path);
+        let full: Vec<&str> = std::iter::once("sorts").chain(entry.path.iter().copied()).collect();
+        sort_registry_core::register_sort_path(entry.name, entry.big_o, false, &full);
     }
 }

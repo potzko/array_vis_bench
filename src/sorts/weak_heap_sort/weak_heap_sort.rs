@@ -52,6 +52,11 @@ impl<D: Direction> HeapAlgorithm for WeakHeapSort<D> {
     fn new_state<T: Ord + Copy, U: ?Sized + SortLogger<T>>(n: usize, logger: &mut U) -> Vec<u8> {
         let reverse = vec![0u8; n];
         logger.log_aux_arr_u8(&reverse);
+        // Reverse bits are exactly 0 or 1, so fix the visualiser scale
+        // to 1 up-front — otherwise the first flip-to-1 establishes
+        // max=1 and every subsequent unflipped cell renders as full
+        // height until that index is written.
+        logger.set_scale_u8(&reverse, 1);
         reverse
     }
 

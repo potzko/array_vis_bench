@@ -2,6 +2,10 @@ use std::marker::PhantomData;
 use crate::traits::log_traits::SortLogger;
 
 pub trait PivotSelector {
+    /// Display name — used by the standalone partition / quick-select
+    /// registration macros to spell out per-leaf path segments
+    /// (`partitions/lomuto/<name>`).
+    const NAME: &'static str;
     fn select<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], logger: &mut U) -> usize;
 }
 
@@ -19,6 +23,7 @@ pub struct Ninther;
 combo_codegen::component!(PivotSelector, Ninther, "ninther");
 
 impl PivotSelector for FirstElement {
+    const NAME: &'static str = "first";
     fn select<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         _arr: &[T],
         _logger: &mut U,
@@ -28,6 +33,7 @@ impl PivotSelector for FirstElement {
 }
 
 impl PivotSelector for MiddleElement {
+    const NAME: &'static str = "middle";
     fn select<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &[T],
         _logger: &mut U,
@@ -37,6 +43,7 @@ impl PivotSelector for MiddleElement {
 }
 
 impl PivotSelector for LastElement {
+    const NAME: &'static str = "last";
     fn select<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &[T],
         _logger: &mut U,
@@ -46,6 +53,7 @@ impl PivotSelector for LastElement {
 }
 
 impl PivotSelector for MedianOfThree {
+    const NAME: &'static str = "median of 3";
     fn select<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &[T],
         logger: &mut U,
@@ -55,6 +63,7 @@ impl PivotSelector for MedianOfThree {
 }
 
 impl PivotSelector for MedianOfMedians {
+    const NAME: &'static str = "median of medians";
     fn select<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &[T],
         logger: &mut U,
@@ -71,6 +80,7 @@ impl PivotSelector for MedianOfMedians {
 }
 
 impl PivotSelector for Ninther {
+    const NAME: &'static str = "ninther";
     fn select<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &[T],
         logger: &mut U,
@@ -157,6 +167,12 @@ pub trait DualPivotSelector {
         logger: &mut U,
     ) -> (usize, usize);
 }
+
+// NOTE: no `NAME` const on `DualPivotSelector`. `CombinedSelector<V1, V2>`'s
+// natural name would be `concat(V1::NAME, V2::NAME)`, but consts inside an
+// impl block can't capture generic parameters in current Rust. The
+// dual-pivot registration macro takes the variant name as an explicit
+// string instead.
 
 // ── CombinedSelector ─────────────────────────────────────────────────────────
 

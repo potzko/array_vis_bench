@@ -16,6 +16,6 @@ Write-minimality is important when writes are expensive (e.g. flash memory, EEPR
 
 - `cycle_sort.rs` — standard cycle sort implementation.
 
-## Status
+## Registration
 
-Active — wired into the dispatch tree in `sorts/mod.rs`. Uses `create_sort!` registration.
+Single-leaf `combo_codegen::family!` invocation in `cycle_sort.rs`.

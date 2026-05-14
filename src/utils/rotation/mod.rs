@@ -25,10 +25,31 @@ pub static ROTATIONS: [RotationEntry] = [..];
 
 macro_rules! register_rotation {
     ($rot:ty) => {
-        fn __rotate_entry_fn(
+        const _ROTATION_NAME: &str = const_format::concatcp!(
+            "rotation: ",
+            <$rot as crate::utils::rotation::Rotation>::NAME,
+        );
+
+        // `rotate_fn` is the type-erased dyn-logger dispatcher used by
+        // the existing `ROTATIONS` slice (merge sorts iterate it to look
+        // a rotation up by name). Same body works as the entry point
+        // for `run_rotation_with_input` since both want a dyn logger.
+        fn __rotate_dyn(
             arr: &mut [usize],
             split: usize,
             logger: &mut dyn crate::traits::log_traits::SortLogger<usize>,
+        ) {
+            <$rot as crate::utils::rotation::Rotation>::rotate(arr, split, logger)
+        }
+
+        // NoOp-logger variant used by the correctness battery — same
+        // body, different logger type. The battery wants a concrete
+        // `NoOpLogger` so the rotation doesn't pay dyn-dispatch cost
+        // while the tests run thousands of cases.
+        fn __rotate_noop(
+            arr: &mut [usize],
+            split: usize,
+            logger: &mut crate::traits::log_traits::NoOpLogger,
         ) {
             <$rot as crate::utils::rotation::Rotation>::rotate(arr, split, logger)
         }
@@ -37,14 +58,58 @@ macro_rules! register_rotation {
         static _ROTATION_ENTRY: crate::utils::rotation::RotationEntry =
             crate::utils::rotation::RotationEntry {
                 name: <$rot as crate::utils::rotation::Rotation>::NAME,
-                rotate_fn: __rotate_entry_fn,
+                rotate_fn: __rotate_dyn,
             };
+
+        // Unified algorithm entry: rotations appear under `/rotations/`
+        // in the menu and are testable / visualisable through the same
+        // pipeline as sorts.
+        fn __run_with_input(
+            input_name: &str,
+            config: &crate::bench_registry::RunConfig,
+            logger: &mut dyn crate::traits::log_traits::SortLogger<usize>,
+        ) {
+            crate::bench_registry::run_rotation_with_input(
+                input_name, config, __rotate_dyn, logger,
+            );
+        }
+        fn __run_correctness() {
+            crate::bench_registry::correctness::rotation_battery(
+                __rotate_noop,
+                _ROTATION_NAME,
+            );
+        }
+
+        #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
+        static _ALGO_ENTRY: crate::bench_registry::AlgorithmEntry =
+            crate::bench_registry::AlgorithmEntry {
+                name: _ROTATION_NAME,
+                category: crate::bench_registry::Category::Rotation,
+                big_o: "O(N)",
+                stable: false,
+                max_input_size: None,
+                run_with_input: __run_with_input,
+                run_correctness: __run_correctness,
+            };
+
+        #[ctor::ctor]
+        fn __register_path() {
+            sort_registry_core::register_sort_path(
+                _ROTATION_NAME,
+                "O(N)",
+                false,
+                &["rotations", <$rot as crate::utils::rotation::Rotation>::NAME],
+            );
+        }
 
         #[cfg(test)]
         mod rotation_test {
             #[test]
             fn correctness() {
-                crate::utils::rotation::test_helpers::check_rotation(&super::_ROTATION_ENTRY);
+                crate::bench_registry::test_helpers::check_sort_subprocess_assert(
+                    &super::_ALGO_ENTRY,
+                    crate::bench_registry::test_helpers::DEFAULT_TIMEOUT,
+                );
             }
         }
     };
@@ -172,42 +237,7 @@ pub fn rotate<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     R::rotate(arr, split_ind, logger);
 }
 
-// ── Test helpers (used by register_rotation! macro) ─────────────────────────
-
-#[cfg(test)]
-pub(crate) mod test_helpers {
-    use super::RotationEntry;
-    use crate::traits::log_traits::NoOpLogger;
-
-    fn check(entry: &RotationEntry, n: usize, split: usize) {
-        let mut arr: Vec<usize> = (0..n).collect();
-        let expected: Vec<usize> = (split..n).chain(0..split).collect();
-        (entry.rotate_fn)(&mut arr, split, &mut NoOpLogger);
-        assert_eq!(
-            arr, expected,
-            "{}: rotate({}, {}) failed",
-            entry.name, n, split
-        );
-    }
-
-    pub fn check_rotation(entry: &RotationEntry) {
-        check(entry, 0, 0);
-        check(entry, 1, 0);
-        check(entry, 1, 1);
-        check(entry, 2, 0);
-        check(entry, 2, 1);
-        check(entry, 2, 2);
-        for n in 3..=16 {
-            for split in 0..=n {
-                check(entry, n, split);
-            }
-        }
-        for n in [32, 100, 127, 128, 255, 1000] {
-            check(entry, n, 1);
-            check(entry, n, n - 1);
-            check(entry, n, n / 2);
-            check(entry, n, n / 3);
-            check(entry, n, n * 2 / 3);
-        }
-    }
-}
+// (The old `check_rotation` test helper has been retired in favour of
+// `bench_registry::correctness::rotation_battery`, which is what the
+// `register_rotation!` macro now calls from each rotation's per-entry
+// `run_correctness`.)

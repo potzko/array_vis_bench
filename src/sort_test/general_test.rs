@@ -1,20 +1,19 @@
-use crate::bench_registry;
+use crate::bench_registry::{self, AlgorithmEntry, Category};
 
 pub fn test_sort(choice: &[String]) -> bool {
-    // Find the sort by name in BENCH_SORTS
     let name = choice.last().map(String::as_str).unwrap_or("");
-    for entry in bench_registry::BENCH_SORTS.iter() {
+    for entry in bench_registry::ALGORITHMS.iter() {
         if entry.name == name {
             return test_entry(entry);
         }
     }
-    eprintln!("sort_test: '{}' not found in BENCH_SORTS", name);
+    eprintln!("sort_test: '{}' not found in ALGORITHMS", name);
     false
 }
 
 pub fn test_all() -> bool {
     let mut all_ok = true;
-    for entry in bench_registry::BENCH_SORTS.iter() {
+    for entry in bench_registry::ALGORITHMS.iter() {
         if !test_entry(entry) {
             all_ok = false;
         }
@@ -22,32 +21,17 @@ pub fn test_all() -> bool {
     all_ok
 }
 
-fn test_entry(entry: &bench_registry::SortBenchEntry) -> bool {
-    let cases: Vec<(&str, Vec<usize>)> = vec![
-        ("empty", vec![]),
-        ("single", vec![1]),
-        ("reversed pair", vec![2, 1]),
-        ("sorted pair", vec![1, 2]),
-        ("reversed 32", (0..32).rev().collect()),
-        ("sorted 32", (0..32).collect()),
-        ("all-same 32", vec![5; 32]),
-        ("alternating 33", (0..33).map(|i| if i % 2 == 0 { i } else { 33 - i }).collect()),
-        ("reversed 100", (0..100).rev().collect()),
-    ];
-
-    let mut ok = true;
-    for (label, case) in &cases {
-        let mut arr = case.clone();
-        let mut expected = case.clone();
-        expected.sort();
-        (entry.run)(&mut arr);
-        if arr != expected {
-            eprintln!("{}: FAILED on '{}'", entry.name, label);
-            ok = false;
-        }
-    }
-    if ok {
+fn test_entry(entry: &AlgorithmEntry) -> bool {
+    if entry.category != Category::Sort {
+        // Non-sort categories have their own batteries inside `run_correctness`.
+        (entry.run_correctness)();
         eprintln!("{}: OK", entry.name);
+        return true;
     }
-    ok
+    // For sorts, the entry's run_correctness already covers a full
+    // pattern bank via `sort_battery`. Defer to it so this helper stays
+    // a single source of truth.
+    (entry.run_correctness)();
+    eprintln!("{}: OK", entry.name);
+    true
 }

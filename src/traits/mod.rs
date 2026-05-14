@@ -4,25 +4,11 @@ pub mod sort_traits;
 pub use log_traits::*;
 pub use sort_traits::*;
 
-use lazy_static::lazy_static;
-use std::collections::HashMap;
-use std::sync::Mutex;
-
-/// Function pointer type for sort implementations (fully optimizable, no trait objects)
+/// Type alias kept for ergonomics inside per-family `register_*!` macros
+/// (`SortFn` is a self-explanatory name at the call site even though the
+/// shape is trivial). Not a registry key any more — algorithm dispatch
+/// goes through `bench_registry::ALGORITHMS`.
 pub type SortFn = fn(&mut [usize], &mut log_traits::NoOpLogger);
-
-/// Function pointer type for sort visualisation (accepts dyn SortLogger)
-pub type SortVisFn = fn(&mut [usize], &mut dyn log_traits::SortLogger<usize>);
-
-lazy_static! {
-    pub static ref SORT_REGISTRY: Mutex<HashMap<String, SortFn>> =
-        Mutex::new(HashMap::new());
-
-    /// Registry for visualisation dispatch — maps sort name → sort_vis fn pointer.
-    /// Populated by `family!(... direct_sort = true; ...)`.
-    pub static ref SORT_VIS_REGISTRY: Mutex<HashMap<String, SortVisFn>> =
-        Mutex::new(HashMap::new());
-}
 
 /// Get all registered sort names (from core)
 pub fn get_registered_sorts() -> Vec<String> {

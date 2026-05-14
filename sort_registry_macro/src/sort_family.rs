@@ -459,17 +459,31 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
         non_empty.iter().map(|l| sanitize(l)).collect::<Vec<_>>().join("_")
     };
 
-    let fn_sort     = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_sort_fn");
-    let fn_bench    = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_bench");
-    let fn_register = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_register");
-    let st_bench    = format_ident!(
-        "__SF_{}_{}_{}_BENCH",
+    // Identifiers for the per-leaf helpers we emit. `__sf_<family>_<idx>
+    // _<labels>_*` keeps them unique without colliding with anything else
+    // the user might have in the same module.
+    let fn_sort        = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_sort_fn");
+    let fn_run_default = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_run_default");
+    let fn_run_correct = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_run_correctness");
+    let fn_register    = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_register");
+    let st_entry       = format_ident!(
+        "__SF_{}_{}_{}_ENTRY",
+        fam_s.to_uppercase(),
+        idx,
+        lbl_s.to_uppercase()
+    );
+    let st_test_mod    = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_test");
+    let st_cap         = format_ident!(
+        "__SF_{}_{}_{}_CAP",
         fam_s.to_uppercase(),
         idx,
         lbl_s.to_uppercase()
     );
 
-    // Build the call expression for sort_fn (NoOpLogger).
+    // Inherent method (direct_sort = true) vs trait route (direct_sort
+    // = false). Both pass through to `Sort::sort(arr, logger)` —
+    // `logger` is monomorphic-NoOp in the test path and a dyn
+    // SortLogger in the visualisation path.
     let sort_call_noop = if family.direct_sort {
         quote! { <#concrete_ty>::sort(arr, logger) }
     } else {
@@ -480,14 +494,14 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
             >>::sort(arr, logger)
         }
     };
-
-    let st_test_mod = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_test");
-    let st_cap      = format_ident!(
-        "__SF_{}_{}_{}_CAP",
-        fam_s.to_uppercase(),
-        idx,
-        lbl_s.to_uppercase()
-    );
+    let sort_call_dyn = if family.direct_sort {
+        quote! { <#concrete_ty>::sort(arr, logger) }
+    } else {
+        // SortAlgo<T, U> needs a sized U; visualisation for indirect
+        // sorts isn't wired (none exist that need it). Fall back to a
+        // no-op so the macro still compiles for those.
+        quote! { let _ = (arr, logger); }
+    };
 
     let cap_static = match family.max_n_for_tests {
         Some(n) => {
@@ -501,8 +515,11 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
         None => quote! {},
     };
 
-    let base = quote! {
+    quote! {
         #cap_static
+
+        // Type-erased entry used by the correctness battery
+        // (`sort_battery` takes a fn pointer with this exact shape).
         #[allow(non_snake_case, dead_code)]
         fn #fn_sort(
             arr: &mut [usize],
@@ -511,20 +528,47 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
             #sort_call_noop;
         }
 
+        // Vis-side entry. Looks up the named input in `SORT_INPUTS`,
+        // generates its values, emits the initial-state events on the
+        // logger, then runs the sort with the supplied dyn logger.
+        // All three responsibilities live inside the shared helper
+        // `run_sort_with_input` to keep this macro-emitted body small.
         #[allow(non_snake_case, dead_code)]
-        fn #fn_bench(arr: &mut [usize]) {
-            let mut l = crate::traits::log_traits::NoOpLogger;
-            #fn_sort(arr, &mut l);
+        fn #fn_run_default(
+            input_name: &str,
+            config: &crate::bench_registry::RunConfig,
+            logger: &mut dyn crate::traits::log_traits::SortLogger<usize>,
+        ) {
+            fn sort_dyn(
+                arr: &mut [usize],
+                logger: &mut dyn crate::traits::log_traits::SortLogger<usize>,
+            ) {
+                #sort_call_dyn;
+            }
+            crate::bench_registry::run_sort_with_input(input_name, config, sort_dyn, logger);
         }
 
-        #[linkme::distributed_slice(crate::bench_registry::BENCH_SORTS)]
+        // Test-side entry. Runs the shared sort battery + stability
+        // battery (the latter is a no-op for non-stable sorts).
+        #[allow(non_snake_case, dead_code)]
+        fn #fn_run_correct() {
+            crate::bench_registry::correctness::sort_battery(#fn_sort, #sort_name);
+            crate::bench_registry::correctness::sort_stability_battery(
+                #fn_sort, #sort_name, #stable,
+            );
+        }
+
+        #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
         #[allow(non_upper_case_globals)]
-        static #st_bench: crate::bench_registry::SortBenchEntry =
-            crate::bench_registry::SortBenchEntry {
+        static #st_entry: crate::bench_registry::AlgorithmEntry =
+            crate::bench_registry::AlgorithmEntry {
                 name: #sort_name,
+                category: crate::bench_registry::Category::Sort,
                 big_o: #big_o,
                 stable: #stable,
-                run: #fn_bench,
+                max_input_size: None,
+                run_with_input: #fn_run_default,
+                run_correctness: #fn_run_correct,
             };
 
         #[cfg(test)]
@@ -533,65 +577,26 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
             #[test]
             fn correctness() {
                 crate::bench_registry::test_helpers::check_sort_subprocess_assert(
-                    &super::#st_bench,
+                    &super::#st_entry,
                     crate::bench_registry::test_helpers::DEFAULT_TIMEOUT,
                 );
             }
         }
-    };
 
-    if family.direct_sort {
-        // Also generate sort_vis and register in SORT_VIS_REGISTRY.
-        let fn_vis      = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_sort_vis");
-
-        quote! {
-            #base
-
-            #[allow(non_snake_case, dead_code)]
-            fn #fn_vis(
-                arr: &mut [usize],
-                logger: &mut dyn crate::traits::log_traits::SortLogger<usize>,
-            ) {
-                <#concrete_ty>::sort(arr, logger);
-            }
-
-            #[ctor::ctor]
-            #[allow(non_snake_case)]
-            fn #fn_register() {
-                crate::traits::SORT_REGISTRY
-                    .lock()
-                    .unwrap()
-                    .insert(#sort_name.to_string(), #fn_sort);
-                crate::traits::SORT_VIS_REGISTRY
-                    .lock()
-                    .unwrap()
-                    .insert(#sort_name.to_string(), #fn_vis);
-                sort_registry_core::register_sort_path(
-                    #sort_name,
-                    #big_o,
-                    #stable,
-                    &[#(#path_elems),*],
-                );
-            }
-        }
-    } else {
-        quote! {
-            #base
-
-            #[ctor::ctor]
-            #[allow(non_snake_case)]
-            fn #fn_register() {
-                crate::traits::SORT_REGISTRY
-                    .lock()
-                    .unwrap()
-                    .insert(#sort_name.to_string(), #fn_sort);
-                sort_registry_core::register_sort_path(
-                    #sort_name,
-                    #big_o,
-                    #stable,
-                    &[#(#path_elems),*],
-                );
-            }
+        #[ctor::ctor]
+        #[allow(non_snake_case)]
+        fn #fn_register() {
+            // Every sort lives under the top-level "sorts" group so the
+            // category picker — sorts / rotations / partitions / merges /
+            // small-sorts — falls out of tree shape rather than living in
+            // a separate piece of code. Rotations / partitions / small-sorts
+            // register their own category prefix at their respective sites.
+            sort_registry_core::register_sort_path(
+                #sort_name,
+                #big_o,
+                #stable,
+                &["sorts", #(#path_elems),*],
+            );
         }
     }
 }

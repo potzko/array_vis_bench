@@ -17,6 +17,6 @@ These properties make it the preferred "small-sort" finisher for merge sort, tim
 
 - `insertion_sort.rs` — standard insertion sort with `SortLogger` instrumentation. Provides both generic `sort` and dyn-compatible `sort_dyn`.
 
-## Status
+## Registration
 
-Active — wired into the dispatch tree in `sorts/mod.rs`. Uses `create_sort!` registration.
+Single-leaf `combo_codegen::family!` invocation in `insertion_sort.rs`.
