@@ -2,6 +2,8 @@ pub use crate::utils::shell_branching::{
     BranchingStrategy, Classic, Fibonacci, LogParity, Optimised, Parity3, RootParity,
 };
 
+pub use crate::sorts::rod_sorts::merge::{AuxMerge, InsertionMerge, RodMerge};
+
 use crate::traits::log_traits::SortLogger;
 use crate::traits::SortFn;
 
@@ -12,7 +14,7 @@ use crate::traits::SortFn;
 pub struct RodEntry {
     pub name: &'static str,
     pub big_o: &'static str,
-    /// Navigation path for the tree menu, e.g. `["rod sorts", "classic"]`.
+    /// Navigation path for the tree menu, e.g. `["rod sorts", "classic", "insertion"]`.
     pub path: &'static [&'static str],
     pub sort_fn: SortFn,
     pub sort_vis: fn(&mut [usize], &mut dyn SortLogger<usize>),
@@ -24,26 +26,33 @@ pub static ROD_STRATEGIES: [RodEntry] = [..];
 // ---------------------------------------------------------------------------
 // Registration macro
 //
-// Usage:  register_rod!(mod_name, StrategyType)
+// Usage:  register_rod!(mod_name, StrategyType, MergeType)
 //
-// To add a new branching strategy:
-//   1. Add the struct + BranchingStrategy impl to utils/shell_branching/mod.rs
-//   2. Add it to the re-export list at the top of this file
-//   3. Call register_rod!(name, Type) below — nothing else changes
+// To add a new branching strategy or merge mode:
+//   1. Add the impl to its home (utils/shell_branching/mod.rs for branching,
+//      sorts/rod_sorts/merge.rs for merge).
+//   2. For branching: also add it to the re-export list at the top of this
+//      file. For merge: it's already re-exported via `merge::*`.
+//   3. Call register_rod!(name, BranchingType, MergeType) below.
 // ---------------------------------------------------------------------------
 macro_rules! register_rod {
-    ($mod:ident, $strat:ident) => {
+    ($mod:ident, $strat:ident, $merge:ident) => {
         mod $mod {
             use super::*;
             use crate::sorts::rod_sorts::rod_sort::RodSort;
             use crate::traits::log_traits::{NoOpLogger, SortLogger};
 
-            const SORT_NAME: &str =
-                const_format::concatcp!("rod sort<strategy: ", $strat::NAME, ">");
-            const PATH: &[&str] = &["rod sorts", $strat::NAME];
+            const SORT_NAME: &str = const_format::concatcp!(
+                "rod sort<strategy: ",
+                $strat::NAME,
+                ", merge: ",
+                $merge::NAME,
+                ">"
+            );
+            const PATH: &[&str] = &["rod sorts", $strat::NAME, $merge::NAME];
 
-            fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) { RodSort::<$strat>::sort(arr, logger) }
-            fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) { RodSort::<$strat>::sort(arr, logger) }
+            fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) { RodSort::<$strat, $merge>::sort(arr, logger) }
+            fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) { RodSort::<$strat, $merge>::sort(arr, logger) }
 
             fn run_with_input(
                 input_name: &str,
@@ -90,9 +99,16 @@ macro_rules! register_rod {
     };
 }
 
-register_rod!(classic,     Classic);
-register_rod!(parity3,     Parity3);
-register_rod!(log_parity,  LogParity);
-register_rod!(root_parity, RootParity);
-register_rod!(optimised,   Optimised);
-register_rod!(fibonacci,   Fibonacci);
+// Cross-product: every branching strategy × every merge mode.
+register_rod!(classic_insertion,     Classic,     InsertionMerge);
+register_rod!(classic_aux,           Classic,     AuxMerge);
+register_rod!(parity3_insertion,     Parity3,     InsertionMerge);
+register_rod!(parity3_aux,           Parity3,     AuxMerge);
+register_rod!(log_parity_insertion,  LogParity,   InsertionMerge);
+register_rod!(log_parity_aux,        LogParity,   AuxMerge);
+register_rod!(root_parity_insertion, RootParity,  InsertionMerge);
+register_rod!(root_parity_aux,       RootParity,  AuxMerge);
+register_rod!(optimised_insertion,   Optimised,   InsertionMerge);
+register_rod!(optimised_aux,         Optimised,   AuxMerge);
+register_rod!(fibonacci_insertion,   Fibonacci,   InsertionMerge);
+register_rod!(fibonacci_aux,         Fibonacci,   AuxMerge);

@@ -1,9 +1,11 @@
 use std::marker::PhantomData;
 
+use super::merge::{insertion_sort_jump, RodMerge};
 use crate::traits::log_traits::SortLogger;
 use crate::utils::shell_branching::BranchingStrategy;
 
-/// Rod sort — recursive divide-and-conquer sort generalised over a branching strategy.
+/// Rod sort — recursive divide-and-conquer sort generalised over a branching
+/// strategy `S` and a final-merge strategy `M`.
 ///
 /// Each recursive call works on the virtual sub-array defined by the slice
 /// `arr[offset..]` with elements spaced `jump` apart.  At each level:
@@ -11,12 +13,12 @@ use crate::utils::shell_branching::BranchingStrategy;
 ///   1. Compute `branch = S::branch(virtual_len)`.
 ///   2. Recurse into each of the `branch` interleaved sub-sub-arrays at stride `jump * branch`.
 ///   3. Optionally do an intermediate insertion-sort pass at `S::intermediate(virtual_len)`.
-///   4. Merge with a final insertion-sort pass at the current stride `jump`.
-pub struct RodSort<S: BranchingStrategy> {
-    _phantom: PhantomData<S>,
+///   4. Merge the `branch` sorted sub-streams via `M::merge` at stride `jump`.
+pub struct RodSort<S: BranchingStrategy, M: RodMerge> {
+    _phantom: PhantomData<(S, M)>,
 }
 
-impl<S: BranchingStrategy> RodSort<S> {
+impl<S: BranchingStrategy, M: RodMerge> RodSort<S, M> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         if !arr.is_empty() {
             Self::sort_rec(arr, 1, logger);
@@ -33,7 +35,9 @@ impl<S: BranchingStrategy> RodSort<S> {
             return;
         }
         if S::should_cut(virtual_len) {
-            Self::insertion_sort_jump(arr, jump, logger);
+            // Base case: unsorted strided data with no pre-existing merge
+            // structure — always insertion-sort, regardless of `M`.
+            insertion_sort_jump(arr, jump, logger);
             return;
         }
 
@@ -50,29 +54,11 @@ impl<S: BranchingStrategy> RodSort<S> {
             for i in 0..inter {
                 let offset = jump * i;
                 if offset < arr.len() {
-                    Self::insertion_sort_jump(&mut arr[offset..], jump * inter, logger);
+                    insertion_sort_jump(&mut arr[offset..], jump * inter, logger);
                 }
             }
         }
 
-        Self::insertion_sort_jump(arr, jump, logger);
-    }
-
-    fn insertion_sort_jump<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-        arr: &mut [T],
-        jump: usize,
-        logger: &mut U,
-    ) {
-        let mut i = 0;
-        while i < arr.len() {
-            let mut ii = i;
-            while ii >= jump {
-                if !logger.cond_swap_lt(arr, ii, ii - jump) {
-                    break;
-                }
-                ii -= jump;
-            }
-            i += jump;
-        }
+        M::merge(arr, jump, branch, logger);
     }
 }

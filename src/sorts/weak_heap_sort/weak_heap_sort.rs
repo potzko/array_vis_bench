@@ -11,12 +11,12 @@
 //! [`Compare`] (min vs max ordering) and [`Layout`] (forward vs reverse
 //! placement in the array) are paired by [`Direction`]. Only the two
 //! ascending-output combinations carry the `HeapDirection` `component!`
-//! marker, so `family!` registers two variants. The build/swap/push-
-//! down primitives feed the [`HeapAlgorithm`] default `sort`, so weak heap
-//! plugs into anything that consumes a `HeapAlgorithm` (e.g. introsort).
+//! marker, so `family!` registers them — multiplied by the
+//! [`ReverseStorage`] axis (byte-per-bit vs bit-packed).
 
 use std::marker::PhantomData;
 
+use super::reverse_storage::ReverseStorage;
 use crate::sorts::heap_sort::compare::Compare;
 use crate::sorts::heap_sort::direction::Direction;
 use crate::sorts::heap_sort::heap::HeapLayout;
@@ -24,15 +24,15 @@ use crate::sorts::heap_sort::heap_algorithm::HeapAlgorithm;
 use crate::sorts::heap_sort::layout::Layout;
 use crate::traits::log_traits::SortLogger;
 
-pub struct WeakHeapSort<D: Direction> {
-    _phantom: PhantomData<D>,
+pub struct WeakHeapSort<D: Direction, R: ReverseStorage> {
+    _phantom: PhantomData<(D, R)>,
 }
 
 // Layout-only `Heap` membership: lets partition-style code that only
 // needs `(Compare, phys)` accept a weak heap as "a heap" even though its
 // build / sift-down operations are stateful (`Vec<u8>` reverse bits) and
 // therefore live on [`HeapAlgorithm`] instead of [`super::super::heap_sort::heap::Heap`].
-impl<D: Direction> HeapLayout for WeakHeapSort<D> {
+impl<D: Direction, R: ReverseStorage> HeapLayout for WeakHeapSort<D, R> {
     type Compare = D::Compare;
 
     #[inline(always)]
@@ -41,28 +41,20 @@ impl<D: Direction> HeapLayout for WeakHeapSort<D> {
     }
 }
 
-impl<D: Direction> HeapAlgorithm for WeakHeapSort<D> {
-    /// Per-node reverse bits — the heart of the weak heap representation.
-    /// Stored as `Vec<u8>` (one byte per node, value 0 or 1) so the buffer
-    /// can be registered with the visualiser via the logger's `_u8` aux
-    /// family — flips are observable as `WriteDataU` events.
+impl<D: Direction, R: ReverseStorage> HeapAlgorithm for WeakHeapSort<D, R> {
+    /// Per-node reverse bits. Storage layout (byte-per-bit or bit-packed)
+    /// is delegated to `R`; the underlying `Vec<u8>` is registered with
+    /// the visualiser via the `_u8` aux family.
     type State = Vec<u8>;
 
     #[inline]
     fn new_state<T: Ord + Copy, U: ?Sized + SortLogger<T>>(n: usize, logger: &mut U) -> Vec<u8> {
-        let reverse = vec![0u8; n];
-        logger.log_aux_arr_u8(&reverse);
-        // Reverse bits are exactly 0 or 1, so fix the visualiser scale
-        // to 1 up-front — otherwise the first flip-to-1 establishes
-        // max=1 and every subsequent unflipped cell renders as full
-        // height until that index is written.
-        logger.set_scale_u8(&reverse, 1);
-        reverse
+        R::new::<T, U>(n, logger)
     }
 
     #[inline]
     fn drop_state<T: Ord + Copy, U: ?Sized + SortLogger<T>>(state: Vec<u8>, logger: &mut U) {
-        logger.free_aux_arr_u8(&state);
+        R::drop::<T, U>(state, logger);
     }
 
     #[inline(always)]
@@ -80,8 +72,8 @@ impl<D: Direction> HeapAlgorithm for WeakHeapSort<D> {
         // distinguished ancestor. After this pass the logical root holds
         // the heap's "champion" value under the chosen direction.
         for i in (1..n).rev() {
-            let g = gparent(i, reverse);
-            merge::<T, U, D>(arr, reverse, g, i, n, logger);
+            let g = gparent::<R>(i, reverse);
+            merge::<T, U, D, R>(arr, reverse, g, i, n, logger);
         }
     }
 
@@ -112,19 +104,19 @@ impl<D: Direction> HeapAlgorithm for WeakHeapSort<D> {
         // Descend through left children (under reverse bits) to the
         // bottom of the heap that still lies inside the unsorted region.
         let mut j: usize = 1;
-        while 2 * j + (reverse[j] as usize) < heap_size {
-            j = 2 * j + (reverse[j] as usize);
+        while 2 * j + (R::get(reverse, j) as usize) < heap_size {
+            j = 2 * j + (R::get(reverse, j) as usize);
         }
         // Walk back up to the root, merging at each step. Each merge
         // ensures the surviving root dominates the path's subtree.
         while j > 0 {
-            merge::<T, U, D>(arr, reverse, 0, j, n, logger);
+            merge::<T, U, D, R>(arr, reverse, 0, j, n, logger);
             j /= 2;
         }
     }
 }
 
-impl<D: Direction> WeakHeapSort<D> {
+impl<D: Direction, R: ReverseStorage> WeakHeapSort<D, R> {
     /// Inherent thin delegate so `<WeakHeapSort<...>>::sort(arr, logger)`
     /// keeps working from `family!`-generated code without needing
     /// the `HeapAlgorithm` trait in scope at the call site.
@@ -136,10 +128,10 @@ impl<D: Direction> WeakHeapSort<D> {
 /// Find the distinguished ancestor of `i`: walk up while `i` is a left
 /// child (in the reverse-bit-flipped scheme), then take one more step.
 #[inline]
-fn gparent(mut i: usize, reverse: &[u8]) -> usize {
+fn gparent<R: ReverseStorage>(mut i: usize, reverse: &[u8]) -> usize {
     while i > 1 {
         let p = i / 2;
-        if (i & 1) as u8 == reverse[p] {
+        if (i & 1) as u8 == R::get(reverse, p) {
             i = p;
         } else {
             break;
@@ -150,10 +142,10 @@ fn gparent(mut i: usize, reverse: &[u8]) -> usize {
 
 /// If `arr[j]` outranks `arr[i]` under the chosen direction, swap them
 /// and flip `reverse[j]`. Post-merge, `arr[i]` dominates the right
-/// subtree rooted at `j`. The flip is routed through `write_data_u8` so
-/// the visualiser observes the bit change.
+/// subtree rooted at `j`. The flip is routed through `R::flip` so the
+/// visualiser observes the bit change in whatever storage layout `R` uses.
 #[inline]
-fn merge<T, U, D>(
+fn merge<T, U, D, R>(
     arr: &mut [T],
     reverse: &mut [u8],
     i: usize,
@@ -164,25 +156,28 @@ fn merge<T, U, D>(
     T: Ord + Copy,
     U: ?Sized + SortLogger<T>,
     D: Direction,
+    R: ReverseStorage,
 {
     let i_phys = <D::Layout as Layout>::phys(i, n);
     let j_phys = <D::Layout as Layout>::phys(j, n);
     if <D::Compare as Compare>::comes_first(logger, arr, j_phys, i_phys) {
         logger.swap(arr, i_phys, j_phys);
-        logger.write_data_u8(reverse, j, reverse[j] ^ 1);
+        R::flip::<T, U>(reverse, j, logger);
     }
 }
 
 combo_codegen::family!(
-    type = WeakHeapSort<{D}>,
+    type = WeakHeapSort<{D}, {R}>,
     uses = [
         "crate::sorts::heap_sort::direction::{MinReverse, MaxForward}",
+        "crate::sorts::weak_heap_sort::reverse_storage::{ByteStorage, BitStorage}",
         "crate::sorts::weak_heap_sort::weak_heap_sort::WeakHeapSort",
     ],
     D: HeapDirection,
+    R: ReverseStorage,
     name = "weak heap sort",
     big_o = "O(N log N)",
     stable = false,
     direct_sort = true,
-    path = ["weak heap sorts", "{D}"],
+    path = ["weak heap sorts", "{D}", "{R}"],
 );
