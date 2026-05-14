@@ -18,7 +18,7 @@ pub mod quick_heap_sort;
 pub mod weak_heap_sort;
 pub mod fun_sorts;
 
-// Disconnected — pending port to sort_family! codegen:
+// Disconnected — pending port to family! codegen:
 // pub mod annotations;
 // pub mod example_generic_sort;
 

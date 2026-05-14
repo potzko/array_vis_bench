@@ -7,7 +7,7 @@
 //! bi-parental DAG and blows up exponentially. The iterative variant
 //! visits each internal node exactly once.
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = HeapSort<BeapHeap<{D}>, {DH}>,
     uses = [
         "crate::sorts::heap_sort::direction::{MinReverse, MaxForward}",

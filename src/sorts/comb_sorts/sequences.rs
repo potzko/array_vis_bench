@@ -18,7 +18,7 @@ pub static COMB_SEQUENCES: [CombEntry] = [..];
 //
 // Each variant is registered in COMB_SEQUENCES so that the interactive
 // visualiser can find it by name.  BENCH_SORTS + SORT_REGISTRY are handled
-// separately by the `sort_family!` call below.
+// separately by the `family!` call below.
 // ---------------------------------------------------------------------------
 macro_rules! register_comb_vis {
     ($mod:ident, $display:literal, $num:literal, $den:literal) => {
@@ -77,14 +77,14 @@ register_comb_vis!(eleven_eighths,    "11/8",          8, 11);
 register_comb_vis!(five_fourths,      "5/4",           4,  5);
 
 // ---------------------------------------------------------------------------
-// Bench + sort-registry via sort_family!
+// Bench + sort-registry via family!
 //
 // CombSortRatio<NUM, DEN> implements SortAlgo and computes the same gaps as
 // the visualisation closures above, so benchmark results are consistent.
 // The sort name format matches the COMB_SEQUENCES names exactly so that the
 // interactive UI and benchmarks refer to the same sort.
 // ---------------------------------------------------------------------------
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = {R},
     uses = [
         "crate::sorts::comb_sorts::comb_sort_ratio::CombSortRatio",

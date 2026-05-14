@@ -3,7 +3,7 @@ use crate::traits::log_traits::SortLogger;
 use super::rotation_merge::RotationMerge;
 use crate::utils::small_sort::SmallSort;
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = TopDownRotationMergeSort<{SS}, NaiveRotationMerge<{R}>, false>,
     uses = [
         "crate::sorts::merge_sorts::rotation::TopDownRotationMergeSort",
@@ -21,7 +21,7 @@ combo_codegen::sort_family!(
     path = ["merge sorts", "rotation", "top-down", "{R}", "{SS}"],
 );
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = TopDownRotationMergeSort<{SS}, SmallerSideRotationMerge<{R}>, false>,
     uses = [
         "crate::sorts::merge_sorts::rotation::TopDownRotationMergeSort",
@@ -39,7 +39,7 @@ combo_codegen::sort_family!(
     path = ["merge sorts", "rotation", "top-down smaller-side", "{R}", "{SS}"],
 );
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = BottomUpRotationMergeSort<{SS}, NaiveRotationMerge<{R}>, false>,
     uses = [
         "crate::sorts::merge_sorts::rotation::BottomUpRotationMergeSort",
@@ -57,7 +57,7 @@ combo_codegen::sort_family!(
     path = ["merge sorts", "rotation", "bottom-up", "{R}", "{SS}"],
 );
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = BottomUpRotationMergeSort<{SS}, SmallerSideRotationMerge<{R}>, false>,
     uses = [
         "crate::sorts::merge_sorts::rotation::BottomUpRotationMergeSort",

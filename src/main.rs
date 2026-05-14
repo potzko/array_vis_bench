@@ -186,7 +186,7 @@ fn create_sort_choice(sort_name: &str) -> Vec<String> {
          Sort '{}' is registered in SORT_REGISTRY but has no\n\
          visualization dispatch route in create_sort_choice().\n\
          \n\
-         To fix: migrate this sort to sort_family!(... direct_sort = true; ...)\n\
+         To fix: migrate this sort to family!(... direct_sort = true; ...)\n\
          or add a sort_choice() route in the sort's module.\n",
         sort_name
     )

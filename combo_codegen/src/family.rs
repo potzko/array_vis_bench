@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 // ── ComponentDef ─────────────────────────────────────────────────────────────
 
-/// A single concrete type that fills a role in a generic sort family.
+/// A single concrete type that fills a role in a generic family.
 ///
 /// `type_expr` is the Rust type as it should appear inside `<…>`, e.g.
 /// `"InsertionSmallSort<16>"`. `label` is the human-readable name used in
-/// the sort registry path, e.g. `"insertion: 16"`.
+/// downstream registries, e.g. `"insertion: 16"`.
 #[derive(Debug, Clone)]
 pub struct ComponentDef {
     pub type_expr: String,
@@ -23,7 +23,8 @@ impl ComponentDef {
 
 /// Maps role names (e.g. `"Partition"`) to their discovered [`ComponentDef`]s.
 ///
-/// Built by [`crate::scan`]; consumed by [`Family`] to resolve axis definitions.
+/// Built by [`crate::scan`]; consumed by [`Family`] / [`FamilyDef`] to resolve
+/// axis definitions.
 #[derive(Debug, Default)]
 pub struct ComponentRegistry {
     roles: HashMap<String, Vec<ComponentDef>>,
@@ -59,17 +60,6 @@ impl ComponentRegistry {
 // ── Axis helpers ─────────────────────────────────────────────────────────────
 
 /// Build a `Vec<ComponentDef>` from a slice of `(type_expr, label)` pairs.
-///
-/// Useful for axes whose variants are not annotated in source files — for
-/// example, boolean const-generic flags:
-///
-/// ```rust,ignore
-/// use combo_codegen::inline;
-///
-/// Family::new("MySort<{SS}, {PP}>")
-///     .axis("SS", registry.role("SmallSort"))
-///     .axis("PP", &inline(&[("false", ""), ("true", "ping-pong")]));
-/// ```
 pub fn inline(items: &[(&str, &str)]) -> Vec<ComponentDef> {
     items
         .iter()
@@ -77,21 +67,8 @@ pub fn inline(items: &[(&str, &str)]) -> Vec<ComponentDef> {
         .collect()
 }
 
-/// Compute the cross-product of two component lists, merging each pair into a
-/// single [`ComponentDef`] using caller-supplied combiners.
-///
-/// Useful when a single type-parameter axis represents a *combination* of two
-/// independent roles — for example, a `DualPivotSelector` that wraps two
-/// independent `PivotSelector` strategies:
-///
-/// ```rust,ignore
-/// let dual = cross_axis(
-///     registry.role("PivotSelector"),
-///     registry.role("PivotSelector"),
-///     |a, b| format!("CombinedSelector<{}, {}>", a.type_expr, b.type_expr),
-///     |a, b| format!("{} / {}", a.label, b.label),
-/// );
-/// ```
+/// Cross-product of two component lists, merging each pair into a single
+/// [`ComponentDef`] using caller-supplied combiners.
 pub fn cross_axis(
     left: &[ComponentDef],
     right: &[ComponentDef],
@@ -107,75 +84,38 @@ pub fn cross_axis(
     out
 }
 
-// ── Axis ─────────────────────────────────────────────────────────────────────
+// ── Axis (manual API) ────────────────────────────────────────────────────────
 
-/// One parameter slot in a [`Family`], identified by its template variable
-/// name (e.g. `"P"`) and the list of concrete types it can take.
+/// One parameter slot in a [`Family`].
 #[derive(Debug, Clone)]
 pub struct Axis {
     pub var: String,
     pub components: Vec<ComponentDef>,
 }
 
-// ── Family ───────────────────────────────────────────────────────────────────
+// ── Family / Combination (manual API) ────────────────────────────────────────
 
-/// A generic sort type together with its named axes.
-///
-/// Build with [`Family::new`] and chain [`Family::axis`] calls, then either:
-/// - call [`Family::axes`] to iterate axes and format your own output, or
-/// - call [`Family::combinations`] to iterate every concrete instantiation.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// use combo_codegen::{scan, Family, inline};
-///
-/// let reg = scan("src/").unwrap();
-///
-/// let family = Family::new("QuickSort<{P}, {V}, {SS}>")
-///     .axis("P",  reg.role("Partition"))
-///     .axis("V",  reg.role("PivotSelector"))
-///     .axis("SS", reg.role("SmallSort"));
-///
-/// for combo in family.combinations() {
-///     println!("{}", combo.instantiated_type());
-/// }
-/// ```
+/// A generic type together with its named axes, built imperatively.
 #[derive(Debug)]
 pub struct Family {
-    /// Template string with `{VAR}` placeholders, e.g. `"QuickSort<{P}, {V}, {SS}>"`.
     pub type_template: String,
     axes: Vec<Axis>,
 }
 
 impl Family {
-    /// Create a new family from a type template string.
-    ///
-    /// Placeholders are written as `{VAR}` where `VAR` matches the first
-    /// argument of subsequent `.axis("VAR", …)` calls.
     pub fn new(type_template: impl Into<String>) -> Self {
         Self { type_template: type_template.into(), axes: Vec::new() }
     }
 
-    /// Add an axis bound to the given variable name.
-    ///
-    /// `components` is typically `registry.role("RoleName")` for discovered
-    /// types, or `&inline(&[…])` for hand-written inline variants.
     pub fn axis(mut self, var: impl Into<String>, components: &[ComponentDef]) -> Self {
         self.axes.push(Axis { var: var.into(), components: components.to_vec() });
         self
     }
 
-    /// Iterate the axes in declaration order.
     pub fn axes(&self) -> &[Axis] {
         &self.axes
     }
 
-    /// Instantiate the type template for a given set of axis bindings.
-    ///
-    /// `bindings` maps variable names to type expressions. Variables not
-    /// present in the template are ignored; template variables without a
-    /// binding are left as-is.
     pub fn instantiate(&self, bindings: &[(&str, &str)]) -> String {
         let mut result = self.type_template.clone();
         for (var, ty) in bindings {
@@ -184,10 +124,7 @@ impl Family {
         result
     }
 
-    /// Return every combination as a [`Combination`], i.e. the full
-    /// cross-product of all axes.
     pub fn combinations(&self) -> Vec<Combination<'_>> {
-        // Start with one empty combination and extend it axis by axis.
         let mut combos: Vec<Vec<(&str, &ComponentDef)>> = vec![vec![]];
 
         for axis in &self.axes {
@@ -209,17 +146,13 @@ impl Family {
     }
 }
 
-// ── Combination ──────────────────────────────────────────────────────────────
-
 /// One fully-resolved instantiation of a [`Family`].
 pub struct Combination<'a> {
     family: &'a Family,
-    /// Ordered list of `(var_name, component)` pairs, one per axis.
     pub bindings: Vec<(&'a str, &'a ComponentDef)>,
 }
 
 impl<'a> Combination<'a> {
-    /// The concrete type string, e.g. `"QuickSort<Lomuto, FirstElement, NoSmallSort>"`.
     pub fn instantiated_type(&self) -> String {
         let pairs: Vec<(&str, &str)> = self
             .bindings
@@ -229,7 +162,6 @@ impl<'a> Combination<'a> {
         self.family.instantiate(&pairs)
     }
 
-    /// The value for a specific axis variable, or `None` if not bound.
     pub fn get(&self, var: &str) -> Option<&ComponentDef> {
         self.bindings
             .iter()
@@ -240,16 +172,14 @@ impl<'a> Combination<'a> {
 
 // ── AxisSpec ─────────────────────────────────────────────────────────────────
 
-/// Describes how to populate one axis of a [`SortFamilyDef`].
+/// How to populate one axis of a scanned [`FamilyDef`].
 #[derive(Debug, Clone)]
 pub enum AxisSpec {
     /// Populate the axis from a named role in the [`ComponentRegistry`].
     Role(String),
     /// Cross-product of two roles, with optional extra entries appended.
     Cross {
-        /// Left role name.
         left: String,
-        /// Right role name.
         right: String,
         /// Type-expression template; `{0}` and `{1}` are the pair's type exprs.
         type_tmpl: String,
@@ -262,14 +192,114 @@ pub enum AxisSpec {
     Inline(Vec<ComponentDef>),
 }
 
-// ── SortFamilyDef ─────────────────────────────────────────────────────────────
+// ── FieldValue ───────────────────────────────────────────────────────────────
 
-/// A fully-parsed `sort_family!(…)` annotation found in a source file.
+/// A loosely-typed value emitted as `key = value;` in the generated output.
 ///
-/// The annotation declares everything the code generator needs to emit one
-/// `sort_registry_macro::sort_family! { … }` invocation.
+/// The scanner classifies each trailing `key = value` pair from a `family!(…)`
+/// (or `sort_family!(…)`) body into one of these variants based on the value's
+/// shape: leading `"` → `String`, leading `[` → `StringArray`, `true`/`false`
+/// → `Bool`, otherwise parsed as `Int`.
 #[derive(Debug, Clone)]
-pub struct SortFamilyDef {
+pub enum FieldValue {
+    String(String),
+    Bool(bool),
+    Int(i64),
+    StringArray(Vec<String>),
+}
+
+impl FieldValue {
+    /// Render as it should appear on the right-hand side of `key = …;`.
+    fn render(&self) -> String {
+        match self {
+            FieldValue::String(s) => format!("\"{}\"", s),
+            FieldValue::Bool(b) => b.to_string(),
+            FieldValue::Int(n) => n.to_string(),
+            FieldValue::StringArray(a) => {
+                let inner = a
+                    .iter()
+                    .map(|s| format!("\"{}\"", s))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("[{inner}]")
+            }
+        }
+    }
+}
+
+// ── CodegenConfig ────────────────────────────────────────────────────────────
+
+/// Knobs that bind the generic family scanner+emitter to a specific consumer
+/// macro (e.g. `sort_registry_macro::sort_family!`).
+///
+/// Construct via [`CodegenConfig::new`] + builder methods, or use the
+/// [`CodegenConfig::for_sort_families`] preset for the existing sort use case.
+#[derive(Debug, Clone)]
+pub struct CodegenConfig {
+    /// Source-side marker the scanner looks for, e.g. `"sort_family"`.
+    /// The scanner matches the literal `"<marker>!("` anywhere in `.rs` files.
+    pub marker: String,
+    /// Macro path written into the generated file, e.g.
+    /// `"sort_registry_macro::sort_family"` — emitted as
+    /// `<output_macro>! { … }`.
+    pub output_macro: String,
+    /// Literal text placed before the family's type template inside the macro
+    /// body, e.g. `"type Sort = "`. Set to `""` if the consumer macro doesn't
+    /// expect a leading keyword.
+    pub type_prefix: String,
+    /// Output filename suffix combined with the source module name, e.g.
+    /// `"_combinations.rs"` produces `<module>_combinations.rs`.
+    pub filename_suffix: String,
+    /// Optional name of a `StringArray` field that should receive
+    /// menu-path-style transformations (smallest-axis-first reorder,
+    /// cross-with-extras "specialty" sub-branch grouping). If `None`, those
+    /// transformations are skipped.
+    pub path_field: Option<String>,
+}
+
+impl CodegenConfig {
+    pub fn new(marker: impl Into<String>, output_macro: impl Into<String>) -> Self {
+        Self {
+            marker: marker.into(),
+            output_macro: output_macro.into(),
+            type_prefix: String::new(),
+            filename_suffix: "_combinations.rs".into(),
+            path_field: None,
+        }
+    }
+
+    pub fn with_type_prefix(mut self, prefix: impl Into<String>) -> Self {
+        self.type_prefix = prefix.into();
+        self
+    }
+
+    pub fn with_filename_suffix(mut self, suffix: impl Into<String>) -> Self {
+        self.filename_suffix = suffix.into();
+        self
+    }
+
+    pub fn with_path_field(mut self, field: impl Into<String>) -> Self {
+        self.path_field = Some(field.into());
+        self
+    }
+
+    /// Preset matching the existing `sort_registry_macro::sort_family!` consumer.
+    pub fn for_sort_families() -> Self {
+        Self::new("family", "sort_registry_macro::sort_family")
+            .with_type_prefix("type Sort = ")
+            .with_path_field("path")
+    }
+}
+
+// ── FamilyDef ────────────────────────────────────────────────────────────────
+
+/// A fully-parsed `family!(…)` (or `sort_family!(…)`) annotation.
+///
+/// `fields` preserves declaration order. The optional path-field — named via
+/// [`CodegenConfig::path_field`] — receives the menu-path transformations
+/// (smallest-axis-first reorder, cross-with-extras "specialty" grouping).
+#[derive(Debug, Clone)]
+pub struct FamilyDef {
     /// Generic type template with `{VAR}` placeholders, e.g.
     /// `"QuickSort<{P}, {V}, {SS}>"`.
     pub type_template: String,
@@ -277,39 +307,46 @@ pub struct SortFamilyDef {
     pub axes: Vec<(String, AxisSpec)>,
     /// `use` paths needed in the generated file (without the `use` keyword).
     pub uses: Vec<String>,
-    pub name: String,
-    pub big_o: String,
-    pub stable: bool,
-    pub direct_sort: bool,
-    /// Path segments; each will be wrapped in `"…"` in the generated code.
-    /// Segments may contain `{VAR}` placeholders (e.g. `"{P}"`).
-    pub path: Vec<String>,
-    /// Optional upper bound on random-input array size in correctness tests.
-    /// Forwarded to the generated `sort_registry_macro::sort_family! { … }`
-    /// invocation as `max_n_for_tests = N;` when set.
-    pub max_n_for_tests: Option<u64>,
-    /// Parent-directory name of the annotated source file; used to determine
-    /// which `*_combinations.rs` file to write (e.g. `"quick_sorts"`).
+    /// Trailing `key = value` fields in declaration order.
+    pub fields: Vec<(String, FieldValue)>,
+    /// Parent-directory name of the annotated source file; determines which
+    /// `<module><filename_suffix>` file to write.
     pub source_module: String,
 }
 
-impl SortFamilyDef {
-    /// Resolve axes against `registry` and append `sort_registry_macro::sort_family!`
+impl FamilyDef {
+    /// Resolve axes against `registry` and append `<config.output_macro>!`
     /// blocks to `out`.
     ///
-    /// Two structural transforms happen here:
+    /// Two structural transforms happen here (both conditional on
+    /// [`CodegenConfig::path_field`] for the path manipulation parts):
     ///
-    /// 1. **Cross-with-extras splits.** A `cross(...) + extras` axis is rendered as
-    ///    two separate blocks: one with just the cross-product, one with just the
-    ///    extras. The extras block gets a `"specialty <role>"` literal inserted
-    ///    before its axis placeholder so it surfaces as a sibling sub-branch in
-    ///    the menu instead of mixing flat with the cross-product entries.
+    /// 1. **Cross-with-extras splits.** A `cross(...) + extras` axis is
+    ///    rendered as two separate blocks: one with just the cross-product,
+    ///    one with just the extras. The extras block gets a
+    ///    `"specialty <role>"` literal inserted before its axis placeholder in
+    ///    the path field so it surfaces as a sibling sub-branch.
     ///
-    /// 2. **Smallest-axis-first path reorder.** Pure-placeholder path elements
-    ///    are reordered by their axis cardinality so each menu step branches on
-    ///    the smallest available axis. Literals stay pinned.
-    pub fn render(&self, out: &mut String, registry: &ComponentRegistry) {
-        self.render_recursive(out, registry, self.path.clone());
+    /// 2. **Smallest-axis-first path reorder.** Pure-placeholder elements of
+    ///    the path field are reordered by their axis cardinality so each menu
+    ///    step branches on the smallest available axis. Literals stay pinned.
+    pub fn render(&self, out: &mut String, registry: &ComponentRegistry, config: &CodegenConfig) {
+        let initial_path = self.get_path(config);
+        self.render_recursive(out, registry, initial_path, config);
+    }
+
+    fn get_path(&self, config: &CodegenConfig) -> Vec<String> {
+        let Some(key) = config.path_field.as_deref() else {
+            return Vec::new();
+        };
+        for (k, v) in &self.fields {
+            if k == key {
+                if let FieldValue::StringArray(a) = v {
+                    return a.clone();
+                }
+            }
+        }
+        Vec::new()
     }
 
     fn render_recursive(
@@ -317,10 +354,11 @@ impl SortFamilyDef {
         out: &mut String,
         registry: &ComponentRegistry,
         path: Vec<String>,
+        config: &CodegenConfig,
     ) {
         // Phase 1: split out any Cross-with-extras into two passes — one for
         // the cross-product, one for the extras under a "specialty <role>"
-        // sub-branch.
+        // sub-branch in the path field.
         let split = self.axes.iter().enumerate().find_map(|(i, (var, spec))| {
             match spec {
                 AxisSpec::Cross { extras, left, right, type_tmpl, label_tmpl }
@@ -343,7 +381,7 @@ impl SortFamilyDef {
         if let Some((idx, var, left_role, cross, extras)) = split {
             let mut main = self.clone();
             main.axes[idx].1 = cross;
-            main.render_recursive(out, registry, path.clone());
+            main.render_recursive(out, registry, path.clone(), config);
 
             let mut spec = self.clone();
             spec.axes[idx].1 = extras;
@@ -353,20 +391,18 @@ impl SortFamilyDef {
             if let Some(p) = new_path.iter().position(|s| s == &placeholder) {
                 new_path.insert(p, marker);
             }
-            spec.render_recursive(out, registry, new_path);
+            spec.render_recursive(out, registry, new_path, config);
             return;
         }
 
         // Phase 2: any remaining Cross axes (extras already stripped) are
         // unrolled into pairs of independent role axes so each side of the
-        // cross becomes its own menu level. The original `{var}` slot in the
-        // type template is rewritten via the cross's `type_tmpl`, and the
-        // path placeholder `{var}` expands into two adjacent placeholders.
+        // cross becomes its own menu level.
         let (transformed, transformed_path) = self.split_crosses_into_role_pairs(&path);
-        transformed.render_single(out, registry, &transformed_path);
+        transformed.render_single(out, registry, &transformed_path, config);
     }
 
-    fn split_crosses_into_role_pairs(&self, path: &[String]) -> (SortFamilyDef, Vec<String>) {
+    fn split_crosses_into_role_pairs(&self, path: &[String]) -> (FamilyDef, Vec<String>) {
         let mut type_template = self.type_template.clone();
         let mut new_path = path.to_vec();
         let mut new_axes: Vec<(String, AxisSpec)> = Vec::new();
@@ -403,11 +439,17 @@ impl SortFamilyDef {
         (new_family, new_path)
     }
 
-    fn render_single(&self, out: &mut String, registry: &ComponentRegistry, path: &[String]) {
+    fn render_single(
+        &self,
+        out: &mut String,
+        registry: &ComponentRegistry,
+        path: &[String],
+        config: &CodegenConfig,
+    ) {
         use std::fmt::Write as _;
 
-        out.push_str("sort_registry_macro::sort_family! {\n");
-        writeln!(out, "    type Sort = {};", self.type_template).unwrap();
+        writeln!(out, "{}! {{", config.output_macro).unwrap();
+        writeln!(out, "    {}{};", config.type_prefix, self.type_template).unwrap();
         out.push('\n');
 
         for (var, spec) in &self.axes {
@@ -420,21 +462,24 @@ impl SortFamilyDef {
         }
 
         out.push('\n');
-        writeln!(out, "    name        = \"{}\";", self.name).unwrap();
-        writeln!(out, "    big_o       = \"{}\";", self.big_o).unwrap();
-        writeln!(out, "    stable      = {};", self.stable).unwrap();
-        writeln!(out, "    direct_sort = {};", self.direct_sort).unwrap();
-        if let Some(n) = self.max_n_for_tests {
-            writeln!(out, "    max_n_for_tests = {n};").unwrap();
-        }
 
-        let reordered = reorder_path_by_axis_size(path, &self.axes, registry);
-        let path_str = reordered
-            .iter()
-            .map(|p| format!("\"{}\"", p))
-            .collect::<Vec<_>>()
-            .join(", ");
-        writeln!(out, "    path        = [{path_str}];").unwrap();
+        let key_width = self.fields.iter().map(|(k, _)| k.len()).max().unwrap_or(0);
+        let path_field = config.path_field.as_deref();
+
+        for (key, value) in &self.fields {
+            let rendered = if Some(key.as_str()) == path_field {
+                let reordered = reorder_path_by_axis_size(path, &self.axes, registry);
+                let inner = reordered
+                    .iter()
+                    .map(|p| format!("\"{p}\""))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("[{inner}]")
+            } else {
+                value.render()
+            };
+            writeln!(out, "    {key:<key_width$} = {rendered};").unwrap();
+        }
 
         out.push_str("}\n\n");
     }
@@ -465,9 +510,8 @@ fn axis_count(spec: &AxisSpec, registry: &ComponentRegistry) -> usize {
 }
 
 /// Reorder pure-placeholder path elements so axes with fewer variants come
-/// first. Literal elements keep their declared positions; special
-/// placeholders that don't match a declared axis (e.g. `{variant}`) are
-/// also treated as literals.
+/// first. Literal elements keep their declared positions; placeholders that
+/// don't match a declared axis are also treated as literals.
 fn reorder_path_by_axis_size(
     path: &[String],
     axes: &[(String, AxisSpec)],
@@ -584,5 +628,25 @@ mod tests {
         reg.add("Foo", "Baz", "baz");
         assert_eq!(reg.role("Foo").len(), 2);
         assert_eq!(reg.role("Unknown").len(), 0);
+    }
+
+    #[test]
+    fn field_value_render() {
+        assert_eq!(FieldValue::String("hi".into()).render(), "\"hi\"");
+        assert_eq!(FieldValue::Bool(true).render(), "true");
+        assert_eq!(FieldValue::Int(42).render(), "42");
+        assert_eq!(
+            FieldValue::StringArray(vec!["a".into(), "b".into()]).render(),
+            "[\"a\", \"b\"]"
+        );
+    }
+
+    #[test]
+    fn config_sort_preset() {
+        let c = CodegenConfig::for_sort_families();
+        assert_eq!(c.marker, "family");
+        assert_eq!(c.output_macro, "sort_registry_macro::sort_family");
+        assert_eq!(c.type_prefix, "type Sort = ");
+        assert_eq!(c.path_field.as_deref(), Some("path"));
     }
 }

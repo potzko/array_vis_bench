@@ -88,7 +88,7 @@ fn deferred_recurse<
     deferred_recurse::<T, U, A, DSS>(&mut arr[mid..], false, true, logger);
 }
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = DeferredQuickHeapSort<{A}, {DSS}>,
     uses = [
         "crate::sorts::heap_sort::arity::{Binary, Ternary, Base16, Base256}",

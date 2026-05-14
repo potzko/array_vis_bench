@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use crate::traits::log_traits::SortLogger;
 use crate::utils::small_sort::{insertion_sort_with, InsertionStrategy};
 
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = InsertionSort<{S}>,
     uses = [
         "crate::utils::small_sort::{LinearInsertion, BinaryInsertion}",

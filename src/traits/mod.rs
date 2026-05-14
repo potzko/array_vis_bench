@@ -19,7 +19,7 @@ lazy_static! {
         Mutex::new(HashMap::new());
 
     /// Registry for visualisation dispatch — maps sort name → sort_vis fn pointer.
-    /// Populated by `sort_family!(... direct_sort = true; ...)`.
+    /// Populated by `family!(... direct_sort = true; ...)`.
     pub static ref SORT_VIS_REGISTRY: Mutex<HashMap<String, SortVisFn>> =
         Mutex::new(HashMap::new());
 }

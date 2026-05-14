@@ -49,7 +49,7 @@ impl<P: PartitionScheme> CyclentSortStack<P> {
 }
 
 // MovingPivot is excluded — see cyclent_sort.rs for rationale.
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = CyclentSortStack<{P}>,
     uses = [
         "crate::sorts::quick_sorts::partitions::{Block, Hoare, Lomuto, ThreeWay}",

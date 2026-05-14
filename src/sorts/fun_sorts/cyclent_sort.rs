@@ -42,7 +42,7 @@ impl<P: PartitionScheme> CyclentSort<P> {
 
 // MovingPivot is excluded — it returns `(high, high)` with `high < len` always,
 // so the convergence check `r == slice_len` would never fire (infinite loop).
-combo_codegen::sort_family!(
+combo_codegen::family!(
     type = CyclentSort<{P}>,
     uses = [
         "crate::sorts::quick_sorts::partitions::{Block, Hoare, Lomuto, ThreeWay}",

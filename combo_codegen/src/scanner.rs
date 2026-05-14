@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::family::{AxisSpec, ComponentDef, ComponentRegistry, SortFamilyDef};
+use crate::family::{AxisSpec, CodegenConfig, ComponentDef, ComponentRegistry, FamilyDef, FieldValue};
 
 /// A single `component!(Role, TypeExpr, "label")` call found in a source file.
 #[derive(Debug, Clone)]
@@ -10,12 +10,13 @@ struct ScannedComponent {
     label: String,
 }
 
-/// Returned by [`scan`]. Holds the discovered registry, scanned sort families,
-/// and the list of files that were read so the caller can emit
-/// `cargo:rerun-if-changed` lines.
+/// Returned by [`scan`]. Holds the discovered registry, scanned families, the
+/// config used for scanning (reused at emit time), and the list of files that
+/// were read so the caller can emit `cargo:rerun-if-changed` lines.
 pub struct ScanResult {
     pub registry: ComponentRegistry,
-    pub families: Vec<SortFamilyDef>,
+    pub families: Vec<FamilyDef>,
+    pub config: CodegenConfig,
     scanned_files: Vec<PathBuf>,
 }
 
@@ -29,15 +30,12 @@ impl ScanResult {
         }
     }
 
-    /// Generate one `*_combinations.rs` file per source module into `out_dir`.
-    ///
-    /// Families are grouped by their [`SortFamilyDef::source_module`].  Within
-    /// each group, `use` declarations are deduplicated (first-occurrence order)
-    /// and the resolved `sort_registry_macro::sort_family! { … }` blocks are
-    /// appended. Each block carries its `group_size` (leaf count) so the
-    /// runtime can surface specialised (small-group) sorts first.
-    pub fn emit_sort_families(&self, out_dir: &Path) -> Result<(), std::io::Error> {
-        // Collect unique module names in first-occurrence order.
+    /// Generate one `<module><config.filename_suffix>` file per source module
+    /// into `out_dir`. Families are grouped by their
+    /// [`FamilyDef::source_module`]. Within each group, `use` declarations are
+    /// deduplicated (first-occurrence order) and the resolved
+    /// `<config.output_macro>! { … }` blocks are appended.
+    pub fn emit_families(&self, out_dir: &Path) -> Result<(), std::io::Error> {
         let mut modules: Vec<&str> = Vec::new();
         for fam in &self.families {
             let m = fam.source_module.as_str();
@@ -47,7 +45,7 @@ impl ScanResult {
         }
 
         for module in modules {
-            let fams: Vec<&SortFamilyDef> = self
+            let fams: Vec<&FamilyDef> = self
                 .families
                 .iter()
                 .filter(|f| f.source_module == module)
@@ -55,7 +53,6 @@ impl ScanResult {
 
             let mut out = String::new();
 
-            // Emit deduplicated `use` statements (first-occurrence order).
             let mut seen_uses: Vec<&str> = Vec::new();
             for fam in &fams {
                 for u in &fam.uses {
@@ -70,12 +67,11 @@ impl ScanResult {
             }
             out.push('\n');
 
-            // Emit each family block.
             for fam in &fams {
-                fam.render(&mut out, &self.registry);
+                fam.render(&mut out, &self.registry, &self.config);
             }
 
-            let filename = format!("{}_combinations.rs", module);
+            let filename = format!("{}{}", module, self.config.filename_suffix);
             std::fs::write(out_dir.join(&filename), &out)?;
         }
 
@@ -84,12 +80,12 @@ impl ScanResult {
 }
 
 /// Recursively walk `dir`, parse every `.rs` file for `component!(...)` and
-/// `sort_family!(...)` calls, and return the aggregated [`ScanResult`].
+/// `<config.marker>!(...)` calls, and return the aggregated [`ScanResult`].
 ///
 /// Files are visited in lexicographic path order so the scan — and every
 /// downstream piece of generated code — is reproducible across machines and
 /// filesystems.
-pub fn scan(dir: impl AsRef<Path>) -> Result<ScanResult, std::io::Error> {
+pub fn scan(dir: impl AsRef<Path>, config: &CodegenConfig) -> Result<ScanResult, std::io::Error> {
     let mut registry = ComponentRegistry::default();
     let mut families = Vec::new();
     let mut scanned_files = Vec::new();
@@ -103,16 +99,18 @@ pub fn scan(dir: impl AsRef<Path>) -> Result<ScanResult, std::io::Error> {
         .collect();
     paths.sort();
 
+    let marker = format!("{}!(", config.marker);
+
     for path in paths {
         let content = std::fs::read_to_string(&path)?;
         for comp in scan_components(&content) {
             registry.add(comp.role, comp.type_expr, comp.label);
         }
-        families.extend(scan_families(&content, &path));
+        families.extend(scan_families(&content, &path, &marker));
         scanned_files.push(path);
     }
 
-    Ok(ScanResult { registry, families, scanned_files })
+    Ok(ScanResult { registry, families, config: config.clone(), scanned_files })
 }
 
 // ── component! scanner ───────────────────────────────────────────────────────
@@ -188,10 +186,11 @@ fn parse_type_expr(s: &str) -> Option<(String, &str)> {
     None
 }
 
-// ── sort_family! scanner ─────────────────────────────────────────────────────
+// ── family! / sort_family! scanner ───────────────────────────────────────────
 
-/// Find all `sort_family!(...)` calls in `content` and parse them.
-fn scan_families(content: &str, path: &Path) -> Vec<SortFamilyDef> {
+/// Find all `<marker>!(...)` calls in `content` and parse them. `marker` is the
+/// full `"<name>!("` literal (precomputed once per scan).
+fn scan_families(content: &str, path: &Path, marker: &str) -> Vec<FamilyDef> {
     let source_module = path
         .parent()
         .and_then(|p| p.file_name())
@@ -199,17 +198,16 @@ fn scan_families(content: &str, path: &Path) -> Vec<SortFamilyDef> {
         .unwrap_or("unknown")
         .to_string();
 
-    const MARKER: &str = "sort_family!(";
     let mut results = Vec::new();
     let mut search_from = 0;
 
-    while let Some(rel) = content[search_from..].find(MARKER) {
-        let body_start = search_from + rel + MARKER.len();
+    while let Some(rel) = content[search_from..].find(marker) {
+        let body_start = search_from + rel + marker.len();
         search_from = body_start;
 
         if let Some(end) = find_closing(content[body_start..].as_bytes(), b'(', b')') {
             let body = content[body_start..body_start + end].trim();
-            if let Some(def) = parse_sort_family_body(body, source_module.clone()) {
+            if let Some(def) = parse_family_body(body, source_module.clone()) {
                 results.push(def);
             }
         }
@@ -218,93 +216,106 @@ fn scan_families(content: &str, path: &Path) -> Vec<SortFamilyDef> {
     results
 }
 
-// ── sort_family! body parser ─────────────────────────────────────────────────
+// ── family body parser ───────────────────────────────────────────────────────
 
-fn parse_sort_family_body(body: &str, source_module: String) -> Option<SortFamilyDef> {
-    let fields = split_top_level_commas(body);
+fn parse_family_body(body: &str, source_module: String) -> Option<FamilyDef> {
+    let entries = split_top_level_commas(body);
 
     let mut type_template: Option<String> = None;
     let mut uses: Vec<String> = Vec::new();
     let mut axes: Vec<(String, AxisSpec)> = Vec::new();
-    let mut name: Option<String> = None;
-    let mut big_o: Option<String> = None;
-    let mut stable: Option<bool> = None;
-    let mut direct_sort: Option<bool> = None;
-    let mut path: Option<Vec<String>> = None;
-    let mut max_n_for_tests: Option<u64> = None;
+    let mut fields: Vec<(String, FieldValue)> = Vec::new();
 
-    for field in fields {
-        let field = field.trim();
-        if field.is_empty() {
+    for entry in entries {
+        let entry = entry.trim();
+        if entry.is_empty() {
             continue;
         }
 
-        let (raw_key, raw_value) = split_key_value(field)?;
-        let key = raw_key.trim();
-        let value = raw_value.trim();
+        let (key, sep, value) = split_key_value(entry)?;
+        let key = key.trim();
+        let value = value.trim();
 
-        match key {
-            "type" => type_template = Some(value.to_string()),
-            "uses" => uses = parse_string_array(value)?,
-            "name" => name = Some(parse_string_literal(value)?),
-            "big_o" => big_o = Some(parse_string_literal(value)?),
-            "stable" => stable = Some(value == "true"),
-            "direct_sort" => direct_sort = Some(value == "true"),
-            "path" => path = Some(parse_string_array(value)?),
-            "max_n_for_tests" => max_n_for_tests = Some(value.trim().parse().ok()?),
-            var => {
-                let spec = parse_axis_spec(value)?;
-                axes.push((var.to_string(), spec));
+        if sep == ':' {
+            let spec = parse_axis_spec(value)?;
+            axes.push((key.to_string(), spec));
+        } else {
+            // sep == '='
+            match key {
+                "type" => type_template = Some(value.to_string()),
+                "uses" => uses = parse_string_array(value)?,
+                _ => {
+                    let v = parse_field_value(value)?;
+                    fields.push((key.to_string(), v));
+                }
             }
         }
     }
 
-    Some(SortFamilyDef {
+    Some(FamilyDef {
         type_template: type_template?,
         axes,
         uses,
-        name: name?,
-        big_o: big_o?,
-        stable: stable?,
-        direct_sort: direct_sort?,
-        path: path?,
-        max_n_for_tests,
+        fields,
         source_module,
     })
 }
 
+/// Classify an axis/field value into a [`FieldValue`].
+///
+/// - Leading `"` → `String`
+/// - Leading `[` → `StringArray`
+/// - `true` / `false` → `Bool`
+/// - Otherwise parsed as `Int` (returns `None` on failure)
+fn parse_field_value(s: &str) -> Option<FieldValue> {
+    let s = s.trim();
+    if s.starts_with('"') {
+        Some(FieldValue::String(parse_string_literal(s)?))
+    } else if s.starts_with('[') {
+        Some(FieldValue::StringArray(parse_string_array(s)?))
+    } else if s == "true" {
+        Some(FieldValue::Bool(true))
+    } else if s == "false" {
+        Some(FieldValue::Bool(false))
+    } else {
+        s.parse::<i64>().ok().map(FieldValue::Int)
+    }
+}
+
 // ── Parsing helpers ──────────────────────────────────────────────────────────
 
-/// Split `s` on the first `=` or `:` that sits at top-level depth
-/// (outside `<>`, `()`, `[]`, strings).
-fn split_key_value(s: &str) -> Option<(&str, &str)> {
-    let mut angle: i32 = 0;
-    let mut round: i32 = 0;
-    let mut square: i32 = 0;
-    let mut in_string = false;
-
-    for (i, c) in s.char_indices() {
-        match c {
-            '"' if !in_string => in_string = true,
-            '"' if in_string => in_string = false,
-            _ if in_string => {}
-            '<' => angle += 1,
-            '>' if angle > 0 => angle -= 1,
-            '(' => round += 1,
-            ')' if round > 0 => round -= 1,
-            '[' => square += 1,
-            ']' if square > 0 => square -= 1,
-            '=' | ':' if angle == 0 && round == 0 && square == 0 => {
-                return Some((&s[..i], &s[i + c.len_utf8()..]));
-            }
-            _ => {}
+/// Read the leading identifier, skip whitespace, then take the next character
+/// as the separator (must be `:` or `=`). Returns `(key, separator, value)`.
+///
+/// Robust against `::` inside values — only the first character past the
+/// identifier-whitespace boundary is consulted.
+fn split_key_value(s: &str) -> Option<(&str, char, &str)> {
+    let s = s.trim_start();
+    let bytes = s.as_bytes();
+    let mut end = 0;
+    while end < bytes.len() {
+        let b = bytes[end];
+        if b.is_ascii_alphanumeric() || b == b'_' {
+            end += 1;
+        } else {
+            break;
         }
     }
-    None
+    if end == 0 {
+        return None;
+    }
+    let key = &s[..end];
+    let rest = s[end..].trim_start();
+    let mut chars = rest.char_indices();
+    let (i, c) = chars.next()?;
+    if c != ':' && c != '=' {
+        return None;
+    }
+    let after = &rest[i + c.len_utf8()..];
+    Some((key, c, after))
 }
 
 /// Split `s` by top-level commas (outside `<>`, `()`, `[]`, `{}`, strings).
-/// Returns a `Vec` of `&str` slices (not trimmed).
 fn split_top_level_commas(s: &str) -> Vec<&str> {
     let mut parts = Vec::new();
     let mut angle: i32 = 0;
@@ -320,7 +331,6 @@ fn split_top_level_commas(s: &str) -> Vec<&str> {
         let b = bytes[i];
         if in_string {
             if b == b'"' {
-                // check for escaped quote
                 let back = bytes[..i].iter().rev().take_while(|&&x| x == b'\\').count();
                 if back % 2 == 0 {
                     in_string = false;
@@ -351,7 +361,6 @@ fn split_top_level_commas(s: &str) -> Vec<&str> {
 }
 
 /// Parse a double-quoted string literal at the start of `s`.
-/// Returns the unescaped content.
 fn parse_string_literal(s: &str) -> Option<String> {
     let s = s.trim();
     let s = s.strip_prefix('"')?;
@@ -381,7 +390,7 @@ fn parse_string_array(s: &str) -> Option<Vec<String>> {
     if !s.starts_with('[') {
         return None;
     }
-    let inner_end = find_closing(&s[1..].as_bytes(), b'[', b']')?;
+    let inner_end = find_closing(s[1..].as_bytes(), b'[', b']')?;
     let inner = &s[1..1 + inner_end];
 
     let mut result = Vec::new();
@@ -461,14 +470,12 @@ fn parse_axis_spec(s: &str) -> Option<AxisSpec> {
         let s = s["inline".len()..].trim_start();
         Some(AxisSpec::Inline(parse_pair_list(s)?))
     } else {
-        // Plain role name.
         Some(AxisSpec::Role(s.to_string()))
     }
 }
 
 /// Find the matching `close` byte in `bytes`, assuming we start just after the
-/// opening `open` byte (depth starts at 1).  Returns the index of `close`.
-///
+/// opening `open` byte (depth starts at 1). Returns the index of `close`.
 /// Correctly skips over string literals delimited by `"…"`.
 fn find_closing(bytes: &[u8], open: u8, close: u8) -> Option<usize> {
     let mut depth: i32 = 1;
@@ -504,6 +511,10 @@ fn find_closing(bytes: &[u8], open: u8, close: u8) -> Option<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn marker() -> String {
+        "family!(".to_string()
+    }
 
     #[test]
     fn simple_type() {
@@ -563,11 +574,9 @@ mod tests {
         assert_eq!(result[0].type_expr, "true");
     }
 
-    // ── sort_family! tests ───────────────────────────────────────────────────
-
     #[test]
     fn parse_simple_family() {
-        let src = r#"combo_codegen::sort_family!(
+        let src = r#"combo_codegen::family!(
             type = MySort<{A}, {B}>,
             uses = ["crate::foo::Bar", "crate::baz::Qux"],
             A: RoleA,
@@ -578,25 +587,26 @@ mod tests {
             direct_sort = false,
             path = ["root", "{A}", "{B}"],
         );"#;
-        let defs = scan_families(src, std::path::Path::new("src/sorts/my_sorts/foo.rs"));
+        let defs = scan_families(src, std::path::Path::new("src/sorts/my_sorts/foo.rs"), &marker());
         assert_eq!(defs.len(), 1);
         let d = &defs[0];
         assert_eq!(d.type_template, "MySort<{A}, {B}>");
         assert_eq!(d.uses, vec!["crate::foo::Bar", "crate::baz::Qux"]);
         assert_eq!(d.axes.len(), 2);
-        assert_eq!(d.axes[0].0, "A");
         assert!(matches!(&d.axes[0].1, AxisSpec::Role(r) if r == "RoleA"));
-        assert_eq!(d.name, "my sort");
-        assert_eq!(d.big_o, "O(N log N)");
-        assert!(d.stable);
-        assert!(!d.direct_sort);
-        assert_eq!(d.path, vec!["root", "{A}", "{B}"]);
+        // Five trailing fields: name, big_o, stable, direct_sort, path.
+        assert_eq!(d.fields.len(), 5);
+        assert_eq!(d.fields[0].0, "name");
+        assert!(matches!(&d.fields[0].1, FieldValue::String(s) if s == "my sort"));
+        assert!(matches!(&d.fields[2].1, FieldValue::Bool(true)));
+        assert!(matches!(&d.fields[3].1, FieldValue::Bool(false)));
+        assert!(matches!(&d.fields[4].1, FieldValue::StringArray(a) if a.len() == 3));
         assert_eq!(d.source_module, "my_sorts");
     }
 
     #[test]
     fn parse_inline_axis() {
-        let src = r#"sort_family!(
+        let src = r#"family!(
             type = S<{PP}>,
             uses = [],
             PP: inline [("false", ""), ("true", "ping-pong")],
@@ -606,7 +616,7 @@ mod tests {
             direct_sort = true,
             path = ["s"],
         );"#;
-        let defs = scan_families(src, std::path::Path::new("src/sorts/foo/bar.rs"));
+        let defs = scan_families(src, std::path::Path::new("src/sorts/foo/bar.rs"), &marker());
         assert_eq!(defs.len(), 1);
         let ax = &defs[0].axes[0];
         assert_eq!(ax.0, "PP");
@@ -621,7 +631,7 @@ mod tests {
 
     #[test]
     fn parse_cross_axis_with_extras() {
-        let src = r#"sort_family!(
+        let src = r#"family!(
             type = DS<{DPS}>,
             uses = [],
             DPS: cross(PivotSelector, PivotSelector, "CombinedSelector<{0}, {1}>", "{0} / {1}")
@@ -632,7 +642,7 @@ mod tests {
             direct_sort = true,
             path = ["dual"],
         );"#;
-        let defs = scan_families(src, std::path::Path::new("src/sorts/qs/dp.rs"));
+        let defs = scan_families(src, std::path::Path::new("src/sorts/qs/dp.rs"), &marker());
         assert_eq!(defs.len(), 1);
         let ax = &defs[0].axes[0];
         if let AxisSpec::Cross { left, right, type_tmpl, label_tmpl, extras } = &ax.1 {
@@ -645,5 +655,47 @@ mod tests {
         } else {
             panic!("expected Cross axis");
         }
+    }
+
+    #[test]
+    fn parse_int_field() {
+        let src = r#"family!(
+            type = X<{A}>,
+            uses = [],
+            A: RoleA,
+            name = "x",
+            big_o = "O(1)",
+            stable = true,
+            direct_sort = true,
+            max_n_for_tests = 200,
+            path = ["x"],
+        );"#;
+        let defs = scan_families(src, std::path::Path::new("src/foo/bar.rs"), &marker());
+        let d = &defs[0];
+        let m = d.fields.iter().find(|(k, _)| k == "max_n_for_tests").unwrap();
+        assert!(matches!(&m.1, FieldValue::Int(200)));
+    }
+
+    #[test]
+    fn separator_robust_to_double_colon() {
+        // Ensure split_key_value uses the FIRST char past whitespace, not the
+        // first ':' or '=' encountered at top level.
+        let (k, sep, v) = split_key_value("name = \"hello :: world\"").unwrap();
+        assert_eq!(k, "name");
+        assert_eq!(sep, '=');
+        assert_eq!(v.trim(), "\"hello :: world\"");
+    }
+
+    #[test]
+    fn alternative_marker() {
+        let src = r#"family!(
+            type = M<{A}>,
+            uses = [],
+            A: RoleA,
+            name = "m",
+        );"#;
+        let defs = scan_families(src, std::path::Path::new("src/x/y.rs"), "family!(");
+        assert_eq!(defs.len(), 1);
+        assert_eq!(defs[0].type_template, "M<{A}>");
     }
 }
