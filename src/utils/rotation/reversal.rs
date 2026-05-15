@@ -6,7 +6,12 @@ pub struct ReversalRotation;
 
 impl Rotation for ReversalRotation {
     const NAME: &'static str = "reversal";
-    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], split_ind: usize, logger: &mut U) {
+    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        split_ind: usize,
+        _scratch: &mut [T],
+        logger: &mut U,
+    ) {
         let n = arr.len();
         if split_ind == 0 || split_ind == n {
             return;

@@ -1,12 +1,17 @@
 use crate::traits::log_traits::SortLogger;
-use super::{Rotation, buf_rotate_left};
+use super::{Rotation, unit_rotate_left, unit_rotate_right};
 
 /// Helix rotation (2021): grail-derived, alternating inner loops.
 pub struct HelixRotation;
 
 impl Rotation for HelixRotation {
     const NAME: &'static str = "helix";
-    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], split_ind: usize, logger: &mut U) {
+    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        split_ind: usize,
+        _scratch: &mut [T],
+        logger: &mut U,
+    ) {
         let n = arr.len();
         let mut left = split_ind;
         let mut right = n - left;
@@ -40,8 +45,12 @@ impl Rotation for HelixRotation {
                 left = mid - start;
             }
         }
-        if left != 0 && right != 0 {
-            buf_rotate_left(&mut arr[start..end], left, logger);
+        // Loop exits with `min(left, right) <= 1`. If both > 0, one is 1 —
+        // a unit rotation, fully in-place.
+        if left == 1 && right > 0 {
+            unit_rotate_left(&mut arr[start..end], logger);
+        } else if right == 1 && left > 0 {
+            unit_rotate_right(&mut arr[start..end], logger);
         }
     }
 }

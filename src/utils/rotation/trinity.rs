@@ -1,15 +1,35 @@
 use crate::traits::log_traits::SortLogger;
-use super::{Rotation, forward_block_swap, buf_rotate_left, buf_rotate_right};
+use super::{
+    Rotation, buf_rotate_left_using, buf_rotate_right_using, forward_block_swap,
+};
 use super::contrev::ContrevRotation;
 
 const TRINITY_AUX: usize = 8;
 
 /// Trinity rotation (2021): contrev + bridge, uses up to 8-element aux.
+///
+/// In the original C, that aux is a stack-resident `T tmp[8]`. Here we
+/// expose it through the trait's [`scratch_size`](Rotation::scratch_size)
+/// so the caller (a rotation merge sort or the standalone runner) can
+/// pre-allocate and *register* the 8-element scratch buffer once for the
+/// whole sort run — the visualiser then shows a single aux array rather
+/// than a fresh one per rotation call.
 pub struct TrinityRotation;
 
 impl Rotation for TrinityRotation {
     const NAME: &'static str = "trinity";
-    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], split_ind: usize, logger: &mut U) {
+
+    #[inline]
+    fn scratch_size(_n: usize) -> usize {
+        TRINITY_AUX
+    }
+
+    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        split_ind: usize,
+        scratch: &mut [T],
+        logger: &mut U,
+    ) {
         let n = arr.len();
         let left = split_ind;
         let right = n - left;
@@ -25,20 +45,23 @@ impl Rotation for TrinityRotation {
         let small = left.min(right);
         let bridge = left.abs_diff(right);
 
-        // Small side fits in aux: simple buffered rotation
+        // Small side fits in aux: buffered rotation using the registered
+        // scratch (slot 0..small).
         if small <= TRINITY_AUX {
-            if left < right { buf_rotate_left(arr, left, logger) }
-            else             { buf_rotate_right(arr, left, logger) }
+            if left < right {
+                buf_rotate_left_using(arr, left, scratch, logger);
+            } else {
+                buf_rotate_right_using(arr, left, scratch, logger);
+            }
             return;
         }
 
-        // Bridge fits in aux: bridge rotation
+        // Bridge fits in aux: bridge rotation, also using the registered
+        // scratch (slot 0..bridge).
         if bridge <= TRINITY_AUX && bridge > 3 {
-            let mut buf = logger.create_aux_arr_t(bridge);
-
             if left < right {
-                // Save bridge arr[left..right] to aux
-                logger.copy_range(arr, left, &mut buf, 0, bridge);
+                // Save bridge arr[left..right] to scratch
+                logger.copy_range(arr, left, scratch, 0, bridge);
                 // Shift left part → tail, right tail → middle (backwards)
                 let (mut ptb, mut ptc, mut ptd) = (left, right, n);
                 for _ in 0..left {
@@ -46,11 +69,11 @@ impl Rotation for TrinityRotation {
                     logger.write(arr, ptc, ptd);
                     logger.write(arr, ptd, ptb);
                 }
-                // Restore bridge from aux → front
-                logger.copy_range(&buf, 0, arr, 0, bridge);
+                // Restore bridge from scratch → front
+                logger.copy_range(scratch, 0, arr, 0, bridge);
             } else {
-                // Save bridge arr[right..left] to aux
-                logger.copy_range(arr, right, &mut buf, 0, bridge);
+                // Save bridge arr[right..left] to scratch
+                logger.copy_range(arr, right, scratch, 0, bridge);
                 // Shift right part → front, left head → middle (forwards)
                 let (mut pta, mut ptb, mut ptc) = (0, left, right);
                 for _ in 0..right {
@@ -58,16 +81,14 @@ impl Rotation for TrinityRotation {
                     logger.write(arr, pta, ptb);
                     pta += 1; ptb += 1; ptc += 1;
                 }
-                // Restore bridge from aux → tail
-                logger.copy_range(&buf, 0, arr, n - bridge, bridge);
+                // Restore bridge from scratch → tail
+                logger.copy_range(scratch, 0, arr, n - bridge, bridge);
             }
-
-            logger.free_aux_arr_t(&buf);
             return;
         }
 
-        // Fallback: contrev
-        ContrevRotation::rotate(arr, left, logger);
+        // Fallback: contrev (in-place, doesn't need scratch).
+        ContrevRotation::rotate(arr, left, &mut [], logger);
     }
 }
 

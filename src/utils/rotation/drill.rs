@@ -1,12 +1,17 @@
 use crate::traits::log_traits::SortLogger;
-use super::{Rotation, buf_rotate_left};
+use super::{Rotation, unit_rotate_left, unit_rotate_right};
 
 /// Drill rotation (2021): grail + piston + helix inner loops combined.
 pub struct DrillRotation;
 
 impl Rotation for DrillRotation {
     const NAME: &'static str = "drill";
-    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], split_ind: usize, logger: &mut U) {
+    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        split_ind: usize,
+        _scratch: &mut [T],
+        logger: &mut U,
+    ) {
         let n = arr.len();
         let mut left = split_ind;
         let mut right = n - left;
@@ -34,8 +39,12 @@ impl Rotation for DrillRotation {
                 logger.swap(arr, mid, end);
             }
         }
-        if left != 0 && right != 0 {
-            buf_rotate_left(&mut arr[start..end], left, logger);
+        // Outer-loop exit guarantees `min(left, right) <= 1`. With both > 0,
+        // exactly one of them is 1 — a unit rotation, fully in-place.
+        if left == 1 && right > 0 {
+            unit_rotate_left(&mut arr[start..end], logger);
+        } else if right == 1 && left > 0 {
+            unit_rotate_right(&mut arr[start..end], logger);
         }
     }
 }

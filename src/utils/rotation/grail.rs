@@ -1,12 +1,17 @@
 use crate::traits::log_traits::SortLogger;
-use super::{Rotation, forward_block_swap, backward_block_swap, buf_rotate_left};
+use super::{Rotation, backward_block_swap, forward_block_swap, unit_rotate_left, unit_rotate_right};
 
 /// Grail rotation (2020): Gries-Mills with a stack-based aux at the end.
 pub struct GrailRotation;
 
 impl Rotation for GrailRotation {
     const NAME: &'static str = "grail";
-    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], split_ind: usize, logger: &mut U) {
+    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        split_ind: usize,
+        _scratch: &mut [T],
+        logger: &mut U,
+    ) {
         let n = arr.len();
         let mut left = split_ind;
         let mut right = n - left;
@@ -34,8 +39,14 @@ impl Rotation for GrailRotation {
                 min = left;
             }
         }
-        if left > 0 && right > 0 {
-            buf_rotate_left(&mut arr[start..start + left + right], left, logger);
+        // Outer-loop exit condition is `min(left, right) <= 1`, so if we
+        // reach here with both > 0, exactly one of them equals 1 — a unit
+        // rotation, doable fully in-place (no aux). The other side could
+        // be arbitrarily large.
+        if left == 1 && right > 0 {
+            unit_rotate_left(&mut arr[start..start + left + right], logger);
+        } else if right == 1 && left > 0 {
+            unit_rotate_right(&mut arr[start..start + left + right], logger);
         }
     }
 }

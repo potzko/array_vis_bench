@@ -12,22 +12,40 @@ use crate::utils::shell_branching::BranchingStrategy;
 ///
 ///   1. Compute `branch = S::branch(virtual_len)`.
 ///   2. Recurse into each of the `branch` interleaved sub-sub-arrays at stride `jump * branch`.
-///   3. Optionally do an intermediate insertion-sort pass at `S::intermediate(virtual_len)`.
-///   4. Merge the `branch` sorted sub-streams via `M::merge` at stride `jump`.
+///   3. Hand off to `M::merge`, forwarding `branch` and the strategy's
+///      `intermediate(virtual_len)` factor (already gated for the
+///      `virtual_len >= 16·inter` heuristic). Whether the merge actually
+///      uses `inter` for a coarser pre-pass is up to `M` — `InsertionMerge`
+///      does; `AuxMerge` ignores it, since a coarse pre-sort would scramble
+///      the branch-substreams it expects.
+///
+/// When `M::NEEDS_AUX` is true, a single aux buffer of size N is allocated
+/// at the top level and threaded through the recursion — every shallower
+/// merge needs strictly less than the top-level merge, and the recursion
+/// is sequential, so no per-level allocation is needed.
 pub struct RodSort<S: BranchingStrategy, M: RodMerge> {
     _phantom: PhantomData<(S, M)>,
 }
 
 impl<S: BranchingStrategy, M: RodMerge> RodSort<S, M> {
+    #[inline]
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        if !arr.is_empty() {
-            Self::sort_rec(arr, 1, logger);
+        if arr.is_empty() {
+            return;
+        }
+        if M::NEEDS_AUX {
+            let mut aux = logger.create_aux_arr_t(arr.len());
+            Self::sort_rec(arr, 1, &mut aux, logger);
+            logger.free_aux_arr_t(&aux);
+        } else {
+            Self::sort_rec(arr, 1, &mut [], logger);
         }
     }
 
     fn sort_rec<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         jump: usize,
+        aux: &mut [T],
         logger: &mut U,
     ) {
         let virtual_len = arr.len() / jump;
@@ -45,20 +63,17 @@ impl<S: BranchingStrategy, M: RodMerge> RodSort<S, M> {
         for i in 0..branch {
             let offset = jump * i;
             if offset < arr.len() {
-                Self::sort_rec(&mut arr[offset..], jump * branch, logger);
+                Self::sort_rec(&mut arr[offset..], jump * branch, aux, logger);
             }
         }
 
         let inter = S::intermediate(virtual_len);
-        if inter > 0 && virtual_len >= inter * 16 {
-            for i in 0..inter {
-                let offset = jump * i;
-                if offset < arr.len() {
-                    insertion_sort_jump(&mut arr[offset..], jump * inter, logger);
-                }
-            }
-        }
+        let effective_inter = if inter > 0 && virtual_len >= inter * 16 {
+            inter
+        } else {
+            0
+        };
 
-        M::merge(arr, jump, branch, logger);
+        M::merge(arr, aux, jump, branch, effective_inter, logger);
     }
 }
