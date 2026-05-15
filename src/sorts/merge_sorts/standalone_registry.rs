@@ -28,23 +28,35 @@ macro_rules! register_merge {
                 "merge: ", $family, "<", ROT_NAME, ">",
             );
 
+            fn run_once<U: ?Sized + SortLogger<usize>>(
+                arr: &mut [usize],
+                mid: usize,
+                logger: &mut U,
+            ) {
+                use crate::sorts::merge_sorts::rotation_merge::RotationMerge;
+                let scratch_size = <$merge>::scratch_size(arr.len());
+                if scratch_size == 0 {
+                    <$merge>::merge(arr, mid, &mut [], logger);
+                } else {
+                    let mut scratch = logger.create_aux_arr_t(scratch_size);
+                    <$merge>::merge(arr, mid, &mut scratch, logger);
+                    logger.free_aux_arr_t(&scratch);
+                }
+            }
+
             fn merge_dyn(
                 arr: &mut [usize],
                 mid: usize,
                 logger: &mut dyn SortLogger<usize>,
             ) {
-                <$merge as crate::sorts::merge_sorts::rotation_merge::RotationMerge>::merge(
-                    arr, mid, logger,
-                )
+                run_once(arr, mid, logger)
             }
             fn merge_noop(
                 arr: &mut [usize],
                 mid: usize,
                 logger: &mut NoOpLogger,
             ) {
-                <$merge as crate::sorts::merge_sorts::rotation_merge::RotationMerge>::merge(
-                    arr, mid, logger,
-                )
+                run_once(arr, mid, logger)
             }
 
             fn run_with_input(

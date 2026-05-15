@@ -90,10 +90,13 @@ pub fn upper_bound<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 /// In-place merge of `arr[..mid]` and `arr[mid..]` using rotation `R`.
 ///
 /// Advances left-only (naive), uses binary search to find how many right
-/// elements to pull across before each rotation.
+/// elements to pull across before each rotation. `scratch` is forwarded
+/// to every `R::rotate` call so the rotation can use a caller-owned aux
+/// buffer (see [`Rotation::scratch_size`](crate::utils::rotation::Rotation::scratch_size)).
 pub fn merge_rotation<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     mid: usize,
+    scratch: &mut [T],
     logger: &mut U,
 ) {
     let n = arr.len();
@@ -114,7 +117,7 @@ pub fn merge_rotation<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         let pivot = arr[lo];
         let split = lower_bound(arr, mid, n, pivot, logger);
         let k = split - mid;
-        R::rotate(&mut arr[lo..split], mid - lo, logger);
+        R::rotate(&mut arr[lo..split], mid - lo, scratch, logger);
         lo += k;
         mid += k;
     }

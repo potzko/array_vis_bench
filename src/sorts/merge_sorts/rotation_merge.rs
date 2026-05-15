@@ -4,9 +4,24 @@ use crate::utils::rotation::Rotation;
 use super::utils::{merge_rotation, lower_bound, upper_bound};
 
 /// Strategy for merging two adjacent sorted slices in-place using rotation.
+///
+/// `scratch_size(n)` returns the size of an aux buffer the caller should
+/// pre-allocate; `merge` then receives that buffer and forwards it to
+/// every `R::rotate` invocation so the visualiser shows a single aux
+/// array per sort run rather than one per rotation.
 pub trait RotationMerge {
-    /// Merge `arr[..mid]` and `arr[mid..]` in-place.
-    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], mid: usize, logger: &mut U);
+    /// Required scratch size for merging an array of length `n`. Delegates
+    /// to the underlying rotation by default.
+    fn scratch_size(n: usize) -> usize;
+
+    /// Merge `arr[..mid]` and `arr[mid..]` in-place, using `scratch` as
+    /// caller-owned aux memory passed down to the rotation.
+    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        mid: usize,
+        scratch: &mut [T],
+        logger: &mut U,
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -18,9 +33,19 @@ pub struct NaiveRotationMerge<R: Rotation> {
 }
 
 impl<R: Rotation> RotationMerge for NaiveRotationMerge<R> {
+    #[inline]
+    fn scratch_size(n: usize) -> usize {
+        R::scratch_size(n)
+    }
+
     #[inline(always)]
-    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], mid: usize, logger: &mut U) {
-        merge_rotation::<R, T, U>(arr, mid, logger);
+    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        mid: usize,
+        scratch: &mut [T],
+        logger: &mut U,
+    ) {
+        merge_rotation::<R, T, U>(arr, mid, scratch, logger);
     }
 }
 
@@ -38,12 +63,22 @@ pub struct SmallerSideRotationMerge<R: Rotation> {
 }
 
 impl<R: Rotation> RotationMerge for SmallerSideRotationMerge<R> {
-    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], mid: usize, logger: &mut U) {
+    #[inline]
+    fn scratch_size(n: usize) -> usize {
+        R::scratch_size(n)
+    }
+
+    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        mid: usize,
+        scratch: &mut [T],
+        logger: &mut U,
+    ) {
         let n = arr.len();
         if mid == 0 || mid == n || logger.cmp_le_accross(arr, mid - 1, arr, mid) {
             return;
         }
-        sym_merge_r::<R, T, U>(arr, 0, mid, n, logger);
+        sym_merge_r::<R, T, U>(arr, 0, mid, n, scratch, logger);
     }
 }
 
@@ -53,6 +88,7 @@ fn sym_merge_r<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     lo: usize,
     mid: usize,
     hi: usize,
+    scratch: &mut [T],
     logger: &mut U,
 ) {
     if lo >= mid || mid >= hi {
@@ -62,13 +98,13 @@ fn sym_merge_r<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     if mid - lo == 1 {
         // Single left element: insert arr[lo] into the right half.
         let pos = lower_bound(arr, mid, hi, arr[lo], logger);
-        R::rotate(&mut arr[lo..pos], 1, logger);
+        R::rotate(&mut arr[lo..pos], 1, scratch, logger);
         return;
     }
     if hi - mid == 1 {
         // Single right element: insert arr[mid] into the left half.
         let pos = upper_bound(arr, lo, mid, arr[mid], logger);
-        R::rotate(&mut arr[pos..hi], mid - pos, logger);
+        R::rotate(&mut arr[pos..hi], mid - pos, scratch, logger);
         return;
     }
 
@@ -88,12 +124,12 @@ fn sym_merge_r<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         // Rotate arr[p..q] so that arr[mid..q] precedes arr[p..mid].
         // After rotation: arr[lo..p] | arr[mid..q] | arr[p..mid] | arr[q..hi]
         let new_mid = p + (q - mid);
-        R::rotate(&mut arr[p..q], mid - p, logger);
+        R::rotate(&mut arr[p..q], mid - p, scratch, logger);
 
         // Left sub-problem:  merge arr[lo..p]     with arr[p..new_mid]  (both ≤ arr[p])
-        sym_merge_r::<R, T, U>(arr, lo, p, new_mid, logger);
+        sym_merge_r::<R, T, U>(arr, lo, p, new_mid, scratch, logger);
         // Right sub-problem: merge arr[new_mid..q] with arr[q..hi]      (both ≥ arr[p])
-        sym_merge_r::<R, T, U>(arr, new_mid, q, hi, logger);
+        sym_merge_r::<R, T, U>(arr, new_mid, q, hi, scratch, logger);
     } else {
         // Right is shorter: pivot at right half's midpoint.
         // arr[p] is always strictly inside the right half (p >= mid).
@@ -104,19 +140,19 @@ fn sym_merge_r<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         // (and everything after it) is already in its final position.  Just merge
         // arr[lo..mid] with the shorter right prefix arr[mid..p] and return.
         if q == mid {
-            sym_merge_r::<R, T, U>(arr, lo, mid, p, logger);
+            sym_merge_r::<R, T, U>(arr, lo, mid, p, scratch, logger);
             return;
         }
 
         // Rotate arr[q..p+1] so that arr[mid..p+1] follows arr[q..mid].
         // After rotation: arr[lo..q] | arr[mid..p+1] | arr[q..mid] | arr[p+1..hi]
         let new_mid = q + (p + 1 - mid);
-        R::rotate(&mut arr[q..p + 1], mid - q, logger);
+        R::rotate(&mut arr[q..p + 1], mid - q, scratch, logger);
 
         // Left sub-problem:  merge arr[lo..q]      with arr[q..new_mid]  (both ≤ arr[p])
-        sym_merge_r::<R, T, U>(arr, lo, q, new_mid, logger);
+        sym_merge_r::<R, T, U>(arr, lo, q, new_mid, scratch, logger);
         // Right sub-problem: merge arr[new_mid..p+1] with arr[p+1..hi]   (both ≥ arr[p])
-        sym_merge_r::<R, T, U>(arr, new_mid, p + 1, hi, logger);
+        sym_merge_r::<R, T, U>(arr, new_mid, p + 1, hi, scratch, logger);
     }
 }
 
@@ -221,7 +257,8 @@ mod tests {
             .chain(right.iter().map(|&v| Lbl(v, 1)))
             .collect();
         let hi = arr.len();
-        sym_merge_r::<R, Lbl, NoOpLogger>(&mut arr, 0, mid, hi, &mut NoOpLogger);
+        let mut scratch: Vec<Lbl> = vec![Lbl(0, 0); R::scratch_size(arr.len())];
+        sym_merge_r::<R, Lbl, NoOpLogger>(&mut arr, 0, mid, hi, &mut scratch, &mut NoOpLogger);
         // verify sorted and stable
         for i in 1..arr.len() {
             assert!(arr[i-1].0 <= arr[i].0, "not sorted at {i}");

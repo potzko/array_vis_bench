@@ -6,7 +6,12 @@ pub struct ContrevRotation;
 
 impl Rotation for ContrevRotation {
     const NAME: &'static str = "contrev";
-    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], split_ind: usize, logger: &mut U) {
+    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        split_ind: usize,
+        _scratch: &mut [T],
+        logger: &mut U,
+    ) {
         let n = arr.len();
         let left = split_ind;
         let right = n - left;

@@ -94,6 +94,25 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
         if n < 2 {
             return;
         }
+        let scratch_size = M::scratch_size(n);
+        if scratch_size == 0 {
+            Self::sort_rec(arr, &mut [], logger);
+        } else {
+            let mut scratch = logger.create_aux_arr_t(scratch_size);
+            Self::sort_rec(arr, &mut scratch, logger);
+            logger.free_aux_arr_t(&scratch);
+        }
+    }
+
+    fn sort_rec<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        scratch: &mut [T],
+        logger: &mut U,
+    ) {
+        let n = arr.len();
+        if n < 2 {
+            return;
+        }
         if S::THRESHOLD > 0 && n <= S::THRESHOLD {
             S::sort(arr, logger);
             return;
@@ -101,13 +120,13 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
         let mid = n / 2;
         {
             let (l, r) = arr.split_at_mut(mid);
-            Self::sort(l, logger);
-            Self::sort(r, logger);
+            Self::sort_rec(l, scratch, logger);
+            Self::sort_rec(r, scratch, logger);
         }
         if EARLY_EXIT && logger.cmp_le_accross(arr, mid - 1, arr, mid) {
             return;
         }
-        M::merge(arr, mid, logger);
+        M::merge(arr, mid, scratch, logger);
     }
 }
 
@@ -128,7 +147,22 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
         if n < 2 {
             return;
         }
+        let scratch_size = M::scratch_size(n);
+        if scratch_size == 0 {
+            Self::sort_inner(arr, &mut [], logger);
+        } else {
+            let mut scratch = logger.create_aux_arr_t(scratch_size);
+            Self::sort_inner(arr, &mut scratch, logger);
+            logger.free_aux_arr_t(&scratch);
+        }
+    }
 
+    fn sort_inner<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        scratch: &mut [T],
+        logger: &mut U,
+    ) {
+        let n = arr.len();
         let gap0 = if S::THRESHOLD > 0 { S::THRESHOLD } else { 1 };
 
         if S::THRESHOLD > 0 {
@@ -150,7 +184,7 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
                     if EARLY_EXIT && logger.cmp_le_accross(arr, mid - 1, arr, mid) {
                         // already sorted — skip
                     } else {
-                        M::merge(&mut arr[i..end], mid - i, logger);
+                        M::merge(&mut arr[i..end], mid - i, scratch, logger);
                     }
                 }
                 i += 2 * gap;

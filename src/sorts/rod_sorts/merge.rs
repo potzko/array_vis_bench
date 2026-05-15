@@ -11,18 +11,39 @@
 //! - [`AuxMerge`]: a `branch`-way merge sort merge through an aux buffer —
 //!   O(N · log(branch)) compares per pass, plus N reads / writes for the
 //!   buffer round-trip. Asymptotically the same as merge sort overall.
+//!
+//! ## Aux buffer ownership
+//!
+//! The top-level merge needs an aux buffer of size N (jump=1, virtual_len=N).
+//! Every shallower merge needs strictly less. The recursion is sequential,
+//! so a single N-sized buffer suffices for the entire sort and is allocated
+//! once at the top — see [`super::rod_sort::RodSort::sort`]. The
+//! `NEEDS_AUX` flag lets [`InsertionMerge`] skip the allocation entirely.
 
 use crate::traits::log_traits::SortLogger;
 
 pub trait RodMerge {
     const NAME: &'static str;
 
+    /// Whether this merge needs an aux buffer of size N. When `false`, the
+    /// caller may pass an empty slice and skip allocation entirely.
+    const NEEDS_AUX: bool;
+
     /// Merge the `branch` already-sorted sub-streams at stride `jump` into
     /// a single sorted stride-`jump` sequence over `arr`.
+    ///
+    /// `aux` is a pre-allocated scratch buffer of size ≥
+    /// `arr.len().div_ceil(jump)` when `NEEDS_AUX` is true; otherwise may
+    /// be empty. `inter` is the branching strategy's intermediate factor
+    /// (already gated by the caller — 0 means skip). The InsertionMerge
+    /// uses `inter` for an extra pre-pass at stride `jump * inter`; the
+    /// AuxMerge ignores it (it would scramble the branch sub-streams).
     fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
+        aux: &mut [T],
         jump: usize,
         branch: usize,
+        inter: usize,
         logger: &mut U,
     );
 }
@@ -30,13 +51,28 @@ pub trait RodMerge {
 pub struct InsertionMerge;
 impl RodMerge for InsertionMerge {
     const NAME: &'static str = "insertion";
+    const NEEDS_AUX: bool = false;
 
+    #[inline]
     fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
+        _aux: &mut [T],
         jump: usize,
         _branch: usize,
+        inter: usize,
         logger: &mut U,
     ) {
+        // Pre-pass: `inter` interleaved insertion sorts at the coarser
+        // stride `jump * inter`. Cheap partial sort that the final
+        // stride-`jump` insertion pass picks up where it left off.
+        if inter > 0 {
+            for i in 0..inter {
+                let offset = jump * i;
+                if offset < arr.len() {
+                    insertion_sort_jump(&mut arr[offset..], jump * inter, logger);
+                }
+            }
+        }
         insertion_sort_jump(arr, jump, logger);
     }
 }
@@ -44,11 +80,15 @@ impl RodMerge for InsertionMerge {
 pub struct AuxMerge;
 impl RodMerge for AuxMerge {
     const NAME: &'static str = "aux";
+    const NEEDS_AUX: bool = true;
 
+    #[inline]
     fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
+        aux: &mut [T],
         jump: usize,
         branch: usize,
+        _inter: usize,
         logger: &mut U,
     ) {
         // Number of elements at stride `jump`: positions 0, jump, 2·jump,
@@ -59,11 +99,14 @@ impl RodMerge for AuxMerge {
             return;
         }
 
+        // Use only the prefix we need; the caller's aux is the full
+        // top-level allocation (size N), shared across the recursion.
+        let aux = &mut aux[..virtual_len];
+
         // Substream `s` holds virtual positions s, s + branch, s + 2·branch,
         // ... — i.e., physical positions (s + k·branch) · jump while in range.
         let stream_count = branch.min(virtual_len);
         let mut heads: Vec<usize> = (0..stream_count).collect();
-        let mut aux = logger.create_aux_arr_t(virtual_len);
 
         for write_idx in 0..virtual_len {
             // Linear scan over the (small) number of active sub-streams.
@@ -86,16 +129,14 @@ impl RodMerge for AuxMerge {
                 };
             }
             let src_phys = heads[min_s] * jump;
-            logger.write_accross(arr, src_phys, &mut aux, write_idx);
+            logger.write_accross(arr, src_phys, aux, write_idx);
             heads[min_s] += branch;
         }
 
         for write_idx in 0..virtual_len {
             let dst_phys = write_idx * jump;
-            logger.write_accross(&aux, write_idx, arr, dst_phys);
+            logger.write_accross(aux, write_idx, arr, dst_phys);
         }
-
-        logger.free_aux_arr_t(&aux);
     }
 }
 
