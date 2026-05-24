@@ -89,4 +89,9 @@ impl Rotation for ContrevRotation {
     }
 }
 
+impl crate::traits::composable::HasSpace for ContrevRotation {
+    const SPACE: crate::traits::complexity::Complexity =
+        crate::traits::complexity::Complexity::CONST;
+}
+
 register_rotation!(ContrevRotation);

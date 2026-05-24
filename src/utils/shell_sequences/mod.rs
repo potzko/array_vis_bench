@@ -1,3 +1,6 @@
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds};
+
 /// A gap sequence for shell sort.
 ///
 /// Implementations return gaps in **descending** order (largest first) so the
@@ -238,3 +241,41 @@ impl GapSequence for Pratt {
         gaps_asc
     }
 }
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// Each gap sequence drives a *full Shell sort run*, so its
+// `HasTimeBounds` reflects the algorithm's complexity under that
+// sequence. Best case is O(N) (already-sorted input scans each gap
+// pass linearly with no swaps). Stability and space are uniform across
+// sequences — they're properties of the outer Shell sort, not the gap
+// schedule — so we declare them per-sequence as true/CONST and let
+// the outer composition flip stability to `false`.
+
+macro_rules! impl_seq_annotations {
+    ($ty:ty, $worst:expr) => {
+        impl HasTimeBounds for $ty {
+            const WORST: Complexity = $worst;
+            const BEST: Complexity = Complexity::N1;
+            const AVERAGE: Complexity = $worst;
+        }
+        impl HasSpace for $ty {
+            const SPACE: Complexity = Complexity::CONST;
+        }
+        impl HasStability for $ty {
+            // The sequence on its own doesn't reorder anything; Shell
+            // sort's overall stability is forced false by the outer impl.
+            const STABLE: bool = true;
+        }
+    };
+}
+
+impl_seq_annotations!(Classic,            Complexity::N_SQUARED);
+impl_seq_annotations!(Knuth,              Complexity::N_SQRT_N);    // O(N^1.5)
+impl_seq_annotations!(Hibbard,            Complexity::N_SQRT_N);    // O(N^1.5)
+impl_seq_annotations!(Sedgewick,          Complexity::N_SQRT_N);    // O(N^4/3), bucketed up
+impl_seq_annotations!(Ciura,              Complexity::N_LOG_N);     // empirical
+impl_seq_annotations!(SedgewickBranching, Complexity::N_SQRT_N);    // O(N^4/3)
+impl_seq_annotations!(Optimized256,       Complexity::N_SQRT_N);    // O(N^1.5)
+impl_seq_annotations!(Tokuda,             Complexity::N_SQRT_N);    // O(N^4/3) empirical
+impl_seq_annotations!(Pratt,              Complexity::N_LOG_SQUARED);

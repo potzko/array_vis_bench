@@ -16,6 +16,8 @@ use std::marker::PhantomData;
 use super::deep_heapify::DeepHeapify;
 use super::heap::Heap;
 use super::heap_algorithm::HeapAlgorithm;
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use crate::traits::log_traits::SortLogger;
 
 pub struct HeapSort<H: Heap, DH: DeepHeapify> {
@@ -85,8 +87,37 @@ combo_codegen::family!(
     D: HeapDirection,
     DH: DeepHeapify,
     name = "heap sort",
-    big_o = "O(N log N)",
+    big_o = inherited,
     stable = false,
     direct_sort = true,
     path = ["heap sorts", "{D}", "{A}", "{DH}"],
 );
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// HeapSort = N extractions × per-extraction heapify cost. Each Heap
+// impl declares its own heapify complexity (binary heap → log N,
+// beap → √N), and the outer composition multiplies by N. The
+// DeepHeapify strategy contributes `O(N)` build cost, which is
+// dominated by the extraction phase.
+//
+// Stability is uniformly false for all heap variants (sift-down
+// reorders equal keys). Space is `O(log N)` recursion stack worst
+// case (recursive deep-heapify); the iterative variant is `O(1)`.
+
+impl<H: Heap + HasTimeBounds, DH: DeepHeapify> HasTimeBounds for HeapSort<H, DH> {
+    /// N extractions × per-operation heapify complexity (H::WORST).
+    const WORST: Complexity = Complexity::product(Complexity::N1, H::WORST);
+    const BEST: Complexity = Complexity::product(Complexity::N1, H::BEST);
+    const AVERAGE: Complexity = Complexity::product(Complexity::N1, H::AVERAGE);
+}
+
+impl<H: Heap, DH: DeepHeapify> HasSpace for HeapSort<H, DH> {
+    /// Conservative bound — Recursive deep-heapify uses O(log N) stack;
+    /// Iterative uses O(1).
+    const SPACE: Complexity = Complexity::LOG_N;
+}
+
+impl<H: Heap, DH: DeepHeapify> HasStability for HeapSort<H, DH> {
+    const STABLE: bool = false;
+}

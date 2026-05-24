@@ -1,4 +1,6 @@
 use std::marker::PhantomData;
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds, PivotQuality};
 use crate::traits::log_traits::SortLogger;
 
 pub trait PivotSelector {
@@ -226,4 +228,64 @@ impl DualPivotSelector for NintherDualPivot {
         let m3 = median_index(arr, logger, s[6], s[7], s[8]);
         min_max_index(arr, logger, m1, m2, m3)
     }
+}
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// Pivot selectors split into two groups:
+//
+//   * O(1) selectors that look at a bounded number of elements
+//     (FirstElement, MiddleElement, LastElement, MedianOfThree, Ninther).
+//     All `DEGENERATES = true` except positional ones that don't
+//     depend on data — `MiddleElement` is degenerate-safe in expectation
+//     for randomised input but *can* still degenerate on adversarial
+//     input, so we conservatively mark it `true`. The data-aware Median-
+//     of-3 / Ninther reduce the probability of bad pivots but don't
+//     eliminate worst-case quadratic behaviour.
+//
+//   * `MedianOfMedians` — true linear-time pivot. Guarantees a balanced
+//     split, so QuickSort's worst case becomes O(N log N). `DEGENERATES = false`.
+
+macro_rules! impl_constant_pivot {
+    ($ty:ty) => {
+        impl HasTimeBounds for $ty {
+            const WORST: Complexity = Complexity::CONST;
+            const BEST: Complexity = Complexity::CONST;
+            const AVERAGE: Complexity = Complexity::CONST;
+        }
+        impl HasSpace for $ty {
+            const SPACE: Complexity = Complexity::CONST;
+        }
+        impl HasStability for $ty {
+            // Pivot selectors don't reorder equal keys themselves.
+            const STABLE: bool = true;
+        }
+        impl PivotQuality for $ty {
+            const DEGENERATES: bool = true;
+        }
+    };
+}
+
+impl_constant_pivot!(FirstElement);
+impl_constant_pivot!(MiddleElement);
+impl_constant_pivot!(LastElement);
+impl_constant_pivot!(MedianOfThree);
+impl_constant_pivot!(Ninther);
+
+// Median-of-medians scans the whole array in linear time but guarantees
+// a balanced pivot — partition recursion depth becomes O(log N).
+impl HasTimeBounds for MedianOfMedians {
+    const WORST: Complexity = Complexity::N1;
+    const BEST: Complexity = Complexity::N1;
+    const AVERAGE: Complexity = Complexity::N1;
+}
+impl HasSpace for MedianOfMedians {
+    // Recursive selection on groups of 5 — depth is O(log N) stack.
+    const SPACE: Complexity = Complexity::LOG_N;
+}
+impl HasStability for MedianOfMedians {
+    const STABLE: bool = true;
+}
+impl PivotQuality for MedianOfMedians {
+    const DEGENERATES: bool = false;
 }

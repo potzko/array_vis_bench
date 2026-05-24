@@ -51,4 +51,9 @@ impl Rotation for GrailRotation {
     }
 }
 
+impl crate::traits::composable::HasSpace for GrailRotation {
+    const SPACE: crate::traits::complexity::Complexity =
+        crate::traits::complexity::Complexity::CONST;
+}
+
 register_rotation!(GrailRotation);

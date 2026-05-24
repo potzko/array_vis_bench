@@ -1,34 +1,36 @@
 # quick_sorts
 
-Quick sort variants — different pivot selection and partitioning strategies.
+Quick sort variants — every meaningful cross-product of pivot selector × partition scheme × small-sort cutoff, plus dual-pivot and deferred-small-sort flavours.
 
 ## How quick sort works
 
-Quick sort picks a *pivot* element, *partitions* the array so that everything less than the pivot is on the left and everything greater is on the right, then recursively sorts each side. The choice of pivot and partitioning scheme affects worst-case behaviour, constant factors, and stability.
+Quick sort picks a *pivot*, *partitions* the array so everything `< pivot` ends up on the left and everything `> pivot` on the right, then recurses on each side. The choice of pivot and partition scheme controls worst-case behaviour, constant factors, and stability.
 
-## Variants
+## Variant axes
 
-### Partition strategies
+| Axis | Provided by | Implementations |
+|---|---|---|
+| Pivot selector (`V: PivotSelector`) | `pivot_selectors.rs` | `FirstElement`, `MiddleElement`, `LastElement`, `MedianOfThree`, `MedianOfMedians`, `Ninther` |
+| Dual-pivot selector (`DPS: DualPivotSelector`) | `pivot_selectors.rs` | `CombinedSelector<V1, V2>` (cross-product of two `PivotSelector`s) plus the native `NintherDualPivot` (samples 9 positions, returns the 1/3 and 2/3 quantiles) |
+| Partition scheme (`P: PartitionScheme`) | `partitions.rs` | `Lomuto`, `Hoare`, `ThreeWay` (Dutch National Flag), `Block` (branchless batched), `MovingPivot` |
+| Small-sort cutoff (`SS: SmallSort`) | `crate::utils::small_sort` | `NoSmallSort`, `Size1SmallSort`, `Size2SmallSort`, `InsertionSmallSort<N, S>`, `NetworkSmallSort`, `Network16SmallSort` |
 
-- **Left-right pointers, static pivot** (`quick_sort_left_right_pointers_static_pivot.rs`) — the default. Two pointers walk inward from both ends, swapping out-of-place pairs. The pivot stays at its original position until the partition is complete.
-- **Left-right pointers, moving pivot** (`quick_sort_left_right_pointers_moving_pivot.rs`) — same two-pointer scheme but the pivot moves during partitioning.
-- **Left-left pointers** (`quick_sort_left_left_pointers.rs`) — Lomuto-style: a single forward scan with a boundary pointer. Simpler but more swaps on average.
-- **Left-left pointers optimised** (`quick_sort_left_left_pointers_optimised.rs`) — Lomuto with reduced swap count.
-- **Left-right pivot optimised** (`quick_sort_left_right_pivot_optimised.rs`) — Hoare-style with pivot-selection optimisations.
+The cross-products live in four family files:
 
-### Pivot strategies
+- `quick_sort.rs` — `QuickSort<P, V, SS>`: standard, classic small-sort applied at recursion base.
+- `deferred_quick_sort.rs` — `DeferredQuickSort<P, V, DSS>`: recurses only until segments fall below the cutoff, then runs one final insertion-sort pass over the whole array.
+- `dual_pivot_quick_sort.rs` — `DualPivotQuickSort<DPS, SS>`: Yaroslavskiy-style three-way partition between two pivots.
+- `deferred_dual_pivot_quick_sort.rs` — dual-pivot with the deferred-small-sort strategy.
 
-- **Median-of-three** (`midian_pivot_quick_sort.rs`) — picks the median of the first, middle, and last elements to avoid worst-case O(N^2) on sorted input.
+Each file's `combo_codegen::family!` invocation lists every concrete instantiation that should be generated; the build script writes them into `OUT_DIR/quick_sorts_combinations.rs`, which `mod.rs` then includes.
 
-### Other variants
+## Supporting files
 
-- **Iterative quick sort** (`iterative_quick_sort.rs`) — replaces recursion with an explicit stack. Same algorithm, no stack overflow risk on large arrays.
-- **Generic quick sort** (`generic_quick_sort.rs`) — parameterised over pluggable pivot and partition strategy traits. Used for combinatoric variant generation.
-- **Pivot strategies** (`pivot_strategies.rs`) — trait + implementations for pivot selection.
-- **Partition strategies** (`partition_strategies.rs`) — trait + implementations for partitioning.
-- **Strategy registry** (`strategy_registry.rs`) — registration wiring for generic variants.
-- **Auto register** (`auto_register.rs`) — automatic registration of combinations.
+- `pivot_selectors.rs` — `PivotSelector` and `DualPivotSelector` traits + all implementations. Each concrete type is annotated with `combo_codegen::component!(PivotSelector, …)` so it is picked up automatically by the codegen.
+- `partitions.rs` — `PartitionScheme` trait + all implementations.
+- `partitions_standalone.rs` — registers every `(PartitionScheme × PivotSelector)` pair as a `Category::Partition` standalone algorithm so the visualiser and bench harness can drive partitions directly, not just through a containing quick sort.
+- `mod.rs` — module declarations + `include!` of the generated combinations file.
 
-## Status
+## Registration
 
-Not yet migrated to the `sort_family!` system. Compiled but commented out of the active dispatch in `sorts/mod.rs`.
+All variants register themselves into `bench_registry::ALGORITHMS` via `combo_codegen::family!`. No central list to edit. Adding a new pivot selector is two lines: declare the type and slap a `combo_codegen::component!(PivotSelector, MyPivot, "label")` next to it — every family that takes a `PivotSelector` slot picks it up on the next build.

@@ -449,9 +449,28 @@ fn emit_init_events(arr: &[usize], logger: &mut dyn sort_logger::SortLogger<usiz
 pub struct AlgorithmEntry {
     pub name: &'static str,
     pub category: Category,
-    pub big_o: &'static str,
+    /// Worst-case time complexity (Big-O). Sites use either
+    /// `Complexity::from_str("O(...)")` for legacy literal annotations or
+    /// `<ConcreteType as HasTimeBounds>::WORST` when generated from the
+    /// trait machinery via `big_o = inherited`.
+    pub worst: crate::traits::complexity::Complexity,
+    /// Best-case time complexity (Big-Omega). Defaults to `worst` for
+    /// algorithms that haven't been split into separate WORST/BEST/AVERAGE
+    /// via `HasTimeBounds`.
+    pub best: crate::traits::complexity::Complexity,
+    /// Average-case time complexity (Big-Theta when tight). Defaults to
+    /// `worst` for legacy entries.
+    pub average: crate::traits::complexity::Complexity,
+    /// Auxiliary-space complexity (heap allocations that grow with N).
+    /// Bounded-stack buffers and recursion depth count as `O(log N)` or
+    /// less — see `Complexity::is_in_place()` for the `in_place` derivation.
+    pub space: crate::traits::complexity::Complexity,
     /// Sort-relevant flag; ignored for non-sort categories.
     pub stable: bool,
+    /// True if the algorithm runs faster on nearly-sorted input
+    /// (e.g. insertion sort, Tim sort). Not compositional — declared
+    /// per-family as a literal.
+    pub adaptive: bool,
     /// Optional contract-defined upper bound on input size. `None` =
     /// unbounded (every general-purpose sort/rotation/partition/merge).
     /// `Some(n)` means inputs larger than `n` are out-of-contract —
@@ -482,6 +501,42 @@ pub static ALGORITHMS: [AlgorithmEntry] = [..];
 /// "no cap" — no change needed at the call site for fast sorts.
 #[distributed_slice]
 pub static SORT_TEST_CAPS: [(&'static str, usize)] = [..];
+
+/// Opt-out registry for algorithms whose `SortLog` trace is intentionally
+/// nondeterministic between runs. The determinism check in
+/// `crate::property_tests::determinism` skips any entry whose `name`
+/// appears here.
+///
+/// The default is "deterministic" — only algorithms that genuinely use
+/// uninitialised entropy (e.g. randomised gap sequences) opt out via
+/// `register_nondeterministic!`.
+#[distributed_slice]
+pub static NONDETERMINISTIC_ALGOS: [&'static str] = [..];
+
+/// True if `name` was registered as nondeterministic via
+/// `register_nondeterministic!`.
+pub fn is_nondeterministic(name: &str) -> bool {
+    NONDETERMINISTIC_ALGOS.iter().any(|n| *n == name)
+}
+
+/// Mark an algorithm as having a nondeterministic `SortLog` trace, so the
+/// determinism check skips it. Place next to the algorithm's `family!`
+/// invocation — one call per registered leaf name.
+///
+/// ```text
+/// register_nondeterministic!("random shell sort<uniform>");
+/// register_nondeterministic!("random shell sort<parabolic>");
+/// ```
+#[macro_export]
+macro_rules! register_nondeterministic {
+    ($name:expr) => {
+        const _: () = {
+            #[::linkme::distributed_slice($crate::bench_registry::NONDETERMINISTIC_ALGOS)]
+            #[allow(non_upper_case_globals)]
+            static ENTRY: &'static str = $name;
+        };
+    };
+}
 
 /// Return the random-input size cap declared for `sort_name`, if any.
 /// Used by `correctness::check_sort` to skip oversized random arrays
@@ -703,6 +758,9 @@ pub mod correctness {
         }
 
         check_rand!(5000, get_rand_arr(5000), "random 5000");
+
+        #[cfg(test)]
+        crate::property_tests::sort::run(sort_fn, name);
     }
 
     /// Stability battery — runs only on sorts that claim `stable = true`.
@@ -788,6 +846,9 @@ pub mod correctness {
                 name, label
             );
         }
+
+        #[cfg(test)]
+        crate::property_tests::rotation::run(rotate_fn, name);
     }
 
     /// Verify a partition (with pivot selection baked in) produces a
@@ -837,6 +898,9 @@ pub mod correctness {
                 name, label
             );
         }
+
+        #[cfg(test)]
+        crate::property_tests::partition::run(partition_fn, name);
     }
 
     /// Verify a merge produces a sorted array from two pre-sorted halves
@@ -859,6 +923,9 @@ pub mod correctness {
             merge_fn(&mut arr, mid, &mut logger);
             assert_eq!(arr, expected, "{}: merge failed on '{}'", name, label);
         }
+
+        #[cfg(test)]
+        crate::property_tests::merge::run(merge_fn, name);
     }
 
     /// Verify a quick-select places the target-rank element at
@@ -923,6 +990,9 @@ pub mod correctness {
                 );
             }
         }
+
+        #[cfg(test)]
+        crate::property_tests::quick_select::run(quick_select_fn, name);
     }
 
     /// Small-sort battery — only tests sizes within the algorithm's
@@ -951,6 +1021,9 @@ pub mod correctness {
                 assert_eq!(arr, expected, "{}: small-sort random trial {}", name, trial);
             }
         }
+
+        #[cfg(test)]
+        crate::property_tests::small_sort::run(sort_fn, name, threshold);
     }
 
     /// Generate all permutations of `base` and call `f` on each (Heap's algorithm).
@@ -1146,4 +1219,5 @@ mod tests {
             );
         }
     }
+
 }

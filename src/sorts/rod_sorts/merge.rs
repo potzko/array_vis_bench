@@ -20,6 +20,8 @@
 //! once at the top — see [`super::rod_sort::RodSort::sort`]. The
 //! `NEEDS_AUX` flag lets [`InsertionMerge`] skip the allocation entirely.
 
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use crate::traits::log_traits::SortLogger;
 
 pub trait RodMerge {
@@ -159,4 +161,38 @@ pub(crate) fn insertion_sort_jump<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         }
         i += jump;
     }
+}
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// Each merge variant captures the *whole* rod-sort algorithmic
+// complexity when used as the final merge step. The branching
+// strategy only changes constants — the merge dominates.
+//
+// InsertionMerge: in-place strided insertion, O(N²) worst.
+// AuxMerge: full N-buffer merge-sort merge, O(N log N) worst.
+
+impl HasTimeBounds for InsertionMerge {
+    const WORST: Complexity = Complexity::N_SQUARED;
+    const BEST: Complexity = Complexity::N1;
+    const AVERAGE: Complexity = Complexity::N_SQUARED;
+}
+impl HasSpace for InsertionMerge {
+    const SPACE: Complexity = Complexity::CONST;
+}
+impl HasStability for InsertionMerge {
+    const STABLE: bool = true;
+}
+
+impl HasTimeBounds for AuxMerge {
+    const WORST: Complexity = Complexity::N_LOG_N;
+    const BEST: Complexity = Complexity::N_LOG_N;
+    const AVERAGE: Complexity = Complexity::N_LOG_N;
+}
+impl HasSpace for AuxMerge {
+    // Top-level merge allocates an N-sized aux buffer.
+    const SPACE: Complexity = Complexity::N1;
+}
+impl HasStability for AuxMerge {
+    const STABLE: bool = true;
 }

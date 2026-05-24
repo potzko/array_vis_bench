@@ -55,4 +55,9 @@ impl Rotation for HelixRotation {
     }
 }
 
+impl crate::traits::composable::HasSpace for HelixRotation {
+    const SPACE: crate::traits::complexity::Complexity =
+        crate::traits::complexity::Complexity::CONST;
+}
+
 register_rotation!(HelixRotation);

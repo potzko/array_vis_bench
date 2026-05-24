@@ -13,6 +13,8 @@ use std::marker::PhantomData;
 
 use crate::sorts::quick_selects::quick_select::QuickSelect;
 use crate::sorts::quick_sorts::pivot_selectors::DualPivotSelector;
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use crate::traits::log_traits::SortLogger;
 
 // ── RecursiveDualPivotQuickSelect ────────────────────────────────────────────
@@ -96,6 +98,30 @@ impl<DPS: DualPivotSelector> QuickSelect for IterativeDualPivotQuickSelect<DPS> 
         }
     }
 }
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// `DualPivotSelector` quality isn't modelled with `PivotQuality` yet,
+// so worst case is conservatively O(N²). Average / best are O(N) — one
+// O(N) Yaroslavskiy partition per level, expected constant levels.
+macro_rules! impl_dp_qs_annotations {
+    ($ty:ident, $space:expr) => {
+        impl<DPS: DualPivotSelector> HasTimeBounds for $ty<DPS> {
+            const WORST: Complexity = Complexity::N_SQUARED;
+            const BEST: Complexity = Complexity::N1;
+            const AVERAGE: Complexity = Complexity::N1;
+        }
+        impl<DPS: DualPivotSelector> HasSpace for $ty<DPS> {
+            const SPACE: Complexity = $space;
+        }
+        impl<DPS: DualPivotSelector> HasStability for $ty<DPS> {
+            const STABLE: bool = false;
+        }
+    };
+}
+
+impl_dp_qs_annotations!(RecursiveDualPivotQuickSelect, Complexity::LOG_N);
+impl_dp_qs_annotations!(IterativeDualPivotQuickSelect, Complexity::CONST);
 
 // ── Yaroslavskiy dual-pivot partition ────────────────────────────────────────
 

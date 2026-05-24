@@ -92,4 +92,10 @@ impl Rotation for TrinityRotation {
     }
 }
 
+impl crate::traits::composable::HasSpace for TrinityRotation {
+    /// Fixed `TRINITY_AUX` (8-element) scratch — independent of N.
+    const SPACE: crate::traits::complexity::Complexity =
+        crate::traits::complexity::Complexity::CONST;
+}
+
 register_rotation!(TrinityRotation);

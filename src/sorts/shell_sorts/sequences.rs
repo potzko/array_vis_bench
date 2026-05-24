@@ -22,7 +22,11 @@ pub static GAP_SEQUENCES: [GapSequenceEntry] = [..];
 // Inner registration: one module per (sort type, gap sequence) pair.
 // ---------------------------------------------------------------------------
 macro_rules! register_shell_variant {
-    ($mod:ident, $sort_name:expr, $path:expr, $big_o:expr, $call:expr) => {
+    // `$sort_ty` is the concrete `ShellSort::<Seq>` (or `ShellSortOrdered::<Seq>`)
+    // type — used to pull all structured fields from the per-axis
+    // composable annotation pipeline. The legacy `$big_o` string is kept
+    // for the in-house `GapSequenceEntry` slice (display only).
+    ($mod:ident, $sort_name:expr, $path:expr, $big_o:expr, $sort_ty:ty, $call:expr) => {
         mod $mod {
             use super::*;
             use crate::traits::log_traits::{NoOpLogger, SortLogger};
@@ -43,7 +47,11 @@ macro_rules! register_shell_variant {
 
             fn run_correctness() {
                 crate::bench_registry::correctness::sort_battery(sort_fn, SORT_NAME);
-                crate::bench_registry::correctness::sort_stability_battery(sort_fn, SORT_NAME, false);
+                crate::bench_registry::correctness::sort_stability_battery(
+                    sort_fn,
+                    SORT_NAME,
+                    <$sort_ty as crate::traits::composable::HasStability>::STABLE,
+                );
             }
 
             #[linkme::distributed_slice(GAP_SEQUENCES)]
@@ -60,8 +68,12 @@ macro_rules! register_shell_variant {
                 crate::bench_registry::AlgorithmEntry {
                     name: SORT_NAME,
                     category: crate::bench_registry::Category::Sort,
-                    big_o: $big_o,
-                    stable: false,
+                    worst: <$sort_ty as crate::traits::composable::HasTimeBounds>::WORST,
+                    best: <$sort_ty as crate::traits::composable::HasTimeBounds>::BEST,
+                    average: <$sort_ty as crate::traits::composable::HasTimeBounds>::AVERAGE,
+                    space: <$sort_ty as crate::traits::composable::HasSpace>::SPACE,
+                    stable: <$sort_ty as crate::traits::composable::HasStability>::STABLE,
+                    adaptive: false,
                     max_input_size: None,
                     run_with_input,
                     run_correctness,
@@ -92,6 +104,7 @@ macro_rules! register_sequence {
             const_format::concatcp!("shell sort<sequence: ", $seq::NAME, ">"),
             &["shell sorts", "shell sort", $seq::NAME],
             $seq::BIG_O,
+            crate::sorts::shell_sorts::shell_sort::ShellSort::<$seq>,
             crate::sorts::shell_sorts::shell_sort::ShellSort::<$seq>::sort
         );
         register_shell_variant!(
@@ -99,6 +112,7 @@ macro_rules! register_sequence {
             const_format::concatcp!("shell sort ordered<sequence: ", $seq::NAME, ">"),
             &["shell sorts", "shell sort ordered", $seq::NAME],
             $seq::BIG_O,
+            crate::sorts::shell_sorts::shell_sort_ordered::ShellSortOrdered::<$seq>,
             crate::sorts::shell_sorts::shell_sort_ordered::ShellSortOrdered::<$seq>::sort
         );
     };

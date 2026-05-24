@@ -6,8 +6,8 @@ macro_rules! arr_name {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Clone)]
-pub enum SortLog<T: Copy> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SortLog<T: Copy + PartialEq + Eq> {
     Swap {
         name: usize,
         ind_a: usize,

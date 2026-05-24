@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 
 use super::merge::{insertion_sort_jump, RodMerge};
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use crate::traits::log_traits::SortLogger;
 use crate::utils::shell_branching::BranchingStrategy;
 
@@ -75,5 +77,61 @@ impl<S: BranchingStrategy, M: RodMerge> RodSort<S, M> {
         };
 
         M::merge(arr, aux, jump, branch, effective_inter, logger);
+    }
+}
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// RodSort's complexity is dominated by the merge strategy — the
+// branching strategy only affects constants. Stability requires both
+// the merge and the branching to be stable.
+// Space is `LOG_N` (recursion stack) when the merge is in-place; `N1`
+// when AuxMerge allocates the top-level buffer.
+
+impl<S, M> HasTimeBounds for RodSort<S, M>
+where
+    S: BranchingStrategy,
+    M: RodMerge + HasTimeBounds,
+{
+    const WORST: Complexity = M::WORST;
+    const BEST: Complexity = M::BEST;
+    const AVERAGE: Complexity = M::AVERAGE;
+}
+
+impl<S, M> HasSpace for RodSort<S, M>
+where
+    S: BranchingStrategy,
+    M: RodMerge + HasSpace,
+{
+    const SPACE: Complexity = Complexity::sum(Complexity::LOG_N, M::SPACE);
+}
+
+impl<S, M> HasStability for RodSort<S, M>
+where
+    S: BranchingStrategy + HasStability,
+    M: RodMerge + HasStability,
+{
+    const STABLE: bool = S::STABLE && M::STABLE;
+}
+
+#[cfg(test)]
+mod annotation_tests {
+    use super::*;
+    use crate::sorts::rod_sorts::merge::{AuxMerge, InsertionMerge};
+    use crate::utils::shell_branching::Classic;
+
+    #[test]
+    fn aux_merge_gives_n_log_n() {
+        assert_eq!(<RodSort<Classic, AuxMerge> as HasTimeBounds>::WORST, Complexity::N_LOG_N);
+        // AuxMerge needs an N-sized aux buffer.
+        assert_eq!(<RodSort<Classic, AuxMerge> as HasSpace>::SPACE, Complexity::N1);
+        assert!(!<RodSort<Classic, AuxMerge> as HasSpace>::SPACE.is_in_place());
+    }
+
+    #[test]
+    fn insertion_merge_gives_quadratic_in_place() {
+        assert_eq!(<RodSort<Classic, InsertionMerge> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
+        assert_eq!(<RodSort<Classic, InsertionMerge> as HasSpace>::SPACE, Complexity::LOG_N);
+        assert!(<RodSort<Classic, InsertionMerge> as HasSpace>::SPACE.is_in_place());
     }
 }

@@ -3,36 +3,53 @@
 ## Crate dependency graph
 
 ```
-                    sort_registry_macro (proc-macro)
+                    sort_registry_macro (proc-macro, legacy sort_family!)
                             │
                             ▼
-array_vis_bench ──────► sort_registry_core (metadata + tree)
+                    combo_codegen (build-script scanner + family! / component! markers)
+                            │
+                            ▼
+array_vis_bench ──────► sort_registry_core (navigation-tree metadata)
   (root crate)  │
                 ├─────► sort_logger (SortLogger trait, NoOpLogger, VisualizerLogger)
                 │
-                └─────► sort_vis (GIF renderer)
+                └─────► sort_vis (MP4 / GIF renderer)
 ```
 
-`sort_logger` is the lightest dependency — just the trait and two implementations. Every sort depends on it. `sort_vis` is the heaviest (pulls in the `image` crate) and is only needed by the visualiser binary.
+`sort_logger` is the lightest dependency — only the logger trait and the no-op / visualiser implementations. `sort_vis` (which pulls in `image`) is only needed by the visualiser binary. `combo_codegen` is build-time only; the scanned cross-products are emitted into `$OUT_DIR/<family>_combinations.rs` and included from each family's `mod.rs`.
 
 ## Data flow
+
+### One slice, three consumers
+
+```
+            bench_registry::ALGORITHMS  (linkme distributed-slice)
+                       │
+        ┌──────────────┼──────────────┐
+        ▼              ▼              ▼
+   visualiser     bench harness   correctness suite
+  (main.rs)      (benches/sorts) (per-leaf #[test] +
+                                  all_registered_algorithms_are_correct)
+```
+
+`AlgorithmEntry` carries the entry's `name`, `category`, `big_o`, `stable`, optional `max_input_size`, and two function pointers: `run_with_input(input_name, config, logger)` and `run_correctness()`. Every consumer uses the same shape regardless of category — the category enum exists only for menu grouping and per-category input dispatch.
 
 ### Benchmark path
 
 ```
-BENCH_SORTS (linkme slice)
+ALGORITHMS slice
     │
     ▼
-criterion harness (benches/sorts.rs)
+benches/sorts.rs
     │
     ▼
-entry.run(arr)  ──►  sort_fn(arr: &mut [usize])
-                         │
-                         ▼
-                     NoOpLogger  (all log() calls compile away)
+entry.run_with_input(primary_input, RunConfig, &mut NoOpLogger)
+    │
+    ▼
+NoOpLogger — every logger method compiles away entirely
 ```
 
-Function pointers are monomorphic `fn(&mut [usize])` — no trait objects, no vtable dispatch. The compiler can inline the entire sort and optimise aggressively.
+Function pointers in `AlgorithmEntry` take `&mut dyn SortLogger<usize>` so the harness can swap loggers without type-erasing the algorithm. With `NoOpLogger` behind the trait object the inner loop is a single virtual call per operation, but `NoOpLogger`'s methods are trivial and easily inlined behind it.
 
 ### Visualisation path
 
@@ -40,69 +57,81 @@ Function pointers are monomorphic `fn(&mut [usize])` — no trait objects, no vt
 main.rs
     │
     ▼
-select_sort() → sort_name (via SortTree navigation)
+SortTree navigation → entry name
     │
     ▼
-create_sort_choice(sort_name) → choice path (e.g. ["merge_sorts", "..."])
+bench_registry::ALGORITHMS.find(name)
     │
     ▼
-visualise_sort(arr, logger, choice)
+entry.run_with_input(input_name, config, &mut VisualizerLogger)
     │
-    ├─► sorts::fn_sort(arr, logger, choice)  ──►  sort runs with VisualizerLogger
-    │                                                    │
-    │                                                    ▼
-    │                                              logger.log: Vec<SortLog<usize>>
+    ▼
+VisualizerLogger captures SortLog<usize> events into a Vec
     │
-    └─► sort_vis::render_gif(original_arr, base_ptr, &log)
-            │
-            ▼
-        output.mp4 (animated GIF on disk)
+    ▼
+sort_vis::render_gif(original_arr, &log) → output.mp4 / .gif
 ```
 
-The `VisualizerLogger` captures every comparison, swap, write, and auxiliary allocation as a `SortLog` enum variant. The renderer replays these events to generate frames.
+The `VisualizerLogger` records every comparison, swap, write, and auxiliary allocation. `bench_registry::emit_init_events` emits the `CreateAuxArrT + SetScale + N×WriteData` prelude so the log alone fully describes the initial state.
+
+### Correctness path
+
+```
+#[test] all_registered_algorithms_are_correct
+    │
+    ▼
+for entry in ALGORITHMS:
+    spawn subprocess(self, env: AVB_RUN_CHECK_SORT=entry.name)
+        │
+        ▼
+    ctor::subprocess_dispatch picks up the env var,
+    calls entry.run_correctness(), exits
+```
+
+The subprocess always re-executes the same binary, so a freshly-added algorithm is immediately picked up without rebuilding a separate runner. `run_correctness` invokes the category's battery: `sort_battery` / `rotation_battery` / `partition_battery` / `merge_battery` / `quick_select_battery` / `small_sort_battery`. Each verifies category-specific shape (sortedness + permutation, rotation contract, partition split, etc.).
 
 ## Registration flow
 
 At program startup (before `main`):
 
-1. **Link time** — `linkme` collects all `#[distributed_slice(BENCH_SORTS)]` statics across compilation units into a single array.
-2. **`#[ctor]` hooks** — each sort's constructor runs, inserting function pointers into `SORT_REGISTRY` (benchmark dispatch) and `SORT_VIS_REGISTRY` (visualisation dispatch), and metadata into `sort_registry_core`'s `SORT_ENTRIES`.
-3. **`main` startup** — `validate_sort_routing()` checks that every registered sort has a visualisation dispatch route, panicking immediately if one is missing.
+1. **Link time** — `linkme` collects every `#[distributed_slice(ALGORITHMS)]` static across compilation units.
+2. **`#[ctor]` hooks** — each algorithm's per-leaf ctor calls `sort_registry_core::register_sort_path` so the variant joins the navigation tree.
+3. **`bench_registry::validate_at_startup`** — runs once, before `main`. Checks: duplicate algorithm names within a category, duplicate tree paths, missing / multiple primary inputs per category, empty input registries for non-empty categories. Any inconsistency panics with a precise message.
 
-## Generic sort design
+## Algorithm interface
 
-Sorts are generic over two type parameters:
+Algorithms expose an inherent `sort` (or category-equivalent) function:
 
 ```rust
-trait SortAlgo<T: Ord + Copy, U: SortLogger<T>> {
-    fn sort(arr: &mut [T], logger: &mut U);
-    // ...
+impl QuickSort<P, V, SS> {
+    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        // ...
+    }
 }
 ```
 
-- `T` — the element type. Usually `usize` for benchmarks, but the sort works with any `Ord + Copy` type.
-- `U` — the logger type. `NoOpLogger` for benchmarks (zero-cost), `VisualizerLogger` for recording, `dyn SortLogger<T>` for dynamic dispatch.
+- `T` — the element type. Always `usize` for the registry harness, but the body is generic.
+- `U: ?Sized` — the logger. Same code path runs with `NoOpLogger` (bench), `VisualizerLogger<usize>` (visualisation), or `dyn SortLogger<usize>` (registry-driven).
 
-This design means the same algorithm code is used for both benchmarking and visualisation, with no runtime overhead in the benchmark path.
+This means the same algorithm code services bench and viz with no runtime overhead in the bench path.
 
-## Parameterised sorts
+## Parameterised families
 
-Many sort families are parameterised over strategy traits:
-
-| Sort family | Parameters |
+| Family | Slots |
 |---|---|
 | Shell sort | `Seq: GapSequence` |
-| Shell-shell sort | `S: BranchingStrategy` |
-| Rod sort | `S: BranchingStrategy` |
-| Merge sort (aux) | `S: SmallSort`, `PING_PONG: bool`, `EARLY_EXIT: bool` |
-| Merge sort (rotation) | `S: SmallSort`, `M: RotationMerge`, `EARLY_EXIT: bool` |
-| Rotation merge | `R: Rotation` |
-| Quick sort (generic) | Pivot strategy, Partition strategy |
+| Shell-shell sort / rod sort | `S: BranchingStrategy` |
+| Top-down / bottom-up merge sort | `SS: SmallSort`, `const PING_PONG: bool`, `const EARLY_EXIT: bool` |
+| Rotation merge sort | `SS: SmallSort`, `M: RotationMerge<R>` (with `R: Rotation`), `const EARLY_EXIT: bool` |
+| Natural merge sort | `const PING_PONG: bool`, `const EARLY_EXIT: bool` |
+| Quick sort | `P: PartitionScheme`, `V: PivotSelector`, `SS: SmallSort` |
+| Dual-pivot quick sort | `DPS: DualPivotSelector`, `SS: SmallSort` |
+| Deferred quick sort | `P`, `V`, `DSS: DeferredSmallSort` |
 
-All parameters are resolved at compile time via generics/const generics. The `sort_family!` macro generates all meaningful combinations and registers each as a separate sort entry.
+All slots are resolved at compile time via generics or const generics. `combo_codegen::family!` enumerates the cross-product and emits one `AlgorithmEntry` per leaf.
 
 ## Module layout principles
 
 - **One concept per folder** — each sort family, utility category, and strategy set gets its own folder with a README explaining the concept.
-- **Registration is local** — each sort family registers itself via `combinations.rs` or `#[derive(SortRegistry)]`. No central list.
-- **Legacy code is preserved** — `merge_sorts_old/`, `classic_shell_sorts/` contain the original hand-written versions before the generic system was built. Kept for reference and comparison.
+- **Registration is local** — every family registers itself via `family!` / `register_*!` macros next to the implementation. There is no central list of algorithm names.
+- **Validation is central** — `validate_at_startup` enforces registry invariants once, in one place.

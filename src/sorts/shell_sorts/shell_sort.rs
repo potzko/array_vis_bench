@@ -1,5 +1,7 @@
 use std::marker::PhantomData;
 
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use crate::traits::log_traits::SortLogger;
 
 use super::sequences::GapSequence;
@@ -27,5 +29,50 @@ impl<Seq: GapSequence> ShellSort<Seq> {
                 }
             }
         }
+    }
+}
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// Shell sort's time complexity is determined entirely by the gap
+// sequence — that's the whole point of the sequence parameter.
+// Space is `O(1)` (in-place insertion at each gap). Shell sort is
+// not stable for any gap sequence with `gap > 1`, so STABLE is
+// always false regardless of Seq's own STABLE.
+
+impl<Seq: GapSequence + HasTimeBounds> HasTimeBounds for ShellSort<Seq> {
+    const WORST: Complexity = Seq::WORST;
+    const BEST: Complexity = Seq::BEST;
+    const AVERAGE: Complexity = Seq::AVERAGE;
+}
+impl<Seq: GapSequence> HasSpace for ShellSort<Seq> {
+    const SPACE: Complexity = Complexity::CONST;
+}
+impl<Seq: GapSequence> HasStability for ShellSort<Seq> {
+    const STABLE: bool = false;
+}
+
+#[cfg(test)]
+mod annotation_tests {
+    use super::*;
+    use crate::utils::shell_sequences::{Classic, Ciura, Pratt};
+
+    #[test]
+    fn complexity_pulled_from_sequence() {
+        assert_eq!(<ShellSort<Classic> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
+        assert_eq!(<ShellSort<Ciura> as HasTimeBounds>::WORST, Complexity::N_LOG_N);
+        assert_eq!(<ShellSort<Pratt> as HasTimeBounds>::WORST, Complexity::N_LOG_SQUARED);
+    }
+
+    #[test]
+    fn shell_sort_never_stable() {
+        // Stability is a property of the algorithm, not the sequence.
+        assert!(!<ShellSort<Classic> as HasStability>::STABLE);
+        assert!(!<ShellSort<Pratt> as HasStability>::STABLE);
+    }
+
+    #[test]
+    fn shell_sort_in_place() {
+        assert!(<ShellSort<Classic> as HasSpace>::SPACE.is_in_place());
     }
 }

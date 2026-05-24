@@ -13,6 +13,7 @@ combo_codegen::family!(
     name = "insertion sort",
     big_o = "O(N^2)",
     stable = true,
+    adaptive = true,
     direct_sort = true,
     path = ["insertion sorts", "{S}"],
 );

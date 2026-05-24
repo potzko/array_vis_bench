@@ -20,7 +20,7 @@ combo_codegen::family!(
         ("Iterative", "iterative"),
     ],
     name = "beap sort",
-    big_o = "O(N sqrt(N))",
+    big_o = inherited,
     stable = false,
     direct_sort = true,
     path = ["beap sorts", "{D}", "{DH}"],

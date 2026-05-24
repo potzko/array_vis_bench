@@ -3,6 +3,10 @@ use crate::traits::log_traits::SortLogger;
 use super::rotation_merge::RotationMerge;
 use crate::utils::small_sort::SmallSort;
 
+// Outer merge sort variants. Per-merge cost dominates the total — using
+// NaiveRotationMerge (O(k²) per size-k merge) gives O(N²) overall;
+// SmallerSideRotationMerge (O(k log² k) per merge) gives ≈ O(N log³ N)
+// rounded to its dominant "N log² N" bucket for picker display.
 combo_codegen::family!(
     type = TopDownRotationMergeSort<{SS}, NaiveRotationMerge<{R}>, false>,
     uses = [
@@ -15,7 +19,7 @@ combo_codegen::family!(
     R: Rotation,
     SS: SmallSort,
     name = "rotation merge sort",
-    big_o = "O(N log N)",
+    big_o = "O(N^2)",
     stable = true,
     direct_sort = true,
     path = ["merge sorts", "rotation", "top-down", "{R}", "{SS}"],
@@ -33,7 +37,7 @@ combo_codegen::family!(
     R: Rotation,
     SS: SmallSort,
     name = "rotation merge sort<smaller-side>",
-    big_o = "O(N log N)",
+    big_o = "O(N log² N)",
     stable = true,
     direct_sort = true,
     path = ["merge sorts", "rotation", "top-down smaller-side", "{R}", "{SS}"],
@@ -51,7 +55,7 @@ combo_codegen::family!(
     R: Rotation,
     SS: SmallSort,
     name = "bottom-up rotation merge sort",
-    big_o = "O(N log N)",
+    big_o = "O(N^2)",
     stable = true,
     direct_sort = true,
     path = ["merge sorts", "rotation", "bottom-up", "{R}", "{SS}"],
@@ -69,7 +73,7 @@ combo_codegen::family!(
     R: Rotation,
     SS: SmallSort,
     name = "bottom-up rotation merge sort<smaller-side>",
-    big_o = "O(N log N)",
+    big_o = "O(N log² N)",
     stable = true,
     direct_sort = true,
     path = ["merge sorts", "rotation", "bottom-up smaller-side", "{R}", "{SS}"],

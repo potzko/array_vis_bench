@@ -277,9 +277,25 @@ fn parse_field_value(s: &str) -> Option<FieldValue> {
         Some(FieldValue::Bool(true))
     } else if s == "false" {
         Some(FieldValue::Bool(false))
+    } else if let Ok(n) = s.parse::<i64>() {
+        Some(FieldValue::Int(n))
+    } else if is_ident(s) {
+        Some(FieldValue::Ident(s.to_string()))
     } else {
-        s.parse::<i64>().ok().map(FieldValue::Int)
+        None
     }
+}
+
+/// True if `s` looks like a Rust identifier — first char is letter/underscore,
+/// rest are letters/digits/underscores. Used to recognise pass-through
+/// keywords like `inherited`.
+fn is_ident(s: &str) -> bool {
+    let mut chars = s.chars();
+    let Some(first) = chars.next() else { return false; };
+    if !(first.is_ascii_alphabetic() || first == '_') {
+        return false;
+    }
+    chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
 }
 
 // ── Parsing helpers ──────────────────────────────────────────────────────────

@@ -76,13 +76,20 @@ macro_rules! register_rod {
                 sort_vis,
             };
 
+            // Trait-derived: `RodSort::<Strategy, Merge>` declares its
+            // own `HasTimeBounds`/`HasSpace`/`HasStability` based on the
+            // merge variant (InsertionMerge → N²; AuxMerge → N log N).
             #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
             static ALGO_ENTRY: crate::bench_registry::AlgorithmEntry =
                 crate::bench_registry::AlgorithmEntry {
                     name: SORT_NAME,
                     category: crate::bench_registry::Category::Sort,
-                    big_o: $strat::BIG_O,
-                    stable: false,
+                    worst: <RodSort<$strat, $merge> as crate::traits::composable::HasTimeBounds>::WORST,
+                    best: <RodSort<$strat, $merge> as crate::traits::composable::HasTimeBounds>::BEST,
+                    average: <RodSort<$strat, $merge> as crate::traits::composable::HasTimeBounds>::AVERAGE,
+                    space: <RodSort<$strat, $merge> as crate::traits::composable::HasSpace>::SPACE,
+                    stable: <RodSort<$strat, $merge> as crate::traits::composable::HasStability>::STABLE,
+                    adaptive: false,
                     max_input_size: None,
                     run_with_input,
                     run_correctness,

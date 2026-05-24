@@ -158,3 +158,9 @@ combo_codegen::family!(
     path = ["fun sorts", "random shell sort", "{D}"],
     max_n_for_tests = 1000,
 );
+
+// Random gap sequences pull entropy from `thread_rng()`, so successive runs
+// produce different `SortLog` traces even for identical input. Opt the
+// leaves out of the determinism check.
+crate::register_nondeterministic!("random shell sort<uniform>");
+crate::register_nondeterministic!("random shell sort<parabolic>");
