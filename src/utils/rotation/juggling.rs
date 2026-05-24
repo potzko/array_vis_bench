@@ -36,4 +36,9 @@ impl Rotation for JugglingRotation {
     }
 }
 
+impl crate::traits::composable::HasSpace for JugglingRotation {
+    const SPACE: crate::traits::complexity::Complexity =
+        crate::traits::complexity::Complexity::CONST;
+}
+
 register_rotation!(JugglingRotation);

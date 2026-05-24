@@ -91,3 +91,17 @@ impl<A: Arity, D: Direction> Heap for ArityHeap<A, D> {
         boundaries
     }
 }
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// Per-operation heapify cost: O(log_A N) ≈ O(log N) for any fixed
+// arity A. The outer HeapSort composition multiplies by N
+// extractions to get the overall sort complexity.
+
+impl<A: super::arity::Arity, D: super::direction::Direction> crate::traits::composable::HasTimeBounds
+    for ArityHeap<A, D>
+{
+    const WORST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::LOG_N;
+    const BEST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::LOG_N;
+    const AVERAGE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::LOG_N;
+}

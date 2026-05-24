@@ -1,109 +1,83 @@
-# Sort Registration System
+# Algorithm Registration System
 
-How sorts announce their existence to the framework without any central list.
+How every algorithm — sort, rotation, partition, merge, quick-select, small-sort — announces itself to the framework without a central list.
 
-## The problem
+## The single source of truth: `bench_registry::ALGORITHMS`
 
-With 50+ sort variants (and growing), maintaining a central `match` statement or array of sorts would be brittle and error-prone. Every new sort would require editing a file far from the sort's own code.
-
-## Solution: self-registration at startup
-
-Every sort registers itself during program initialisation, using two complementary mechanisms.
-
-## Mechanism 1: `create_sort!` + `#[derive(SortRegistry)]`
-
-The older, per-sort approach. Used by sorts that were written before `sort_family!` existed.
+Everything ends up as one `AlgorithmEntry` in a `linkme` distributed-slice (`bench_registry::ALGORITHMS`). The visualiser, the speed-test binary, the Criterion-free bench harness, and the correctness test suite all iterate that single slice.
 
 ```rust
-// In bubble_sort.rs:
-fn bubble_sort<T: Ord + Copy, U: SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-    // ... algorithm ...
+pub struct AlgorithmEntry {
+    pub name: &'static str,
+    pub category: Category,        // Sort | Rotation | Partition | Merge | SmallSort | QuickSelect
+    pub big_o: &'static str,
+    pub stable: bool,              // sort-specific; ignored for other categories
+    pub max_input_size: Option<usize>,
+    pub run_with_input:  fn(&str, &RunConfig, &mut dyn SortLogger<usize>),
+    pub run_correctness: fn(),
 }
 
-create_sort!(bubble_sort, "bubble sort", "O(N^2)", true);
+#[distributed_slice]
+pub static ALGORITHMS: [AlgorithmEntry] = [..];
 ```
 
-`create_sort!` generates:
+`run_with_input` is the harness contract: given a registered input name, emit the initial-state events and run the algorithm against it. `run_correctness` invokes the category's correctness battery (random + structured inputs, sortedness + permutation + category-specific shape checks).
 
-1. **`SortImp<T, U>`** — a type implementing `SortAlgo<T, U>` that delegates to the sort function.
-2. **`SortReg`** with `#[derive(SortRegistry)]` — triggers the proc macro, which generates:
-   - A monomorphic `fn __sort_fn_*(arr: &mut [usize], logger: &mut NoOpLogger)` — fully inlinable.
-   - A `#[ctor]` hook that inserts the function pointer into `SORT_REGISTRY` and calls `sort_registry_core::register_sort()`.
-3. **A `linkme` distributed-slice entry** — `static __BENCH_SORT_ENTRY: SortBenchEntry` collected into `BENCH_SORTS` at link time.
+## Mechanism 1: `combo_codegen::family!`
 
-## Mechanism 2: `sort_family!` macro
-
-The newer, combinatoric approach. Designed for parameterised sorts with many variants.
+The preferred path for new families. Build-script driven: every concrete component (e.g. `Lomuto`, `MedianOfThree`, `InsertionSmallSort<32>`) annotates itself with `combo_codegen::component!(Role, Type, "label")`, and every family annotates its generic-parameter slots with `combo_codegen::family!`. The build script scans the source tree, computes the cross-product, and writes one `AlgorithmEntry` per leaf to `$OUT_DIR/<family>_combinations.rs`.
 
 ```rust
-sort_family! {
-    type Sort = TopDownMergeSort<{SmallSort}, {PingPong}, {EarlyExit}>;
-
-    SmallSort {
-        NoSmallSort => "no-ss"
-        InsertionSmallSort<32> => "ins-32"
-    }
-
-    PingPong { false => "cb"  true => "pp" }
-    EarlyExit { false => "no-ee"  true => "ee" }
-
-    name   = "merge sort top-down {SmallSort} {PingPong} {EarlyExit}";
-    big_o  = "O(N log N)";
-    stable = true;
-    path   = ["merge sorts", "top-down", "{SmallSort}", "{PingPong}"];
-}
+combo_codegen::family!(
+    type = QuickSort<{P}, {V}, {SS}>,
+    uses = [
+        "crate::sorts::quick_sorts::quick_sort::QuickSort",
+        "crate::sorts::quick_sorts::partitions::{Lomuto, Hoare, ThreeWay, Block}",
+        "crate::sorts::quick_sorts::pivot_selectors::{FirstElement, MiddleElement, MedianOfThree, Ninther}",
+        "crate::utils::small_sort::{NoSmallSort, InsertionSmallSort, Size2SmallSort}",
+        "crate::utils::small_sort::{LinearInsertion, BinaryInsertion}",
+    ],
+    P:  Partition,
+    V:  PivotSelector,
+    SS: SmallSort,
+    name        = "quick sort",
+    big_o       = "O(N log N)",
+    stable      = false,
+    direct_sort = true,
+    path        = ["quick sorts", "{P}", "{V}", "{SS}"],
+);
 ```
 
-This generates **2 × 2 × 2 = 8** concrete sort registrations, each with:
-- A `linkme` `BENCH_SORTS` entry.
-- A `#[ctor]` hook for `SORT_REGISTRY` and `SORT_VIS_REGISTRY`.
-- Metadata in `sort_registry_core` with a navigation path for the tree menu.
+Adding a new pivot selector or partition scheme costs nothing in the family file: declare the type, add a `combo_codegen::component!` next to it, and every family that takes that slot picks it up on the next build.
 
-For rotation merge sorts with 11 rotation algorithms × 2 merge strategies × 2 small-sort options × 2 early-exit options, this generates 80+ variants from a single macro invocation.
+## Mechanism 2: `sort_registry_macro::sort_family!`
 
-## Mechanism 3: Manual `#[ctor]` + distributed slice
+The original, lighter-weight macro. Useful for single-leaf sorts or self-contained variant trees that don't need cross-family component scanning. Same `AlgorithmEntry` shape; same menu integration. See `src/sorts/bubble_sorts/bubble_sort.rs` for the minimal form.
 
-Some families (shell sorts, comb sorts, rod sorts, circle sorts) use a middle-ground approach:
+## Mechanism 3: per-category `register_*!` macros
 
-1. Define a distributed slice of registration entries in the family's `sequences.rs` or `branching.rs`.
-2. Each entry contains the sort's name, function pointers, and metadata.
-3. A single `#[ctor]` in `combinations.rs` iterates the slice and registers everything into `SORT_REGISTRY`.
+Non-sort algorithms use sibling macros that produce `AlgorithmEntry` with the matching `Category::*`:
 
-```rust
-// In shell_sorts/combinations.rs:
-#[ctor::ctor]
-fn register_shell_sorts() {
-    for entry in GAP_SEQUENCES {
-        registry.insert(entry.name.to_string(), entry.sort_fn);
-        sort_registry_core::register_sort_path(entry.name, entry.big_o, false, entry.path);
-    }
-}
-```
-
-## Two registries
-
-| Registry | Type | Purpose |
+| Category | Macro | Lives in |
 |---|---|---|
-| `SORT_REGISTRY` | `HashMap<String, fn(&mut [usize], &mut NoOpLogger)>` | Benchmark dispatch. Monomorphic function pointers — no trait objects, fully inlinable. |
-| `SORT_VIS_REGISTRY` | `HashMap<String, fn(&mut [usize], &mut dyn SortLogger<usize>)>` | Visualisation dispatch. Accepts `dyn SortLogger` for recording operations. |
+| `Rotation` | `register_rotation!` | `src/utils/rotation/` |
+| `Partition` | `register_partition!` | `src/sorts/quick_sorts/partitions_standalone.rs` |
+| `Merge` | `register_merge!` / `register_aux_merge!` | `src/sorts/merge_sorts/standalone_registry.rs` |
+| `QuickSelect` | `register_quick_select_single!` / `_dual!` | `src/sorts/quick_selects/standalone_registry.rs` |
+| `SmallSort` | `register_small_sort!` | `src/utils/small_sort.rs` |
 
-Both are `lazy_static` `Mutex<HashMap>`s populated by `#[ctor]` hooks before `main` runs.
+Each emits one `AlgorithmEntry` per concrete leaf, the same way `family!` does for sorts.
 
-## `BENCH_SORTS` distributed slice
+## What gets registered
 
-A `linkme` distributed slice of `SortBenchEntry` structs. Unlike the `HashMap` registries, this is assembled at link time — no runtime insertion needed. The Criterion benchmark iterates this slice directly.
+Every leaf in any of the three mechanisms gets:
 
-## Navigation tree
+1. **A `linkme` `AlgorithmEntry`** in `bench_registry::ALGORITHMS` (the shared registry).
+2. **A navigation-tree path** in `sort_registry_core::SORT_ENTRIES`, populated by a per-leaf `#[ctor::ctor]` that calls `register_sort_path`.
+3. **An optional `register_test_cap!`** entry in `SORT_TEST_CAPS` if the algorithm caps random-input size for the correctness battery.
 
-`sort_registry_core` maintains a `SortTree` built from the navigation paths provided during registration. The interactive CLI walks this tree to present a hierarchical sort-selection menu.
+Validation runs in `bench_registry::validate_at_startup` before anything else: duplicate names, duplicate tree paths, missing or multiple primary inputs all panic at process start.
 
-```
-merge sorts/
-  top-down/
-    no-ss/
-      cb/
-        "merge sort top-down no-ss cb no-ee"
-        "merge sort top-down no-ss cb ee"
-      pp/
-        ...
-```
+## Where inputs come from
+
+Each category has its own `SortInputEntry` / `RotationInputEntry` / etc. slice. Inputs register themselves the same way algorithms do, and exactly one entry per category is marked `primary: true` (the harness's default when no input is named). See `src/inputs.rs`.

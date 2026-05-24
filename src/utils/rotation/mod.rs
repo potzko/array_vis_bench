@@ -103,13 +103,37 @@ macro_rules! register_rotation {
             );
         }
 
+        // Every rotation here is intrinsically O(N) time — one pass over
+        // the array, regardless of split point. Space varies (Auxiliary
+        // is O(N), the in-place schemes are O(1)) so it's pulled from
+        // each rotation's per-file `HasSpace` impl. Stability is uniform
+        // (rotations preserve relative order within both halves) but the
+        // legacy entries had `stable = false`; keep that here to avoid
+        // changing observable behaviour, override per-rotation later if
+        // we re-classify them.
+        impl crate::traits::composable::HasTimeBounds for $rot {
+            const WORST: crate::traits::complexity::Complexity =
+                crate::traits::complexity::Complexity::N1;
+            const BEST: crate::traits::complexity::Complexity =
+                crate::traits::complexity::Complexity::N1;
+            const AVERAGE: crate::traits::complexity::Complexity =
+                crate::traits::complexity::Complexity::N1;
+        }
+        impl crate::traits::composable::HasStability for $rot {
+            const STABLE: bool = false;
+        }
+
         #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
         static _ALGO_ENTRY: crate::bench_registry::AlgorithmEntry =
             crate::bench_registry::AlgorithmEntry {
                 name: _ROTATION_NAME,
                 category: crate::bench_registry::Category::Rotation,
-                big_o: "O(N)",
-                stable: false,
+                worst: <$rot as crate::traits::composable::HasTimeBounds>::WORST,
+                best: <$rot as crate::traits::composable::HasTimeBounds>::BEST,
+                average: <$rot as crate::traits::composable::HasTimeBounds>::AVERAGE,
+                space: <$rot as crate::traits::composable::HasSpace>::SPACE,
+                stable: <$rot as crate::traits::composable::HasStability>::STABLE,
+                adaptive: false,
                 max_input_size: None,
                 run_with_input: __run_with_input,
                 run_correctness: __run_correctness,

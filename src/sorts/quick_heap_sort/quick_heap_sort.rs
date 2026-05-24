@@ -124,7 +124,7 @@ combo_codegen::family!(
     A: Arity,
     SS: SmallSort,
     name = "quick heap sort",
-    big_o = "O(N log N)",
+    big_o = inherited,
     stable = false,
     direct_sort = true,
     path = ["quick heap sorts", "classic", "{A}", "{SS}"],
@@ -160,7 +160,7 @@ combo_codegen::family!(
         ("NetworkSmallSort",                        "network: 8"),
     ],
     name = "quick heap sort",
-    big_o = "O(N log N)",
+    big_o = inherited,
     stable = false,
     direct_sort = true,
     path = ["quick heap sorts", "quick build", "{A}", "{QDH}", "{HP}", "{V}", "{SS}"],
@@ -185,8 +185,43 @@ combo_codegen::family!(
         ("NetworkSmallSort",                        "network: 8"),
     ],
     name = "quick heap sort dual pivot",
-    big_o = "O(N log N)",
+    big_o = inherited,
     stable = false,
     direct_sort = true,
     path = ["quick heap sorts", "quick build", "dual pivot", "{A}", "{QDH}", "{DPS}", "{SS}"],
 );
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// QuickHeapSort builds a heap via quickselect then extracts. Both the
+// build (O(N)) and the extraction (O(N log N) for binary arities) put
+// the total at O(N log N) — same as plain heap sort. The arity choice
+// only changes constants. The deep-heapify and small-sort axes are
+// likewise constant-factor; the small-sort runs on bounded-size leaves.
+
+impl<A, DH, SS> crate::traits::composable::HasTimeBounds for QuickHeapSort<A, DH, SS>
+where
+    A: crate::sorts::heap_sort::arity::Arity,
+    DH: crate::sorts::heap_sort::deep_heapify::DeepHeapify,
+    SS: crate::utils::small_sort::SmallSort,
+{
+    const WORST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+    const BEST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+    const AVERAGE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+}
+impl<A, DH, SS> crate::traits::composable::HasSpace for QuickHeapSort<A, DH, SS>
+where
+    A: crate::sorts::heap_sort::arity::Arity,
+    DH: crate::sorts::heap_sort::deep_heapify::DeepHeapify,
+    SS: crate::utils::small_sort::SmallSort,
+{
+    const SPACE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::LOG_N;
+}
+impl<A, DH, SS> crate::traits::composable::HasStability for QuickHeapSort<A, DH, SS>
+where
+    A: crate::sorts::heap_sort::arity::Arity,
+    DH: crate::sorts::heap_sort::deep_heapify::DeepHeapify,
+    SS: crate::utils::small_sort::SmallSort,
+{
+    const STABLE: bool = false;
+}

@@ -1,14 +1,17 @@
 # sort_registry_core
 
-Shared runtime state for sort discovery. Owns the global list of registered sort names and the `register_sort` function that populates it.
+Navigation-tree state shared between every algorithm registration and the interactive picker. No runtime function pointers live here — those are in `bench_registry::ALGORITHMS` in the root crate.
 
 ## What it contains
 
-- **`SORT_NAMES`** — a `Mutex<Vec<String>>` holding the name of every sort that has registered itself at startup.
-- **`register_sort(name, big_o, stable, category)`** — called by each sort's `#[ctor]` initialiser to announce its existence. Deduplicates by name.
-- **`get_registered_sorts()`** — returns a snapshot of all registered names; used by the CLI to build the sort selection menu.
-- **`SortRegistry` trait** — implemented (via derive macro) by each sort type. Provides a `register()` method that inserts the sort's function pointer into `SORT_REGISTRY` and calls `register_sort`.
+- **`SORT_ENTRIES`** — a `Mutex<Vec<(name, big_o, stable, path)>>` populated at startup as each algorithm's per-leaf `#[ctor]` calls `register_sort_path`.
+- **`register_sort_path(name, big_o, stable, path)`** — the entry point every registration macro reaches for. Appends one entry; deduplicates by name.
+- **`get_registered_sorts()`** — returns names in depth-first menu order (subtree-size first), used by the interactive CLI and the `bench_registry::sorted()` ordering pass.
+- **`get_sort_tree() -> SortTree`** — builds the hierarchical navigation tree from the recorded paths. The interactive binary walks this tree to drive its category → family → variant menu.
+- **`registered_path_entries()`** — flat `(name, path)` pairs, consumed by `bench_registry::validate_registries` to catch duplicate tree paths.
 
 ## Why it's a separate crate
 
-The registry state has to be visible to both the proc macro crate (`sort_registry_macro`) and the root crate simultaneously. Proc macro crates cannot export runtime items, so the shared state lives here and both crates depend on it. This also keeps the `lazy_static` dependency out of the sort implementations themselves.
+The metadata has to be visible to multiple registration macros (the proc-macro `sort_registry_macro`, the build-script-driven `combo_codegen`, and the category-specific `register_*!` macros in the root crate) without any of them depending on each other. A small leaf crate with no project dependencies serves all of them.
+
+This also keeps the `lazy_static` dependency confined here instead of leaking into the sort implementations.

@@ -22,4 +22,9 @@ impl Rotation for ReversalRotation {
     }
 }
 
+impl crate::traits::composable::HasSpace for ReversalRotation {
+    const SPACE: crate::traits::complexity::Complexity =
+        crate::traits::complexity::Complexity::CONST;
+}
+
 register_rotation!(ReversalRotation);

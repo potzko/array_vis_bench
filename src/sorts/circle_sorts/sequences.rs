@@ -85,8 +85,12 @@ macro_rules! register_circle {
                 crate::bench_registry::AlgorithmEntry {
                     name: SORT_NAME,
                     category: crate::bench_registry::Category::Sort,
-                    big_o: "O(N log\u{00B2} N)",
+                    worst: crate::traits::complexity::Complexity::N_LOG_SQUARED,
+                    best: crate::traits::complexity::Complexity::N_LOG_SQUARED,
+                    average: crate::traits::complexity::Complexity::N_LOG_SQUARED,
+                    space: crate::traits::complexity::Complexity::CONST,
                     stable: false,
+                    adaptive: false,
                     max_input_size: None,
                     run_with_input,
                     run_correctness,

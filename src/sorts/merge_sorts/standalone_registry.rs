@@ -73,13 +73,21 @@ macro_rules! register_merge {
                 crate::bench_registry::correctness::merge_battery(merge_noop, NAME);
             }
 
+            // Pull every structured field straight from the merge type's
+            // compositional impls — Naive contributes O(N²) worst, Smaller
+            // Side contributes O(N log² N), and both forward the rotation
+            // type's space requirement.
             #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
             pub(super) static ENTRY: crate::bench_registry::AlgorithmEntry =
                 crate::bench_registry::AlgorithmEntry {
                     name: NAME,
                     category: crate::bench_registry::Category::Merge,
-                    big_o: "O(N log N)",
-                    stable: false,
+                    worst: <$merge as crate::traits::composable::HasTimeBounds>::WORST,
+                    best: <$merge as crate::traits::composable::HasTimeBounds>::BEST,
+                    average: <$merge as crate::traits::composable::HasTimeBounds>::AVERAGE,
+                    space: <$merge as crate::traits::composable::HasSpace>::SPACE,
+                    stable: <$merge as crate::traits::composable::HasStability>::STABLE,
+                    adaptive: false,
                     max_input_size: None,
                     run_with_input,
                     run_correctness,
@@ -89,8 +97,8 @@ macro_rules! register_merge {
             fn register_path() {
                 sort_registry_core::register_sort_path(
                     NAME,
-                    "O(N log N)",
-                    false,
+                    <$merge as crate::traits::composable::HasTimeBounds>::WORST.as_str(),
+                    <$merge as crate::traits::composable::HasStability>::STABLE,
                     &["merges", $family, ROT_NAME],
                 );
             }
@@ -217,8 +225,12 @@ macro_rules! register_aux_merge {
                 crate::bench_registry::AlgorithmEntry {
                     name: NAME,
                     category: crate::bench_registry::Category::Merge,
-                    big_o: "O(N)",
-                    stable: true,
+                    worst: <$merge as crate::traits::composable::HasTimeBounds>::WORST,
+                    best: <$merge as crate::traits::composable::HasTimeBounds>::BEST,
+                    average: <$merge as crate::traits::composable::HasTimeBounds>::AVERAGE,
+                    space: <$merge as crate::traits::composable::HasSpace>::SPACE,
+                    stable: <$merge as crate::traits::composable::HasStability>::STABLE,
+                    adaptive: false,
                     max_input_size: None,
                     run_with_input,
                     run_correctness,
@@ -228,8 +240,8 @@ macro_rules! register_aux_merge {
             fn register_path() {
                 sort_registry_core::register_sort_path(
                     NAME,
-                    "O(N)",
-                    true,
+                    <$merge as crate::traits::composable::HasTimeBounds>::WORST.as_str(),
+                    <$merge as crate::traits::composable::HasStability>::STABLE,
                     &["merges", "auxiliary", VARIANT],
                 );
             }

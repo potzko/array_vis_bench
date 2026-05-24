@@ -17,7 +17,7 @@ combo_codegen::family!(
        + [("NintherDualPivot", "ninther 1/3 + 2/3")],
     SS: SmallSort,
     name = "quick sort dual pivot",
-    big_o = "O(N Log(N))",
+    big_o = inherited,
     stable = false,
     direct_sort = true,
     path = ["quick sorts", "dual pivot", "{DPS}", "{SS}"],
@@ -122,4 +122,34 @@ where
     if gt + 1 < arr.len() {
         dual_pivot_recursive::<T, U, DPS, SS>(&mut arr[gt + 1..], logger);
     }
+}
+
+// Dual-pivot quicksort: complexity is dominated by the partition phase
+// (O(N) per level) over log-N depth. With well-chosen dual pivots, all
+// three partitions stay balanced; with degenerate pivots, depth can
+// blow up to O(N) — same worst-case profile as single-pivot QuickSort.
+// We don't currently model DualPivotSelector quality, so we declare a
+// conservative O(N²) worst and O(N log N) best/average.
+impl<DPS, SS> crate::traits::composable::HasTimeBounds for DualPivotQuickSort<DPS, SS>
+where
+    DPS: super::pivot_selectors::DualPivotSelector,
+    SS: crate::utils::small_sort::SmallSort,
+{
+    const WORST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_SQUARED;
+    const BEST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+    const AVERAGE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+}
+impl<DPS, SS> crate::traits::composable::HasSpace for DualPivotQuickSort<DPS, SS>
+where
+    DPS: super::pivot_selectors::DualPivotSelector,
+    SS: crate::utils::small_sort::SmallSort,
+{
+    const SPACE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::LOG_N;
+}
+impl<DPS, SS> crate::traits::composable::HasStability for DualPivotQuickSort<DPS, SS>
+where
+    DPS: super::pivot_selectors::DualPivotSelector,
+    SS: crate::utils::small_sort::SmallSort,
+{
+    const STABLE: bool = false;
 }

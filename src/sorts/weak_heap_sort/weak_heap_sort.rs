@@ -176,8 +176,37 @@ combo_codegen::family!(
     D: HeapDirection,
     R: ReverseStorage,
     name = "weak heap sort",
-    big_o = "O(N log N)",
+    big_o = inherited,
     stable = false,
     direct_sort = true,
     path = ["weak heap sorts", "{D}", "{R}"],
 );
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// Weak heap sort is `O(N log N)` worst, best, and average regardless
+// of the `ReverseStorage` flavour (byte vs bit-packed). The storage
+// choice only affects constants and visualisation, not asymptotic
+// behaviour.
+//
+// Space: O(N) for the parity / reverse bit array (one bit or byte per
+// node).
+
+impl<D: crate::sorts::heap_sort::direction::Direction, R: super::reverse_storage::ReverseStorage>
+    crate::traits::composable::HasTimeBounds for WeakHeapSort<D, R>
+{
+    const WORST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+    const BEST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+    const AVERAGE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+}
+impl<D: crate::sorts::heap_sort::direction::Direction, R: super::reverse_storage::ReverseStorage>
+    crate::traits::composable::HasSpace for WeakHeapSort<D, R>
+{
+    /// One bit/byte per node for the reverse/parity array.
+    const SPACE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N1;
+}
+impl<D: crate::sorts::heap_sort::direction::Direction, R: super::reverse_storage::ReverseStorage>
+    crate::traits::composable::HasStability for WeakHeapSort<D, R>
+{
+    const STABLE: bool = false;
+}

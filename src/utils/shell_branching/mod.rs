@@ -1,3 +1,6 @@
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds};
+
 /// A branching strategy for shell-shell sort.
 ///
 /// At each recursion level the algorithm:
@@ -122,3 +125,33 @@ impl BranchingStrategy for Fibonacci {
         Self::branch(virtual_len).saturating_sub(1)
     }
 }
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// Every branching strategy currently declares O(N²) worst-case under
+// shell-shell sort. Best case is O(N) for already-sorted input.
+// Stability false at the algorithm level is set by the outer
+// ShellShellSort composition.
+
+macro_rules! impl_branching_annotations {
+    ($ty:ty) => {
+        impl HasTimeBounds for $ty {
+            const WORST: Complexity = Complexity::N_SQUARED;
+            const BEST: Complexity = Complexity::N1;
+            const AVERAGE: Complexity = Complexity::N_SQUARED;
+        }
+        impl HasSpace for $ty {
+            const SPACE: Complexity = Complexity::CONST;
+        }
+        impl HasStability for $ty {
+            const STABLE: bool = true;
+        }
+    };
+}
+
+impl_branching_annotations!(Classic);
+impl_branching_annotations!(Parity3);
+impl_branching_annotations!(LogParity);
+impl_branching_annotations!(RootParity);
+impl_branching_annotations!(Optimised);
+impl_branching_annotations!(Fibonacci);

@@ -19,7 +19,7 @@ combo_codegen::family!(
     V: PivotSelector,
     DSS: DeferredSmallSort,
     name = "quick sort classic deferred",
-    big_o = "O(N Log(N))",
+    big_o = inherited,
     stable = false,
     direct_sort = true,
     path = ["quick sorts", "classic deferred", "{P}", "{V}", "{DSS}"],
@@ -56,4 +56,53 @@ fn deferred_recursive<
     let (left_end, right_start) = P::partition(arr, logger, pivot_idx);
     deferred_recursive::<T, U, P, V, DSS>(&mut arr[..left_end], logger);
     deferred_recursive::<T, U, P, V, DSS>(&mut arr[right_start..], logger);
+}
+
+// Same composition profile as QuickSort: worst depends on pivot quality,
+// best/average is O(N log N). DeferredSmallSort runs on bounded leaves
+// during a single final pass, so its contribution is O(1) at composition
+// time (bounded by SS::THRESHOLD).
+impl<P, V, DSS> crate::traits::composable::HasTimeBounds for DeferredQuickSort<P, V, DSS>
+where
+    P: super::partitions::PartitionScheme + crate::traits::composable::HasTimeBounds,
+    V: super::pivot_selectors::PivotSelector
+        + crate::traits::composable::HasTimeBounds
+        + crate::traits::composable::PivotQuality,
+    DSS: crate::utils::small_sort::DeferredSmallSort,
+{
+    const WORST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::product(
+        if V::DEGENERATES {
+            crate::traits::complexity::Complexity::N1
+        } else {
+            crate::traits::complexity::Complexity::LOG_N
+        },
+        crate::traits::complexity::Complexity::sum(P::WORST, V::WORST),
+    );
+    const BEST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::product(
+        crate::traits::complexity::Complexity::LOG_N,
+        crate::traits::complexity::Complexity::sum(P::BEST, V::BEST),
+    );
+    const AVERAGE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::product(
+        crate::traits::complexity::Complexity::LOG_N,
+        crate::traits::complexity::Complexity::sum(P::AVERAGE, V::AVERAGE),
+    );
+}
+impl<P, V, DSS> crate::traits::composable::HasSpace for DeferredQuickSort<P, V, DSS>
+where
+    P: super::partitions::PartitionScheme + crate::traits::composable::HasSpace,
+    V: super::pivot_selectors::PivotSelector + crate::traits::composable::HasSpace,
+    DSS: crate::utils::small_sort::DeferredSmallSort,
+{
+    const SPACE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::sum(
+        crate::traits::complexity::Complexity::LOG_N,
+        crate::traits::complexity::Complexity::sum(P::SPACE, V::SPACE),
+    );
+}
+impl<P, V, DSS> crate::traits::composable::HasStability for DeferredQuickSort<P, V, DSS>
+where
+    P: super::partitions::PartitionScheme + crate::traits::composable::HasStability,
+    V: super::pivot_selectors::PivotSelector + crate::traits::composable::HasStability,
+    DSS: crate::utils::small_sort::DeferredSmallSort,
+{
+    const STABLE: bool = P::STABLE && V::STABLE;
 }

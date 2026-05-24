@@ -99,8 +99,36 @@ combo_codegen::family!(
     A: Arity,
     DSS: DeferredSmallSort,
     name = "quick heap sort deferred",
-    big_o = "O(N log N)",
+    big_o = inherited,
     stable = false,
     direct_sort = true,
     path = ["quick heap sorts", "deferred", "{A}", "{DSS}"],
 );
+
+// DeferredQuickHeapSort delegates to HeapSort<ArityHeap<_, _>, _> for
+// the heap-extraction phase; total complexity is still O(N log N).
+// Small-sort fan-out runs on bounded leaves, so its contribution is
+// constant.
+impl<A, DSS> crate::traits::composable::HasTimeBounds for DeferredQuickHeapSort<A, DSS>
+where
+    A: crate::sorts::heap_sort::arity::Arity,
+    DSS: crate::utils::small_sort::DeferredSmallSort,
+{
+    const WORST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+    const BEST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+    const AVERAGE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+}
+impl<A, DSS> crate::traits::composable::HasSpace for DeferredQuickHeapSort<A, DSS>
+where
+    A: crate::sorts::heap_sort::arity::Arity,
+    DSS: crate::utils::small_sort::DeferredSmallSort,
+{
+    const SPACE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::LOG_N;
+}
+impl<A, DSS> crate::traits::composable::HasStability for DeferredQuickHeapSort<A, DSS>
+where
+    A: crate::sorts::heap_sort::arity::Arity,
+    DSS: crate::utils::small_sort::DeferredSmallSort,
+{
+    const STABLE: bool = false;
+}

@@ -199,13 +199,18 @@ pub enum AxisSpec {
 /// The scanner classifies each trailing `key = value` pair from a `family!(…)`
 /// (or `sort_family!(…)`) body into one of these variants based on the value's
 /// shape: leading `"` → `String`, leading `[` → `StringArray`, `true`/`false`
-/// → `Bool`, otherwise parsed as `Int`.
+/// → `Bool`, bare identifier (e.g. `inherited`) → `Ident`, otherwise
+/// parsed as `Int`.
 #[derive(Debug, Clone)]
 pub enum FieldValue {
     String(String),
     Bool(bool),
     Int(i64),
     StringArray(Vec<String>),
+    /// A bare identifier passed through verbatim. Used for keywords like
+    /// `inherited` that the downstream consumer macro interprets — the
+    /// scanner doesn't need to know what they mean, just preserve them.
+    Ident(String),
 }
 
 impl FieldValue {
@@ -223,6 +228,7 @@ impl FieldValue {
                     .join(", ");
                 format!("[{inner}]")
             }
+            FieldValue::Ident(s) => s.clone(),
         }
     }
 }

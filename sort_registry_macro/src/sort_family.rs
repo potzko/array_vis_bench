@@ -16,8 +16,14 @@ pub(crate) struct SortFamilyInput {
     sort_template: TypeExpr,
     axes: Vec<AxisDef>,
     name: String,
-    big_o: String,
+    big_o: BigOValue,
+    space: SpaceValue,
     stable: bool,
+    /// True when the user wrote `stable = inherited`. In that case `stable`
+    /// itself is ignored at emit time — the field is pulled from the type's
+    /// `HasStability` impl instead.
+    stable_inherited: bool,
+    adaptive: bool,
     path_template: Vec<String>,
     /// When true: call `ConcreteType::sort(arr, logger)` directly (inherent method).
     /// Also generates a `sort_vis` fn and registers in `SORT_VIS_REGISTRY`.
@@ -34,6 +40,33 @@ pub(crate) struct SortFamilyInput {
 struct AxisDef {
     slot: String,
     variants: Vec<VariantNode>,
+}
+
+/// What `big_o = ...` resolved to during parsing.
+///
+/// `Literal("O(N log N)")` — legacy string form. Emitted as a const
+/// `Complexity::from_str("O(N log N)")` expression, which is parsed at
+/// compile time inside the AlgorithmEntry static initializer.
+///
+/// `Inherited` — emitted as `<ConcreteType as HasTimeBounds>::WORST`,
+/// pulling the value from the per-axis composable annotation pipeline.
+/// Use for sorts whose components declare their own HasTimeBounds.
+pub(crate) enum BigOValue {
+    Literal(String),
+    Inherited,
+}
+
+/// What `space = ...` resolved to during parsing, plus a default for the
+/// (currently common) case where no `space` field was given.
+pub(crate) enum SpaceValue {
+    /// `space = "O(...)"` — parsed at compile time by `Complexity::from_str`.
+    Literal(String),
+    /// `space = inherited` — pulls `<ConcreteType as HasSpace>::SPACE`.
+    Inherited,
+    /// No `space` field present. Defaults to `Complexity::CONST` at emit
+    /// time (conservative "in-place" default for sorts that haven't been
+    /// annotated yet).
+    Default,
 }
 
 struct VariantNode {
@@ -196,8 +229,11 @@ impl Parse for SortFamilyInput {
 
         let mut axes: Vec<AxisDef> = vec![];
         let mut name: Option<String> = None;
-        let mut big_o: Option<String> = None;
+        let mut big_o: Option<BigOValue> = None;
+        let mut space: SpaceValue = SpaceValue::Default;
         let mut stable: Option<bool> = None;
+        let mut stable_inherited: bool = false;
+        let mut adaptive: bool = false;
         let mut path_template: Vec<String> = vec![];
         let mut direct_sort: bool = false;
         let mut max_n_for_tests: Option<u64> = None;
@@ -214,11 +250,76 @@ impl Parse for SortFamilyInput {
                         let _: Token![;] = input.parse()?;
                     }
                     "big_o" => {
-                        big_o = Some(input.parse::<LitStr>()?.value());
+                        // Accept either a string literal ("O(N log N)") for
+                        // the legacy hand-annotated form, or the bare ident
+                        // `inherited` to pull the value from the type's
+                        // `HasTimeBounds` impl at compile time.
+                        if input.peek(LitStr) {
+                            big_o = Some(BigOValue::Literal(input.parse::<LitStr>()?.value()));
+                        } else if input.peek(Ident) {
+                            let kw: Ident = input.parse()?;
+                            if kw == "inherited" {
+                                big_o = Some(BigOValue::Inherited);
+                            } else {
+                                return Err(syn::Error::new(
+                                    kw.span(),
+                                    format!("Expected `\"O(...)\"` literal or `inherited`, got `{kw}`"),
+                                ));
+                            }
+                        } else {
+                            return Err(input.error(
+                                "Expected `big_o = \"O(...)\"` or `big_o = inherited`",
+                            ));
+                        }
                         let _: Token![;] = input.parse()?;
                     }
                     "stable" => {
-                        stable = Some(input.parse::<LitBool>()?.value());
+                        // `stable = true|false` (literal) or `stable = inherited`
+                        // (pulled from `<T as HasStability>::STABLE`).
+                        if input.peek(LitBool) {
+                            stable = Some(input.parse::<LitBool>()?.value());
+                        } else if input.peek(Ident) {
+                            let kw: Ident = input.parse()?;
+                            if kw == "inherited" {
+                                stable_inherited = true;
+                                stable = Some(false); // placeholder; not used when inherited
+                            } else {
+                                return Err(syn::Error::new(
+                                    kw.span(),
+                                    format!("Expected `true`, `false`, or `inherited`, got `{kw}`"),
+                                ));
+                            }
+                        } else {
+                            return Err(input.error(
+                                "Expected `stable = true|false` or `stable = inherited`",
+                            ));
+                        }
+                        let _: Token![;] = input.parse()?;
+                    }
+                    "space" => {
+                        // `space = "O(...)"` (legacy literal) or `space = inherited`
+                        // (pulled from `<T as HasSpace>::SPACE`).
+                        if input.peek(LitStr) {
+                            space = SpaceValue::Literal(input.parse::<LitStr>()?.value());
+                        } else if input.peek(Ident) {
+                            let kw: Ident = input.parse()?;
+                            if kw == "inherited" {
+                                space = SpaceValue::Inherited;
+                            } else {
+                                return Err(syn::Error::new(
+                                    kw.span(),
+                                    format!("Expected `\"O(...)\"` literal or `inherited`, got `{kw}`"),
+                                ));
+                            }
+                        } else {
+                            return Err(input.error(
+                                "Expected `space = \"O(...)\"` or `space = inherited`",
+                            ));
+                        }
+                        let _: Token![;] = input.parse()?;
+                    }
+                    "adaptive" => {
+                        adaptive = input.parse::<LitBool>()?.value();
                         let _: Token![;] = input.parse()?;
                     }
                     "path" => {
@@ -241,7 +342,7 @@ impl Parse for SortFamilyInput {
                         return Err(syn::Error::new(
                             field.span(),
                             format!(
-                                "Unknown field `{other}`. Expected: name, big_o, stable, path, direct_sort, max_n_for_tests"
+                                "Unknown field `{other}`. Expected: name, big_o, space, stable, adaptive, path, direct_sort, max_n_for_tests"
                             ),
                         ));
                     }
@@ -262,9 +363,12 @@ impl Parse for SortFamilyInput {
             big_o: big_o.ok_or_else(|| {
                 syn::Error::new(Span::call_site(), "sort_family!: missing `big_o = ...;`")
             })?,
+            space,
             stable: stable.ok_or_else(|| {
                 syn::Error::new(Span::call_site(), "sort_family!: missing `stable = ...;`")
             })?,
+            stable_inherited,
+            adaptive,
             path_template,
             direct_sort,
             max_n_for_tests,
@@ -449,7 +553,51 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
         .collect();
 
     let stable = family.stable;
-    let big_o = &family.big_o;
+    let adaptive = family.adaptive;
+    // Build the AlgorithmEntry field expressions for this combination.
+    //
+    // - `big_o = "O(...)"` (legacy literal): parsed by `Complexity::from_str`
+    //   at compile time. worst/best/average all get the same value.
+    // - `big_o = inherited`: pulls WORST/BEST/AVERAGE individually from
+    //   `<ConcreteType as HasTimeBounds>` so a sort with N² worst but
+    //   N log N best (e.g. QuickSort with degenerate pivot) surfaces the
+    //   distinction in the registry.
+    let (worst_expr, best_expr, average_expr): (TokenStream2, TokenStream2, TokenStream2) =
+        match &family.big_o {
+            BigOValue::Literal(s) => {
+                let parsed = quote! { crate::traits::complexity::Complexity::from_str(#s) };
+                (parsed.clone(), parsed.clone(), parsed)
+            }
+            BigOValue::Inherited => (
+                quote! { <#concrete_ty as crate::traits::composable::HasTimeBounds>::WORST },
+                quote! { <#concrete_ty as crate::traits::composable::HasTimeBounds>::BEST },
+                quote! { <#concrete_ty as crate::traits::composable::HasTimeBounds>::AVERAGE },
+            ),
+        };
+    // Space field expression. `space = "O(...)"` literal | `space = inherited`
+    // | omitted → `Complexity::CONST` (conservative "in-place" default; most
+    // sorts in the codebase are).
+    let space_expr: TokenStream2 = match &family.space {
+        SpaceValue::Literal(s) => quote! { crate::traits::complexity::Complexity::from_str(#s) },
+        SpaceValue::Inherited => quote! {
+            <#concrete_ty as crate::traits::composable::HasSpace>::SPACE
+        },
+        SpaceValue::Default => quote! { crate::traits::complexity::Complexity::CONST },
+    };
+    // Stability: literal bool | `inherited` → HasStability::STABLE.
+    let stable_expr: TokenStream2 = if family.stable_inherited {
+        quote! { <#concrete_ty as crate::traits::composable::HasStability>::STABLE }
+    } else {
+        quote! { #stable }
+    };
+    // Display form used at the legacy register_sort_path call (string-typed
+    // and currently ignored downstream — kept for API stability).
+    let big_o_display: TokenStream2 = match &family.big_o {
+        BigOValue::Literal(s) => quote! { #s },
+        BigOValue::Inherited => quote! {
+            <#concrete_ty as crate::traits::composable::HasTimeBounds>::WORST.as_str()
+        },
+    };
 
     // Unique identifier prefix: __sf_<family>_<idx>_<labels>
     let fam_s = sanitize(&family.name);
@@ -554,7 +702,7 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
         fn #fn_run_correct() {
             crate::bench_registry::correctness::sort_battery(#fn_sort, #sort_name);
             crate::bench_registry::correctness::sort_stability_battery(
-                #fn_sort, #sort_name, #stable,
+                #fn_sort, #sort_name, #stable_expr,
             );
         }
 
@@ -564,8 +712,12 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
             crate::bench_registry::AlgorithmEntry {
                 name: #sort_name,
                 category: crate::bench_registry::Category::Sort,
-                big_o: #big_o,
-                stable: #stable,
+                worst: #worst_expr,
+                best: #best_expr,
+                average: #average_expr,
+                space: #space_expr,
+                stable: #stable_expr,
+                adaptive: #adaptive,
                 max_input_size: None,
                 run_with_input: #fn_run_default,
                 run_correctness: #fn_run_correct,
@@ -593,7 +745,7 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
             // register their own category prefix at their respective sites.
             sort_registry_core::register_sort_path(
                 #sort_name,
-                #big_o,
+                #big_o_display,
                 #stable,
                 &["sorts", #(#path_elems),*],
             );

@@ -13,6 +13,8 @@
 //!   write head can never overtake the right read head). Half the aux
 //!   space at the cost of a tiny amount of pointer arithmetic.
 
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use crate::traits::log_traits::SortLogger;
 
 use super::utils::merge_inplace;
@@ -32,6 +34,18 @@ pub trait AuxMerge {
 /// Copy `arr` into a length-N aux buffer, then merge `aux[..mid]` and
 /// `aux[mid..]` back into `arr`. O(N) aux space.
 pub struct FullCopyAuxMerge;
+
+impl HasTimeBounds for FullCopyAuxMerge {
+    const WORST: Complexity = Complexity::N1;
+    const BEST: Complexity = Complexity::N1;
+    const AVERAGE: Complexity = Complexity::N1;
+}
+impl HasSpace for FullCopyAuxMerge {
+    const SPACE: Complexity = Complexity::N1;
+}
+impl HasStability for FullCopyAuxMerge {
+    const STABLE: bool = true;
+}
 
 impl AuxMerge for FullCopyAuxMerge {
     const NAME: &'static str = "full";
@@ -63,6 +77,18 @@ impl AuxMerge for FullCopyAuxMerge {
 /// before any of its cells are overwritten. When the left (aux) side
 /// runs out, the remaining `arr[j..]` is already in place.
 pub struct HalfCopyAuxMerge;
+
+impl HasTimeBounds for HalfCopyAuxMerge {
+    const WORST: Complexity = Complexity::N1;
+    const BEST: Complexity = Complexity::N1;
+    const AVERAGE: Complexity = Complexity::N1;
+}
+impl HasSpace for HalfCopyAuxMerge {
+    const SPACE: Complexity = Complexity::N1;
+}
+impl HasStability for HalfCopyAuxMerge {
+    const STABLE: bool = true;
+}
 
 impl AuxMerge for HalfCopyAuxMerge {
     const NAME: &'static str = "half";

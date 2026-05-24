@@ -200,3 +200,17 @@ mod tests {
         assert_eq!(<H as Heap>::layer_boundaries(1), Vec::<usize>::new());
     }
 }
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// Per-operation heapify cost on a beap (bi-parental heap) is O(√N) —
+// each push_down walks at most one diagonal of the triangular layout.
+// HeapSort<BeapHeap<_>, _>::WORST = N * √N = O(N^1.5).
+
+impl<D: crate::sorts::heap_sort::direction::Direction> crate::traits::composable::HasTimeBounds
+    for BeapHeap<D>
+{
+    const WORST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::SQRT_N;
+    const BEST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::SQRT_N;
+    const AVERAGE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::SQRT_N;
+}

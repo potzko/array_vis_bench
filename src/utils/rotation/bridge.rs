@@ -72,4 +72,11 @@ impl Rotation for BridgeRotation {
     }
 }
 
+impl crate::traits::composable::HasSpace for BridgeRotation {
+    /// Allocates a bridge-sized buffer (|left − right|) or falls back to
+    /// `buf_rotate_*` (≤ N/2). Either way, worst-case is O(N).
+    const SPACE: crate::traits::complexity::Complexity =
+        crate::traits::complexity::Complexity::N1;
+}
+
 register_rotation!(BridgeRotation);

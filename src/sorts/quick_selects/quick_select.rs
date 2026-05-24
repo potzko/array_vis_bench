@@ -18,6 +18,8 @@ use std::marker::PhantomData;
 
 use crate::sorts::quick_sorts::partitions::PartitionScheme;
 use crate::sorts::quick_sorts::pivot_selectors::PivotSelector;
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds, PivotQuality};
 use crate::traits::log_traits::SortLogger;
 
 /// Reorder `arr` so the element that would sit at index `target` after a
@@ -95,6 +97,57 @@ impl<P: PartitionScheme, V: PivotSelector> QuickSelect for IterativeQuickSelect<
         }
     }
 }
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// QuickSelect is the one-sided cousin of QuickSort: each level does
+// partition + pivot work, then recurses into a single half. Expected
+// depth is O(1) levels with good pivots (each cuts the input by half),
+// or O(N) if pivots can degenerate (e.g. first-element on sorted input).
+//
+// - Best / average: 1 level × (P::WORST + V::WORST) ≈ O(N).
+// - Worst: degenerate pivot → O(N) levels × O(N) = O(N²); guaranteed
+//   pivot (Median-of-medians has DEGENERATES=false) → O(N).
+
+macro_rules! impl_qs_annotations {
+    ($ty:ident, $space:expr) => {
+        impl<P, V> HasTimeBounds for $ty<P, V>
+        where
+            P: PartitionScheme + HasTimeBounds,
+            V: PivotSelector + HasTimeBounds + PivotQuality,
+        {
+            const WORST: Complexity = Complexity::product(
+                if V::DEGENERATES { Complexity::N1 } else { Complexity::CONST },
+                Complexity::sum(P::WORST, V::WORST),
+            );
+            const BEST: Complexity = Complexity::sum(P::BEST, V::BEST);
+            const AVERAGE: Complexity = Complexity::sum(P::AVERAGE, V::AVERAGE);
+        }
+        impl<P, V> HasSpace for $ty<P, V>
+        where
+            P: PartitionScheme + HasSpace,
+            V: PivotSelector + HasSpace,
+        {
+            const SPACE: Complexity = Complexity::sum(
+                $space,
+                Complexity::sum(P::SPACE, V::SPACE),
+            );
+        }
+        impl<P, V> HasStability for $ty<P, V>
+        where
+            P: PartitionScheme,
+            V: PivotSelector,
+        {
+            /// Quickselect leaves both sides unsorted, so the surrounding
+            /// stability question is moot — the algorithm offers no
+            /// guarantee about equal-key order.
+            const STABLE: bool = false;
+        }
+    };
+}
+
+impl_qs_annotations!(RecursiveQuickSelect, Complexity::LOG_N);
+impl_qs_annotations!(IterativeQuickSelect, Complexity::CONST);
 
 #[cfg(test)]
 mod tests {

@@ -1,5 +1,7 @@
 use std::marker::PhantomData;
 
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use crate::traits::log_traits::SortLogger;
 
 use super::sequences::GapSequence;
@@ -34,4 +36,18 @@ impl<Seq: GapSequence> ShellSortOrdered<Seq> {
             }
         }
     }
+}
+
+// Same complexity profile as ShellSort — same gap sequence drives both;
+// the only difference is iteration order, not the count.
+impl<Seq: GapSequence + HasTimeBounds> HasTimeBounds for ShellSortOrdered<Seq> {
+    const WORST: Complexity = Seq::WORST;
+    const BEST: Complexity = Seq::BEST;
+    const AVERAGE: Complexity = Seq::AVERAGE;
+}
+impl<Seq: GapSequence> HasSpace for ShellSortOrdered<Seq> {
+    const SPACE: Complexity = Complexity::CONST;
+}
+impl<Seq: GapSequence> HasStability for ShellSortOrdered<Seq> {
+    const STABLE: bool = false;
 }

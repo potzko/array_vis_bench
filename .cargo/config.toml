@@ -1,0 +1,11 @@
+# Build every binary / bench / test in this workspace with the host CPU's
+# full instruction set. We benchmark on the machine we develop on, so
+# missing this flag leaves measurable performance on the table — see
+# `src/bin/compare_quicksort.rs` for a concrete case (a 4-5% gap closed
+# entirely by switching from the baseline x86_64 target to native).
+#
+# Side effect: the resulting binary is not portable to CPUs without the
+# features the build machine has. That's fine for a local benchmarking
+# / visualisation project.
+[build]
+rustflags = ["-C", "target-cpu=native"]

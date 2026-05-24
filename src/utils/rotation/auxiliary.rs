@@ -26,4 +26,10 @@ impl Rotation for AuxiliaryRotation {
     }
 }
 
+impl crate::traits::composable::HasSpace for AuxiliaryRotation {
+    /// Copies the smaller side into a heap-allocated buffer (≤ N/2).
+    const SPACE: crate::traits::complexity::Complexity =
+        crate::traits::complexity::Complexity::N1;
+}
+
 register_rotation!(AuxiliaryRotation);

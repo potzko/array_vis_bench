@@ -12,6 +12,10 @@ combo_codegen::family!(
     SS: SmallSort,
     name = "naive merge sort",
     big_o = "O(N log N)",
+    // Naive recursion allocates a fresh L+R pair at every active frame,
+    // so all frames coexist → log N levels × N total per level = N log N
+    // peak aux. Other merge sorts reuse one N-sized scratch.
+    space = "O(N log N)",
     stable = true,
     direct_sort = true,
     path = ["merge sorts", "classic", "naive", "{variant}"],

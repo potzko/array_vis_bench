@@ -76,13 +76,21 @@ macro_rules! register_quick_select_single {
                 );
             }
 
+            // Pull worst/best/average/space/stable from the QuickSelect
+            // type's compositional impls. Worst flips between O(N) and
+            // O(N²) depending on whether the pivot can degenerate;
+            // Median-of-medians is the only non-degenerating pivot.
             #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
             pub(super) static ENTRY: crate::bench_registry::AlgorithmEntry =
                 crate::bench_registry::AlgorithmEntry {
                     name: NAME,
                     category: crate::bench_registry::Category::QuickSelect,
-                    big_o: "O(N)",
-                    stable: false,
+                    worst: <QS as crate::traits::composable::HasTimeBounds>::WORST,
+                    best: <QS as crate::traits::composable::HasTimeBounds>::BEST,
+                    average: <QS as crate::traits::composable::HasTimeBounds>::AVERAGE,
+                    space: <QS as crate::traits::composable::HasSpace>::SPACE,
+                    stable: <QS as crate::traits::composable::HasStability>::STABLE,
+                    adaptive: false,
                     max_input_size: None,
                     run_with_input,
                     run_correctness,
@@ -92,8 +100,8 @@ macro_rules! register_quick_select_single {
             fn register_path() {
                 sort_registry_core::register_sort_path(
                     NAME,
-                    "O(N)",
-                    false,
+                    <QS as crate::traits::composable::HasTimeBounds>::WORST.as_str(),
+                    <QS as crate::traits::composable::HasStability>::STABLE,
                     &[
                         "quick selects",
                         $strat_name,
@@ -176,8 +184,12 @@ macro_rules! register_quick_select_dual {
                 crate::bench_registry::AlgorithmEntry {
                     name: NAME,
                     category: crate::bench_registry::Category::QuickSelect,
-                    big_o: "O(N)",
-                    stable: false,
+                    worst: <QS as crate::traits::composable::HasTimeBounds>::WORST,
+                    best: <QS as crate::traits::composable::HasTimeBounds>::BEST,
+                    average: <QS as crate::traits::composable::HasTimeBounds>::AVERAGE,
+                    space: <QS as crate::traits::composable::HasSpace>::SPACE,
+                    stable: <QS as crate::traits::composable::HasStability>::STABLE,
+                    adaptive: false,
                     max_input_size: None,
                     run_with_input,
                     run_correctness,
@@ -187,8 +199,8 @@ macro_rules! register_quick_select_dual {
             fn register_path() {
                 sort_registry_core::register_sort_path(
                     NAME,
-                    "O(N)",
-                    false,
+                    <QS as crate::traits::composable::HasTimeBounds>::WORST.as_str(),
+                    <QS as crate::traits::composable::HasStability>::STABLE,
                     &[
                         "quick selects",
                         const_format::concatcp!($strat_name, " (dual pivot)"),

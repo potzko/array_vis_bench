@@ -49,4 +49,9 @@ impl Rotation for DrillRotation {
     }
 }
 
+impl crate::traits::composable::HasSpace for DrillRotation {
+    const SPACE: crate::traits::complexity::Complexity =
+        crate::traits::complexity::Complexity::CONST;
+}
+
 register_rotation!(DrillRotation);

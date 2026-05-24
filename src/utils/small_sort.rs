@@ -1,5 +1,7 @@
 use std::marker::PhantomData;
 
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use crate::traits::log_traits::SortLogger;
 
 // ---------------------------------------------------------------------------
@@ -172,13 +174,24 @@ macro_rules! register_small_sort {
                 );
             }
 
+            // Small-sorts are bounded by THRESHOLD (compile-time const), so
+            // their per-invocation time and space are O(1) regardless of
+            // the algorithm's intrinsic complexity (e.g. insertion's
+            // `HasTimeBounds::WORST = N²` is irrelevant inside a bounded
+            // leaf — the outer composition substitutes CONST here). The
+            // intrinsic `HasStability` impl still drives `stable`, since
+            // stability is a structural property unaffected by bounding.
             #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
             pub(super) static ENTRY: crate::bench_registry::AlgorithmEntry =
                 crate::bench_registry::AlgorithmEntry {
                     name: NAME,
                     category: crate::bench_registry::Category::SmallSort,
-                    big_o: "O(K)",
-                    stable: false,
+                    worst: crate::traits::complexity::Complexity::CONST,
+                    best: crate::traits::complexity::Complexity::CONST,
+                    average: crate::traits::complexity::Complexity::CONST,
+                    space: crate::traits::complexity::Complexity::CONST,
+                    stable: <$ty as crate::traits::composable::HasStability>::STABLE,
+                    adaptive: false,
                     max_input_size: Some(
                         <$ty as crate::utils::small_sort::SmallSort>::THRESHOLD,
                     ),
@@ -515,3 +528,75 @@ impl<S: InsertionStrategy, const N: usize> DeferredSmallSort for DeferredInserti
         let _ = insertion_sort_with::<S, _, _>(arr, logger);
     }
 }
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// Small sorts' `HasTimeBounds` reflects the algorithm's *intrinsic*
+// complexity (assuming N is the input length). When a small sort is
+// used as the bounded leaf of an outer sort (e.g. QuickSort), the outer
+// sort's composition treats the slot as `O(1)` because `THRESHOLD` is
+// a compile-time constant — the per-component declaration here stays
+// truthful to what the algorithm is, not how it's used.
+//
+// Space is `O(1)` for every variant: insertion sorts run in-place, the
+// hardware networks unroll into compare-and-swap sequences with no aux.
+
+impl HasTimeBounds for NoSmallSort {
+    // Never invoked (THRESHOLD = 0). Pick a value that won't pollute
+    // composition; CONST keeps `Complexity::product(_, CONST) = _`.
+    const WORST: Complexity = Complexity::CONST;
+    const BEST: Complexity = Complexity::CONST;
+    const AVERAGE: Complexity = Complexity::CONST;
+}
+impl HasSpace for NoSmallSort { const SPACE: Complexity = Complexity::CONST; }
+impl HasStability for NoSmallSort { const STABLE: bool = true; }
+
+impl HasTimeBounds for Size1SmallSort {
+    const WORST: Complexity = Complexity::CONST;
+    const BEST: Complexity = Complexity::CONST;
+    const AVERAGE: Complexity = Complexity::CONST;
+}
+impl HasSpace for Size1SmallSort { const SPACE: Complexity = Complexity::CONST; }
+impl HasStability for Size1SmallSort { const STABLE: bool = true; }
+
+impl HasTimeBounds for Size2SmallSort {
+    const WORST: Complexity = Complexity::CONST;
+    const BEST: Complexity = Complexity::CONST;
+    const AVERAGE: Complexity = Complexity::CONST;
+}
+impl HasSpace for Size2SmallSort { const SPACE: Complexity = Complexity::CONST; }
+impl HasStability for Size2SmallSort { const STABLE: bool = true; }
+
+// Insertion sort: O(N²) swaps in the worst case, O(N) compares on a
+// pre-sorted input (best case). Stable regardless of insertion strategy
+// — both linear and binary preserve original order of equal keys.
+impl<S: InsertionStrategy, const N: usize> HasTimeBounds for InsertionSmallSort<S, N> {
+    const WORST: Complexity = Complexity::N_SQUARED;
+    const BEST: Complexity = Complexity::N1;
+    const AVERAGE: Complexity = Complexity::N_SQUARED;
+}
+impl<S: InsertionStrategy, const N: usize> HasSpace for InsertionSmallSort<S, N> {
+    const SPACE: Complexity = Complexity::CONST;
+}
+impl<S: InsertionStrategy, const N: usize> HasStability for InsertionSmallSort<S, N> {
+    const STABLE: bool = true;
+}
+
+// Sorting networks: bounded-size compare-and-swap circuits. Whether
+// stable depends on the network; Batcher's odd-even and the optimal-8
+// networks aren't stable in general.
+impl HasTimeBounds for NetworkSmallSort {
+    const WORST: Complexity = Complexity::CONST;
+    const BEST: Complexity = Complexity::CONST;
+    const AVERAGE: Complexity = Complexity::CONST;
+}
+impl HasSpace for NetworkSmallSort { const SPACE: Complexity = Complexity::CONST; }
+impl HasStability for NetworkSmallSort { const STABLE: bool = false; }
+
+impl HasTimeBounds for Network16SmallSort {
+    const WORST: Complexity = Complexity::CONST;
+    const BEST: Complexity = Complexity::CONST;
+    const AVERAGE: Complexity = Complexity::CONST;
+}
+impl HasSpace for Network16SmallSort { const SPACE: Complexity = Complexity::CONST; }
+impl HasStability for Network16SmallSort { const STABLE: bool = false; }

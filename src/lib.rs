@@ -6,4 +6,7 @@ pub mod visualise;
 pub mod bench_registry;
 pub mod inputs;
 
+#[cfg(test)]
+mod property_tests;
+
 // Auto-registration is handled via derive macros with linkme; no generated registrations needed.

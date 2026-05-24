@@ -71,13 +71,34 @@ macro_rules! register_partition {
                 );
             }
 
+            // One partition step = partition scan + pivot selection. Both
+            // axes declare their own `HasTimeBounds` impls; sum picks the
+            // dominant cost (Block / Hoare / Lomuto / ThreeWay / MovingPivot
+            // are all O(N), MedianOfMedians is O(N), the rest are O(1)).
             #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
             pub(super) static ENTRY: crate::bench_registry::AlgorithmEntry =
                 crate::bench_registry::AlgorithmEntry {
                     name: NAME,
                     category: crate::bench_registry::Category::Partition,
-                    big_o: "O(N)",
-                    stable: false,
+                    worst: crate::traits::complexity::Complexity::sum(
+                        <$part as crate::traits::composable::HasTimeBounds>::WORST,
+                        <$piv as crate::traits::composable::HasTimeBounds>::WORST,
+                    ),
+                    best: crate::traits::complexity::Complexity::sum(
+                        <$part as crate::traits::composable::HasTimeBounds>::BEST,
+                        <$piv as crate::traits::composable::HasTimeBounds>::BEST,
+                    ),
+                    average: crate::traits::complexity::Complexity::sum(
+                        <$part as crate::traits::composable::HasTimeBounds>::AVERAGE,
+                        <$piv as crate::traits::composable::HasTimeBounds>::AVERAGE,
+                    ),
+                    space: crate::traits::complexity::Complexity::sum(
+                        <$part as crate::traits::composable::HasSpace>::SPACE,
+                        <$piv as crate::traits::composable::HasSpace>::SPACE,
+                    ),
+                    stable: <$part as crate::traits::composable::HasStability>::STABLE
+                        && <$piv as crate::traits::composable::HasStability>::STABLE,
+                    adaptive: false,
                     max_input_size: None,
                     run_with_input,
                     run_correctness,

@@ -1,4 +1,5 @@
 use array_vis_bench::bench_registry::{list_inputs, RunConfig};
+use array_vis_bench::traits::complexity::Complexity;
 use array_vis_bench::traits::get_sort_tree;
 use array_vis_bench::traits::log_traits::VisualizerLogger;
 use array_vis_bench::visualise::{find, visualise};
@@ -187,14 +188,69 @@ fn select_sort_inner(tree: &sort_registry_core::SortTree) -> String {
         match opt {
             Opt::Branch(label, sub) => {
                 let n = sub.count_leaves();
-                println!("  {}: {} ({} variant{})", i + 1, label, n, if n == 1 { "" } else { "s" });
+                let range = average_complexity_range(sub);
+                println!(
+                    "  {}: {} ({} variant{}){}",
+                    i + 1, label, n,
+                    if n == 1 { "" } else { "s" },
+                    range,
+                );
             }
-            Opt::Leaf(display, _) => println!("  {}: {}", i + 1, display),
+            Opt::Leaf(display, name) => {
+                let suffix = find(name)
+                    .map(|e| format!(" ({})", e.average.as_str()))
+                    .unwrap_or_default();
+                println!("  {}: {}{}", i + 1, display, suffix);
+            }
         }
     }
     let sel = get_user_selection("Select", 1, opts.len()) - 1;
     match &opts[sel] {
         Opt::Branch(_, sub) => select_sort_inner(sub),
         Opt::Leaf(_, name) => name.to_string(),
+    }
+}
+
+/// Walk every leaf in `tree`, look up each name in `ALGORITHMS`, and
+/// return a printable " (O(min) - O(max))" tag describing the spread of
+/// average-case complexities. Returns "" when no leaves resolve to an
+/// entry (the picker degrades to its previous behaviour for unknown
+/// trees rather than printing "(O(?) - O(?))").
+fn average_complexity_range(tree: &sort_registry_core::SortTree) -> String {
+    let mut min: Option<Complexity> = None;
+    let mut max: Option<Complexity> = None;
+    walk_leaves(tree, &mut |name| {
+        if let Some(entry) = find(name) {
+            let a = entry.average;
+            min = Some(min.map_or(a, |m| if cmp_complexity(a, m).is_lt() { a } else { m }));
+            max = Some(max.map_or(a, |m| Complexity::sum(a, m)));
+        }
+    });
+    match (min, max) {
+        (Some(lo), Some(hi)) if lo == hi => format!(" ({})", lo.as_str()),
+        (Some(lo), Some(hi)) => format!(" ({} - {})", lo.as_str(), hi.as_str()),
+        _ => String::new(),
+    }
+}
+
+fn walk_leaves(tree: &sort_registry_core::SortTree, f: &mut dyn FnMut(&str)) {
+    for (_, name) in &tree.leaves {
+        f(name);
+    }
+    for (_, sub) in &tree.children {
+        walk_leaves(sub, f);
+    }
+}
+
+/// Order on big-O classes that matches `Complexity::sum` (which returns
+/// the dominant of two). Used to find the minimum complexity in a
+/// branch — `sum` only gives us the max.
+fn cmp_complexity(a: Complexity, b: Complexity) -> std::cmp::Ordering {
+    if a == b {
+        std::cmp::Ordering::Equal
+    } else if Complexity::sum(a, b) == a {
+        std::cmp::Ordering::Greater
+    } else {
+        std::cmp::Ordering::Less
     }
 }

@@ -1,4 +1,9 @@
+use std::marker::PhantomData;
+
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use crate::traits::log_traits::SortLogger;
+use crate::utils::rotation::{ReversalRotation, Rotation};
 
 pub trait PartitionScheme {
     /// Display name used both in the `Partition` component slot and in
@@ -230,4 +235,235 @@ impl PartitionScheme for MovingPivot {
         logger.cond_swap_lt(arr, high, low);
         (high, high)
     }
+}
+
+/// Moving-pivot partition, v2.
+
+pub struct MovingPivotV2;
+// WIP: partition algorithm currently fails correctness on reversed /
+// arbitrary permutation inputs. The codegen registration line is left
+// out of the cross-product until the algorithm is fixed (the build-time
+// scanner is a plain text grep, so any in-comment reference here would
+// still match — re-introduce a real registration call after the fix).
+
+impl PartitionScheme for MovingPivotV2 {
+    const NAME: &'static str = "moving pivot v2";
+    fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        logger: &mut U,
+        _pivot_idx: usize,
+    ) -> (usize, usize) {
+        let mut pivot_ind = 0;
+        let mut high = 0;
+
+        while pivot_ind + 1 < high {
+            let mut cmp_offset = 1;
+
+            // count how many elements from pivot_ind are less than the pivot, starting with the next one 
+            while pivot_ind + cmp_offset < arr.len() && logger.cmp_lt(arr, pivot_ind + cmp_offset, pivot_ind) {
+                cmp_offset += 1;
+            }
+            // swap the block of smaller elements to the left of the pivot, stabaly by doing a series of adjacent swaps
+            for i in 1..cmp_offset {
+                logger.swap(arr, pivot_ind + i, pivot_ind + i - 1);
+            }
+            // move the pivot index to the end of the block of smaller elements -> 0..pivot_ind are smaller, then, pivotInd, then a block of larger elements followed by unknown elements
+            pivot_ind += cmp_offset - 1;
+
+            // count how many elements from pivot_ind are greater than the pivot, starting with the next one
+            while pivot_ind + cmp_offset < arr.len() && logger.cmp_ge(arr, pivot_ind + cmp_offset, pivot_ind) {
+                cmp_offset += 1;
+            }
+            // swap the block of larger elements to the right of the pivot, stabaly by doing rotation, then reverse the block of larger elements
+            //todo, rotation arr[pivot_ind..], comp_offset
+            //todo reverse arr[arr.len - cmp_offset..]
+
+            // we now set arr to  arr[pivot_ind..arr.len - cmp_offset] and restart the loop.
+
+        }
+        // now we have a partition with the larger elements in preserved reversed order, the smaller elements are in preserved order, and the pivot is in the middle. we just need to reverse the larger elements to restore their original order and complete the partition.
+        // todo reverse arr[pivot_ind + 1..]
+        (pivot_ind, pivot_ind + 1)
+    }
+}
+
+
+
+
+/// Stable moving-pivot partition, generic over a rotation strategy.
+///
+/// Each iteration scans the contiguous run of `< pivot` elements right of
+/// the pivot, bubbles the pivot rightward through them (preserving their
+/// relative order), then scans the next contiguous run of `>= pivot`
+/// elements and rotates that block to the back of the still-unknown
+/// region. The rotation `R` is order-preserving, so the unknown region
+/// stays in original order across iterations — that's what keeps both
+/// halves stable.
+///
+/// Each placed larger block is reversed in-place immediately after it
+/// lands at the back. After the loop, a single global reverse over the
+/// whole larger region flips both per-block order *and* cross-block order:
+/// blocks come out in scan (= original) order, each block's contents in
+/// original order. See the file's history for the worked-out trace.
+///
+/// Stable + in-place, but **O(N²) worst case** (the per-iteration
+/// rotation walks the rest of the view). Aux space inherits from `R`.
+pub struct MovingPivotV3<R: Rotation>(PhantomData<R>);
+
+impl<R: Rotation> MovingPivotV3<R> {
+    fn partition_impl<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        logger: &mut U,
+        pivot_idx: usize,
+    ) -> (usize, usize) {
+        let n = arr.len();
+        if n == 0 {
+            return (0, 0);
+        }
+        logger.swap(arr, pivot_idx, 0);
+        let pivot = arr[0];
+
+        let scratch_size = R::scratch_size(n);
+        let mut scratch: Vec<T> = if scratch_size > 0 {
+            logger.create_aux_arr_t(scratch_size)
+        } else {
+            Vec::new()
+        };
+
+        let mut pivot_ind = 0usize;
+        let mut high = n;
+
+        while pivot_ind + 1 < high {
+            // 1. Smaller-block scan: contiguous run of `< pivot` right of the pivot.
+            let mut s = 0usize;
+            while pivot_ind + 1 + s < high
+                && logger.cmp_lt_data(arr, pivot_ind + 1 + s, pivot)
+            {
+                s += 1;
+            }
+            // 2. Bubble pivot rightward through the smaller block via adjacent
+            //    swaps — each smaller element moves left by one, preserving
+            //    their relative order.
+            for i in 0..s {
+                logger.swap(arr, pivot_ind + i, pivot_ind + i + 1);
+            }
+            pivot_ind += s;
+            if pivot_ind + 1 >= high {
+                break;
+            }
+
+            // 3. Larger-block scan: arr[pivot_ind+1] is not `< pivot` (else
+            //    step 1 would have consumed it), so l >= 1.
+            let mut l = 0usize;
+            while pivot_ind + 1 + l < high
+                && logger.cmp_ge_data(arr, pivot_ind + 1 + l, pivot)
+            {
+                l += 1;
+            }
+
+            // 4. Order-preserving rotation of the sub-slice
+            //    arr[pivot_ind+1..high] = [larger (l)] [unknown (rest)].
+            //    `R::rotate(slice, split)` puts `slice[split..]` at the front,
+            //    so split = l makes the unknown the new prefix and pushes the
+            //    larger block to the back.
+            R::rotate(&mut arr[pivot_ind + 1..high], l, &mut scratch, logger);
+
+            // 5. Reverse the just-placed block. Each placed block is left
+            //    reversed at the back so the final global reverse fixes both
+            //    per-block order and cross-iteration order in one pass.
+            logger.reverse(&mut arr[high - l..high]);
+            high -= l;
+        }
+
+        // Final reverse over the whole placed-larger region. Before: blocks
+        // are stacked iter-K, iter-(K-1), …, iter-1 from front to back, each
+        // individually reversed. After: blocks are iter-1, iter-2, …, iter-K
+        // (scan order = original order), each in original order.
+        if pivot_ind + 1 < n {
+            logger.reverse(&mut arr[pivot_ind + 1..]);
+        }
+
+        if scratch_size > 0 {
+            logger.free_aux_arr_t(&scratch);
+        }
+
+        (pivot_ind, pivot_ind + 1)
+    }
+}
+
+// Per-rotation `PartitionScheme` impls. The trait's `const NAME` cannot
+// reference the outer generic `R` (Rust limitation: const items inside
+// generic impls don't capture outer type params), so each registered
+// instance gets its own impl block with a hardcoded label. The algorithm
+// body lives on the generic `partition_impl` above. The `component!` calls
+// must stay at module scope — the codegen scanner is a text-grep that
+// only sees top-level macro invocations, so they can't be hidden inside
+// a macro_rules wrapper.
+macro_rules! impl_moving_pivot_v3_trait {
+    ($rot:ty, $name:literal) => {
+        impl PartitionScheme for MovingPivotV3<$rot> {
+            const NAME: &'static str = $name;
+            fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+                arr: &mut [T],
+                logger: &mut U,
+                pivot_idx: usize,
+            ) -> (usize, usize) {
+                Self::partition_impl(arr, logger, pivot_idx)
+            }
+        }
+    };
+}
+
+impl_moving_pivot_v3_trait!(ReversalRotation, "moving pivot v3<reversal>");
+combo_codegen::component!(
+    Partition,
+    MovingPivotV3<ReversalRotation>,
+    "moving pivot v3<reversal>"
+);
+
+// ── Composable annotations ──────────────────────────────────────────
+//
+// Every partition variant here walks the array once: O(N) time, O(1) aux
+// space, no stable ordering preserved. The values are uniform across the
+// five schemes — listed individually so adding a new partition that
+// breaks one of these (e.g. a stable in-place partition, an aux-buffer
+// scheme) is a one-line override.
+
+macro_rules! impl_partition_annotations {
+    ($ty:ty, $stable:expr) => {
+        impl HasTimeBounds for $ty {
+            const WORST: Complexity = Complexity::N1;
+            const BEST: Complexity = Complexity::N1;
+            const AVERAGE: Complexity = Complexity::N1;
+        }
+        impl HasSpace for $ty {
+            const SPACE: Complexity = Complexity::CONST;
+        }
+        impl HasStability for $ty {
+            const STABLE: bool = $stable;
+        }
+    };
+}
+
+impl_partition_annotations!(Lomuto, false);
+impl_partition_annotations!(Hoare, false);
+impl_partition_annotations!(ThreeWay, false);
+impl_partition_annotations!(Block, false);
+impl_partition_annotations!(MovingPivot, false);
+impl_partition_annotations!(MovingPivotV2, false);
+
+// MovingPivotV3<R>: stable + in-place, but the per-iteration rotation
+// makes it O(N²) worst case (best case is still O(N) — one bubble pass
+// when every element is < pivot). Space inherits from R: O(1) for
+// in-place rotations, O(N) for AuxiliaryRotation.
+impl<R: Rotation + HasSpace> HasTimeBounds for MovingPivotV3<R> {
+    const WORST: Complexity = Complexity::N_SQUARED;
+    const BEST: Complexity = Complexity::N1;
+    const AVERAGE: Complexity = Complexity::N_SQUARED;
+}
+impl<R: Rotation + HasSpace> HasSpace for MovingPivotV3<R> {
+    const SPACE: Complexity = R::SPACE;
+}
+impl<R: Rotation> HasStability for MovingPivotV3<R> {
+    const STABLE: bool = true;
 }

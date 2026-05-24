@@ -1,4 +1,6 @@
 use std::marker::PhantomData;
+use crate::traits::complexity::Complexity;
+use crate::traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use crate::traits::log_traits::SortLogger;
 use crate::utils::rotation::Rotation;
 use super::utils::{merge_rotation, lower_bound, upper_bound};
@@ -49,6 +51,22 @@ impl<R: Rotation> RotationMerge for NaiveRotationMerge<R> {
     }
 }
 
+// One rotation per inserted element × O(N) per rotation = O(N²). Best
+// case (already merged) still walks the larger side once → O(N).
+impl<R: Rotation> HasTimeBounds for NaiveRotationMerge<R> {
+    const WORST: Complexity = Complexity::N_SQUARED;
+    const BEST: Complexity = Complexity::N1;
+    const AVERAGE: Complexity = Complexity::N_SQUARED;
+}
+impl<R: Rotation + HasSpace> HasSpace for NaiveRotationMerge<R> {
+    const SPACE: Complexity = R::SPACE;
+}
+impl<R: Rotation> HasStability for NaiveRotationMerge<R> {
+    /// Naive rotation merge preserves the order of equal keys (it
+    /// binary-searches for `lower_bound` and rotates contiguous blocks).
+    const STABLE: bool = true;
+}
+
 // ---------------------------------------------------------------------------
 
 /// symMerge: O(N log N) data movements, O(N log² N) comparisons per merge.
@@ -80,6 +98,23 @@ impl<R: Rotation> RotationMerge for SmallerSideRotationMerge<R> {
         }
         sym_merge_r::<R, T, U>(arr, 0, mid, n, scratch, logger);
     }
+}
+
+// symMerge: O(N log N) data movements, O(N log² N) comparisons per merge.
+// The comparison count is the dominant cost driving outer-loop timing.
+impl<R: Rotation> HasTimeBounds for SmallerSideRotationMerge<R> {
+    const WORST: Complexity = Complexity::N_LOG_SQUARED;
+    const BEST: Complexity = Complexity::N1;
+    const AVERAGE: Complexity = Complexity::N_LOG_SQUARED;
+}
+impl<R: Rotation + HasSpace> HasSpace for SmallerSideRotationMerge<R> {
+    const SPACE: Complexity = R::SPACE;
+}
+impl<R: Rotation> HasStability for SmallerSideRotationMerge<R> {
+    /// symMerge picks pivots from the inside of each half via
+    /// `lower_bound`/`upper_bound` so equal keys keep their original
+    /// inter-half ordering.
+    const STABLE: bool = true;
 }
 
 /// Recursive symMerge helper: merge `arr[lo..mid]` with `arr[mid..hi]`.

@@ -15,6 +15,7 @@ combo_codegen::family!(
     EE: inline [("false", ""), ("true", "early-exit")],
     name = "merge sort",
     big_o = "O(N log N)",
+    space = "O(N)",
     stable = true,
     direct_sort = true,
     path = ["merge sorts", "classic", "top-down", "{variant}"],

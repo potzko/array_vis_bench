@@ -1,18 +1,50 @@
 # sort_registry_macro
 
-Proc macro crate that eliminates registration boilerplate for sorts that use the `create_sort!` / `#[derive(SortRegistry)]` path.
+Proc-macro crate exposing the legacy `sort_family!` macro. New cross-product families use `combo_codegen::family!` (in the `combo_codegen` crate) instead; this macro stays in the workspace because several simple families still use it.
 
 ## What it contains
 
-- **`#[derive(SortRegistry)]`** — when applied to a sort's registration type, generates:
-  - A monomorphic `fn __sort_fn_<name>(arr: &mut [usize], logger: &mut NoOpLogger)` — a fully inlinable function pointer stored in `SORT_REGISTRY`.
-  - An `impl SortRegistry for <Type>` that resolves the sort's name, big-O, and stability from its `SortAlgo` impl, inserts the function pointer, and calls `sort_registry_core::register_sort`.
-  - A `#[ctor::ctor] fn __register_<name>()` that calls `register()` at program startup — no manual wiring in `main`.
+- **`sort_family!`** — a declarative macro that emits one `bench_registry::AlgorithmEntry` (`Category::Sort`) per leaf of a small variant tree. Each leaf gets:
+  - a `#[linkme::distributed_slice(bench_registry::ALGORITHMS)]` static so the entry shows up in the global algorithm registry,
+  - a `#[ctor::ctor]` hook that calls `sort_registry_core::register_sort_path` so the variant appears in the interactive navigation tree.
 
-## Why it's a separate crate
+## Syntax
 
-Rust requires proc macro crates to be their own crate with `proc-macro = true`. The generated code references items from the root crate (`crate::traits::SORT_REGISTRY`, `crate::traits::sort_traits::SortAlgo`), so it is tightly coupled to the root but must be compiled as a separate artifact. `sort_registry_core` provides the pieces that need to be shared without pulling in the root.
+```rust
+sort_registry_macro::sort_family! {
+    type Sort = BubbleSort;
+    name        = "bubble sort";
+    big_o       = "O(N^2)";
+    stable      = true;
+    direct_sort = true;
+    path        = ["bubble sorts", "bubble sort"];
+}
+```
 
-## Relationship to the linkme path
+For parameterised families, declare slots and their concrete variants inline:
 
-Newer sorts (shell sorts, shell-shell sorts) self-register via `linkme` distributed slices and a `#[ctor]` in `combinations.rs` — they don't use this derive macro. The macro path remains for sorts that were registered before the `linkme` approach was introduced and may be phased out as the refactor progresses.
+```rust
+sort_registry_macro::sort_family! {
+    type Sort = MySort<{Strategy}>;
+
+    Strategy {
+        StrategyA => "a"
+        StrategyB => "b"
+    }
+
+    name        = "my sort {Strategy}";
+    big_o       = "O(N log N)";
+    stable      = false;
+    direct_sort = true;
+    path        = ["my sorts", "{Strategy}"];
+}
+```
+
+## When to use which macro
+
+| Macro | Crate | Best for |
+|---|---|---|
+| `combo_codegen::family!` | `combo_codegen` | Cross-products with multiple slots that draw from project-wide `component!`-annotated types (preferred for new families). |
+| `sort_registry_macro::sort_family!` | this crate | Single-leaf or self-contained variant trees that don't need cross-crate component scanning. |
+
+Both register into the same `bench_registry::ALGORITHMS` slice and produce identical menu paths.

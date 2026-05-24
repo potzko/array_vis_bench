@@ -17,7 +17,7 @@ combo_codegen::family!(
        + [("NintherDualPivot", "ninther 1/3 + 2/3")],
     DSS: DeferredSmallSort,
     name = "quick sort dual pivot deferred",
-    big_o = "O(N Log(N))",
+    big_o = inherited,
     stable = false,
     direct_sort = true,
     path = ["quick sorts", "dual pivot deferred", "{DPS}", "{DSS}"],
@@ -112,4 +112,29 @@ where
     if gt + 1 < arr.len() {
         deferred_dual_pivot_recursive::<T, U, DPS, DSS>(&mut arr[gt + 1..], logger);
     }
+}
+
+// Same complexity profile as DualPivotQuickSort.
+impl<DPS, DSS> crate::traits::composable::HasTimeBounds for DeferredDualPivotQuickSort<DPS, DSS>
+where
+    DPS: super::pivot_selectors::DualPivotSelector,
+    DSS: crate::utils::small_sort::DeferredSmallSort,
+{
+    const WORST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_SQUARED;
+    const BEST: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+    const AVERAGE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::N_LOG_N;
+}
+impl<DPS, DSS> crate::traits::composable::HasSpace for DeferredDualPivotQuickSort<DPS, DSS>
+where
+    DPS: super::pivot_selectors::DualPivotSelector,
+    DSS: crate::utils::small_sort::DeferredSmallSort,
+{
+    const SPACE: crate::traits::complexity::Complexity = crate::traits::complexity::Complexity::LOG_N;
+}
+impl<DPS, DSS> crate::traits::composable::HasStability for DeferredDualPivotQuickSort<DPS, DSS>
+where
+    DPS: super::pivot_selectors::DualPivotSelector,
+    DSS: crate::utils::small_sort::DeferredSmallSort,
+{
+    const STABLE: bool = false;
 }
