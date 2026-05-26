@@ -1,11 +1,12 @@
 use std::marker::PhantomData;
+use std::ops::Range;
 
 use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds, PivotQuality};
 use array_vis_bench_traits::SmallSort;
 use sort_logger::SortLogger;
 
-use array_vis_bench_traits::PartitionScheme;
+use array_vis_bench_traits::{PartitionScheme, PartitionVisitor};
 use array_vis_bench_traits::PivotSelector;
 
 pub struct QuickSort<P: PartitionScheme, V: PivotSelector, SS: SmallSort>(
@@ -15,6 +16,34 @@ pub struct QuickSort<P: PartitionScheme, V: PivotSelector, SS: SmallSort>(
 impl<P: PartitionScheme, V: PivotSelector, SS: SmallSort> QuickSort<P, V, SS> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         quick_sort_recursive::<T, U, P, V, SS>(arr, logger);
+    }
+}
+
+/// Stack-resident visitor: collects up to 4 unsorted ranges the
+/// partition emits per call. 4 is the upper bound across every
+/// `PartitionScheme` impl in the workspace (3 for dual-pivot eq-pinning,
+/// 2 for everything else). Tagged `#[inline(always)]` so the visitor
+/// dispatch lowers to direct stack writes after monomorphisation.
+struct QuickSortVisitor {
+    ranges: [Range<usize>; 4],
+    n: u8,
+}
+
+impl QuickSortVisitor {
+    #[inline(always)]
+    fn new() -> Self {
+        Self { ranges: [0..0, 0..0, 0..0, 0..0], n: 0 }
+    }
+}
+
+impl PartitionVisitor for QuickSortVisitor {
+    #[inline(always)]
+    fn unsorted(&mut self, r: Range<usize>) {
+        // Safety: trait contract caps it at 4 ranges per call (no
+        // partition in the workspace produces more); the index is
+        // bounded by construction.
+        unsafe { *self.ranges.get_unchecked_mut(self.n as usize) = r };
+        self.n += 1;
     }
 }
 
@@ -36,9 +65,15 @@ fn quick_sort_recursive<
         return;
     }
     let pivot_idx = V::select(arr, logger);
-    let (left_end, right_start) = P::partition(arr, logger, pivot_idx);
-    quick_sort_recursive::<T, U, P, V, SS>(&mut arr[..left_end], logger);
-    quick_sort_recursive::<T, U, P, V, SS>(&mut arr[right_start..], logger);
+    let mut visitor = QuickSortVisitor::new();
+    P::partition::<T, U, _>(arr, logger, &[pivot_idx], &mut visitor);
+    let n = visitor.n as usize;
+    let mut i = 0;
+    while i < n {
+        let r = visitor.ranges[i].clone();
+        quick_sort_recursive::<T, U, P, V, SS>(&mut arr[r], logger);
+        i += 1;
+    }
 }
 
 // ── Composable annotations ──────────────────────────────────────────
@@ -98,4 +133,3 @@ where
 {
     const STABLE: bool = P::STABLE && V::STABLE && SS::STABLE;
 }
-

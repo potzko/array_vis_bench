@@ -13,11 +13,23 @@
 //! optimization over the plain variant.
 
 use std::marker::PhantomData;
+use std::ops::Range;
 
-use array_vis_bench_traits::PartitionScheme;
+use array_vis_bench_traits::{PartitionScheme, PartitionVisitor};
 use sort_logger::SortLogger;
 
 pub struct CyclentSortOpt<P: PartitionScheme>(PhantomData<P>);
+
+struct RightStart { right_start: usize, n: u8 }
+impl PartitionVisitor for RightStart {
+    #[inline(always)]
+    fn unsorted(&mut self, r: Range<usize>) {
+        if self.n == 1 {
+            self.right_start = r.start;
+        }
+        self.n += 1;
+    }
+}
 
 impl<P: PartitionScheme> CyclentSortOpt<P> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
@@ -29,11 +41,12 @@ impl<P: PartitionScheme> CyclentSortOpt<P> {
                 if slice_len < 2 {
                     break;
                 }
-                let (_l, r) = P::partition(&mut arr[bound..=i], logger, slice_len - 1);
-                if r == slice_len {
+                let mut v = RightStart { right_start: slice_len, n: 0 };
+                P::partition(&mut arr[bound..=i], logger, &[slice_len - 1], &mut v);
+                if v.right_start == slice_len {
                     break;
                 }
-                bound += r;
+                bound += v.right_start;
             }
         }
     }
