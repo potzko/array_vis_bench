@@ -10,4 +10,17 @@ pub use array_vis_bench_core::{register_nondeterministic, register_test_cap};
 #[cfg(test)]
 mod property_tests;
 
-// Auto-registration is handled via derive macros with linkme; no generated registrations needed.
+// Force-link the side-effect-only registry crates. Without these
+// `#[used]` anchors the linker drops their object files (and the
+// `#[linkme::distributed_slice]` ALGORITHMS entries + `#[ctor]` menu
+// registrations inside them) because nothing else references their
+// symbols.
+#[used]
+#[allow(dead_code)]
+static _PARTITION_REGISTRY_ANCHOR: &() = &quick_partition_registry::LINK_ANCHOR;
+#[used]
+#[allow(dead_code)]
+static _MERGE_REGISTRY_ANCHOR: &() = &merge_standalone_registry::LINK_ANCHOR;
+#[used]
+#[allow(dead_code)]
+static _QUICK_SELECT_REGISTRY_ANCHOR: &() = &quick_select_registry::LINK_ANCHOR;

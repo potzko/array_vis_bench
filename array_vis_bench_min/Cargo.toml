@@ -1,0 +1,28 @@
+[package]
+name = "array_vis_bench_min"
+version = "0.1.0"
+edition = "2021"
+description = "Minimal-build demo. Depends only on two algorithm leaves (heap + insertion) + their direct trait/logger dependencies — no codegen, no wiring crate, no visualiser. Demonstrates that a downstream consumer wanting just a couple of sorts can opt out of the rest of the workspace."
+
+[[bin]]
+name = "array_vis_bench_min"
+path = "src/main.rs"
+
+[[bin]]
+name = "array_vis_bench_min_with_quick"
+path = "src/main_with_quick.rs"
+
+[dependencies]
+rand = "0.8"
+array_vis_bench_traits = { path = "../array_vis_bench_traits" }
+sort_logger = { path = "../sort_logger" }
+heap_sort_lib = { path = "../heap_sort_lib" }
+insertion_sort_lib = { path = "../insertion_sort_lib" }
+small_sort_insertion_strategy = { path = "../small_sort_insertion_strategy" }
+# Adding quick_sort_lib + a single (partition, pivot) pair only — to
+# demonstrate that after the partitions_standalone extraction, picking
+# QuickSort no longer forces every other partition/pivot leaf.
+quick_sort_lib = { path = "../quick_sort_lib" }
+partition_lomuto = { path = "../partition_lomuto" }
+pivot_first = { path = "../pivot_first" }
+small_sort_basic = { path = "../small_sort_basic" }

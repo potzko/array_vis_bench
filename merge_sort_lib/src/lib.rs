@@ -1,11 +1,12 @@
 //! Merge sort family — classic (TopDown, BottomUp, Naive, Natural) and
-//! rotation-based merge sorts, plus the standalone `Category::Merge`
-//! registrations for the 22 rotation merges + 2 auxiliary merges.
+//! rotation-based merge sorts.
 //!
 //! Cross-product sort families live in
 //! `merge_sort_lib/Cargo.toml`'s `[[package.metadata.array_vis_bench.families]]`
-//! blocks; the standalone merge registrations are macro-generated in
-//! [`standalone_registry`].
+//! blocks. The standalone `Category::Merge` registrations for the 22
+//! rotation merges + 2 auxiliary merges now live in the sibling
+//! `merge_standalone_registry` crate so this leaf doesn't drag every
+//! rotation leaf into every consumer.
 
 pub mod auxiliary_merge;
 pub mod bottom_up;
@@ -13,7 +14,6 @@ pub mod naive;
 pub mod natural;
 pub mod rotation;
 pub mod rotation_merge;
-pub mod standalone_registry;
 pub mod top_down;
 mod utils;
 

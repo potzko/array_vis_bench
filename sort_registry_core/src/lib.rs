@@ -1,3 +1,16 @@
+//! Navigation-tree registry for the CLI/menu surface.
+//!
+//! Holds the global list of `(name, path)` entries that leaf crates
+//! register at process start via [`register_sort_path`]. The tree is
+//! built lazily on demand by [`get_sort_tree`], which sorts each level
+//! so smaller subtrees surface ahead of larger cross-products without
+//! any caller-supplied ordering.
+//!
+//! This crate is intentionally minimal — no algorithm code, no logger,
+//! no dep on the rest of the workspace except `lazy_static`. Any leaf
+//! that wants a menu entry depends only on this crate (plus `ctor` for
+//! the registration hook).
+
 use lazy_static::lazy_static;
 use std::sync::Mutex;
 

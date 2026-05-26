@@ -101,6 +101,7 @@ dependencies = [
  "lazy_static",
  "linkme",
  "merge_sort_lib",
+ "merge_standalone_registry",
  "partition_block",
  "partition_hoare",
  "partition_lomuto",
@@ -115,7 +116,9 @@ dependencies = [
  "pivot_ninther",
  "proptest",
  "quick_heap_sort_lib",
+ "quick_partition_registry",
  "quick_select_lib",
+ "quick_select_registry",
  "quick_sort_lib",
  "rand 0.8.5",
  "rayon",
@@ -146,6 +149,22 @@ dependencies = [
  "sort_registry_macro",
  "sort_vis",
  "weak_heap_sort_lib",
+]
+
+[[package]]
+name = "array_vis_bench_min"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "heap_sort_lib",
+ "insertion_sort_lib",
+ "partition_lomuto",
+ "pivot_first",
+ "quick_sort_lib",
+ "rand 0.8.5",
+ "small_sort_basic",
+ "small_sort_insertion_strategy",
+ "sort_logger",
 ]
 
 [[package]]
@@ -606,11 +625,20 @@ dependencies = [
 name = "merge_sort_lib"
 version = "0.1.0"
 dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "merge_standalone_registry"
+version = "0.1.0"
+dependencies = [
  "array_vis_bench_core",
  "array_vis_bench_traits",
  "const_format",
  "ctor",
  "linkme",
+ "merge_sort_lib",
  "rotation_auxiliary",
  "rotation_bridge",
  "rotation_contrev",
@@ -788,15 +816,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "quick_select_lib"
-version = "0.1.0"
-dependencies = [
- "array_vis_bench_traits",
- "sort_logger",
-]
-
-[[package]]
-name = "quick_sort_lib"
+name = "quick_partition_registry"
 version = "0.1.0"
 dependencies = [
  "array_vis_bench_core",
@@ -817,6 +837,47 @@ dependencies = [
  "pivot_ninther",
  "sort_logger",
  "sort_registry_core",
+]
+
+[[package]]
+name = "quick_select_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "quick_select_registry"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_core",
+ "array_vis_bench_traits",
+ "const_format",
+ "ctor",
+ "dual_pivot_quick_select_lib",
+ "linkme",
+ "partition_block",
+ "partition_hoare",
+ "partition_lomuto",
+ "partition_three_way",
+ "pivot_first",
+ "pivot_last",
+ "pivot_median3",
+ "pivot_middle",
+ "pivot_ninther",
+ "quick_select_lib",
+ "quick_sort_lib",
+ "sort_logger",
+ "sort_registry_core",
+]
+
+[[package]]
+name = "quick_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
 ]
 
 [[package]]

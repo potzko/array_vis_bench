@@ -4,6 +4,16 @@
 //! wrapper so the public partition fn is just `(&mut [usize], &mut Logger)`.
 //!
 //! 5 partition schemes × 6 pivot selectors = 30 standalone partitions.
+//!
+//! This crate has no public API beyond [`LINK_ANCHOR`] — its job is the
+//! `#[ctor]` + `#[linkme::distributed_slice]` side-effects that fire
+//! when it's linked. Downstream wiring crates reference [`LINK_ANCHOR`]
+//! from a `#[used]` static so the linker doesn't drop the object file
+//! under `--gc-sections` (which kills both the ctor and the
+//! distributed-slice entries with it).
+
+/// Force-link anchor — see module docs.
+pub static LINK_ANCHOR: () = ();
 
 use partition_block::Block;
 use partition_hoare::Hoare;

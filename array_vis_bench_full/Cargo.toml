@@ -67,6 +67,9 @@ bubble_sort_lib = { path = "../bubble_sort_lib" }
 heap_sort_lib = { path = "../heap_sort_lib" }
 merge_sort_lib = { path = "../merge_sort_lib" }
 quick_sort_lib = { path = "../quick_sort_lib" }
+quick_partition_registry = { path = "../quick_partition_registry" }
+merge_standalone_registry = { path = "../merge_standalone_registry" }
+quick_select_registry = { path = "../quick_select_registry" }
 quick_heap_sort_lib = { path = "../quick_heap_sort_lib" }
 cycle_sort_lib = { path = "../cycle_sort_lib" }
 beap_sort_lib = { path = "../beap_sort_lib" }

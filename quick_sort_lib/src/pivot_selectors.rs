@@ -3,17 +3,12 @@ use sort_logger::SortLogger;
 
 // Trait + the six simple impls + the median/min-max helpers all live in
 // per-leaf crates now. `PivotSelector` is re-exported from the traits
-// crate; each leaf's `pub struct` is re-exported here so existing
-// `super::pivot_selectors::FirstElement` paths keep resolving.
+// crate. Simple-pivot leaves (`pivot_first` etc.) are no longer
+// re-exported from this module — depend on them directly. Keeping the
+// re-exports here would force `quick_sort_lib` to drag every pivot leaf
+// into every consumer, defeating the per-leaf split.
 pub use array_vis_bench_traits::{DualPivotSelector, PivotSelector};
 use array_vis_bench_traits::role::pivot::{median_index, min_max_index};
-
-pub use pivot_first::FirstElement;
-pub use pivot_last::LastElement;
-pub use pivot_median3::MedianOfThree;
-pub use pivot_median_of_medians::MedianOfMedians;
-pub use pivot_middle::MiddleElement;
-pub use pivot_ninther::Ninther;
 
 // NOTE: no `NAME` const on `DualPivotSelector`. `CombinedSelector<V1, V2>`'s
 // natural name would be `concat(V1::NAME, V2::NAME)`, but consts inside an

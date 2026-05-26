@@ -67,18 +67,31 @@ pub struct Complexity {
 }
 
 impl Complexity {
+    /// `O(1)` — independent of input size.
     pub const CONST: Self = Self { n_pow: 0, log_pow: 0, special: None };
+    /// `O(log N)`.
     pub const LOG_N: Self = Self { n_pow: 0, log_pow: 1, special: None };
+    /// `O(log² N)`.
     pub const LOG_SQUARED: Self = Self { n_pow: 0, log_pow: 2, special: None };
+    /// `O(√N)`.
     pub const SQRT_N: Self = Self { n_pow: 0, log_pow: 0, special: Some(Special::Sqrt) };
+    /// `O(N)` — linear.
     pub const N1: Self = Self { n_pow: 1, log_pow: 0, special: None };
+    /// `O(N log N)` — the canonical comparison-sort lower bound.
     pub const N_LOG_N: Self = Self { n_pow: 1, log_pow: 1, special: None };
+    /// `O(N log² N)`.
     pub const N_LOG_SQUARED: Self = Self { n_pow: 1, log_pow: 2, special: None };
+    /// `O(N √N)`.
     pub const N_SQRT_N: Self = Self { n_pow: 1, log_pow: 0, special: Some(Special::Sqrt) };
+    /// `O(N²)` — naive comparison sorts in the worst case.
     pub const N_SQUARED: Self = Self { n_pow: 2, log_pow: 0, special: None };
+    /// `O(N² log N)`.
     pub const N_SQUARED_LOG_N: Self = Self { n_pow: 2, log_pow: 1, special: None };
+    /// `O(N³)`.
     pub const CUBIC: Self = Self { n_pow: 3, log_pow: 0, special: None };
+    /// `O(2^N)` — slow sort.
     pub const EXPONENTIAL: Self = Self { n_pow: 0, log_pow: 0, special: Some(Special::Exponential) };
+    /// `O(N!)` — bogosort.
     pub const FACTORIAL: Self = Self { n_pow: 0, log_pow: 0, special: Some(Special::Factorial) };
 
     /// `O(f) · O(g)` — exponents add, special tags combine. `√N · √N`

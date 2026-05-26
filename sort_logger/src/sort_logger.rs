@@ -1,3 +1,16 @@
+//! The [`SortLogger`] trait — every sort algorithm in the workspace
+//! calls into one of its methods to record an observable operation.
+//!
+//! Method shape is non-generic per `T` (parameterized only by the
+//! trait's own `T`) so the trait stays dyn-compatible, which lets the
+//! visualiser drive sort code through `&mut dyn SortLogger<T>` while
+//! the bench path passes a monomorphic `&mut NoOpLogger`.
+//!
+//! Integer aux-array families (`*_aux_arr*` / `*_data_*`) are generated
+//! by the `int_aux_family!` macro from a single declaration per type
+//! width, sharing the same `SortLog` events so the visualiser handles
+//! any width uniformly.
+
 use crate::arr_name;
 use crate::sort_log::SortLog;
 
