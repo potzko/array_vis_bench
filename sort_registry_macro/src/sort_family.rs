@@ -35,6 +35,12 @@ pub(crate) struct SortFamilyInput {
     /// Optional upper bound on random-input array size in correctness tests.
     /// Slow sorts set this to skip pathological cases.
     max_n_for_tests: Option<u64>,
+    /// When true: emit a `#[inline(never)] #[no_mangle] pub fn asm_<slug>(
+    /// arr: &mut [usize])` wrapper around the NoOp-logger sort call for each
+    /// variant, plus a `#[used]` static anchor so the linker doesn't drop the
+    /// symbol. Off by default; flip on for the family you're investigating
+    /// and pair with `cargo asm` for a clean ASM dump.
+    asm_friendly: bool,
 }
 
 struct AxisDef {
@@ -237,6 +243,7 @@ impl Parse for SortFamilyInput {
         let mut path_template: Vec<String> = vec![];
         let mut direct_sort: bool = false;
         let mut max_n_for_tests: Option<u64> = None;
+        let mut asm_friendly: bool = false;
 
         while !input.is_empty() {
             if input.peek(Ident) && input.peek2(syn::token::Brace) {
@@ -338,11 +345,15 @@ impl Parse for SortFamilyInput {
                         max_n_for_tests = Some(input.parse::<LitInt>()?.base10_parse::<u64>()?);
                         let _: Token![;] = input.parse()?;
                     }
+                    "asm" => {
+                        asm_friendly = input.parse::<LitBool>()?.value();
+                        let _: Token![;] = input.parse()?;
+                    }
                     other => {
                         return Err(syn::Error::new(
                             field.span(),
                             format!(
-                                "Unknown field `{other}`. Expected: name, big_o, space, stable, adaptive, path, direct_sort, max_n_for_tests"
+                                "Unknown field `{other}`. Expected: name, big_o, space, stable, adaptive, path, direct_sort, max_n_for_tests, asm"
                             ),
                         ));
                     }
@@ -372,6 +383,7 @@ impl Parse for SortFamilyInput {
             path_template,
             direct_sort,
             max_n_for_tests,
+            asm_friendly,
         })
     }
 }
@@ -565,28 +577,28 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
     let (worst_expr, best_expr, average_expr): (TokenStream2, TokenStream2, TokenStream2) =
         match &family.big_o {
             BigOValue::Literal(s) => {
-                let parsed = quote! { crate::traits::complexity::Complexity::from_str(#s) };
+                let parsed = quote! { ::array_vis_bench_traits::Complexity::from_str(#s) };
                 (parsed.clone(), parsed.clone(), parsed)
             }
             BigOValue::Inherited => (
-                quote! { <#concrete_ty as crate::traits::composable::HasTimeBounds>::WORST },
-                quote! { <#concrete_ty as crate::traits::composable::HasTimeBounds>::BEST },
-                quote! { <#concrete_ty as crate::traits::composable::HasTimeBounds>::AVERAGE },
+                quote! { <#concrete_ty as ::array_vis_bench_traits::composable::HasTimeBounds>::WORST },
+                quote! { <#concrete_ty as ::array_vis_bench_traits::composable::HasTimeBounds>::BEST },
+                quote! { <#concrete_ty as ::array_vis_bench_traits::composable::HasTimeBounds>::AVERAGE },
             ),
         };
     // Space field expression. `space = "O(...)"` literal | `space = inherited`
     // | omitted → `Complexity::CONST` (conservative "in-place" default; most
     // sorts in the codebase are).
     let space_expr: TokenStream2 = match &family.space {
-        SpaceValue::Literal(s) => quote! { crate::traits::complexity::Complexity::from_str(#s) },
+        SpaceValue::Literal(s) => quote! { ::array_vis_bench_traits::Complexity::from_str(#s) },
         SpaceValue::Inherited => quote! {
-            <#concrete_ty as crate::traits::composable::HasSpace>::SPACE
+            <#concrete_ty as ::array_vis_bench_traits::composable::HasSpace>::SPACE
         },
-        SpaceValue::Default => quote! { crate::traits::complexity::Complexity::CONST },
+        SpaceValue::Default => quote! { ::array_vis_bench_traits::Complexity::CONST },
     };
     // Stability: literal bool | `inherited` → HasStability::STABLE.
     let stable_expr: TokenStream2 = if family.stable_inherited {
-        quote! { <#concrete_ty as crate::traits::composable::HasStability>::STABLE }
+        quote! { <#concrete_ty as ::array_vis_bench_traits::composable::HasStability>::STABLE }
     } else {
         quote! { #stable }
     };
@@ -595,7 +607,7 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
     let big_o_display: TokenStream2 = match &family.big_o {
         BigOValue::Literal(s) => quote! { #s },
         BigOValue::Inherited => quote! {
-            <#concrete_ty as crate::traits::composable::HasTimeBounds>::WORST.as_str()
+            <#concrete_ty as ::array_vis_bench_traits::composable::HasTimeBounds>::WORST.as_str()
         },
     };
 
@@ -620,7 +632,6 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
         idx,
         lbl_s.to_uppercase()
     );
-    let st_test_mod    = format_ident!("__sf_{fam_s}_{idx}_{lbl_s}_test");
     let st_cap         = format_ident!(
         "__SF_{}_{}_{}_CAP",
         fam_s.to_uppercase(),
@@ -636,9 +647,9 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
         quote! { <#concrete_ty>::sort(arr, logger) }
     } else {
         quote! {
-            <#concrete_ty as crate::traits::sort_traits::SortAlgo<
+            <#concrete_ty as ::array_vis_bench_traits::sort_traits::SortAlgo<
                 usize,
-                crate::traits::log_traits::NoOpLogger,
+                ::sort_logger::NoOpLogger,
             >>::sort(arr, logger)
         }
     };
@@ -655,7 +666,7 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
         Some(n) => {
             let lit = proc_macro2::Literal::u64_unsuffixed(n);
             quote! {
-                #[linkme::distributed_slice(crate::bench_registry::SORT_TEST_CAPS)]
+                #[linkme::distributed_slice(::array_vis_bench_core::bench_registry::SORT_TEST_CAPS)]
                 #[allow(non_upper_case_globals)]
                 static #st_cap: (&'static str, usize) = (#sort_name, #lit as usize);
             }
@@ -663,15 +674,42 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
         None => quote! {},
     };
 
+    // `asm = true` opt-in: emit a no-mangle wrapper so `cargo asm` can pull
+    // a clean, deterministic dump for this variant. `#[inline(never)]`
+    // forces a real call boundary even when the sort body would otherwise
+    // be inlined into the test harness; `#[used]` on a fn-pointer static
+    // keeps the linker from gc-ing the symbol when nothing in the crate
+    // graph references `asm_<slug>` directly.
+    let asm_extras = if family.asm_friendly {
+        let asm_slug = format!("{fam_s}_{idx}_{lbl_s}");
+        let fn_asm = format_ident!("asm_{asm_slug}");
+        let st_anchor = format_ident!("__ASM_ANCHOR_{}", asm_slug.to_uppercase());
+        quote! {
+            #[inline(never)]
+            #[no_mangle]
+            #[allow(non_snake_case, dead_code)]
+            pub fn #fn_asm(arr: &mut [usize]) {
+                let logger = &mut ::sort_logger::NoOpLogger;
+                #sort_call_noop;
+            }
+            #[used]
+            #[allow(non_upper_case_globals, dead_code)]
+            static #st_anchor: fn(&mut [usize]) = #fn_asm;
+        }
+    } else {
+        quote! {}
+    };
+
     quote! {
         #cap_static
+        #asm_extras
 
         // Type-erased entry used by the correctness battery
         // (`sort_battery` takes a fn pointer with this exact shape).
         #[allow(non_snake_case, dead_code)]
         fn #fn_sort(
             arr: &mut [usize],
-            logger: &mut crate::traits::log_traits::NoOpLogger,
+            logger: &mut ::sort_logger::NoOpLogger,
         ) {
             #sort_call_noop;
         }
@@ -684,34 +722,34 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
         #[allow(non_snake_case, dead_code)]
         fn #fn_run_default(
             input_name: &str,
-            config: &crate::bench_registry::RunConfig,
-            logger: &mut dyn crate::traits::log_traits::SortLogger<usize>,
+            config: &::array_vis_bench_core::bench_registry::RunConfig,
+            logger: &mut dyn ::sort_logger::SortLogger<usize>,
         ) {
             fn sort_dyn(
                 arr: &mut [usize],
-                logger: &mut dyn crate::traits::log_traits::SortLogger<usize>,
+                logger: &mut dyn ::sort_logger::SortLogger<usize>,
             ) {
                 #sort_call_dyn;
             }
-            crate::bench_registry::run_sort_with_input(input_name, config, sort_dyn, logger);
+            ::array_vis_bench_core::bench_registry::run_sort_with_input(input_name, config, sort_dyn, logger);
         }
 
         // Test-side entry. Runs the shared sort battery + stability
         // battery (the latter is a no-op for non-stable sorts).
         #[allow(non_snake_case, dead_code)]
         fn #fn_run_correct() {
-            crate::bench_registry::correctness::sort_battery(#fn_sort, #sort_name);
-            crate::bench_registry::correctness::sort_stability_battery(
+            ::array_vis_bench_core::bench_registry::correctness::sort_battery(#fn_sort, #sort_name);
+            ::array_vis_bench_core::bench_registry::correctness::sort_stability_battery(
                 #fn_sort, #sort_name, #stable_expr,
             );
         }
 
-        #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
+        #[linkme::distributed_slice(::array_vis_bench_core::bench_registry::ALGORITHMS)]
         #[allow(non_upper_case_globals)]
-        static #st_entry: crate::bench_registry::AlgorithmEntry =
-            crate::bench_registry::AlgorithmEntry {
+        static #st_entry: ::array_vis_bench_core::bench_registry::AlgorithmEntry =
+            ::array_vis_bench_core::bench_registry::AlgorithmEntry {
                 name: #sort_name,
-                category: crate::bench_registry::Category::Sort,
+                category: ::array_vis_bench_core::bench_registry::Category::Sort,
                 worst: #worst_expr,
                 best: #best_expr,
                 average: #average_expr,
@@ -723,17 +761,11 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
                 run_correctness: #fn_run_correct,
             };
 
-        #[cfg(test)]
-        #[allow(non_snake_case)]
-        mod #st_test_mod {
-            #[test]
-            fn correctness() {
-                crate::bench_registry::test_helpers::check_sort_subprocess_assert(
-                    &super::#st_entry,
-                    crate::bench_registry::test_helpers::DEFAULT_TIMEOUT,
-                );
-            }
-        }
+        // Per-leaf subprocess test removed: the aggregate
+        // `all_registered_algorithms_are_correct` in the wiring crate
+        // already exercises every variant. Re-emitting it here would
+        // duplicate work and force every leaf to depend on main's
+        // `test_helpers` module.
 
         #[ctor::ctor]
         #[allow(non_snake_case)]

@@ -1,0 +1,82 @@
+[package]
+name = "array_vis_bench_full"
+version = "0.1.0"
+edition = "2021"
+description = "Wiring crate: pulls in every algorithm + component leaf, runs the cross-product codegen (via `build.rs`), and exposes the unified `sorts/`, `traits/`, `utils/`, `bench_registry/` module tree. Library consumers depend on this; the binary crate `array_vis_bench` depends on this in turn for its CLI entry points."
+
+[lib]
+name = "array_vis_bench_full"
+path = "src/lib.rs"
+
+[dependencies]
+rand = "0.8"
+lazy_static = "1.4.0"
+rayon = "1.7"
+clap = { version = "4.3", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sort_registry_macro = { path = "../sort_registry_macro" }
+sort_registry_core = { path = "../sort_registry_core" }
+ctor = "0.2"
+linkme = "0.3"
+const_format = "0.2"
+sort_logger = { path = "../sort_logger" }
+sort_vis = { path = "../sort_vis" }
+combo_codegen = { path = "../combo_codegen" }
+array_vis_bench_traits = { path = "../array_vis_bench_traits" }
+array_vis_bench_core = { path = "../array_vis_bench_core" }
+partition_lomuto = { path = "../partition_lomuto" }
+rotation_auxiliary = { path = "../rotation_auxiliary" }
+rotation_bridge = { path = "../rotation_bridge" }
+rotation_contrev = { path = "../rotation_contrev" }
+rotation_drill = { path = "../rotation_drill" }
+rotation_grail = { path = "../rotation_grail" }
+rotation_gries_mills = { path = "../rotation_gries_mills" }
+rotation_helix = { path = "../rotation_helix" }
+rotation_juggling = { path = "../rotation_juggling" }
+rotation_piston = { path = "../rotation_piston" }
+rotation_reversal = { path = "../rotation_reversal" }
+rotation_trinity = { path = "../rotation_trinity" }
+pivot_first = { path = "../pivot_first" }
+pivot_middle = { path = "../pivot_middle" }
+pivot_last = { path = "../pivot_last" }
+pivot_median3 = { path = "../pivot_median3" }
+pivot_median_of_medians = { path = "../pivot_median_of_medians" }
+pivot_ninther = { path = "../pivot_ninther" }
+partition_hoare = { path = "../partition_hoare" }
+partition_three_way = { path = "../partition_three_way" }
+partition_block = { path = "../partition_block" }
+partition_moving_pivot = { path = "../partition_moving_pivot" }
+partition_moving_pivot_v3 = { path = "../partition_moving_pivot_v3" }
+small_sort_insertion_strategy = { path = "../small_sort_insertion_strategy" }
+small_sort_basic = { path = "../small_sort_basic" }
+small_sort_insertion = { path = "../small_sort_insertion" }
+small_sort_network = { path = "../small_sort_network" }
+small_sort_network_16 = { path = "../small_sort_network_16" }
+small_sort_deferred_insertion = { path = "../small_sort_deferred_insertion" }
+heap_internals_components = { path = "../heap_internals_components" }
+comb_ratio_components = { path = "../comb_ratio_components" }
+gap_distribution_lib = { path = "../gap_distribution_lib" }
+reverse_storage_lib = { path = "../reverse_storage_lib" }
+quick_select_lib = { path = "../quick_select_lib" }
+dual_pivot_quick_select_lib = { path = "../dual_pivot_quick_select_lib" }
+shell_sort_lib = { path = "../shell_sort_lib" }
+insertion_sort_lib = { path = "../insertion_sort_lib" }
+comb_sort_lib = { path = "../comb_sort_lib" }
+bubble_sort_lib = { path = "../bubble_sort_lib" }
+heap_sort_lib = { path = "../heap_sort_lib" }
+merge_sort_lib = { path = "../merge_sort_lib" }
+quick_sort_lib = { path = "../quick_sort_lib" }
+quick_heap_sort_lib = { path = "../quick_heap_sort_lib" }
+cycle_sort_lib = { path = "../cycle_sort_lib" }
+beap_sort_lib = { path = "../beap_sort_lib" }
+weak_heap_sort_lib = { path = "../weak_heap_sort_lib" }
+rod_sort_lib = { path = "../rod_sort_lib" }
+circle_sort_lib = { path = "../circle_sort_lib" }
+fun_sorts_lib = { path = "../fun_sorts_lib" }
+
+[build-dependencies]
+combo_codegen = { path = "../combo_codegen" }
+
+[dev-dependencies]
+proptest = "1"

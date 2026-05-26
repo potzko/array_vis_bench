@@ -2,17 +2,13 @@ use std::path::{Path, PathBuf};
 
 use crate::family::{AxisSpec, CodegenConfig, ComponentDef, ComponentRegistry, FamilyDef, FieldValue};
 
-/// A single `component!(Role, TypeExpr, "label")` call found in a source file.
-#[derive(Debug, Clone)]
-struct ScannedComponent {
-    role: String,
-    type_expr: String,
-    label: String,
-}
-
 /// Returned by [`scan`]. Holds the discovered registry, scanned families, the
 /// config used for scanning (reused at emit time), and the list of files that
 /// were read so the caller can emit `cargo:rerun-if-changed` lines.
+///
+/// Components are no longer text-scanned — populate `registry` from
+/// [`crate::metadata_scanner::scan_manifest`] (Cargo.toml metadata) before
+/// emitting. The scanner here only discovers `family!(…)` declarations.
 pub struct ScanResult {
     pub registry: ComponentRegistry,
     pub families: Vec<FamilyDef>,
@@ -20,7 +16,122 @@ pub struct ScanResult {
     scanned_files: Vec<PathBuf>,
 }
 
+/// Structural problems caught after the scan / metadata merge. Each
+/// variant carries enough context for a build script to panic with a
+/// useful message pointing at the offending declaration.
+#[derive(Debug)]
+pub enum ValidationError {
+    /// Same `(role, type_expr)` declared more than once. Catches
+    /// copy-paste mistakes — the same component registered twice would
+    /// otherwise produce a duplicate variant in every cross-product.
+    DuplicateComponent {
+        role: String,
+        type_expr: String,
+    },
+    /// A `family!(...)` axis references a role for which no component is
+    /// registered. The cross-product would silently be empty; without
+    /// this check a typo in the role name (e.g. `PivotSelectr`) would
+    /// only manifest as missing menu entries.
+    EmptyRole {
+        role: String,
+        family: String,
+    },
+}
+
+impl std::fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ValidationError::DuplicateComponent { role, type_expr } => write!(
+                f,
+                "duplicate component: role={role}, type={type_expr} \
+                 (declared more than once across scanned sources)"
+            ),
+            ValidationError::EmptyRole { role, family } => write!(
+                f,
+                "family `{family}` references role `{role}` but no \
+                 component is registered under that role — check for a \
+                 typo in either the family axis or a component's `role` \
+                 field"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for ValidationError {}
+
 impl ScanResult {
+    /// Roles that have at least one registered component but aren't
+    /// referenced by any scanned family axis. Returned roles are sorted
+    /// for deterministic output across machines.
+    ///
+    /// Orphan roles are *suspicious* but not always wrong — a role can
+    /// be consumed by hand-written Rust outside the family system (e.g.
+    /// `partitions_standalone.rs` iterates the `Partition` registry
+    /// directly). Surface this as a `cargo:warning` rather than an error.
+    pub fn orphan_roles(&self) -> Vec<String> {
+        let mut referenced: Vec<&str> = Vec::new();
+        for fam in &self.families {
+            for (_var, spec) in &fam.axes {
+                match spec {
+                    AxisSpec::Role(r) => referenced.push(r),
+                    AxisSpec::Cross { left, right, .. } => {
+                        referenced.push(left);
+                        referenced.push(right);
+                    }
+                    AxisSpec::Inline(_) => {}
+                }
+            }
+        }
+        let mut out: Vec<String> = self
+            .registry
+            .roles()
+            .filter(|r| !referenced.contains(r))
+            .map(|r| r.to_string())
+            .collect();
+        out.sort();
+        out
+    }
+
+    /// Run structural validation that wouldn't otherwise surface until a
+    /// downstream consumer mis-renders or a registered algorithm goes
+    /// missing. Returns the first problem found — fix and re-run to see
+    /// the next one.
+    pub fn validate(&self) -> Result<(), ValidationError> {
+        // 1. No duplicate (role, type_expr) pairs in the registry.
+        for role in self.registry.roles() {
+            let comps = self.registry.role(role);
+            for (i, a) in comps.iter().enumerate() {
+                if comps[..i].iter().any(|b| b.type_expr == a.type_expr) {
+                    return Err(ValidationError::DuplicateComponent {
+                        role: role.to_string(),
+                        type_expr: a.type_expr.clone(),
+                    });
+                }
+            }
+        }
+        // 2. Every family axis references a role that has at least one
+        //    component. Cross axes have two role names; inline axes are
+        //    self-contained (no lookup), so they don't fail this check.
+        for fam in &self.families {
+            for (_var, spec) in &fam.axes {
+                let referenced: Vec<&str> = match spec {
+                    AxisSpec::Role(r) => vec![r.as_str()],
+                    AxisSpec::Cross { left, right, .. } => vec![left.as_str(), right.as_str()],
+                    AxisSpec::Inline(_) => vec![],
+                };
+                for r in referenced {
+                    if self.registry.role(r).is_empty() {
+                        return Err(ValidationError::EmptyRole {
+                            role: r.to_string(),
+                            family: fam.type_template.clone(),
+                        });
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
     /// Print a `cargo:rerun-if-changed=<path>` line for every scanned `.rs`
     /// file. Call this from `build.rs` so Cargo reruns the build script
     /// whenever any annotated source file changes.
@@ -79,14 +190,19 @@ impl ScanResult {
     }
 }
 
-/// Recursively walk `dir`, parse every `.rs` file for `component!(...)` and
-/// `<config.marker>!(...)` calls, and return the aggregated [`ScanResult`].
+/// Recursively walk `dir`, parse every `.rs` file for
+/// `<config.marker>!(...)` (family) calls, and return the aggregated
+/// [`ScanResult`].
+///
+/// Components are no longer scanned from source — populate `registry` from
+/// [`crate::metadata_scanner::scan_manifest`] before calling
+/// [`ScanResult::emit_families`].
 ///
 /// Files are visited in lexicographic path order so the scan — and every
 /// downstream piece of generated code — is reproducible across machines and
 /// filesystems.
 pub fn scan(dir: impl AsRef<Path>, config: &CodegenConfig) -> Result<ScanResult, std::io::Error> {
-    let mut registry = ComponentRegistry::default();
+    let registry = ComponentRegistry::default();
     let mut families = Vec::new();
     let mut scanned_files = Vec::new();
 
@@ -103,87 +219,11 @@ pub fn scan(dir: impl AsRef<Path>, config: &CodegenConfig) -> Result<ScanResult,
 
     for path in paths {
         let content = std::fs::read_to_string(&path)?;
-        for comp in scan_components(&content) {
-            registry.add(comp.role, comp.type_expr, comp.label);
-        }
         families.extend(scan_families(&content, &path, &marker));
         scanned_files.push(path);
     }
 
     Ok(ScanResult { registry, families, config: config.clone(), scanned_files })
-}
-
-// ── component! scanner ───────────────────────────────────────────────────────
-
-/// Find all `component!(...)` calls in `content` and return parsed components.
-fn scan_components(content: &str) -> Vec<ScannedComponent> {
-    const MARKER: &str = "component!(";
-    let mut results = Vec::new();
-    let mut search_from = 0;
-
-    while let Some(rel) = content[search_from..].find(MARKER) {
-        let args_start = search_from + rel + MARKER.len();
-        search_from = args_start;
-        if let Some(comp) = parse_component_call(&content[args_start..]) {
-            results.push(comp);
-        }
-    }
-
-    results
-}
-
-/// Parse the argument list that follows the opening `(` of a `component!` call.
-fn parse_component_call(s: &str) -> Option<ScannedComponent> {
-    let s = s.trim_start();
-
-    let role_end = s.find(|c: char| !c.is_alphanumeric() && c != '_')?;
-    let role = s[..role_end].trim().to_string();
-    if role.is_empty() {
-        return None;
-    }
-
-    let s = s[role_end..].trim_start();
-    let s = s.strip_prefix(',')?.trim_start();
-
-    let (type_expr, rest) = parse_type_expr(s)?;
-    let type_expr = type_expr.trim().to_string();
-    if type_expr.is_empty() {
-        return None;
-    }
-
-    let rest = rest.trim_start();
-    let rest = rest.strip_prefix(',')?.trim_start();
-
-    let rest = rest.strip_prefix('"')?;
-    let label_end = rest.find('"')?;
-    let label = rest[..label_end].to_string();
-
-    Some(ScannedComponent { role, type_expr, label })
-}
-
-/// Read characters from `s`, tracking bracket depth, until a top-level `,`.
-fn parse_type_expr(s: &str) -> Option<(String, &str)> {
-    let mut angle: i32 = 0;
-    let mut round: i32 = 0;
-    let mut square: i32 = 0;
-
-    for (i, c) in s.char_indices() {
-        match c {
-            '<' => angle += 1,
-            '>' if angle > 0 => angle -= 1,
-            '(' => round += 1,
-            ')' if round > 0 => round -= 1,
-            '[' => square += 1,
-            ']' if square > 0 => square -= 1,
-            ',' if angle == 0 && round == 0 && square == 0 => {
-                return Some((s[..i].to_string(), &s[i..]));
-            }
-            ')' if round == 0 => return None,
-            _ => {}
-        }
-    }
-
-    None
 }
 
 // ── family! / sort_family! scanner ───────────────────────────────────────────
@@ -533,64 +573,6 @@ mod tests {
     }
 
     #[test]
-    fn simple_type() {
-        let result = scan_components(r#"combo_codegen::component!(Partition, Lomuto, "lomuto");"#);
-        assert_eq!(result.len(), 1);
-        assert_eq!(result[0].role, "Partition");
-        assert_eq!(result[0].type_expr, "Lomuto");
-        assert_eq!(result[0].label, "lomuto");
-    }
-
-    #[test]
-    fn const_generic_type() {
-        let result =
-            scan_components(r#"component!(SmallSort, InsertionSmallSort<16>, "insertion: 16");"#);
-        assert_eq!(result.len(), 1);
-        assert_eq!(result[0].type_expr, "InsertionSmallSort<16>");
-    }
-
-    #[test]
-    fn nested_generics() {
-        let result = scan_components(r#"component!(MyRole, Outer<Inner<u8>>, "nested");"#);
-        assert_eq!(result.len(), 1);
-        assert_eq!(result[0].type_expr, "Outer<Inner<u8>>");
-    }
-
-    #[test]
-    fn multiple_in_file() {
-        let src = r#"
-            component!(Partition, Lomuto, "lomuto");
-            component!(Partition, Hoare, "hoare");
-            component!(PivotSelector, FirstElement, "first");
-        "#;
-        let result = scan_components(src);
-        assert_eq!(result.len(), 3);
-    }
-
-    #[test]
-    fn trailing_comma() {
-        let result = scan_components(r#"component!(R, SomeType, "label",);"#);
-        assert_eq!(result.len(), 1);
-        assert_eq!(result[0].label, "label");
-    }
-
-    #[test]
-    fn qualified_path() {
-        let result = scan_components(
-            r#"combo_codegen::component!(Rotation, ReversalRotation, "reversal");"#,
-        );
-        assert_eq!(result.len(), 1);
-        assert_eq!(result[0].role, "Rotation");
-    }
-
-    #[test]
-    fn boolean_const_generic() {
-        let result = scan_components(r#"component!(PingPong, true, "ping-pong");"#);
-        assert_eq!(result.len(), 1);
-        assert_eq!(result[0].type_expr, "true");
-    }
-
-    #[test]
     fn parse_simple_family() {
         let src = r#"combo_codegen::family!(
             type = MySort<{A}, {B}>,
@@ -713,5 +695,108 @@ mod tests {
         let defs = scan_families(src, std::path::Path::new("src/x/y.rs"), "family!(");
         assert_eq!(defs.len(), 1);
         assert_eq!(defs[0].type_template, "M<{A}>");
+    }
+
+    // ── Validation ────────────────────────────────────────────────────────────
+
+    fn empty_result() -> ScanResult {
+        ScanResult {
+            registry: ComponentRegistry::default(),
+            families: Vec::new(),
+            config: CodegenConfig::for_sort_families(),
+            scanned_files: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn validate_passes_on_empty() {
+        empty_result().validate().unwrap();
+    }
+
+    #[test]
+    fn validate_catches_duplicate_component() {
+        let mut r = empty_result();
+        r.registry.add("Partition", "Lomuto", "lomuto");
+        r.registry.add("Partition", "Lomuto", "lomuto-again");
+        let err = r.validate().unwrap_err();
+        assert!(
+            matches!(err, ValidationError::DuplicateComponent { ref role, ref type_expr }
+                if role == "Partition" && type_expr == "Lomuto"),
+            "got {err:?}",
+        );
+    }
+
+    #[test]
+    fn validate_allows_same_type_under_different_roles() {
+        let mut r = empty_result();
+        // Same concrete type registered under two distinct roles is the
+        // legitimate pattern (e.g. `InsertionSmallSort<…>` is both
+        // `SmallSort` and `NonTrivialSmallSort`).
+        r.registry.add("SmallSort", "InsertionSmallSort<L, 16>", "insertion: 16");
+        r.registry.add("NonTrivialSmallSort", "InsertionSmallSort<L, 16>", "insertion: 16");
+        r.validate().unwrap();
+    }
+
+    #[test]
+    fn validate_catches_family_referencing_empty_role() {
+        let src = r#"family!(
+            type = QS<{P}>,
+            uses = [],
+            P: Partition,
+            name = "qs",
+        );"#;
+        let mut r = empty_result();
+        r.families = scan_families(src, std::path::Path::new("src/qs.rs"), &marker());
+        // Registry has no Partition components — should fail.
+        let err = r.validate().unwrap_err();
+        assert!(
+            matches!(err, ValidationError::EmptyRole { ref role, .. } if role == "Partition"),
+            "got {err:?}",
+        );
+    }
+
+    #[test]
+    fn validate_passes_when_family_role_is_populated() {
+        let src = r#"family!(
+            type = QS<{P}>,
+            uses = [],
+            P: Partition,
+            name = "qs",
+        );"#;
+        let mut r = empty_result();
+        r.families = scan_families(src, std::path::Path::new("src/qs.rs"), &marker());
+        r.registry.add("Partition", "Lomuto", "lomuto");
+        r.validate().unwrap();
+    }
+
+    #[test]
+    fn orphan_roles_returns_unreferenced_roles() {
+        let src = r#"family!(
+            type = QS<{P}>,
+            uses = [],
+            P: Partition,
+            name = "qs",
+        );"#;
+        let mut r = empty_result();
+        r.families = scan_families(src, std::path::Path::new("src/qs.rs"), &marker());
+        r.registry.add("Partition", "Lomuto", "lomuto");
+        // `ReverseStorage` has a component but no family references it.
+        r.registry.add("ReverseStorage", "BitStorage", "bit storage");
+        // `Aux` is registered but only via an inline axis below — that
+        // shouldn't count as a real reference.
+        r.registry.add("Aux", "AuxA", "a");
+        let inline_src = r#"family!(
+            type = Other<{X}>,
+            uses = [],
+            X: inline [("Foo", "foo")],
+            name = "other",
+        );"#;
+        r.families.extend(scan_families(
+            inline_src,
+            std::path::Path::new("src/other.rs"),
+            &marker(),
+        ));
+        let orphans = r.orphan_roles();
+        assert_eq!(orphans, vec!["Aux".to_string(), "ReverseStorage".to_string()]);
     }
 }

@@ -6,3 +6,22 @@ description = "Build-time scanner and cross-product generator for annotated type
 
 [dependencies]
 walkdir = "2"
+# `preserve_order` keeps declaration order when parsing component tables —
+# the metadata scanner relies on this so the registry's per-role list
+# matches the order users wrote the components in their Cargo.toml.
+toml = { version = "0.8", features = ["preserve_order"] }
+serde = { version = "1", features = ["derive"] }
+# `cargo_metadata` returns the metadata block as `serde_json::Value`
+# (TOML round-tripped through JSON internally), so the dep-graph path
+# deserializes via serde_json. `preserve_order` keeps `serde_json::Map`
+# in insertion order so a family's trailing fields render in TOML
+# declaration order — matters because the generated `name = "…"; big_o
+# = …;` block is consumed positionally downstream.
+serde_json = { version = "1", features = ["preserve_order"] }
+# Used by `scan_workspace_components` to walk the dep graph from the
+# wiring crate and harvest every dep's `[[package.metadata...]]` block —
+# the discovery primitive that makes per-leaf crates work.
+cargo_metadata = "0.18"
+
+[dev-dependencies]
+tempfile = "3"

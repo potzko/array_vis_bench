@@ -1,0 +1,12 @@
+[package]
+name = "array_vis_bench_traits"
+version = "0.1.0"
+edition = "2021"
+description = "Pure-trait crate: PartitionScheme, PivotSelector, Rotation, SmallSort, BranchingStrategy, GapSequence, composable annotations (HasTimeBounds/HasSpace/HasStability/PivotQuality), and Complexity. Stable surface area that leaf-component crates depend on without pulling in the full array_vis_bench tree."
+
+[lib]
+name = "array_vis_bench_traits"
+path = "src/lib.rs"
+
+[dependencies]
+sort_logger = { path = "../sort_logger" }

@@ -14,9 +14,9 @@
 
 use std::time::Instant;
 
-use array_vis_bench::bench_registry::{primary_input, ALGORITHMS, Category, RunConfig};
-use array_vis_bench::traits::log_traits::NoOpLogger;
-use array_vis_bench::utils::array_gen::get_rand_arr;
+use array_vis_bench_full::bench_registry::{primary_input, ALGORITHMS, Category, RunConfig};
+use array_vis_bench_full::traits::log_traits::NoOpLogger;
+use array_vis_bench_full::utils::array_gen::get_rand_arr;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use sort_logger::SortLogger;

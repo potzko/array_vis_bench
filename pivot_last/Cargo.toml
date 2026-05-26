@@ -1,0 +1,18 @@
+[package]
+name = "pivot_last"
+version = "0.1.0"
+edition = "2021"
+description = "LastElement pivot selector leaf crate."
+
+[lib]
+name = "pivot_last"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../array_vis_bench_traits" }
+sort_logger = { path = "../sort_logger" }
+
+[[package.metadata.array_vis_bench.components]]
+role  = "PivotSelector"
+type  = "LastElement"
+label = "last"

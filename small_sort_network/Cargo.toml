@@ -1,0 +1,25 @@
+[package]
+name = "small_sort_network"
+version = "0.1.0"
+edition = "2021"
+description = "NetworkSmallSort — optimal 8-element sorting network (19 comparators)."
+
+[lib]
+name = "small_sort_network"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../array_vis_bench_traits" }
+sort_logger = { path = "../sort_logger" }
+# Falls back to linear insertion for `len < 8`.
+small_sort_insertion_strategy = { path = "../small_sort_insertion_strategy" }
+
+[[package.metadata.array_vis_bench.components]]
+role  = "SmallSort"
+type  = "NetworkSmallSort"
+label = "network: 8"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "NonTrivialSmallSort"
+type  = "NetworkSmallSort"
+label = "network: 8"
