@@ -1,8 +1,8 @@
-use array_vis_bench::bench_registry::{list_inputs, RunConfig};
-use array_vis_bench::traits::complexity::Complexity;
-use array_vis_bench::traits::get_sort_tree;
-use array_vis_bench::traits::log_traits::VisualizerLogger;
-use array_vis_bench::visualise::{find, visualise};
+use array_vis_bench_full::bench_registry::{list_inputs, RunConfig};
+use array_vis_bench_full::traits::complexity::Complexity;
+use array_vis_bench_full::traits::get_sort_tree;
+use array_vis_bench_full::traits::log_traits::VisualizerLogger;
+use array_vis_bench_full::visualise::{find, visualise};
 use sort_vis::{Encoding, Mp4Config, Pacing, COMMON_FRAMERATES, COMMON_RESOLUTIONS};
 use std::io::{self, Write};
 
@@ -78,7 +78,7 @@ fn main() {
 }
 
 /// Show the registered inputs for `category` and let the user pick one.
-fn select_input(category: array_vis_bench::bench_registry::Category) -> String {
+fn select_input(category: array_vis_bench_full::bench_registry::Category) -> String {
     let names = list_inputs(category);
     assert!(
         !names.is_empty(),

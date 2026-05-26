@@ -1,0 +1,90 @@
+[package]
+name = "heap_internals_components"
+version = "0.1.0"
+edition = "2021"
+description = "Metadata-only leaf for heap-internal component roles (Arity, HeapDirection, HeapPartition, DeepHeapify, QuickDeepHeapify, DualPivotQuickDeepHeapify). Code stays in `array_vis_bench` — these roles are deeply coupled to Heap/Compare/HeapLayout traits and a per-leaf code split would balloon the trait surface unnecessarily. The components are still discoverable via the dep-graph scanner; this crate just hosts their metadata."
+
+[lib]
+name = "heap_internals_components"
+path = "src/lib.rs"
+
+# ── Arity ──
+[[package.metadata.array_vis_bench.components]]
+role  = "Arity"
+type  = "Binary"
+label = "binary"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "Arity"
+type  = "Ternary"
+label = "ternary"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "Arity"
+type  = "Base16"
+label = "16-ary"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "Arity"
+type  = "Base256"
+label = "256-ary"
+
+# ── HeapDirection ──
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapDirection"
+type  = "MinReverse"
+label = "min reverse"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapDirection"
+type  = "MaxForward"
+label = "max forward"
+
+# ── HeapPartition ──
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapPartition"
+type  = "Lomuto"
+label = "lomuto"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapPartition"
+type  = "Hoare"
+label = "hoare"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapPartition"
+type  = "Block"
+label = "block"
+
+# ── DeepHeapify ──
+[[package.metadata.array_vis_bench.components]]
+role  = "DeepHeapify"
+type  = "Recursive"
+label = "recursive"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "DeepHeapify"
+type  = "Iterative"
+label = "iterative"
+
+# ── QuickDeepHeapify ──
+[[package.metadata.array_vis_bench.components]]
+role  = "QuickDeepHeapify"
+type  = "SequentialQuickDeepHeapify"
+label = "sequential"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "QuickDeepHeapify"
+type  = "RecursivePartialQuickDeepHeapify"
+label = "recursive partition"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "QuickDeepHeapify"
+type  = "StackPartialQuickDeepHeapify"
+label = "stack partition"
+
+# ── DualPivotQuickDeepHeapify ──
+[[package.metadata.array_vis_bench.components]]
+role  = "DualPivotQuickDeepHeapify"
+type  = "StackDualPivotPartialQuickDeepHeapify"
+label = "stack dual-pivot partition"

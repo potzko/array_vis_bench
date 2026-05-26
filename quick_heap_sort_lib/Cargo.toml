@@ -1,0 +1,136 @@
+[package]
+name = "quick_heap_sort_lib"
+version = "0.1.0"
+edition = "2021"
+description = "Quick heap sort family — `QuickHeapSort<A, DH, SS>` and `DeferredQuickHeapSort<A, DSS>`. Hybrid that builds a max-forward heap on the left and a min-reverse heap on the right and converges by head-swapping. Three classic families + one deferred family declared as TOML metadata below."
+
+[lib]
+name = "quick_heap_sort_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../array_vis_bench_traits" }
+heap_sort_lib = { path = "../heap_sort_lib" }
+sort_logger = { path = "../sort_logger" }
+
+# ── Quick heap sort classic (A × Iterative-DH × SS) ──
+[[package.metadata.array_vis_bench.families]]
+module = "quick_heap_sort"
+type   = "QuickHeapSort<{A}, Iterative, {SS}>"
+uses   = [
+    "heap_sort_lib::arity::{Binary, Ternary, Base16, Base256}",
+    "heap_sort_lib::deep_heapify::Iterative",
+    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
+    "small_sort_insertion::InsertionSmallSort",
+    "small_sort_network::NetworkSmallSort",
+    "small_sort_network_16::Network16SmallSort",
+    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
+    "quick_heap_sort_lib::quick_heap_sort::QuickHeapSort",
+]
+axes = [
+    { var = "A",  role = "Arity" },
+    { var = "SS", role = "SmallSort" },
+]
+name        = "quick heap sort"
+big_o       = "@inherited"
+stable      = false
+direct_sort = true
+path        = ["quick heap sorts", "classic", "{A}", "{SS}"]
+
+# ── Quick heap sort quick build (single pivot) ──
+[[package.metadata.array_vis_bench.families]]
+module = "quick_heap_sort"
+type   = "QuickHeapSort<{A}, {QDH}<{HP}, {V}>, {SS}>"
+uses   = [
+    "heap_sort_lib::arity::{Binary, Ternary, Base16, Base256}",
+    "heap_sort_lib::quick_deep_heapify::{RecursivePartialQuickDeepHeapify, SequentialQuickDeepHeapify, StackPartialQuickDeepHeapify}",
+    "heap_sort_lib::heap_partition::{Block, Hoare, Lomuto}",
+    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
+    "small_sort_insertion::InsertionSmallSort",
+    "small_sort_network::NetworkSmallSort",
+    "small_sort_network_16::Network16SmallSort",
+    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
+    "pivot_first::FirstElement",
+    "pivot_median_of_medians::MedianOfMedians",
+    "pivot_median3::MedianOfThree",
+    "pivot_middle::MiddleElement",
+    "quick_heap_sort_lib::quick_heap_sort::QuickHeapSort",
+]
+axes = [
+    { var = "A",   role = "Arity" },
+    { var = "QDH", role = "QuickDeepHeapify" },
+    { var = "HP",  role = "HeapPartition" },
+    { var = "V", inline = [
+        { type = "FirstElement",    label = "first" },
+        { type = "MiddleElement",   label = "middle" },
+        { type = "MedianOfThree",   label = "median of 3" },
+        { type = "MedianOfMedians", label = "median of medians" },
+    ] },
+    { var = "SS", inline = [
+        { type = "NoSmallSort",                              label = "no threshold" },
+        { type = "InsertionSmallSort<LinearInsertion, 32>",  label = "insertion: 32" },
+        { type = "NetworkSmallSort",                          label = "network: 8" },
+    ] },
+]
+name        = "quick heap sort"
+big_o       = "@inherited"
+stable      = false
+direct_sort = true
+path        = ["quick heap sorts", "quick build", "{A}", "{QDH}", "{HP}", "{V}", "{SS}"]
+
+# ── Quick heap sort quick build (dual pivot) ──
+[[package.metadata.array_vis_bench.families]]
+module = "quick_heap_sort"
+type   = "QuickHeapSort<{A}, {QDH}<{DPS}>, {SS}>"
+uses   = [
+    "heap_sort_lib::quick_deep_heapify::StackDualPivotPartialQuickDeepHeapify",
+    "quick_sort_lib::pivot_selectors::{CombinedSelector, NintherDualPivot}",
+    "pivot_first::FirstElement",
+    "pivot_middle::MiddleElement",
+    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
+    "small_sort_insertion::InsertionSmallSort",
+    "small_sort_network::NetworkSmallSort",
+    "small_sort_network_16::Network16SmallSort",
+    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
+    "heap_sort_lib::arity::{Binary, Ternary, Base16, Base256}",
+    "quick_heap_sort_lib::quick_heap_sort::QuickHeapSort",
+]
+axes = [
+    { var = "A",   role = "Arity" },
+    { var = "QDH", role = "DualPivotQuickDeepHeapify" },
+    { var = "DPS", inline = [
+        { type = "CombinedSelector<FirstElement, FirstElement>",   label = "first" },
+        { type = "CombinedSelector<MiddleElement, MiddleElement>", label = "middle" },
+        { type = "NintherDualPivot",                                label = "ninther 1/3 + 2/3" },
+    ] },
+    { var = "SS", inline = [
+        { type = "NoSmallSort",                              label = "no threshold" },
+        { type = "InsertionSmallSort<LinearInsertion, 32>",  label = "insertion: 32" },
+        { type = "NetworkSmallSort",                          label = "network: 8" },
+    ] },
+]
+name        = "quick heap sort dual pivot"
+big_o       = "@inherited"
+stable      = false
+direct_sort = true
+path        = ["quick heap sorts", "quick build", "dual pivot", "{A}", "{QDH}", "{DPS}", "{SS}"]
+
+# ── Deferred quick heap sort (A × DSS) ──
+[[package.metadata.array_vis_bench.families]]
+module = "quick_heap_sort"
+type   = "DeferredQuickHeapSort<{A}, {DSS}>"
+uses   = [
+    "heap_sort_lib::arity::{Binary, Ternary, Base16, Base256}",
+    "small_sort_deferred_insertion::DeferredInsertion",
+    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
+    "quick_heap_sort_lib::deferred_quick_heap_sort::DeferredQuickHeapSort",
+]
+axes = [
+    { var = "A",   role = "Arity" },
+    { var = "DSS", role = "DeferredSmallSort" },
+]
+name        = "quick heap sort deferred"
+big_o       = "@inherited"
+stable      = false
+direct_sort = true
+path        = ["quick heap sorts", "deferred", "{A}", "{DSS}"]

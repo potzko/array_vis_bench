@@ -1,0 +1,18 @@
+[package]
+name = "pivot_median3"
+version = "0.1.0"
+edition = "2021"
+description = "MedianOfThree pivot selector leaf crate."
+
+[lib]
+name = "pivot_median3"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../array_vis_bench_traits" }
+sort_logger = { path = "../sort_logger" }
+
+[[package.metadata.array_vis_bench.components]]
+role  = "PivotSelector"
+type  = "MedianOfThree"
+label = "median of 3"

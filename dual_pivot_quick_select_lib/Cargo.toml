@@ -1,0 +1,23 @@
+[package]
+name = "dual_pivot_quick_select_lib"
+version = "0.1.0"
+edition = "2021"
+description = "Yaroslavskiy dual-pivot quickselect, generic over a DualPivotSelector. Recursive + iterative variants. Implements QuickSelect (from array_vis_bench_traits) so it slots into the same QuickSelect role as the single-pivot impls."
+
+[lib]
+name = "dual_pivot_quick_select_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../array_vis_bench_traits" }
+sort_logger = { path = "../sort_logger" }
+
+[[package.metadata.array_vis_bench.components]]
+role  = "DualPivotQuickSelectAlg"
+type  = "RecursiveDualPivotQuickSelect"
+label = "recursive"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "DualPivotQuickSelectAlg"
+type  = "IterativeDualPivotQuickSelect"
+label = "iterative"

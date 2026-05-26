@@ -55,21 +55,104 @@ dependencies = [
 name = "array_vis_bench"
 version = "0.1.0"
 dependencies = [
+ "array_vis_bench_full",
+ "fun_sorts_lib",
+ "rand 0.8.5",
+ "sort_logger",
+ "sort_registry_core",
+ "sort_vis",
+]
+
+[[package]]
+name = "array_vis_bench_core"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "ctor",
+ "linkme",
+ "rand 0.8.5",
+ "sort_logger",
+ "sort_registry_core",
+ "sort_vis",
+]
+
+[[package]]
+name = "array_vis_bench_full"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_core",
+ "array_vis_bench_traits",
+ "beap_sort_lib",
+ "bubble_sort_lib",
+ "circle_sort_lib",
  "clap",
+ "comb_ratio_components",
+ "comb_sort_lib",
  "combo_codegen",
  "const_format",
  "ctor",
+ "cycle_sort_lib",
+ "dual_pivot_quick_select_lib",
+ "fun_sorts_lib",
+ "gap_distribution_lib",
+ "heap_internals_components",
+ "heap_sort_lib",
+ "insertion_sort_lib",
  "lazy_static",
  "linkme",
+ "merge_sort_lib",
+ "partition_block",
+ "partition_hoare",
+ "partition_lomuto",
+ "partition_moving_pivot",
+ "partition_moving_pivot_v3",
+ "partition_three_way",
+ "pivot_first",
+ "pivot_last",
+ "pivot_median3",
+ "pivot_median_of_medians",
+ "pivot_middle",
+ "pivot_ninther",
  "proptest",
+ "quick_heap_sort_lib",
+ "quick_select_lib",
+ "quick_sort_lib",
  "rand 0.8.5",
  "rayon",
+ "reverse_storage_lib",
+ "rod_sort_lib",
+ "rotation_auxiliary",
+ "rotation_bridge",
+ "rotation_contrev",
+ "rotation_drill",
+ "rotation_grail",
+ "rotation_gries_mills",
+ "rotation_helix",
+ "rotation_juggling",
+ "rotation_piston",
+ "rotation_reversal",
+ "rotation_trinity",
  "serde",
  "serde_json",
+ "shell_sort_lib",
+ "small_sort_basic",
+ "small_sort_deferred_insertion",
+ "small_sort_insertion",
+ "small_sort_insertion_strategy",
+ "small_sort_network",
+ "small_sort_network_16",
  "sort_logger",
  "sort_registry_core",
  "sort_registry_macro",
  "sort_vis",
+ "weak_heap_sort_lib",
+]
+
+[[package]]
+name = "array_vis_bench_traits"
+version = "0.1.0"
+dependencies = [
+ "sort_logger",
 ]
 
 [[package]]
@@ -77,6 +160,15 @@ name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
+
+[[package]]
+name = "beap_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "heap_sort_lib",
+ "sort_logger",
+]
 
 [[package]]
 name = "bit-set"
@@ -100,10 +192,69 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4512299f36f043ab09a583e57bceb5a5aab7a73db1805848e8fef3c9e8c78b3"
 
 [[package]]
+name = "bubble_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_core",
+ "array_vis_bench_traits",
+ "ctor",
+ "linkme",
+ "sort_logger",
+ "sort_registry_core",
+ "sort_registry_macro",
+]
+
+[[package]]
+name = "camino"
+version = "1.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e629a66d692cb9ff1a1c664e41771b3dcaf961985a9774c0eb0bd1b51cf60a48"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
+name = "cargo-platform"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e35af189006b9c0f00a064685c727031e3ed2d8020f7ba284d78cc2671bd36ea"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "cargo_metadata"
+version = "0.18.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d886547e41f740c616ae73108f6eb70afe6d940c7bc697cb30f13daec073037"
+dependencies = [
+ "camino",
+ "cargo-platform",
+ "semver",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
+name = "circle_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_core",
+ "array_vis_bench_traits",
+ "const_format",
+ "ctor",
+ "linkme",
+ "small_sort_insertion_strategy",
+ "sort_logger",
+ "sort_registry_core",
+]
 
 [[package]]
 name = "clap"
@@ -152,9 +303,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 
 [[package]]
+name = "comb_ratio_components"
+version = "0.1.0"
+
+[[package]]
+name = "comb_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_core",
+ "array_vis_bench_traits",
+ "const_format",
+ "ctor",
+ "linkme",
+ "sort_logger",
+ "sort_registry_core",
+]
+
+[[package]]
 name = "combo_codegen"
 version = "0.1.0"
 dependencies = [
+ "cargo_metadata",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "toml",
  "walkdir",
 ]
 
@@ -222,10 +395,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "cycle_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_core",
+ "array_vis_bench_traits",
+ "ctor",
+ "linkme",
+ "sort_logger",
+ "sort_registry_core",
+ "sort_registry_macro",
+]
+
+[[package]]
+name = "dual_pivot_quick_select_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
 name = "either"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a26ae43d7bcc3b814de94796a5e736d4029efb0ee900c12e2d54c993ad1a1e07"
+
+[[package]]
+name = "equivalent"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "errno"
@@ -248,6 +448,28 @@ name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
+
+[[package]]
+name = "fun_sorts_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_core",
+ "array_vis_bench_traits",
+ "ctor",
+ "gap_distribution_lib",
+ "linkme",
+ "rand 0.8.5",
+ "sort_logger",
+ "sort_registry_core",
+ "sort_registry_macro",
+]
+
+[[package]]
+name = "gap_distribution_lib"
+version = "0.1.0"
+dependencies = [
+ "rand 0.8.5",
+]
 
 [[package]]
 name = "getrandom"
@@ -273,10 +495,47 @@ dependencies = [
 ]
 
 [[package]]
+name = "hashbrown"
+version = "0.17.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
+
+[[package]]
+name = "heap_internals_components"
+version = "0.1.0"
+
+[[package]]
+name = "heap_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
 name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
+
+[[package]]
+name = "indexmap"
+version = "2.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d466e9454f08e4a911e14806c24e16fba1b4c121d1ea474396f396069cf949d9"
+dependencies = [
+ "equivalent",
+ "hashbrown",
+]
+
+[[package]]
+name = "insertion_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "small_sort_insertion_strategy",
+ "sort_logger",
+]
 
 [[package]]
 name = "is_terminal_polyfill"
@@ -329,12 +588,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 
 [[package]]
+name = "memchr"
+version = "2.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
+
+[[package]]
 name = "memoffset"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a634b1c61a95585bd15607c6ab0c4e5b226e695ff2800ba0cdccddf208c406c"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "merge_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_core",
+ "array_vis_bench_traits",
+ "const_format",
+ "ctor",
+ "linkme",
+ "rotation_auxiliary",
+ "rotation_bridge",
+ "rotation_contrev",
+ "rotation_drill",
+ "rotation_grail",
+ "rotation_gries_mills",
+ "rotation_helix",
+ "rotation_juggling",
+ "rotation_piston",
+ "rotation_reversal",
+ "rotation_trinity",
+ "sort_logger",
+ "sort_registry_core",
 ]
 
 [[package]]
@@ -353,6 +642,103 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
+name = "partition_block"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "partition_hoare"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "partition_lomuto"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "partition_moving_pivot"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "partition_moving_pivot_v3"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "rotation_reversal",
+ "sort_logger",
+]
+
+[[package]]
+name = "partition_three_way"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "pivot_first"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "pivot_last"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "pivot_median3"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "pivot_median_of_medians"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "pivot_middle"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "pivot_ninther"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
 name = "ppv-lite86"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -360,9 +746,9 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.76"
+version = "1.0.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95fc56cda0b5c3325f5fbbd7ff9fda9e02bb00bb3dac51252d2f1bfa1cb8cc8c"
+checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
 dependencies = [
  "unicode-ident",
 ]
@@ -391,6 +777,47 @@ name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
+
+[[package]]
+name = "quick_heap_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "heap_sort_lib",
+ "sort_logger",
+]
+
+[[package]]
+name = "quick_select_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "quick_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_core",
+ "array_vis_bench_traits",
+ "const_format",
+ "ctor",
+ "linkme",
+ "partition_block",
+ "partition_hoare",
+ "partition_lomuto",
+ "partition_moving_pivot",
+ "partition_three_way",
+ "pivot_first",
+ "pivot_last",
+ "pivot_median3",
+ "pivot_median_of_medians",
+ "pivot_middle",
+ "pivot_ninther",
+ "sort_logger",
+ "sort_registry_core",
+]
 
 [[package]]
 name = "quote"
@@ -502,6 +929,115 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
 
 [[package]]
+name = "reverse_storage_lib"
+version = "0.1.0"
+dependencies = [
+ "sort_logger",
+]
+
+[[package]]
+name = "rod_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_core",
+ "array_vis_bench_traits",
+ "const_format",
+ "ctor",
+ "linkme",
+ "sort_logger",
+ "sort_registry_core",
+]
+
+[[package]]
+name = "rotation_auxiliary"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "rotation_bridge"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "rotation_contrev"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "rotation_drill"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "rotation_grail"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "rotation_gries_mills"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "rotation_helix"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "rotation_juggling"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "rotation_piston"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "rotation_reversal"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "rotation_trinity"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "rotation_contrev",
+ "sort_logger",
+]
+
+[[package]]
 name = "rustix"
 version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -548,19 +1084,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
-name = "serde"
-version = "1.0.195"
+name = "semver"
+version = "1.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63261df402c67811e9ac6def069e4786148c4563f4b50fd4bf30aa370d626b02"
+checksum = "8a7852d02fc848982e0c167ef163aaff9cd91dc640ba85e263cb1ce46fae51cd"
+dependencies = [
+ "serde",
+ "serde_core",
+]
+
+[[package]]
+name = "serde"
+version = "1.0.228"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
+dependencies = [
+ "serde_core",
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_core"
+version = "1.0.228"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.195"
+version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46fe8f8603d81ba86327b23a2e9cdf49e1255fb94a4c5f297f6ee0547178ea2c"
+checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -573,9 +1129,85 @@ version = "1.0.111"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "176e46fa42316f18edd598015a5166857fc835ec732f5215eac6b7bdbf0a84f4"
 dependencies = [
+ "indexmap",
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "serde_spanned"
+version = "0.6.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf41e0cfaf7226dca15e8197172c295a782857fcb97fad1808a166870dee75a3"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "shell_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_core",
+ "array_vis_bench_traits",
+ "const_format",
+ "ctor",
+ "linkme",
+ "sort_logger",
+ "sort_registry_core",
+]
+
+[[package]]
+name = "small_sort_basic"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "small_sort_deferred_insertion"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "small_sort_insertion_strategy",
+ "sort_logger",
+]
+
+[[package]]
+name = "small_sort_insertion"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "small_sort_insertion_strategy",
+ "sort_logger",
+]
+
+[[package]]
+name = "small_sort_insertion_strategy"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
+name = "small_sort_network"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "small_sort_insertion_strategy",
+ "sort_logger",
+]
+
+[[package]]
+name = "small_sort_network_16"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "small_sort_insertion_strategy",
+ "small_sort_network",
+ "sort_logger",
 ]
 
 [[package]]
@@ -613,9 +1245,9 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
 name = "syn"
-version = "2.0.48"
+version = "2.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f3531638e407dfc0814761abb7c00a5b54992b849452a0646b7f65c9f770f3f"
+checksum = "e665b8803e7b1d2a727f4023456bbbbe74da67099c585258af0ad9c5013b9b99"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -634,6 +1266,68 @@ dependencies = [
  "rustix",
  "windows-sys",
 ]
+
+[[package]]
+name = "thiserror"
+version = "1.0.69"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.69"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "toml"
+version = "0.8.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc1beb996b9d83529a9e75c17a1686767d148d70663143c7854d8b4a09ced362"
+dependencies = [
+ "indexmap",
+ "serde",
+ "serde_spanned",
+ "toml_datetime",
+ "toml_edit",
+]
+
+[[package]]
+name = "toml_datetime"
+version = "0.6.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22cddaf88f4fbc13c51aebbf5f8eceb5c7c5a9da2ac40a13519eb5b0a0e8f11c"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.22.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41fe8c660ae4257887cf66394862d21dbca4a6ddd26f04a3560410406a2f819a"
+dependencies = [
+ "indexmap",
+ "serde",
+ "serde_spanned",
+ "toml_datetime",
+ "toml_write",
+ "winnow",
+]
+
+[[package]]
+name = "toml_write"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
 
 [[package]]
 name = "unarray"
@@ -691,6 +1385,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20064672db26d7cdc89c7798c48a0fdfac8213434a1186e5ef29fd560ae223d6"
 dependencies = [
  "wit-bindgen",
+]
+
+[[package]]
+name = "weak_heap_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "heap_sort_lib",
+ "reverse_storage_lib",
+ "sort_logger",
 ]
 
 [[package]]
@@ -767,6 +1471,15 @@ name = "windows_x86_64_msvc"
 version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dff9641d1cd4be8d1a070daf9e3773c5f67e78b4d9d42263020c057706765c04"
+
+[[package]]
+name = "winnow"
+version = "0.7.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df79d97927682d2fd8adb29682d1140b343be4ac0f08fd68b7765d9c059d3945"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "wit-bindgen"

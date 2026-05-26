@@ -1,0 +1,18 @@
+[package]
+name = "array_vis_bench_core"
+version = "0.1.0"
+edition = "2021"
+description = "Registry, harness, inputs, and visualiser shell shared by every array_vis_bench wiring crate. Owns AlgorithmEntry / ALGORITHMS, the run_*_with_input dispatchers, the correctness batteries, and the input shapes; algorithm leaves register into this crate's distributed slices."
+
+[lib]
+name = "array_vis_bench_core"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../array_vis_bench_traits" }
+sort_logger = { path = "../sort_logger" }
+sort_vis = { path = "../sort_vis" }
+sort_registry_core = { path = "../sort_registry_core" }
+linkme = "0.3"
+ctor = "0.2"
+rand = "0.8"

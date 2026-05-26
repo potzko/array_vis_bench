@@ -7,8 +7,8 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use serde::Serialize;
 
-use array_vis_bench::bench_registry;
-use array_vis_bench::utils::array_gen::get_rand_arr;
+use array_vis_bench_full::bench_registry;
+use array_vis_bench_full::utils::array_gen::get_rand_arr;
 use sort_registry_core::{get_sort_tree, SortTree};
 
 /// Base per-(sort × N) time budget. Sorts whose probe average exceeds the

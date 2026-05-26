@@ -2,18 +2,26 @@
 //!
 //! # Usage overview
 //!
-//! ## 1. Annotate concrete types in source files
+//! ## 1. Declare components in Cargo.toml metadata
 //!
-//! Place `component!` calls next to your type definitions:
+//! Each component is one entry in the
+//! `[package.metadata.array_vis_bench.components]` array-of-tables:
 //!
-//! ```rust,ignore
-//! // partitions.rs
-//! combo_codegen::component!(Partition, Lomuto, "lomuto");
-//! combo_codegen::component!(Partition, Hoare, "hoare");
+//! ```toml
+//! [[package.metadata.array_vis_bench.components]]
+//! role  = "Partition"
+//! type  = "Lomuto"
+//! label = "lomuto"
 //!
-//! // Works with const-generic types too:
-//! combo_codegen::component!(SmallSort, InsertionSmallSort<16>, "insertion: 16");
+//! [[package.metadata.array_vis_bench.components]]
+//! role  = "SmallSort"
+//! type  = "InsertionSmallSort<LinearInsertion, 16>"
+//! label = "insertion: 16"
 //! ```
+//!
+//! Unknown fields error at scan time (`deny_unknown_fields`); a typo'd
+//! key surfaces as a build failure pointing at the manifest. See
+//! [`metadata_scanner::scan_manifest`].
 //!
 //! ## 2. Annotate families next to their struct definitions
 //!
@@ -48,8 +56,13 @@
 //!
 //! fn main() {
 //!     let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
+//!     let manifest_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
 //!     let config = combo_codegen::CodegenConfig::for_sort_families();
-//!     let result = combo_codegen::scan("src/", &config).unwrap();
+//!     let mut result = combo_codegen::scan("src/", &config).unwrap();
+//!     for c in combo_codegen::scan_manifest(manifest_dir.join("Cargo.toml")).unwrap().iter().rev() {
+//!         result.registry.add_front(c.role.clone(), c.type_expr.clone(), c.label.clone());
+//!     }
+//!     result.validate().unwrap();
 //!     result.emit_rerun();
 //!     println!("cargo:rerun-if-changed=build.rs");
 //!     result.emit_families(&out_dir).unwrap();
@@ -73,33 +86,18 @@
 //! ```
 
 pub mod family;
+pub mod metadata_scanner;
 pub mod scanner;
 
 pub use family::{
     cross_axis, inline, Axis, AxisSpec, CodegenConfig, Combination, ComponentDef,
     ComponentRegistry, Family, FamilyDef, FieldValue,
 };
-pub use scanner::{scan, ScanResult};
-
-// ── component! macro ─────────────────────────────────────────────────────────
-
-/// Annotate a concrete type as implementing a named role.
-///
-/// This macro **expands to nothing**. It exists solely as a marker that the
-/// build-script scanner ([`scan`]) recognises and uses to populate a
-/// [`ComponentRegistry`].
-///
-/// # Arguments
-///
-/// | Position | Meaning | Example |
-/// |----------|---------|---------|
-/// | 1 | Role identifier | `Partition` |
-/// | 2 | Type expression | `InsertionSmallSort<16>` |
-/// | 3 | Human-readable label | `"insertion: 16"` |
-#[macro_export]
-macro_rules! component {
-    ($role:ident, $ty:ty, $label:literal) => {};
-}
+pub use metadata_scanner::{
+    scan_manifest, scan_workspace_components, scan_workspace_families, MetadataComponent,
+    MetadataError, MetadataFamily,
+};
+pub use scanner::{scan, ScanResult, ValidationError};
 
 // ── family! / sort_family! markers ───────────────────────────────────────────
 

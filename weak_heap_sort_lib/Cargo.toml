@@ -1,0 +1,33 @@
+[package]
+name = "weak_heap_sort_lib"
+version = "0.1.0"
+edition = "2021"
+description = "Weak heap sort — `WeakHeapSort<D, R>` generic over a `Direction` (Min/Max × Forward/Reverse layout) and a `ReverseStorage` (byte-per-bit or bit-packed). Stateful: each sort allocates a `Vec<u8>` of reverse / parity bits through the visualiser-aware aux family."
+
+[lib]
+name = "weak_heap_sort_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../array_vis_bench_traits" }
+heap_sort_lib = { path = "../heap_sort_lib" }
+reverse_storage_lib = { path = "../reverse_storage_lib" }
+sort_logger = { path = "../sort_logger" }
+
+[[package.metadata.array_vis_bench.families]]
+module = "weak_heap_sort"
+type   = "WeakHeapSort<{D}, {R}>"
+uses   = [
+    "heap_sort_lib::direction::{MinReverse, MaxForward}",
+    "reverse_storage_lib::{ByteStorage, BitStorage}",
+    "weak_heap_sort_lib::weak_heap_sort::WeakHeapSort",
+]
+axes = [
+    { var = "D", role = "HeapDirection" },
+    { var = "R", role = "ReverseStorage" },
+]
+name        = "weak heap sort"
+big_o       = "@inherited"
+stable      = false
+direct_sort = true
+path        = ["weak heap sorts", "{D}", "{R}"]

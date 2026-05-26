@@ -51,6 +51,25 @@ impl ComponentRegistry {
             .push(ComponentDef::new(type_expr, label));
     }
 
+    /// Insert a component at the front of its role list. The build script
+    /// uses this when merging components from a higher-priority source
+    /// (Cargo.toml metadata) into a registry already populated by the text
+    /// scanner. Iterating metadata in *reverse* declaration order and
+    /// calling `add_front` for each leaves them at the front in original
+    /// declaration order.
+    pub fn add_front(
+        &mut self,
+        role: impl Into<String>,
+        type_expr: impl Into<String>,
+        label: impl Into<String>,
+    ) {
+        self.roles
+            .entry(role.into())
+            .or_default()
+            .insert(0, ComponentDef::new(type_expr, label));
+    }
+
+
     /// All role names present in the registry, in arbitrary order.
     pub fn roles(&self) -> impl Iterator<Item = &str> {
         self.roles.keys().map(String::as_str)

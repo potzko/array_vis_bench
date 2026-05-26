@@ -6,8 +6,65 @@ members = [
     "sort_registry_core",
     "sort_registry_macro",
     "combo_codegen",
+    "array_vis_bench_traits",
+    "array_vis_bench_core",
+    "array_vis_bench_full",
+    "partition_lomuto",
+    "rotation_auxiliary",
+    "rotation_bridge",
+    "rotation_contrev",
+    "rotation_drill",
+    "rotation_grail",
+    "rotation_gries_mills",
+    "rotation_helix",
+    "rotation_juggling",
+    "rotation_piston",
+    "rotation_reversal",
+    "rotation_trinity",
+    "pivot_first",
+    "pivot_middle",
+    "pivot_last",
+    "pivot_median3",
+    "pivot_median_of_medians",
+    "pivot_ninther",
+    "partition_hoare",
+    "partition_three_way",
+    "partition_block",
+    "partition_moving_pivot",
+    "partition_moving_pivot_v3",
+    "small_sort_insertion_strategy",
+    "small_sort_basic",
+    "small_sort_insertion",
+    "small_sort_network",
+    "small_sort_network_16",
+    "small_sort_deferred_insertion",
+    "heap_internals_components",
+    "comb_ratio_components",
+    "gap_distribution_lib",
+    "reverse_storage_lib",
+    "quick_select_lib",
+    "dual_pivot_quick_select_lib",
+    "shell_sort_lib",
+    "insertion_sort_lib",
+    "comb_sort_lib",
+    "bubble_sort_lib",
+    "heap_sort_lib",
+    "merge_sort_lib",
+    "quick_sort_lib",
+    "quick_heap_sort_lib",
+    "cycle_sort_lib",
+    "beap_sort_lib",
+    "weak_heap_sort_lib",
+    "rod_sort_lib",
+    "circle_sort_lib",
+    "fun_sorts_lib",
 ]
 resolver = "2"
+
+# Binary-only crate: the library and codegen live in
+# `array_vis_bench_full`. This crate keeps the `array_vis_bench` name
+# stable for the CLI entry point (`cargo run` defaults to it) and the
+# auxiliary tools in `src/bin/`.
 
 [package]
 name = "array_vis_bench"
@@ -15,35 +72,26 @@ version = "0.1.0"
 edition = "2021"
 default-run = "array_vis_bench"
 
-[lib]
-name = "array_vis_bench"
-path = "src/lib.rs"
-
 [profile.dev]
 opt-level = 1
 
+[profile.release]
+# Single codegen unit so LLVM's inliner sees every monomorphisation in
+# one module — the macro-expanded `sort_family!` blocks land in the
+# wiring crate but the default 16-way split was keeping leaf-trait
+# methods (e.g. `ArityHeap::heapify`) out-of-line in the hot path.
+codegen-units = 1
+
 [dependencies]
+array_vis_bench_full = { path = "./array_vis_bench_full" }
+# Bin-only direct deps. Everything the binaries need from the algorithm
+# graph reaches them through `array_vis_bench_full`; these are for the
+# CLI / harness layer itself.
 rand = "0.8"
-lazy_static = "1.4.0"
-rayon = "1.7"
-clap = { version = "4.3", features = ["derive"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-sort_registry_macro = { path = "./sort_registry_macro" }
-sort_registry_core = { path = "./sort_registry_core" }
-ctor = "0.2"
-linkme = "0.3"
-const_format = "0.2"
 sort_logger = { path = "./sort_logger" }
 sort_vis = { path = "./sort_vis" }
-combo_codegen = { path = "./combo_codegen" }
-#gif = "0.13.1"
-
-[build-dependencies]
-combo_codegen = { path = "./combo_codegen" }
-
-[dev-dependencies]
-proptest = "1"
+sort_registry_core = { path = "./sort_registry_core" }
+fun_sorts_lib = { path = "./fun_sorts_lib" }
 
 [[bench]]
 name = "sorts"

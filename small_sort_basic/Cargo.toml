@@ -1,0 +1,37 @@
+[package]
+name = "small_sort_basic"
+version = "0.1.0"
+edition = "2021"
+description = "Bounded-size sentinel small sorts: NoSmallSort (threshold 0), Size1SmallSort, Size2SmallSort."
+
+[lib]
+name = "small_sort_basic"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../array_vis_bench_traits" }
+sort_logger = { path = "../sort_logger" }
+
+# `Size2SmallSort` is the only one of the three that gets registered as
+# a standalone algorithm (No/Size1 are pure sentinels). It's also the
+# only one with a `NonTrivialSmallSort` impl, so it has two component
+# blocks.
+[[package.metadata.array_vis_bench.components]]
+role  = "SmallSort"
+type  = "NoSmallSort"
+label = "no threshold"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "SmallSort"
+type  = "Size1SmallSort"
+label = "size: 1"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "SmallSort"
+type  = "Size2SmallSort"
+label = "size: 2"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "NonTrivialSmallSort"
+type  = "Size2SmallSort"
+label = "size: 2"
