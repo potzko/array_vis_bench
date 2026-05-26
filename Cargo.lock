@@ -56,6 +56,7 @@ name = "array_vis_bench"
 version = "0.1.0"
 dependencies = [
  "array_vis_bench_full",
+ "array_vis_bench_traits",
  "fun_sorts_lib",
  "rand 0.8.5",
  "sort_logger",
