@@ -1,5 +1,6 @@
 use array_vis_bench_traits::{
-    Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme,
+    Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme, PartitionSchemeV,
+    PartitionVisitor,
 };
 use sort_logger::SortLogger;
 
@@ -36,6 +37,45 @@ impl PartitionScheme for Hoare {
         }
         logger.swap(arr, 0, right);
         (right, right + 1)
+    }
+}
+
+impl PartitionSchemeV for Hoare {
+    const NAME: &'static str = "hoare";
+    const N_PIVOTS: usize = 1;
+    #[inline]
+    fn partition<T, U, V>(
+        arr: &mut [T],
+        logger: &mut U,
+        pivots: &[usize],
+        visitor: &mut V,
+    ) where
+        T: Ord + Copy,
+        U: ?Sized + SortLogger<T>,
+        V: PartitionVisitor,
+    {
+        let len = arr.len();
+        logger.swap(arr, pivots[0], 0);
+        let pivot = arr[0];
+
+        let mut left = 1;
+        let mut right = len - 1;
+        while left <= right {
+            while left <= right && logger.cmp_le_data(arr, left, pivot) {
+                left += 1;
+            }
+            while left <= right && logger.cmp_gt_data(arr, right, pivot) {
+                right -= 1;
+            }
+            if left < right {
+                logger.swap(arr, left, right);
+                left += 1;
+                right -= 1;
+            }
+        }
+        logger.swap(arr, 0, right);
+        visitor.unsorted(0..right);
+        visitor.unsorted(right + 1..len);
     }
 }
 

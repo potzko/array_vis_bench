@@ -12,7 +12,8 @@
 //! crate's `Cargo.toml`.
 
 use array_vis_bench_traits::{
-    Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme,
+    Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme, PartitionSchemeV,
+    PartitionVisitor,
 };
 use sort_logger::SortLogger;
 
@@ -42,6 +43,44 @@ impl PartitionScheme for Lomuto {
         }
         logger.swap(arr, small, len - 1);
         (small, small + 1)
+    }
+}
+
+// ── Visitor-pattern impl (A/B prototype) ────────────────────────────────────
+//
+// Same algorithm body as `PartitionScheme::partition` — only the return
+// shape differs. With `#[inline]` on the trait method, the two
+// `visitor.unsorted(...)` calls should lower to the same `mov`+`call`
+// pattern as the tuple-return version after monomorphisation.
+
+impl PartitionSchemeV for Lomuto {
+    const NAME: &'static str = "lomuto";
+    const N_PIVOTS: usize = 1;
+    #[inline]
+    fn partition<T, U, V>(
+        arr: &mut [T],
+        logger: &mut U,
+        pivots: &[usize],
+        visitor: &mut V,
+    ) where
+        T: Ord + Copy,
+        U: ?Sized + SortLogger<T>,
+        V: PartitionVisitor,
+    {
+        let len = arr.len();
+        logger.swap(arr, pivots[0], len - 1);
+        let pivot = arr[len - 1];
+
+        let mut small = 0;
+        for i in 0..len - 1 {
+            if logger.cmp_le_data(arr, i, pivot) {
+                logger.swap(arr, i, small);
+                small += 1;
+            }
+        }
+        logger.swap(arr, small, len - 1);
+        visitor.unsorted(0..small);
+        visitor.unsorted(small + 1..len);
     }
 }
 
