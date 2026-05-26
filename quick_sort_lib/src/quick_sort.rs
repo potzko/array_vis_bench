@@ -6,14 +6,24 @@ use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds, 
 use array_vis_bench_traits::SmallSort;
 use sort_logger::SortLogger;
 
-use array_vis_bench_traits::{PartitionScheme, PartitionVisitor};
-use array_vis_bench_traits::PivotSelector;
+use array_vis_bench_traits::{PartitionScheme, PartitionVisitor, PivotInput};
 
-pub struct QuickSort<P: PartitionScheme, V: PivotSelector, SS: SmallSort>(
+/// Generic quicksort. `P` decides how each partition step works
+/// (single- or dual-pivot — see [`PartitionScheme::N_PIVOTS`]); `V`
+/// decides where the pivots come from for each call (single- or
+/// dual-pivot — see [`PivotInput::N`]). The two arities must agree at
+/// the type level: `P::N_PIVOTS == V::N`.
+///
+/// Single-pivot variants are written as `QuickSort<Lomuto, FirstElement,
+/// NoSmallSort>`; dual-pivot as
+/// `QuickSort<Yaroslavskiy, CombinedSelector<First, Middle>, NoSmallSort>`.
+/// The old `DualPivotQuickSort` is gone — both shapes route through one
+/// recursive driver below.
+pub struct QuickSort<P: PartitionScheme, V: PivotInput, SS: SmallSort>(
     PhantomData<(P, V, SS)>,
 );
 
-impl<P: PartitionScheme, V: PivotSelector, SS: SmallSort> QuickSort<P, V, SS> {
+impl<P: PartitionScheme, V: PivotInput, SS: SmallSort> QuickSort<P, V, SS> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         quick_sort_recursive::<T, U, P, V, SS>(arr, logger);
     }
@@ -21,9 +31,9 @@ impl<P: PartitionScheme, V: PivotSelector, SS: SmallSort> QuickSort<P, V, SS> {
 
 /// Stack-resident visitor: collects up to 4 unsorted ranges the
 /// partition emits per call. 4 is the upper bound across every
-/// `PartitionScheme` impl in the workspace (3 for dual-pivot eq-pinning,
-/// 2 for everything else). Tagged `#[inline(always)]` so the visitor
-/// dispatch lowers to direct stack writes after monomorphisation.
+/// `PartitionScheme` impl in the workspace (3 for Yaroslavskiy
+/// dual-pivot, 2 for single-pivot). Tagged `#[inline(always)]` so the
+/// visitor dispatch lowers to direct stack writes after monomorphisation.
 struct QuickSortVisitor {
     ranges: [Range<usize>; 4],
     n: u8,
@@ -39,9 +49,7 @@ impl QuickSortVisitor {
 impl PartitionVisitor for QuickSortVisitor {
     #[inline(always)]
     fn unsorted(&mut self, r: Range<usize>) {
-        // Safety: trait contract caps it at 4 ranges per call (no
-        // partition in the workspace produces more); the index is
-        // bounded by construction.
+        // Safety: trait contract caps partition emit at 4 ranges per call.
         unsafe { *self.ranges.get_unchecked_mut(self.n as usize) = r };
         self.n += 1;
     }
@@ -51,7 +59,7 @@ fn quick_sort_recursive<
     T: Ord + Copy,
     U: ?Sized + SortLogger<T>,
     P: PartitionScheme,
-    V: PivotSelector,
+    V: PivotInput,
     SS: SmallSort,
 >(
     arr: &mut [T],
@@ -64,9 +72,13 @@ fn quick_sort_recursive<
     if arr.len() < 2 {
         return;
     }
-    let pivot_idx = V::select(arr, logger);
+    // Stack-allocated pivot buffer sized for the largest supported
+    // arity (2). After monomorphisation only `V::N` slots are
+    // populated; the rest are dead.
+    let mut pivots = [0usize; 2];
+    V::pick(arr, logger, &mut pivots);
     let mut visitor = QuickSortVisitor::new();
-    P::partition::<T, U, _>(arr, logger, &[pivot_idx], &mut visitor);
+    P::partition::<T, U, _>(arr, logger, &pivots[..V::N], &mut visitor);
     let n = visitor.n as usize;
     let mut i = 0;
     while i < n {
@@ -91,7 +103,7 @@ fn quick_sort_recursive<
 impl<P, V, SS> HasTimeBounds for QuickSort<P, V, SS>
 where
     P: PartitionScheme + HasTimeBounds,
-    V: PivotSelector + HasTimeBounds + PivotQuality,
+    V: PivotInput + HasTimeBounds + PivotQuality,
     SS: SmallSort,
 {
     /// Recursion depth × per-level (partition + pivot) × small-sort (O(1)).
@@ -114,7 +126,7 @@ where
 impl<P, V, SS> HasSpace for QuickSort<P, V, SS>
 where
     P: PartitionScheme + HasSpace,
-    V: PivotSelector + HasSpace,
+    V: PivotInput + HasSpace,
     SS: SmallSort + HasSpace,
 {
     /// Recursion adds O(log N) stack baseline; take the max with each
@@ -128,7 +140,7 @@ where
 impl<P, V, SS> HasStability for QuickSort<P, V, SS>
 where
     P: PartitionScheme + HasStability,
-    V: PivotSelector + HasStability,
+    V: PivotInput + HasStability,
     SS: SmallSort + HasStability,
 {
     const STABLE: bool = P::STABLE && V::STABLE && SS::STABLE;

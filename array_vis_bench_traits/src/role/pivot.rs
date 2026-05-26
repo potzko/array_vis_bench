@@ -30,6 +30,42 @@ pub trait DualPivotSelector {
     ) -> (usize, usize);
 }
 
+/// Unified pivot-source trait — produces `N` pivot indices into the
+/// caller's slice. `N` is an associated const so the partition arity
+/// can be matched against [`PartitionScheme::N_PIVOTS`] at the type
+/// level; both single-pivot ([`PivotSelector`]) and dual-pivot
+/// ([`DualPivotSelector`]) backends route through this.
+///
+/// A blanket impl lifts every [`PivotSelector`] into a `PivotInput`
+/// with `N = 1`, so existing `QuickSort<P, FirstElement, SS>`
+/// instantiations keep working unchanged. Dual-pivot types
+/// (`CombinedSelector`, `NintherDualPivot`) impl `PivotInput`
+/// directly with `N = 2`; they do *not* impl `PivotSelector`, so no
+/// trait-coherence conflict.
+pub trait PivotInput {
+    /// Number of pivot indices written into `out` per call.
+    const N: usize;
+    /// Write `Self::N` pivot indices into `out[..Self::N]`. The
+    /// indices need not be ordered — the partition normalises them.
+    fn pick<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &[T],
+        logger: &mut U,
+        out: &mut [usize],
+    );
+}
+
+impl<V: PivotSelector> PivotInput for V {
+    const N: usize = 1;
+    #[inline(always)]
+    fn pick<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &[T],
+        logger: &mut U,
+        out: &mut [usize],
+    ) {
+        out[0] = V::select(arr, logger);
+    }
+}
+
 // ── Shared helpers ───────────────────────────────────────────────────────────
 
 /// Return `(min_index, max_index)` among `arr[a]`, `arr[b]`, `arr[c]`

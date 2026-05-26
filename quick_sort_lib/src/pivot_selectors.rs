@@ -7,8 +7,11 @@ use sort_logger::SortLogger;
 // re-exported from this module — depend on them directly. Keeping the
 // re-exports here would force `quick_sort_lib` to drag every pivot leaf
 // into every consumer, defeating the per-leaf split.
-pub use array_vis_bench_traits::{DualPivotSelector, PivotSelector};
+pub use array_vis_bench_traits::{DualPivotSelector, PivotInput, PivotSelector};
 use array_vis_bench_traits::role::pivot::{median_index, min_max_index};
+use array_vis_bench_traits::{
+    Complexity, HasSpace, HasStability, HasTimeBounds, PivotQuality,
+};
 
 // NOTE: no `NAME` const on `DualPivotSelector`. `CombinedSelector<V1, V2>`'s
 // natural name would be `concat(V1::NAME, V2::NAME)`, but consts inside an
@@ -33,6 +36,23 @@ impl<V1: PivotSelector, V2: PivotSelector> DualPivotSelector for CombinedSelecto
         let p1 = V1::select(arr, logger);
         let p2 = if arr.len() > 1 { 1 + V2::select(&arr[1..], logger) } else { 0 };
         (p1, p2)
+    }
+}
+
+// Make CombinedSelector usable as a unified `PivotInput` with N = 2 so
+// the same `QuickSort<P, V, SS>` machinery covers single- and
+// dual-pivot variants.
+impl<V1: PivotSelector, V2: PivotSelector> PivotInput for CombinedSelector<V1, V2> {
+    const N: usize = 2;
+    #[inline(always)]
+    fn pick<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &[T],
+        logger: &mut U,
+        out: &mut [usize],
+    ) {
+        let (p1, p2) = <Self as DualPivotSelector>::select(arr, logger);
+        out[0] = p1;
+        out[1] = p2;
     }
 }
 
@@ -70,6 +90,83 @@ impl DualPivotSelector for NintherDualPivot {
     }
 }
 
+impl PivotInput for NintherDualPivot {
+    const N: usize = 2;
+    #[inline(always)]
+    fn pick<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &[T],
+        logger: &mut U,
+        out: &mut [usize],
+    ) {
+        let (p1, p2) = <Self as DualPivotSelector>::select(arr, logger);
+        out[0] = p1;
+        out[1] = p2;
+    }
+}
+
 // Composable annotations for the six simple pivots live in their leaf
 // crates. CombinedSelector / NintherDualPivot are foreign-trait-on-local-
 // type so they stay in this crate.
+
+// ── Composable annotations for the dual-pivot types ─────────────────
+//
+// `CombinedSelector<V1, V2>` chains two single-pivot selections, so
+// each axis's cost compounds: bounds sum over V1 + V2 and a degenerate
+// V1 *or* V2 is enough to make the composed selector degenerate.
+//
+// `NintherDualPivot` does a constant amount of work (9 lookups + 3
+// medians + 1 min-max) regardless of input size, and the sampling
+// strategy makes it non-degenerate by construction.
+
+impl<V1, V2> HasTimeBounds for CombinedSelector<V1, V2>
+where
+    V1: PivotSelector + HasTimeBounds,
+    V2: PivotSelector + HasTimeBounds,
+{
+    const WORST: Complexity = Complexity::sum(V1::WORST, V2::WORST);
+    const BEST: Complexity = Complexity::sum(V1::BEST, V2::BEST);
+    const AVERAGE: Complexity = Complexity::sum(V1::AVERAGE, V2::AVERAGE);
+}
+impl<V1, V2> HasSpace for CombinedSelector<V1, V2>
+where
+    V1: PivotSelector + HasSpace,
+    V2: PivotSelector + HasSpace,
+{
+    const SPACE: Complexity = Complexity::sum(V1::SPACE, V2::SPACE);
+}
+impl<V1, V2> HasStability for CombinedSelector<V1, V2>
+where
+    V1: PivotSelector + HasStability,
+    V2: PivotSelector + HasStability,
+{
+    // Pivot *selection* doesn't reorder elements, so STABLE is academic
+    // here; carry the AND for completeness.
+    const STABLE: bool = V1::STABLE && V2::STABLE;
+}
+impl<V1, V2> PivotQuality for CombinedSelector<V1, V2>
+where
+    V1: PivotSelector + PivotQuality,
+    V2: PivotSelector + PivotQuality,
+{
+    // Combined degenerates if either side does — the QuickSort worst
+    // case picks O(N) recursion depth.
+    const DEGENERATES: bool = V1::DEGENERATES || V2::DEGENERATES;
+}
+
+impl HasTimeBounds for NintherDualPivot {
+    const WORST: Complexity = Complexity::CONST;
+    const BEST: Complexity = Complexity::CONST;
+    const AVERAGE: Complexity = Complexity::CONST;
+}
+impl HasSpace for NintherDualPivot {
+    const SPACE: Complexity = Complexity::CONST;
+}
+impl HasStability for NintherDualPivot {
+    const STABLE: bool = true;
+}
+impl PivotQuality for NintherDualPivot {
+    // Sample-based selector targets ~1/3 and ~2/3 quantiles. Worst
+    // case still exists on adversarial inputs but is not the regular
+    // O(N) recursion-depth degeneration the simple pivots have.
+    const DEGENERATES: bool = false;
+}

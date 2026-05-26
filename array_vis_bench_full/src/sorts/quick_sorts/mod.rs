@@ -24,14 +24,11 @@ pub mod pivot_selectors {
 pub mod quick_sort {
     pub use quick_sort_lib::quick_sort::*;
 }
-pub mod dual_pivot_quick_sort {
-    pub use quick_sort_lib::dual_pivot_quick_sort::*;
-}
 pub mod deferred_quick_sort {
     pub use quick_sort_lib::deferred_quick_sort::*;
 }
-pub mod deferred_dual_pivot_quick_sort {
-    pub use quick_sort_lib::deferred_dual_pivot_quick_sort::*;
+pub mod yaroslavskiy {
+    pub use quick_sort_lib::yaroslavskiy::*;
 }
 
 pub mod combinations {
