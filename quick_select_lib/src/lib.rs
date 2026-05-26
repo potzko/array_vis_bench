@@ -37,6 +37,27 @@ impl<P: PartitionScheme, V: PivotSelector> QuickSelect for RecursiveQuickSelect<
     }
 }
 
+/// Helper visitor extracting `(left_end, right_start)` from a
+/// single-pivot PartitionScheme call. Records the end of the first
+/// unsorted range as `left_end` and the start of the second as
+/// `right_start`; everything in `[left_end, right_start)` is placed.
+struct BoundsVisitor { left_end: usize, right_start: usize, n: u8 }
+impl BoundsVisitor {
+    #[inline(always)]
+    fn new(len: usize) -> Self { Self { left_end: 0, right_start: len, n: 0 } }
+}
+impl array_vis_bench_traits::PartitionVisitor for BoundsVisitor {
+    #[inline(always)]
+    fn unsorted(&mut self, r: std::ops::Range<usize>) {
+        if self.n == 0 {
+            self.left_end = r.end;
+        } else if self.n == 1 {
+            self.right_start = r.start;
+        }
+        self.n += 1;
+    }
+}
+
 fn recursive<T, U, P, V>(arr: &mut [T], logger: &mut U, target: usize)
 where
     T: Ord + Copy,
@@ -48,11 +69,12 @@ where
         return;
     }
     let pivot_idx = V::select(arr, logger);
-    let (left_end, right_start) = P::partition(arr, logger, pivot_idx);
-    if target < left_end {
-        recursive::<T, U, P, V>(&mut arr[..left_end], logger, target);
-    } else if target >= right_start {
-        recursive::<T, U, P, V>(&mut arr[right_start..], logger, target - right_start);
+    let mut v = BoundsVisitor::new(arr.len());
+    P::partition(arr, logger, &[pivot_idx], &mut v);
+    if target < v.left_end {
+        recursive::<T, U, P, V>(&mut arr[..v.left_end], logger, target);
+    } else if target >= v.right_start {
+        recursive::<T, U, P, V>(&mut arr[v.right_start..], logger, target - v.right_start);
     }
     // else: target sits in [left_end, right_start) — already placed.
 }
@@ -73,12 +95,13 @@ impl<P: PartitionScheme, V: PivotSelector> QuickSelect for IterativeQuickSelect<
         while hi - lo >= 2 {
             let slice = &mut arr[lo..hi];
             let pivot_idx = V::select(slice, logger);
-            let (left_end, right_start) = P::partition(slice, logger, pivot_idx);
-            if target < left_end {
-                hi = lo + left_end;
-            } else if target >= right_start {
-                lo += right_start;
-                target -= right_start;
+            let mut v = BoundsVisitor::new(slice.len());
+            P::partition(slice, logger, &[pivot_idx], &mut v);
+            if target < v.left_end {
+                hi = lo + v.left_end;
+            } else if target >= v.right_start {
+                lo += v.right_start;
+                target -= v.right_start;
             } else {
                 return;
             }

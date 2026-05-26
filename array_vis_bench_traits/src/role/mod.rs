@@ -11,7 +11,7 @@ pub mod quick_select;
 pub mod rotation;
 pub mod small_sort;
 
-pub use partition::{PartitionScheme, PartitionSchemeV, PartitionVisitor};
+pub use partition::{PartitionScheme, PartitionVisitor};
 pub use pivot::{DualPivotSelector, PivotSelector};
 pub use quick_select::QuickSelect;
 pub use rotation::Rotation;

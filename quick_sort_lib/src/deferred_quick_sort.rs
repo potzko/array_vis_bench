@@ -1,9 +1,10 @@
 use std::marker::PhantomData;
+use std::ops::Range;
 
 use array_vis_bench_traits::DeferredSmallSort;
 use sort_logger::SortLogger;
 
-use array_vis_bench_traits::PartitionScheme;
+use array_vis_bench_traits::{PartitionScheme, PartitionVisitor};
 use array_vis_bench_traits::PivotSelector;
 
 pub struct DeferredQuickSort<P: PartitionScheme, V: PivotSelector, DSS: DeferredSmallSort>(
@@ -14,6 +15,22 @@ impl<P: PartitionScheme, V: PivotSelector, DSS: DeferredSmallSort> DeferredQuick
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         deferred_recursive::<T, U, P, V, DSS>(arr, logger);
         DSS::final_pass(arr, logger);
+    }
+}
+
+/// Same visitor pattern as `quick_sort::QuickSortVisitor` — kept local
+/// so the two QuickSort families don't coupling-leak through a shared
+/// internal helper.
+struct DeferredVisitor {
+    ranges: [Range<usize>; 4],
+    n: u8,
+}
+
+impl PartitionVisitor for DeferredVisitor {
+    #[inline(always)]
+    fn unsorted(&mut self, r: Range<usize>) {
+        unsafe { *self.ranges.get_unchecked_mut(self.n as usize) = r };
+        self.n += 1;
     }
 }
 
@@ -34,9 +51,15 @@ fn deferred_recursive<
         return;
     }
     let pivot_idx = V::select(arr, logger);
-    let (left_end, right_start) = P::partition(arr, logger, pivot_idx);
-    deferred_recursive::<T, U, P, V, DSS>(&mut arr[..left_end], logger);
-    deferred_recursive::<T, U, P, V, DSS>(&mut arr[right_start..], logger);
+    let mut visitor = DeferredVisitor { ranges: [0..0, 0..0, 0..0, 0..0], n: 0 };
+    P::partition::<T, U, _>(arr, logger, &[pivot_idx], &mut visitor);
+    let n = visitor.n as usize;
+    let mut i = 0;
+    while i < n {
+        let r = visitor.ranges[i].clone();
+        deferred_recursive::<T, U, P, V, DSS>(&mut arr[r], logger);
+        i += 1;
+    }
 }
 
 // Same composition profile as QuickSort: worst depends on pivot quality,
