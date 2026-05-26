@@ -51,12 +51,13 @@ direct_sort = true
 asm         = true
 path        = ["quick sorts", "classic", "{P}", "{V}", "{SS}"]
 
-# ── QuickSort dual pivot (DPS × SS) ──
+# ── QuickSort dual pivot (DPS × SS), routed through unified QuickSort ──
 [[package.metadata.array_vis_bench.families]]
 module = "quick_sorts"
-type   = "DualPivotQuickSort<{DPS}, {SS}>"
+type   = "QuickSort<Yaroslavskiy, {DPS}, {SS}>"
 uses   = [
-    "quick_sort_lib::dual_pivot_quick_sort::DualPivotQuickSort",
+    "quick_sort_lib::quick_sort::QuickSort",
+    "quick_sort_lib::yaroslavskiy::Yaroslavskiy",
     "quick_sort_lib::pivot_selectors::{CombinedSelector, NintherDualPivot}",
     "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
     "small_sort_insertion::InsertionSmallSort",
@@ -113,12 +114,13 @@ stable      = false
 direct_sort = true
 path        = ["quick sorts", "classic deferred", "{P}", "{V}", "{DSS}"]
 
-# ── DeferredDualPivotQuickSort (DPS × DSS) ──
+# ── DeferredQuickSort dual pivot (DPS × DSS), routed through unified DeferredQuickSort ──
 [[package.metadata.array_vis_bench.families]]
 module = "quick_sorts"
-type   = "DeferredDualPivotQuickSort<{DPS}, {DSS}>"
+type   = "DeferredQuickSort<Yaroslavskiy, {DPS}, {DSS}>"
 uses   = [
-    "quick_sort_lib::deferred_dual_pivot_quick_sort::DeferredDualPivotQuickSort",
+    "quick_sort_lib::deferred_quick_sort::DeferredQuickSort",
+    "quick_sort_lib::yaroslavskiy::Yaroslavskiy",
     "quick_sort_lib::pivot_selectors::{CombinedSelector, NintherDualPivot}",
     "small_sort_deferred_insertion::DeferredInsertion",
     "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
