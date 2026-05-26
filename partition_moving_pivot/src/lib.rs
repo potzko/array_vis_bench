@@ -1,5 +1,6 @@
 use array_vis_bench_traits::{
-    Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme,
+    Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme, PartitionSchemeV,
+    PartitionVisitor,
 };
 use sort_logger::SortLogger;
 
@@ -31,6 +32,42 @@ impl PartitionScheme for MovingPivot {
         }
         logger.cond_swap_lt(arr, high, low);
         (high, high)
+    }
+}
+
+impl PartitionSchemeV for MovingPivot {
+    const NAME: &'static str = "moving pivot";
+    const N_PIVOTS: usize = 1;
+    #[inline]
+    fn partition<T, U, V>(
+        arr: &mut [T],
+        logger: &mut U,
+        pivots: &[usize],
+        visitor: &mut V,
+    ) where
+        T: Ord + Copy,
+        U: ?Sized + SortLogger<T>,
+        V: PartitionVisitor,
+    {
+        let len = arr.len();
+        logger.swap(arr, pivots[0], 0);
+
+        let mut low = 0;
+        let mut high = len - 1;
+        while low < high - 1 {
+            if logger.cond_swap_le(arr, low + 1, low) {
+                low += 1;
+            } else {
+                logger.swap(arr, low + 1, high);
+                high -= 1;
+            }
+        }
+        logger.cond_swap_lt(arr, high, low);
+        // Mirrors the tuple impl: `(high, high)` — the pivot is reprocessed
+        // in the right sub-call (it's at index `high` and `arr[high..]`
+        // includes it). Same convention here for parity.
+        visitor.unsorted(0..high);
+        visitor.unsorted(high..len);
     }
 }
 

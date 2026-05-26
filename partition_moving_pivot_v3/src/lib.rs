@@ -9,7 +9,8 @@
 use std::marker::PhantomData;
 
 use array_vis_bench_traits::{
-    Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme, Rotation,
+    Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme, PartitionSchemeV,
+    PartitionVisitor, Rotation,
 };
 use rotation_reversal::ReversalRotation;
 use sort_logger::SortLogger;
@@ -101,6 +102,27 @@ impl PartitionScheme for MovingPivotV3<ReversalRotation> {
         pivot_idx: usize,
     ) -> (usize, usize) {
         Self::partition_impl(arr, logger, pivot_idx)
+    }
+}
+
+impl PartitionSchemeV for MovingPivotV3<ReversalRotation> {
+    const NAME: &'static str = "moving pivot v3<reversal>";
+    const N_PIVOTS: usize = 1;
+    #[inline]
+    fn partition<T, U, V>(
+        arr: &mut [T],
+        logger: &mut U,
+        pivots: &[usize],
+        visitor: &mut V,
+    ) where
+        T: Ord + Copy,
+        U: ?Sized + SortLogger<T>,
+        V: PartitionVisitor,
+    {
+        let len = arr.len();
+        let (left_end, right_start) = Self::partition_impl(arr, logger, pivots[0]);
+        visitor.unsorted(0..left_end);
+        visitor.unsorted(right_start..len);
     }
 }
 

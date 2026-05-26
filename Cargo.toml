@@ -92,6 +92,7 @@ lto = "thin"
 
 [dependencies]
 array_vis_bench_full = { path = "./array_vis_bench_full" }
+array_vis_bench_traits = { path = "./array_vis_bench_traits" }
 # Bin-only direct deps. Everything the binaries need from the algorithm
 # graph reaches them through `array_vis_bench_full`; these are for the
 # CLI / harness layer itself.
