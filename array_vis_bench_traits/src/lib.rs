@@ -22,7 +22,8 @@ pub use complexity::{Complexity, Special};
 pub use composable::{HasSpace, HasStability, HasTimeBounds, PivotQuality};
 pub use role::{
     DeferredSmallSort, DualPivotSelector, InsertionStrategy, NonTrivialSmallSort, PartitionScheme,
-    PivotSelector, QuickSelect, Rotation, SetSizeSmallSort, SmallSort, SmallSortAdapter,
+    PartitionSchemeV, PartitionVisitor, PivotSelector, QuickSelect, Rotation, SetSizeSmallSort,
+    SmallSort, SmallSortAdapter,
 };
 pub use role::rotation::reverse;
 pub use role::small_sort::insertion_sort_with;
