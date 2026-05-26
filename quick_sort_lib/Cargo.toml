@@ -2,34 +2,15 @@
 name = "quick_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Quick sort family — `QuickSort<P, V, SS>`, `DualPivotQuickSort<DPS, SS>` (Yaroslavskiy), deferred variants for both, and the 30 standalone partition registrations (each P × V pair as `Category::Partition`). Hosts `CombinedSelector` and `NintherDualPivot` because the dual-pivot family is foreign-trait-on-local-type and can't live in a per-pivot leaf."
+description = "Quick sort family — `QuickSort<P, V, SS>`, `DualPivotQuickSort<DPS, SS>` (Yaroslavskiy), and deferred variants for both. Hosts `CombinedSelector` and `NintherDualPivot` because the dual-pivot family is foreign-trait-on-local-type and can't live in a per-pivot leaf. Standalone `(P × V)` partition registrations now live in the sibling `quick_partition_registry` crate."
 
 [lib]
 name = "quick_sort_lib"
 path = "src/lib.rs"
 
 [dependencies]
-array_vis_bench_core = { path = "../array_vis_bench_core" }
 array_vis_bench_traits = { path = "../array_vis_bench_traits" }
 sort_logger = { path = "../sort_logger" }
-sort_registry_core = { path = "../sort_registry_core" }
-linkme = "0.3"
-ctor = "0.2"
-const_format = "0.2"
-# Standalone-partition registry imports every partition + pivot variant
-# directly. The family TOML uses paths reach them through the same
-# leaves at codegen time.
-partition_block = { path = "../partition_block" }
-partition_hoare = { path = "../partition_hoare" }
-partition_lomuto = { path = "../partition_lomuto" }
-partition_moving_pivot = { path = "../partition_moving_pivot" }
-partition_three_way = { path = "../partition_three_way" }
-pivot_first = { path = "../pivot_first" }
-pivot_last = { path = "../pivot_last" }
-pivot_median3 = { path = "../pivot_median3" }
-pivot_median_of_medians = { path = "../pivot_median_of_medians" }
-pivot_middle = { path = "../pivot_middle" }
-pivot_ninther = { path = "../pivot_ninther" }
 
 # ── QuickSort classic (P × V × SS) ──
 [[package.metadata.array_vis_bench.families]]

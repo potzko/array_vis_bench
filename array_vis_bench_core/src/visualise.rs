@@ -1,3 +1,9 @@
+//! Run-and-render orchestration. Given a registered algorithm name +
+//! a registered input name + an `Mp4Config`, drive the bench harness
+//! through a [`VisualizerLogger`], then hand the captured event log to
+//! `sort_vis::Mp4Visualizer` for rendering. The main binary's
+//! interactive picker is the primary caller.
+
 use crate::bench_registry::{AlgorithmEntry, RunConfig, ALGORITHMS};
 use sort_logger::{SortLogger, VisualizerLogger};
 use sort_vis::{Mp4Config, Mp4Visualizer, Visualizer};

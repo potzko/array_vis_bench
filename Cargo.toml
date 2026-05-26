@@ -9,6 +9,7 @@ members = [
     "array_vis_bench_traits",
     "array_vis_bench_core",
     "array_vis_bench_full",
+    "array_vis_bench_min",
     "partition_lomuto",
     "rotation_auxiliary",
     "rotation_bridge",
@@ -58,6 +59,9 @@ members = [
     "rod_sort_lib",
     "circle_sort_lib",
     "fun_sorts_lib",
+    "quick_partition_registry",
+    "merge_standalone_registry",
+    "quick_select_registry",
 ]
 resolver = "2"
 
@@ -81,6 +85,10 @@ opt-level = 1
 # wiring crate but the default 16-way split was keeping leaf-trait
 # methods (e.g. `ArityHeap::heapify`) out-of-line in the hot path.
 codegen-units = 1
+# ThinLTO on top: lets the linker import functions across the crate
+# graph for inlining, smoothing the per-crate-add layout drift that
+# was pushing the heap gate over 1.05 after each registry split.
+lto = "thin"
 
 [dependencies]
 array_vis_bench_full = { path = "./array_vis_bench_full" }

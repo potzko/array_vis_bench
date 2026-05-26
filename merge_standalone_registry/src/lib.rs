@@ -1,13 +1,22 @@
 //! Register rotation-based merges as standalone `Category::Merge`
 //! algorithms — visualisable, testable, benchable through the same
 //! pipeline as sorts. Pure cross-product registration; the merge
-//! algorithms themselves live in `rotation_merge.rs`.
+//! algorithms themselves live in `merge_sort_lib::rotation_merge`.
 //!
 //! Two merge families × eleven rotations = twenty-two leaves. Each
 //! leaf gets its own private inner `mod` so duplicate identifiers
 //! (`ENTRY`, `merge_dyn`, etc.) don't collide across invocations.
+//!
+//! This crate has no public API beyond [`LINK_ANCHOR`] — its job is the
+//! `#[ctor]` + `#[linkme::distributed_slice]` side-effects that fire
+//! when it's linked. Downstream wiring crates reference [`LINK_ANCHOR`]
+//! from a `#[used]` static so the linker doesn't drop the object file
+//! under `--gc-sections`.
 
-use crate::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge};
+/// Force-link anchor — see module docs.
+pub static LINK_ANCHOR: () = ();
+
+use merge_sort_lib::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge};
 use rotation_auxiliary::AuxiliaryRotation;
 use rotation_bridge::BridgeRotation;
 use rotation_contrev::ContrevRotation;
@@ -39,7 +48,7 @@ macro_rules! register_merge {
                 mid: usize,
                 logger: &mut U,
             ) {
-                use crate::rotation_merge::RotationMerge;
+                use merge_sort_lib::rotation_merge::RotationMerge;
                 let scratch_size = <$merge>::scratch_size(arr.len());
                 if scratch_size == 0 {
                     <$merge>::merge(arr, mid, &mut [], logger);
@@ -174,7 +183,7 @@ register_smaller_side_merges! {
 // `auxiliary_merge.rs`) with concrete impls. Each impl is registered
 // under `/merges/auxiliary/<variant>/`.
 
-use crate::auxiliary_merge::{AuxMerge, FullCopyAuxMerge, HalfCopyAuxMerge};
+use merge_sort_lib::auxiliary_merge::{AuxMerge, FullCopyAuxMerge, HalfCopyAuxMerge};
 
 macro_rules! register_aux_merge {
     ($mod:ident, $merge:ty) => {

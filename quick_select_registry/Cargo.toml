@@ -1,0 +1,32 @@
+[package]
+name = "quick_select_registry"
+version = "0.1.0"
+edition = "2021"
+description = "Standalone-quick-select registry: registers the 40 single-pivot (strategy × partition × pivot) + 8 dual-pivot quick-select combinations as `Category::QuickSelect` algorithms. Split out of the wiring crate so the quick-select algorithm leaves (`quick_select_lib`, `dual_pivot_quick_select_lib`) stay lean — depend on this crate only if you want the standalone quick-select menu entries."
+
+[lib]
+name = "quick_select_registry"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_core = { path = "../array_vis_bench_core" }
+array_vis_bench_traits = { path = "../array_vis_bench_traits" }
+sort_logger = { path = "../sort_logger" }
+sort_registry_core = { path = "../sort_registry_core" }
+linkme = "0.3"
+ctor = "0.2"
+const_format = "0.2"
+quick_select_lib = { path = "../quick_select_lib" }
+dual_pivot_quick_select_lib = { path = "../dual_pivot_quick_select_lib" }
+quick_sort_lib = { path = "../quick_sort_lib" }  # for CombinedSelector + NintherDualPivot
+# Single-pivot side uses 4 of the 5 partitions (Lomuto, Hoare, ThreeWay, Block)
+# and 5 of the 6 pivots (everything except MedianOfMedians).
+partition_block = { path = "../partition_block" }
+partition_hoare = { path = "../partition_hoare" }
+partition_lomuto = { path = "../partition_lomuto" }
+partition_three_way = { path = "../partition_three_way" }
+pivot_first = { path = "../pivot_first" }
+pivot_last = { path = "../pivot_last" }
+pivot_median3 = { path = "../pivot_median3" }
+pivot_middle = { path = "../pivot_middle" }
+pivot_ninther = { path = "../pivot_ninther" }

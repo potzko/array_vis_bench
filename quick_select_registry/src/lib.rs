@@ -8,16 +8,30 @@
 //! Single-pivot cross-product: 2 (Recursive/Iterative) × 4 partitions
 //! (Lomuto/Hoare/ThreeWay/Block) × 5 pivots = 40 leaves.
 //! Dual-pivot cross-product: 2 × 4 selectors = 8 leaves.
+//!
+//! This crate has no public API beyond [`LINK_ANCHOR`] — its job is the
+//! `#[ctor]` + `#[linkme::distributed_slice]` side-effects that fire
+//! when it's linked. Downstream wiring crates reference [`LINK_ANCHOR`]
+//! from a `#[used]` static so the linker doesn't drop the object file
+//! under `--gc-sections`.
 
-use crate::sorts::quick_selects::quick_select::{IterativeQuickSelect, RecursiveQuickSelect};
-use crate::sorts::quick_selects::dual_pivot_quick_select::{
+/// Force-link anchor — see module docs.
+pub static LINK_ANCHOR: () = ();
+
+use quick_select_lib::{IterativeQuickSelect, RecursiveQuickSelect};
+use dual_pivot_quick_select_lib::{
     IterativeDualPivotQuickSelect, RecursiveDualPivotQuickSelect,
 };
-use crate::sorts::quick_sorts::partitions::{Block, Hoare, Lomuto, ThreeWay};
-use crate::sorts::quick_sorts::pivot_selectors::{
-    CombinedSelector, FirstElement, LastElement, MedianOfThree, MiddleElement, NintherDualPivot,
-    Ninther,
-};
+use partition_block::Block;
+use partition_hoare::Hoare;
+use partition_lomuto::Lomuto;
+use partition_three_way::ThreeWay;
+use quick_sort_lib::pivot_selectors::{CombinedSelector, NintherDualPivot};
+use pivot_first::FirstElement;
+use pivot_last::LastElement;
+use pivot_median3::MedianOfThree;
+use pivot_middle::MiddleElement;
+use pivot_ninther::Ninther;
 
 // ── Single-pivot wrapper ─────────────────────────────────────────────────────
 
@@ -25,10 +39,10 @@ macro_rules! register_quick_select_single {
     ($mod:ident, $strategy:ident, $strat_name:expr, $part:ty, $piv:ty) => {
         mod $mod {
             use super::*;
-            use crate::sorts::quick_selects::quick_select::QuickSelect;
-            use crate::sorts::quick_sorts::partitions::PartitionScheme;
-            use crate::sorts::quick_sorts::pivot_selectors::PivotSelector;
-            use crate::traits::log_traits::{NoOpLogger, SortLogger};
+            use array_vis_bench_traits::QuickSelect;
+            use array_vis_bench_traits::PartitionScheme;
+            use array_vis_bench_traits::PivotSelector;
+            use sort_logger::{NoOpLogger, SortLogger};
 
             type QS = $strategy<$part, $piv>;
 
@@ -63,15 +77,15 @@ macro_rules! register_quick_select_single {
 
             fn run_with_input(
                 input_name: &str,
-                config: &crate::bench_registry::RunConfig,
+                config: &array_vis_bench_core::bench_registry::RunConfig,
                 logger: &mut dyn SortLogger<usize>,
             ) {
-                crate::bench_registry::run_quick_select_with_input(
+                array_vis_bench_core::bench_registry::run_quick_select_with_input(
                     input_name, config, select_dyn, logger,
                 );
             }
             fn run_correctness() {
-                crate::bench_registry::correctness::quick_select_battery(
+                array_vis_bench_core::bench_registry::correctness::quick_select_battery(
                     select_noop, NAME,
                 );
             }
@@ -80,16 +94,16 @@ macro_rules! register_quick_select_single {
             // type's compositional impls. Worst flips between O(N) and
             // O(N²) depending on whether the pivot can degenerate;
             // Median-of-medians is the only non-degenerating pivot.
-            #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
-            pub(super) static ENTRY: crate::bench_registry::AlgorithmEntry =
-                crate::bench_registry::AlgorithmEntry {
+            #[linkme::distributed_slice(array_vis_bench_core::bench_registry::ALGORITHMS)]
+            pub(super) static ENTRY: array_vis_bench_core::bench_registry::AlgorithmEntry =
+                array_vis_bench_core::bench_registry::AlgorithmEntry {
                     name: NAME,
-                    category: crate::bench_registry::Category::QuickSelect,
-                    worst: <QS as crate::traits::composable::HasTimeBounds>::WORST,
-                    best: <QS as crate::traits::composable::HasTimeBounds>::BEST,
-                    average: <QS as crate::traits::composable::HasTimeBounds>::AVERAGE,
-                    space: <QS as crate::traits::composable::HasSpace>::SPACE,
-                    stable: <QS as crate::traits::composable::HasStability>::STABLE,
+                    category: array_vis_bench_core::bench_registry::Category::QuickSelect,
+                    worst: <QS as array_vis_bench_traits::composable::HasTimeBounds>::WORST,
+                    best: <QS as array_vis_bench_traits::composable::HasTimeBounds>::BEST,
+                    average: <QS as array_vis_bench_traits::composable::HasTimeBounds>::AVERAGE,
+                    space: <QS as array_vis_bench_traits::composable::HasSpace>::SPACE,
+                    stable: <QS as array_vis_bench_traits::composable::HasStability>::STABLE,
                     adaptive: false,
                     max_input_size: None,
                     run_with_input,
@@ -100,8 +114,8 @@ macro_rules! register_quick_select_single {
             fn register_path() {
                 sort_registry_core::register_sort_path(
                     NAME,
-                    <QS as crate::traits::composable::HasTimeBounds>::WORST.as_str(),
-                    <QS as crate::traits::composable::HasStability>::STABLE,
+                    <QS as array_vis_bench_traits::composable::HasTimeBounds>::WORST.as_str(),
+                    <QS as array_vis_bench_traits::composable::HasStability>::STABLE,
                     &[
                         "quick selects",
                         $strat_name,
@@ -109,17 +123,6 @@ macro_rules! register_quick_select_single {
                         <$piv as PivotSelector>::NAME,
                     ],
                 );
-            }
-
-            #[cfg(test)]
-            mod qs_test {
-                #[test]
-                fn correctness() {
-                    crate::bench_registry::test_helpers::check_sort_subprocess_assert(
-                        &super::ENTRY,
-                        crate::bench_registry::test_helpers::DEFAULT_TIMEOUT,
-                    );
-                }
             }
         }
     };
@@ -131,8 +134,8 @@ macro_rules! register_quick_select_dual {
     ($mod:ident, $strategy:ident, $strat_name:expr, $dps:ty, $dps_name:expr) => {
         mod $mod {
             use super::*;
-            use crate::sorts::quick_selects::quick_select::QuickSelect;
-            use crate::traits::log_traits::{NoOpLogger, SortLogger};
+            use array_vis_bench_traits::QuickSelect;
+            use sort_logger::{NoOpLogger, SortLogger};
 
             type QS = $strategy<$dps>;
 
@@ -166,29 +169,29 @@ macro_rules! register_quick_select_dual {
 
             fn run_with_input(
                 input_name: &str,
-                config: &crate::bench_registry::RunConfig,
+                config: &array_vis_bench_core::bench_registry::RunConfig,
                 logger: &mut dyn SortLogger<usize>,
             ) {
-                crate::bench_registry::run_quick_select_with_input(
+                array_vis_bench_core::bench_registry::run_quick_select_with_input(
                     input_name, config, select_dyn, logger,
                 );
             }
             fn run_correctness() {
-                crate::bench_registry::correctness::quick_select_battery(
+                array_vis_bench_core::bench_registry::correctness::quick_select_battery(
                     select_noop, NAME,
                 );
             }
 
-            #[linkme::distributed_slice(crate::bench_registry::ALGORITHMS)]
-            pub(super) static ENTRY: crate::bench_registry::AlgorithmEntry =
-                crate::bench_registry::AlgorithmEntry {
+            #[linkme::distributed_slice(array_vis_bench_core::bench_registry::ALGORITHMS)]
+            pub(super) static ENTRY: array_vis_bench_core::bench_registry::AlgorithmEntry =
+                array_vis_bench_core::bench_registry::AlgorithmEntry {
                     name: NAME,
-                    category: crate::bench_registry::Category::QuickSelect,
-                    worst: <QS as crate::traits::composable::HasTimeBounds>::WORST,
-                    best: <QS as crate::traits::composable::HasTimeBounds>::BEST,
-                    average: <QS as crate::traits::composable::HasTimeBounds>::AVERAGE,
-                    space: <QS as crate::traits::composable::HasSpace>::SPACE,
-                    stable: <QS as crate::traits::composable::HasStability>::STABLE,
+                    category: array_vis_bench_core::bench_registry::Category::QuickSelect,
+                    worst: <QS as array_vis_bench_traits::composable::HasTimeBounds>::WORST,
+                    best: <QS as array_vis_bench_traits::composable::HasTimeBounds>::BEST,
+                    average: <QS as array_vis_bench_traits::composable::HasTimeBounds>::AVERAGE,
+                    space: <QS as array_vis_bench_traits::composable::HasSpace>::SPACE,
+                    stable: <QS as array_vis_bench_traits::composable::HasStability>::STABLE,
                     adaptive: false,
                     max_input_size: None,
                     run_with_input,
@@ -199,25 +202,14 @@ macro_rules! register_quick_select_dual {
             fn register_path() {
                 sort_registry_core::register_sort_path(
                     NAME,
-                    <QS as crate::traits::composable::HasTimeBounds>::WORST.as_str(),
-                    <QS as crate::traits::composable::HasStability>::STABLE,
+                    <QS as array_vis_bench_traits::composable::HasTimeBounds>::WORST.as_str(),
+                    <QS as array_vis_bench_traits::composable::HasStability>::STABLE,
                     &[
                         "quick selects",
                         const_format::concatcp!($strat_name, " (dual pivot)"),
                         $dps_name,
                     ],
                 );
-            }
-
-            #[cfg(test)]
-            mod qs_test {
-                #[test]
-                fn correctness() {
-                    crate::bench_registry::test_helpers::check_sort_subprocess_assert(
-                        &super::ENTRY,
-                        crate::bench_registry::test_helpers::DEFAULT_TIMEOUT,
-                    );
-                }
             }
         }
     };

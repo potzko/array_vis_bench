@@ -1,30 +1,58 @@
+//! Algorithm + input registry — the runtime spine of the workspace.
+//!
+//! Every algorithm leaf (sorts, rotations, partitions, merges,
+//! small-sorts, quick-selects) registers itself into [`ALGORITHMS`] via
+//! `#[linkme::distributed_slice]` at link time. The harness — bench,
+//! visualiser, correctness tests — sees one type-erased
+//! [`AlgorithmEntry`] regardless of category, and dispatches through
+//! the two fn pointers each entry carries:
+//!
+//! - `run_with_input` — drives the algorithm with a dyn-logger.
+//! - `run_correctness` — drives the category's correctness battery.
+//!
+//! Input shapes are registered separately, per category, into a
+//! distributed slice (`SORT_INPUTS`, `ROTATION_INPUTS`, etc.). The
+//! algorithm picks its input by name at runtime; the input
+//! implements its category's `*Input` trait to translate a
+//! [`RunConfig`] into the algorithm's natural-shape argument list.
+//!
+//! Library consumers usually only read `ALGORITHMS` (and friends);
+//! producers of new algorithms register through the `sort_family!` /
+//! `register_input!` macros and never touch the registry directly.
+
 use linkme::distributed_slice;
 
 // ── Generic algorithm registry ───────────────────────────────────────────────
-//
-// `AlgorithmEntry` covers every algorithm category (sorts, rotations,
-// partitions, merges, small-sorts). Each per-category `*_family!` macro
-// emits one entry per concrete instantiation, bundling:
-//   - the natural-signature entry point (typed via `run_default`),
-//   - the category's correctness battery (typed via `run_correctness`),
-//   - shared metadata (name, big-O, stability where applicable).
-//
-// The registry layer is intentionally type-erased: the harness — vis,
-// bench, tests — sees one shape regardless of category. The category
-// enum exists only for menu grouping and category-specific verification
-// logic (which lives inside `run_correctness`, NOT in the harness).
 
+/// What kind of algorithm an [`AlgorithmEntry`] describes.
+///
+/// The harness layer (bench, vis, tests) is category-agnostic — this
+/// enum exists for menu grouping and to let the per-category
+/// correctness batteries pick the right verification logic.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Category {
+    /// A full sort. Input: `Vec<usize>`. Postcondition: sorted ascending.
     Sort,
+    /// A slice rotation. Input: `(Vec<usize>, split)`. Postcondition:
+    /// elements at `[split..]` are now at the front.
     Rotation,
+    /// One partition step around a pivot. Input: `Vec<usize>`. Output:
+    /// `(left_end, right_start)` boundary indices.
     Partition,
+    /// A single merge of two adjacent sorted runs. Input:
+    /// `(Vec<usize>, mid)`. Postcondition: sorted ascending.
     Merge,
+    /// A small-input fast path (size threshold typically ≤ 32).
     SmallSort,
+    /// k-th-order-statistic finder. Input: `(Vec<usize>, target)`.
+    /// Postcondition: the element that would land at `target` after a
+    /// full sort is at `arr[target]`.
     QuickSelect,
 }
 
 impl Category {
+    /// Lowercase short name (used in menu paths and error messages).
+    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             Category::Sort => "sort",
@@ -60,24 +88,33 @@ impl Default for RunConfig {
 // `register_input!` macros below, so they're selectable by name at
 // runtime without giving up the typed `generate` signature.
 
+/// Generates the input array for a sort benchmark / visualisation.
 pub trait SortInput {
+    /// Build a `Vec<usize>` of length `config.size` following this
+    /// input's shape (random / sorted / reversed / sawtooth / …).
     fn generate(config: &RunConfig) -> Vec<usize>;
 }
 
+/// Generates the input for a single rotation step.
 pub trait RotationInput {
     /// Returns (array, split index).
     fn generate(config: &RunConfig) -> (Vec<usize>, usize);
 }
 
+/// Generates the input for a single merge step — two adjacent runs.
 pub trait MergeInput {
     /// Returns (array, mid). `arr[..mid]` and `arr[mid..]` are each sorted.
     fn generate(config: &RunConfig) -> (Vec<usize>, usize);
 }
 
+/// Generates the input for a small-sort variant. Same shape as
+/// [`SortInput`] but typically sized below the algorithm's threshold.
 pub trait SmallSortInput {
+    /// Build a `Vec<usize>` shorter than the small-sort threshold.
     fn generate(config: &RunConfig) -> Vec<usize>;
 }
 
+/// Generates the input for a quickselect step.
 pub trait QuickSelectInput {
     /// Returns (array, target index). Quickselect reorders `arr` so
     /// that the value which would land at `target` after a full sort
