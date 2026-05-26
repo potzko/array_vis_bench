@@ -19,11 +19,23 @@
 //! `CyclentSortStack`.
 
 use std::marker::PhantomData;
+use std::ops::Range;
 
-use array_vis_bench_traits::PartitionScheme;
+use array_vis_bench_traits::{PartitionScheme, PartitionVisitor};
 use sort_logger::SortLogger;
 
 pub struct CyclentSortStackOptimized<P: PartitionScheme>(PhantomData<P>);
+
+struct RightStart { right_start: usize, n: u8 }
+impl PartitionVisitor for RightStart {
+    #[inline(always)]
+    fn unsorted(&mut self, r: Range<usize>) {
+        if self.n == 1 {
+            self.right_start = r.start;
+        }
+        self.n += 1;
+    }
+}
 
 impl<P: PartitionScheme> CyclentSortStackOptimized<P> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
@@ -31,8 +43,6 @@ impl<P: PartitionScheme> CyclentSortStackOptimized<P> {
         let mut stack: Vec<usize> = Vec::new();
         for i in (0..n).rev() {
             loop {
-                // Drop bounds that no longer sit strictly below `i` —
-                // their subrange `[bound..=i]` is empty / single-element.
                 while let Some(&top) = stack.last() {
                     if top >= i {
                         stack.pop();
@@ -45,11 +55,12 @@ impl<P: PartitionScheme> CyclentSortStackOptimized<P> {
                 if slice_len < 2 {
                     break;
                 }
-                let (_l, r) = P::partition(&mut arr[bound..=i], logger, slice_len - 1);
-                if r == slice_len {
+                let mut v = RightStart { right_start: slice_len, n: 0 };
+                P::partition(&mut arr[bound..=i], logger, &[slice_len - 1], &mut v);
+                if v.right_start == slice_len {
                     break;
                 }
-                stack.push(bound + r);
+                stack.push(bound + v.right_start);
             }
         }
     }

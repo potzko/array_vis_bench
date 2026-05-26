@@ -9,8 +9,7 @@
 use std::marker::PhantomData;
 
 use array_vis_bench_traits::{
-    Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme, PartitionSchemeV,
-    PartitionVisitor, Rotation,
+    Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme, PartitionVisitor, Rotation,
 };
 use rotation_reversal::ReversalRotation;
 use sort_logger::SortLogger;
@@ -95,17 +94,6 @@ impl<R: Rotation> MovingPivotV3<R> {
 // generic impls don't capture outer type params), so each specialisation
 // gets its own impl block with a hardcoded label.
 impl PartitionScheme for MovingPivotV3<ReversalRotation> {
-    const NAME: &'static str = "moving pivot v3<reversal>";
-    fn partition<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-        arr: &mut [T],
-        logger: &mut U,
-        pivot_idx: usize,
-    ) -> (usize, usize) {
-        Self::partition_impl(arr, logger, pivot_idx)
-    }
-}
-
-impl PartitionSchemeV for MovingPivotV3<ReversalRotation> {
     const NAME: &'static str = "moving pivot v3<reversal>";
     const N_PIVOTS: usize = 1;
     #[inline]

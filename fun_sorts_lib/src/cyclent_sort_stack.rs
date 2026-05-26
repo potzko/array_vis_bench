@@ -14,11 +14,25 @@
 //! work.
 
 use std::marker::PhantomData;
+use std::ops::Range;
 
-use array_vis_bench_traits::PartitionScheme;
+use array_vis_bench_traits::{PartitionScheme, PartitionVisitor};
 use sort_logger::SortLogger;
 
 pub struct CyclentSortStack<P: PartitionScheme>(PhantomData<P>);
+
+struct Bounds { left_end: usize, right_start: usize, n: u8 }
+impl PartitionVisitor for Bounds {
+    #[inline(always)]
+    fn unsorted(&mut self, r: Range<usize>) {
+        if self.n == 0 {
+            self.left_end = r.end;
+        } else if self.n == 1 {
+            self.right_start = r.start;
+        }
+        self.n += 1;
+    }
+}
 
 impl<P: PartitionScheme> CyclentSortStack<P> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
@@ -32,9 +46,10 @@ impl<P: PartitionScheme> CyclentSortStack<P> {
                 continue;
             }
             let slice_len = hi - lo;
-            let (l, r) = P::partition(&mut arr[lo..hi], logger, slice_len - 1);
-            let pivot_end = lo + l;
-            let right_start = lo + r;
+            let mut v = Bounds { left_end: 0, right_start: slice_len, n: 0 };
+            P::partition(&mut arr[lo..hi], logger, &[slice_len - 1], &mut v);
+            let pivot_end = lo + v.left_end;
+            let right_start = lo + v.right_start;
             // Push right half first so the left half is processed next
             // (LIFO) — keeps the recursion shape similar to the
             // cyclent-framed variants.

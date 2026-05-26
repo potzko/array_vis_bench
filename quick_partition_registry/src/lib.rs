@@ -34,8 +34,9 @@ macro_rules! register_partition {
     ($mod:ident, $part:ty, $piv:ty) => {
         mod $mod {
             use super::*;
-            use array_vis_bench_traits::{PartitionScheme, PivotSelector};
+            use array_vis_bench_traits::{PartitionScheme, PartitionVisitor, PivotSelector};
             use sort_logger::{NoOpLogger, SortLogger};
+            use std::ops::Range;
 
             const NAME: &str = const_format::concatcp!(
                 "partition: ",
@@ -45,9 +46,27 @@ macro_rules! register_partition {
                 ">",
             );
 
-            /// dyn-logger entry — drops the (left_end, right_start)
-            /// return because the visualiser only cares about the
-            /// stream of events.
+            /// Single-pivot visitor that just remembers the bounds of
+            /// the gap between the two unsorted regions (== where the
+            /// placed/sorted run sits).
+            struct BoundsVisitor { left_end: usize, right_start: usize, n: u8 }
+            impl BoundsVisitor {
+                fn new(len: usize) -> Self { Self { left_end: 0, right_start: len, n: 0 } }
+            }
+            impl PartitionVisitor for BoundsVisitor {
+                #[inline(always)]
+                fn unsorted(&mut self, r: Range<usize>) {
+                    if self.n == 0 {
+                        self.left_end = r.end;
+                    } else if self.n == 1 {
+                        self.right_start = r.start;
+                    }
+                    self.n += 1;
+                }
+            }
+
+            /// dyn-logger entry — drops the bounds because the
+            /// visualiser only cares about the event stream.
             fn partition_dyn(
                 arr: &mut [usize],
                 logger: &mut dyn SortLogger<usize>,
@@ -56,10 +75,11 @@ macro_rules! register_partition {
                     return;
                 }
                 let pivot = <$piv as PivotSelector>::select(arr, logger);
-                let _ = <$part as PartitionScheme>::partition(arr, logger, pivot);
+                let mut v = BoundsVisitor::new(arr.len());
+                <$part as PartitionScheme>::partition(arr, logger, &[pivot], &mut v);
             }
 
-            /// NoOp-logger entry — keeps the return so the battery can
+            /// NoOp-logger entry — keeps the bounds so the battery can
             /// verify `max(arr[..left_end]) ≤ min(arr[right_start..])`.
             fn partition_noop(
                 arr: &mut [usize],
@@ -69,7 +89,9 @@ macro_rules! register_partition {
                     return (0, arr.len());
                 }
                 let pivot = <$piv as PivotSelector>::select(arr, logger);
-                <$part as PartitionScheme>::partition(arr, logger, pivot)
+                let mut v = BoundsVisitor::new(arr.len());
+                <$part as PartitionScheme>::partition(arr, logger, &[pivot], &mut v);
+                (v.left_end, v.right_start)
             }
 
             fn run_with_input(
