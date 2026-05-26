@@ -12,7 +12,7 @@ pub mod rotation;
 pub mod small_sort;
 
 pub use partition::{PartitionScheme, PartitionVisitor};
-pub use pivot::{DualPivotSelector, PivotSelector};
+pub use pivot::{DualPivotSelector, PivotInput, PivotSelector};
 pub use quick_select::QuickSelect;
 pub use rotation::Rotation;
 pub use small_sort::{
