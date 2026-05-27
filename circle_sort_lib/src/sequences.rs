@@ -17,7 +17,6 @@
 //! and add a new set of `_sc!` invocations below.
 
 use sort_logger::SortLogger;
-use array_vis_bench_core::bench_registry::correctness::SortFnPtr;
 
 pub use super::directions::{Decreasing, Increasing, ShakerDecInc, ShakerIncDec};
 pub use super::finishing::{Convergence, InsertionNearSort, ShortCircuit};

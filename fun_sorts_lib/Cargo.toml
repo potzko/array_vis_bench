@@ -197,30 +197,33 @@ direct_sort      = true
 path             = ["fun sorts", "quick surrender", "{Alg}", "{P}", "{V}"]
 max_n_for_tests  = 500
 
-# ── Quick surrender (dual pivot Alg × DPS inline) ──
+# ── Quick surrender (dual pivot: Yaroslavskiy partition × dual selector) ──
+# Folded into the unified QuickSelect<P, V> types: dual-pivot is just the
+# `yaroslavskiy` partition with a dual-pivot PivotInput selector.
 [[package.metadata.array_vis_bench.families]]
 module = "fun_sorts"
-type   = "QuickSurrender<{Alg}<{DPS}>>"
+type   = "QuickSurrender<{Alg}<Yaroslavskiy, {DPS}>>"
 uses   = [
     "quick_sort_lib::pivot_selectors::{CombinedSelector, NintherDualPivot}",
-    "dual_pivot_quick_select_lib::{IterativeDualPivotQuickSelect, RecursiveDualPivotQuickSelect}",
+    "quick_sort_lib::Yaroslavskiy",
+    "quick_select_lib::{IterativeQuickSelect, RecursiveQuickSelect}",
     "pivot_first::FirstElement",
     "pivot_middle::MiddleElement",
     "fun_sorts_lib::quick_surrender::QuickSurrender",
 ]
 axes = [
-    { var = "Alg", role = "DualPivotQuickSelectAlg" },
+    { var = "Alg", role = "QuickSelect" },
     { var = "DPS", inline = [
-        { type = "CombinedSelector<FirstElement, FirstElement>",   label = "first" },
-        { type = "CombinedSelector<MiddleElement, MiddleElement>", label = "middle" },
+        { type = "CombinedSelector<FirstElement, FirstElement>",   label = "first / first" },
+        { type = "CombinedSelector<MiddleElement, MiddleElement>", label = "middle / middle" },
         { type = "NintherDualPivot",                                label = "ninther 1/3 + 2/3" },
     ] },
 ]
-name             = "quick surrender dual pivot"
+name             = "quick surrender"
 big_o            = "O(N^2)"
 stable           = false
 direct_sort      = true
-path             = ["fun sorts", "quick surrender", "dual pivot", "{Alg}", "{DPS}"]
+path             = ["fun sorts", "quick surrender", "{Alg}", "yaroslavskiy", "{DPS}"]
 max_n_for_tests  = 500
 
 # ── Quick surrender optimised (single pivot, plus SS) ──
@@ -264,13 +267,16 @@ direct_sort      = true
 path             = ["fun sorts", "quick surrender optimised", "{Alg}", "{P}", "{V}", "{SS}"]
 max_n_for_tests  = 1000
 
-# ── Quick surrender optimised (dual pivot) ──
+# ── Quick surrender optimised (dual pivot: Yaroslavskiy × dual selector) ──
+# Folded into the unified QuickSelect<P, V> types — dual-pivot is the
+# `yaroslavskiy` partition with a dual-pivot PivotInput selector.
 [[package.metadata.array_vis_bench.families]]
 module = "fun_sorts"
-type   = "QuickSurrenderOptimised<{Alg}<{DPS}>, {SS}>"
+type   = "QuickSurrenderOptimised<{Alg}<Yaroslavskiy, {DPS}>, {SS}>"
 uses   = [
     "quick_sort_lib::pivot_selectors::{CombinedSelector, NintherDualPivot}",
-    "dual_pivot_quick_select_lib::{IterativeDualPivotQuickSelect, RecursiveDualPivotQuickSelect}",
+    "quick_sort_lib::Yaroslavskiy",
+    "quick_select_lib::{IterativeQuickSelect, RecursiveQuickSelect}",
     "pivot_first::FirstElement",
     "pivot_middle::MiddleElement",
     "small_sort_basic::Size2SmallSort",
@@ -281,17 +287,17 @@ uses   = [
     "fun_sorts_lib::quick_surrender_optimised::QuickSurrenderOptimised",
 ]
 axes = [
-    { var = "Alg", role = "DualPivotQuickSelectAlg" },
+    { var = "Alg", role = "QuickSelect" },
     { var = "DPS", inline = [
-        { type = "CombinedSelector<FirstElement, FirstElement>",   label = "first" },
-        { type = "CombinedSelector<MiddleElement, MiddleElement>", label = "middle" },
+        { type = "CombinedSelector<FirstElement, FirstElement>",   label = "first / first" },
+        { type = "CombinedSelector<MiddleElement, MiddleElement>", label = "middle / middle" },
         { type = "NintherDualPivot",                                label = "ninther 1/3 + 2/3" },
     ] },
     { var = "SS", role = "NonTrivialSmallSort" },
 ]
-name             = "quick surrender optimised dual pivot"
+name             = "quick surrender optimised"
 big_o            = "O(N log N)"
 stable           = false
 direct_sort      = true
-path             = ["fun sorts", "quick surrender optimised", "dual pivot", "{Alg}", "{DPS}", "{SS}"]
+path             = ["fun sorts", "quick surrender optimised", "{Alg}", "yaroslavskiy", "{DPS}", "{SS}"]
 max_n_for_tests  = 1000

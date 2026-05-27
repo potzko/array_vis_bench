@@ -197,7 +197,11 @@ fn select_sort_inner(tree: &sort_registry_core::SortTree) -> String {
                 );
             }
             Opt::Leaf(display, name) => {
+                // Skip the suffix when the bound is unanalysed — showing
+                // "(O(?))" next to a leaf is noise; the bare display
+                // name reads better.
                 let suffix = find(name)
+                    .filter(|e| !e.average.is_unknown())
                     .map(|e| format!(" ({})", e.average.as_str()))
                     .unwrap_or_default();
                 println!("  {}: {}{}", i + 1, display, suffix);
@@ -217,11 +221,18 @@ fn select_sort_inner(tree: &sort_registry_core::SortTree) -> String {
 /// entry (the picker degrades to its previous behaviour for unknown
 /// trees rather than printing "(O(?) - O(?))").
 fn average_complexity_range(tree: &sort_registry_core::SortTree) -> String {
+    // Filter `Complexity::UNKNOWN` out of the range — the UI should
+    // surface the spread across *known* bounds in the subtree. Doing
+    // this via `Complexity::sum` would have Unknown dominate and the
+    // whole branch would render as "O(?)".
     let mut min: Option<Complexity> = None;
     let mut max: Option<Complexity> = None;
     walk_leaves(tree, &mut |name| {
         if let Some(entry) = find(name) {
             let a = entry.average;
+            if a.is_unknown() {
+                return;
+            }
             min = Some(min.map_or(a, |m| if cmp_complexity(a, m).is_lt() { a } else { m }));
             max = Some(max.map_or(a, |m| Complexity::sum(a, m)));
         }

@@ -20,8 +20,8 @@
 //! at the bottom of this file.
 
 pub use array_vis_bench_traits::{
-    insertion_sort_with, DeferredSmallSort, InsertionStrategy, NonTrivialSmallSort,
-    SetSizeSmallSort, SmallSort, SmallSortAdapter,
+    DeferredSmallSort, InsertionStrategy, NonTrivialSmallSort, SetSizeSmallSort, SmallSort,
+    SmallSortAdapter,
 };
 
 pub use small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort};
@@ -30,19 +30,6 @@ pub use small_sort_insertion::InsertionSmallSort;
 pub use small_sort_insertion_strategy::{BinaryInsertion, LinearInsertion};
 pub use small_sort_network::NetworkSmallSort;
 pub use small_sort_network_16::Network16SmallSort;
-
-use crate::traits::log_traits::SortLogger;
-
-/// Linear insertion sort over the whole array. Kept as a free function
-/// because several call sites (circle sorts, etc.) want it without
-/// committing to a strategy parameter.
-#[inline(always)]
-pub(crate) fn insertion_sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-    arr: &mut [T],
-    logger: &mut U,
-) -> bool {
-    insertion_sort_with::<LinearInsertion, _, _>(arr, logger)
-}
 
 /// Register a `SmallSort` impl as a standalone algorithm. Sentinel
 /// small-sorts (those with `THRESHOLD = 0`) should NOT call this —

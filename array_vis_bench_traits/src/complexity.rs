@@ -14,22 +14,34 @@
 /// Non-polynomial complexity tags. Multiplying with `Special::None` is
 /// the identity; combining two non-`None` specials is treated as
 /// saturation (see `Special::product`).
+///
+/// `Unknown` is the "I don't know" sentinel — used by trait defaults so a
+/// component that hasn't been analysed yet doesn't lie about its bounds.
+/// It dominates every other tag in both `sum` and `product`, propagating
+/// up through compositional impls so the outer sort's annotation correctly
+/// surfaces as `O(?)` rather than silently falling back to a known class.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Special {
     /// Multiplied by `√N`.
     Sqrt,
-    /// `O(2^N)` — dominates everything.
+    /// `O(2^N)` — dominates everything except `Factorial` and `Unknown`.
     Exponential,
     /// `O(N!)` — dominates `Exponential`.
     Factorial,
+    /// Unanalysed — dominates everything else, including `Factorial`. A
+    /// component carrying this tag bubbles up through any composition.
+    Unknown,
 }
 
 impl Special {
-    /// Big-O product of two special tags. `Factorial` > `Exponential` >
-    /// `Sqrt`; combining picks the dominant tag. The `Option<Special>`
-    /// wrapper handles the `None` (no special) identity.
+    /// Big-O product of two special tags. `Unknown` > `Factorial` >
+    /// `Exponential` > `Sqrt`; combining picks the dominant tag. The
+    /// `Option<Special>` wrapper handles the `None` (no special) identity.
     const fn product(a: Option<Special>, b: Option<Special>) -> Option<Special> {
         match (a, b) {
+            // Unknown dominates — must come before the None-identity arm
+            // so `Unknown · anything` propagates rather than getting lost.
+            (Some(Special::Unknown), _) | (_, Some(Special::Unknown)) => Some(Special::Unknown),
             (None, x) | (x, None) => x,
             (Some(Special::Factorial), _) | (_, Some(Special::Factorial)) => Some(Special::Factorial),
             (Some(Special::Exponential), _) | (_, Some(Special::Exponential)) => Some(Special::Exponential),
@@ -46,6 +58,7 @@ impl Special {
     /// Big-O sum (max). Same dominance order as `product`.
     const fn sum(a: Option<Special>, b: Option<Special>) -> Option<Special> {
         match (a, b) {
+            (Some(Special::Unknown), _) | (_, Some(Special::Unknown)) => Some(Special::Unknown),
             (None, x) | (x, None) => x,
             (Some(Special::Factorial), _) | (_, Some(Special::Factorial)) => Some(Special::Factorial),
             (Some(Special::Exponential), _) | (_, Some(Special::Exponential)) => Some(Special::Exponential),
@@ -93,10 +106,25 @@ impl Complexity {
     pub const EXPONENTIAL: Self = Self { n_pow: 0, log_pow: 0, special: Some(Special::Exponential) };
     /// `O(N!)` — bogosort.
     pub const FACTORIAL: Self = Self { n_pow: 0, log_pow: 0, special: Some(Special::Factorial) };
+    /// Unanalysed / unknown bound — the default used by trait impls that
+    /// haven't been pinned down. Sums and products with any other class
+    /// stay `UNKNOWN`, so the "I don't know" answer bubbles to the top of
+    /// any composition. Display sites are expected to suppress it.
+    pub const UNKNOWN: Self = Self { n_pow: 0, log_pow: 0, special: Some(Special::Unknown) };
+
+    /// `true` when this is the unanalysed-bound sentinel.
+    pub const fn is_unknown(self) -> bool {
+        matches!(self.special, Some(Special::Unknown))
+    }
 
     /// `O(f) · O(g)` — exponents add, special tags combine. `√N · √N`
-    /// collapses to one factor of `N`.
+    /// collapses to one factor of `N`. If either side is `UNKNOWN`, the
+    /// result is `UNKNOWN` — we don't know `f`, so we can't claim a
+    /// product class.
     pub const fn product(a: Self, b: Self) -> Self {
+        if a.is_unknown() || b.is_unknown() {
+            return Self::UNKNOWN;
+        }
         let double_sqrt = matches!(a.special, Some(Special::Sqrt))
             && matches!(b.special, Some(Special::Sqrt));
         Self {
@@ -108,8 +136,13 @@ impl Complexity {
 
     /// `O(f) + O(g) = O(max(f, g))`. Treats `Sqrt` as half an `n_pow`
     /// step (so `N √N` ranks above `N log N` and above `N log² N`,
-    /// matching asymptotics), then breaks ties by `log_pow`.
+    /// matching asymptotics), then breaks ties by `log_pow`. `UNKNOWN`
+    /// dominates everything (worst-case assumption when one side is
+    /// unanalysed).
     pub const fn sum(a: Self, b: Self) -> Self {
+        if a.is_unknown() || b.is_unknown() {
+            return Self::UNKNOWN;
+        }
         match (a.special, b.special) {
             (Some(Special::Factorial), _) => a,
             (_, Some(Special::Factorial)) => b,
@@ -143,8 +176,9 @@ impl Complexity {
     }
 
     /// "In-place" = no allocation that grows with N. Equivalent to
-    /// `n_pow == 0 && special != Some(Sqrt | Exponential | Factorial)`.
-    /// `log_pow ≥ 1` (recursion-stack depth) is fine.
+    /// `n_pow == 0 && special is None`. `log_pow ≥ 1` (recursion-stack
+    /// depth) is fine. `UNKNOWN` returns `false` — when we don't know,
+    /// don't claim in-place.
     pub const fn is_in_place(self) -> bool {
         self.n_pow == 0 && self.special.is_none()
     }
@@ -167,6 +201,7 @@ impl Complexity {
             (3, 0, None) => "O(N³)",
             (0, 0, Some(Special::Exponential)) => "O(2^N)",
             (0, 0, Some(Special::Factorial)) => "O(N!)",
+            (_, _, Some(Special::Unknown)) => "O(?)",
             _ => "O(?)",
         }
     }
@@ -337,6 +372,30 @@ mod tests {
         assert_eq!(Complexity::from_str("O(N^2)"), Complexity::N_SQUARED);
         assert_eq!(Complexity::from_str("O(N^2.5)").n_pow, 2);
         assert_eq!(Complexity::from_str("O(N^logN)"), Complexity::EXPONENTIAL);
+    }
+
+    #[test]
+    fn unknown_propagates_in_product() {
+        assert_eq!(Complexity::product(Complexity::UNKNOWN, Complexity::N_LOG_N), Complexity::UNKNOWN);
+        assert_eq!(Complexity::product(Complexity::N1, Complexity::UNKNOWN), Complexity::UNKNOWN);
+        assert!(Complexity::product(Complexity::UNKNOWN, Complexity::CONST).is_unknown());
+    }
+
+    #[test]
+    fn unknown_dominates_in_sum() {
+        assert_eq!(Complexity::sum(Complexity::UNKNOWN, Complexity::N1), Complexity::UNKNOWN);
+        assert_eq!(Complexity::sum(Complexity::N_SQUARED, Complexity::UNKNOWN), Complexity::UNKNOWN);
+        assert_eq!(Complexity::sum(Complexity::FACTORIAL, Complexity::UNKNOWN), Complexity::UNKNOWN);
+    }
+
+    #[test]
+    fn unknown_is_not_in_place() {
+        assert!(!Complexity::UNKNOWN.is_in_place());
+    }
+
+    #[test]
+    fn unknown_displays_as_question_mark() {
+        assert_eq!(Complexity::UNKNOWN.as_str(), "O(?)");
     }
 
     #[test]
