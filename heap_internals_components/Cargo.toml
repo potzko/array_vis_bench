@@ -2,7 +2,7 @@
 name = "heap_internals_components"
 version = "0.1.0"
 edition = "2021"
-description = "Metadata-only leaf for heap-internal component roles (Arity, HeapDirection, HeapPartition, DeepHeapify, QuickDeepHeapify, DualPivotQuickDeepHeapify). Code stays in `array_vis_bench` — these roles are deeply coupled to Heap/Compare/HeapLayout traits and a per-leaf code split would balloon the trait surface unnecessarily. The components are still discoverable via the dep-graph scanner; this crate just hosts their metadata."
+description = "Metadata-only leaf for heap-internal component roles (Arity, HeapDirection, HeapPartition, DeepHeapify, QuickDeepHeapify, DualPivotQuickDeepHeapify). Code stays in `heap_sort_lib` — these roles are deeply coupled to Heap/Compare/HeapLayout traits and a per-leaf code split would balloon the trait surface unnecessarily. The components are still discoverable via the dep-graph scanner; this crate just hosts their metadata + the `use` paths into `heap_sort_lib`."
 
 [lib]
 name = "heap_internals_components"
@@ -13,78 +13,93 @@ path = "src/lib.rs"
 role  = "Arity"
 type  = "Binary"
 label = "binary"
+uses  = ["heap_sort_lib::arity::Binary"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "Arity"
 type  = "Ternary"
 label = "ternary"
+uses  = ["heap_sort_lib::arity::Ternary"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "Arity"
 type  = "Base16"
 label = "16-ary"
+uses  = ["heap_sort_lib::arity::Base16"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "Arity"
 type  = "Base256"
 label = "256-ary"
+uses  = ["heap_sort_lib::arity::Base256"]
 
 # ── HeapDirection ──
 [[package.metadata.array_vis_bench.components]]
 role  = "HeapDirection"
 type  = "MinReverse"
 label = "min reverse"
+uses  = ["heap_sort_lib::direction::MinReverse"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "HeapDirection"
 type  = "MaxForward"
 label = "max forward"
+uses  = ["heap_sort_lib::direction::MaxForward"]
 
 # ── HeapPartition ──
 [[package.metadata.array_vis_bench.components]]
 role  = "HeapPartition"
-type  = "Lomuto"
-label = "lomuto"
+type  = "LeftLeftPartition"
+label = "left-left pointer"
+uses  = ["heap_sort_lib::heap_partition::LeftLeftPartition"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "HeapPartition"
-type  = "Hoare"
-label = "hoare"
+type  = "LeftRightPartition"
+label = "left-right pointer"
+uses  = ["heap_sort_lib::heap_partition::LeftRightPartition"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "HeapPartition"
 type  = "Block"
 label = "block"
+uses  = ["heap_sort_lib::heap_partition::Block"]
 
 # ── DeepHeapify ──
 [[package.metadata.array_vis_bench.components]]
 role  = "DeepHeapify"
 type  = "Recursive"
 label = "recursive"
+uses  = ["heap_sort_lib::deep_heapify::Recursive"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "DeepHeapify"
 type  = "Iterative"
 label = "iterative"
+uses  = ["heap_sort_lib::deep_heapify::Iterative"]
 
 # ── QuickDeepHeapify ──
 [[package.metadata.array_vis_bench.components]]
 role  = "QuickDeepHeapify"
 type  = "SequentialQuickDeepHeapify"
 label = "sequential"
+uses  = ["heap_sort_lib::quick_deep_heapify::SequentialQuickDeepHeapify"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "QuickDeepHeapify"
 type  = "RecursivePartialQuickDeepHeapify"
 label = "recursive partition"
+uses  = ["heap_sort_lib::quick_deep_heapify::RecursivePartialQuickDeepHeapify"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "QuickDeepHeapify"
 type  = "StackPartialQuickDeepHeapify"
 label = "stack partition"
+uses  = ["heap_sort_lib::quick_deep_heapify::StackPartialQuickDeepHeapify"]
 
 # ── DualPivotQuickDeepHeapify ──
 [[package.metadata.array_vis_bench.components]]
 role  = "DualPivotQuickDeepHeapify"
 type  = "StackDualPivotPartialQuickDeepHeapify"
 label = "stack dual-pivot partition"
+uses  = ["heap_sort_lib::quick_deep_heapify::StackDualPivotPartialQuickDeepHeapify"]

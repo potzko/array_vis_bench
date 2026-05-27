@@ -11,11 +11,23 @@ use std::collections::HashMap;
 pub struct ComponentDef {
     pub type_expr: String,
     pub label: String,
+    /// `use` paths this component needs in the generated file (its own type
+    /// plus any generic-argument types). Unioned per family at emit time so
+    /// families no longer have to list component imports themselves.
+    pub uses: Vec<String>,
 }
 
 impl ComponentDef {
     pub fn new(type_expr: impl Into<String>, label: impl Into<String>) -> Self {
-        Self { type_expr: type_expr.into(), label: label.into() }
+        Self { type_expr: type_expr.into(), label: label.into(), uses: Vec::new() }
+    }
+
+    pub fn with_uses(
+        type_expr: impl Into<String>,
+        label: impl Into<String>,
+        uses: Vec<String>,
+    ) -> Self {
+        Self { type_expr: type_expr.into(), label: label.into(), uses }
     }
 }
 
@@ -67,6 +79,21 @@ impl ComponentRegistry {
             .entry(role.into())
             .or_default()
             .insert(0, ComponentDef::new(type_expr, label));
+    }
+
+    /// Like [`add_front`](Self::add_front) but also records the component's
+    /// own `use` paths, which the emitter unions into each consuming family.
+    pub fn add_front_with_uses(
+        &mut self,
+        role: impl Into<String>,
+        type_expr: impl Into<String>,
+        label: impl Into<String>,
+        uses: Vec<String>,
+    ) {
+        self.roles
+            .entry(role.into())
+            .or_default()
+            .insert(0, ComponentDef::with_uses(type_expr, label, uses));
     }
 
 
@@ -355,120 +382,37 @@ impl FamilyDef {
     /// 2. **Smallest-axis-first path reorder.** Pure-placeholder elements of
     ///    the path field are reordered by their axis cardinality so each menu
     ///    step branches on the smallest available axis. Literals stay pinned.
+    /// Resolve axes against `registry` and append one `<config.output_macro>!`
+    /// block to `out`.
+    ///
+    /// Each axis is emitted with its humanized **role** (`{var} : "role" {…}`)
+    /// so the consumer macro can tag every faceted slot. `Cross` axes are
+    /// resolved to a single flat list (cross-product + extras), keeping the
+    /// `{var}` placeholder intact in the type template — the consumer fills
+    /// it with the whole combined type. The `path` field is emitted verbatim;
+    /// the consumer derives the menu structure (category vs faceted axis) from
+    /// it plus the per-axis roles.
     pub fn render(&self, out: &mut String, registry: &ComponentRegistry, config: &CodegenConfig) {
-        let initial_path = self.get_path(config);
-        self.render_recursive(out, registry, initial_path, config);
+        self.render_single(out, registry, config);
     }
 
-    fn get_path(&self, config: &CodegenConfig) -> Vec<String> {
-        let Some(key) = config.path_field.as_deref() else {
-            return Vec::new();
-        };
-        for (k, v) in &self.fields {
-            if k == key {
-                if let FieldValue::StringArray(a) = v {
-                    return a.clone();
-                }
-            }
+    /// Humanized role label for an axis, or `""` for `Inline` axes (which the
+    /// consumer treats as structural category segments, not faceted axes).
+    fn axis_role(spec: &AxisSpec) -> String {
+        match spec {
+            AxisSpec::Role(role) => humanize_role(role),
+            // A cross axis is a *pair* (e.g. two pivot selectors). Give it a
+            // role distinct from the single-value role so the faceted picker
+            // doesn't pool single- and dual-pivot selectors into one list.
+            AxisSpec::Cross { left, .. } => format!("{} pair", humanize_role(left)),
+            AxisSpec::Inline(_) => String::new(),
         }
-        Vec::new()
-    }
-
-    fn render_recursive(
-        &self,
-        out: &mut String,
-        registry: &ComponentRegistry,
-        path: Vec<String>,
-        config: &CodegenConfig,
-    ) {
-        // Phase 1: split out any Cross-with-extras into two passes — one for
-        // the cross-product, one for the extras under a "specialty <role>"
-        // sub-branch in the path field.
-        let split = self.axes.iter().enumerate().find_map(|(i, (var, spec))| {
-            match spec {
-                AxisSpec::Cross { extras, left, right, type_tmpl, label_tmpl }
-                    if !extras.is_empty() =>
-                {
-                    let cross_only = AxisSpec::Cross {
-                        left: left.clone(),
-                        right: right.clone(),
-                        type_tmpl: type_tmpl.clone(),
-                        label_tmpl: label_tmpl.clone(),
-                        extras: Vec::new(),
-                    };
-                    let extras_only = AxisSpec::Inline(extras.clone());
-                    Some((i, var.clone(), left.clone(), cross_only, extras_only))
-                }
-                _ => None,
-            }
-        });
-
-        if let Some((idx, var, left_role, cross, extras)) = split {
-            let mut main = self.clone();
-            main.axes[idx].1 = cross;
-            main.render_recursive(out, registry, path.clone(), config);
-
-            let mut spec = self.clone();
-            spec.axes[idx].1 = extras;
-            let placeholder = format!("{{{var}}}");
-            let marker = format!("specialty {}", humanize_role(&left_role));
-            let mut new_path = path;
-            if let Some(p) = new_path.iter().position(|s| s == &placeholder) {
-                new_path.insert(p, marker);
-            }
-            spec.render_recursive(out, registry, new_path, config);
-            return;
-        }
-
-        // Phase 2: any remaining Cross axes (extras already stripped) are
-        // unrolled into pairs of independent role axes so each side of the
-        // cross becomes its own menu level.
-        let (transformed, transformed_path) = self.split_crosses_into_role_pairs(&path);
-        transformed.render_single(out, registry, &transformed_path, config);
-    }
-
-    fn split_crosses_into_role_pairs(&self, path: &[String]) -> (FamilyDef, Vec<String>) {
-        let mut type_template = self.type_template.clone();
-        let mut new_path = path.to_vec();
-        let mut new_axes: Vec<(String, AxisSpec)> = Vec::new();
-
-        for (var, spec) in self.axes.iter().cloned() {
-            match spec {
-                AxisSpec::Cross { left, right, type_tmpl, .. } => {
-                    let left_var = format!("{var}__0");
-                    let right_var = format!("{var}__1");
-
-                    let combined = type_tmpl
-                        .replace("{0}", &format!("{{{left_var}}}"))
-                        .replace("{1}", &format!("{{{right_var}}}"));
-                    let placeholder = format!("{{{var}}}");
-                    type_template = type_template.replace(&placeholder, &combined);
-
-                    if let Some(p) = new_path.iter().position(|s| s == &placeholder) {
-                        new_path.splice(
-                            p..p + 1,
-                            [format!("{{{left_var}}}"), format!("{{{right_var}}}")],
-                        );
-                    }
-
-                    new_axes.push((left_var, AxisSpec::Role(left)));
-                    new_axes.push((right_var, AxisSpec::Role(right)));
-                }
-                other => new_axes.push((var, other)),
-            }
-        }
-
-        let mut new_family = self.clone();
-        new_family.type_template = type_template;
-        new_family.axes = new_axes;
-        (new_family, new_path)
     }
 
     fn render_single(
         &self,
         out: &mut String,
         registry: &ComponentRegistry,
-        path: &[String],
         config: &CodegenConfig,
     ) {
         use std::fmt::Write as _;
@@ -479,7 +423,12 @@ impl FamilyDef {
 
         for (var, spec) in &self.axes {
             let components = resolve_axis_spec(spec, registry);
-            writeln!(out, "    {var} {{").unwrap();
+            let role = Self::axis_role(spec);
+            if role.is_empty() {
+                writeln!(out, "    {var} {{").unwrap();
+            } else {
+                writeln!(out, "    {var} : \"{role}\" {{").unwrap();
+            }
             for comp in &components {
                 writeln!(out, "        {} => \"{}\"", comp.type_expr, comp.label).unwrap();
             }
@@ -489,21 +438,9 @@ impl FamilyDef {
         out.push('\n');
 
         let key_width = self.fields.iter().map(|(k, _)| k.len()).max().unwrap_or(0);
-        let path_field = config.path_field.as_deref();
 
         for (key, value) in &self.fields {
-            let rendered = if Some(key.as_str()) == path_field {
-                let reordered = reorder_path_by_axis_size(path, &self.axes, registry);
-                let inner = reordered
-                    .iter()
-                    .map(|p| format!("\"{p}\""))
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                format!("[{inner}]")
-            } else {
-                value.render()
-            };
-            writeln!(out, "    {key:<key_width$} = {rendered};").unwrap();
+            writeln!(out, "    {key:<key_width$} = {};", value.render()).unwrap();
         }
 
         out.push_str("}\n\n");
@@ -519,55 +456,6 @@ fn humanize_role(role: &str) -> String {
             out.push(' ');
         }
         out.push(c.to_ascii_lowercase());
-    }
-    out
-}
-
-/// Cardinality of an axis after resolving it against `registry`.
-fn axis_count(spec: &AxisSpec, registry: &ComponentRegistry) -> usize {
-    match spec {
-        AxisSpec::Role(role) => registry.role(role).len(),
-        AxisSpec::Cross { left, right, extras, .. } => {
-            registry.role(left).len() * registry.role(right).len() + extras.len()
-        }
-        AxisSpec::Inline(items) => items.len(),
-    }
-}
-
-/// Reorder pure-placeholder path elements so axes with fewer variants come
-/// first. Literal elements keep their declared positions; placeholders that
-/// don't match a declared axis are also treated as literals.
-fn reorder_path_by_axis_size(
-    path: &[String],
-    axes: &[(String, AxisSpec)],
-    registry: &ComponentRegistry,
-) -> Vec<String> {
-    let positions: Vec<usize> = path
-        .iter()
-        .enumerate()
-        .filter_map(|(i, e)| {
-            let slot = e.strip_prefix('{').and_then(|s| s.strip_suffix('}'))?;
-            if axes.iter().any(|(n, _)| n == slot) { Some(i) } else { None }
-        })
-        .collect();
-
-    if positions.len() < 2 {
-        return path.to_vec();
-    }
-
-    let mut slots: Vec<(&str, usize)> = positions
-        .iter()
-        .map(|&i| {
-            let slot = path[i].strip_prefix('{').unwrap().strip_suffix('}').unwrap();
-            let (_, spec) = axes.iter().find(|(n, _)| n == slot).unwrap();
-            (slot, axis_count(spec, registry))
-        })
-        .collect();
-    slots.sort_by_key(|&(_, c)| c);
-
-    let mut out = path.to_vec();
-    for (&pos, (slot, _)) in positions.iter().zip(slots.iter()) {
-        out[pos] = format!("{{{}}}", slot);
     }
     out
 }
@@ -600,8 +488,8 @@ mod tests {
 
     fn parts() -> Vec<ComponentDef> {
         vec![
-            ComponentDef::new("Lomuto", "lomuto"),
-            ComponentDef::new("Hoare", "hoare"),
+            ComponentDef::new("LeftLeftPartition", "left-left pointer"),
+            ComponentDef::new("LeftRightPartition", "left-right pointer"),
         ]
     }
 
@@ -626,15 +514,15 @@ mod tests {
             .axis("P", &parts())
             .axis("V", &pivots());
         let combos = family.combinations();
-        assert_eq!(combos[0].instantiated_type(), "QuickSort<Lomuto, FirstElement>");
-        assert_eq!(combos[3].instantiated_type(), "QuickSort<Hoare, LastElement>");
+        assert_eq!(combos[0].instantiated_type(), "QuickSort<LeftLeftPartition, FirstElement>");
+        assert_eq!(combos[3].instantiated_type(), "QuickSort<LeftRightPartition, LastElement>");
     }
 
     #[test]
     fn get_binding() {
         let family = Family::new("Sort<{P}>").axis("P", &parts());
         let combo = &family.combinations()[0];
-        assert_eq!(combo.get("P").unwrap().label, "lomuto");
+        assert_eq!(combo.get("P").unwrap().label, "left-left pointer");
         assert!(combo.get("X").is_none());
     }
 

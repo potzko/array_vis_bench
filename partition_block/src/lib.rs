@@ -7,7 +7,7 @@ use sort_logger::SortLogger;
 ///
 /// Processes elements in fixed-size blocks: first classifies which
 /// elements need to move (into offset buffers), then swaps them in a
-/// tight loop. Reduces branch mispredictions compared to Lomuto/Hoare.
+/// tight loop. Reduces branch mispredictions compared to LeftLeftPartition/LeftRightPartition.
 pub struct Block;
 
 impl PartitionScheme for Block {

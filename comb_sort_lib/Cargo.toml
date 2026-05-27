@@ -21,7 +21,6 @@ const_format = "0.2"
 module = "comb_sorts"
 type   = "{R}"
 uses   = [
-    "comb_sort_lib::CombSortRatio",
 ]
 axes = [
     { var = "R", role = "CombRatio" },

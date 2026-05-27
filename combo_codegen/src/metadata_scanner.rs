@@ -6,8 +6,8 @@
 //! ```toml
 //! [[package.metadata.array_vis_bench.components]]
 //! role  = "Partition"
-//! type  = "Lomuto"
-//! label = "lomuto"
+//! type  = "LeftLeftPartition"
+//! label = "left-left pointer"
 //! ```
 //!
 //! Array form is preferred over a keyed map because the same `type` can
@@ -38,6 +38,8 @@ pub struct MetadataComponent {
     pub role: String,
     pub type_expr: String,
     pub label: String,
+    /// `use` paths this component needs in the generated file.
+    pub uses: Vec<String>,
     /// Path to the `Cargo.toml` it came from — used for `cargo:rerun-if-changed`.
     pub source_manifest: PathBuf,
 }
@@ -133,10 +135,25 @@ pub fn scan_workspace_components(
                 source,
             })?;
         for decl in decls {
+            // If the component doesn't declare its own `uses`, auto-derive a
+            // single import from its source crate + the base type name (the
+            // type stripped of any generic args). This covers the common case
+            // — a leaf crate exposing one type at its root — with no metadata.
+            // Components whose type lives in another crate (e.g. the
+            // `*_components` metadata-only crates) or that carry generic-arg
+            // types must list `uses` explicitly.
+            let uses = if decl.uses.is_empty() {
+                let base = decl.type_expr.split('<').next().unwrap_or(&decl.type_expr).trim();
+                let krate = pkg.name.as_str().replace('-', "_");
+                vec![format!("{krate}::{base}")]
+            } else {
+                decl.uses
+            };
             out.push(MetadataComponent {
                 role: decl.role,
                 type_expr: decl.type_expr,
                 label: decl.label,
+                uses,
                 source_manifest: pkg.manifest_path.clone().into_std_path_buf(),
             });
         }
@@ -221,6 +238,7 @@ pub fn scan_manifest(manifest: impl AsRef<Path>) -> Result<Vec<MetadataComponent
             role: decl.role,
             type_expr: decl.type_expr,
             label: decl.label,
+            uses: decl.uses,
             source_manifest: path.to_path_buf(),
         })
         .collect();
@@ -454,6 +472,12 @@ struct ComponentDecl {
     #[serde(rename = "type")]
     type_expr: String,
     label: String,
+    /// `use` paths this component needs in the generated file — its own type
+    /// path plus any generic-argument types. The emitter unions these into
+    /// every family that references this component's role, so families no
+    /// longer have to list component imports.
+    #[serde(default)]
+    uses: Vec<String>,
     /// Reserved for future use (generic over a role — e.g. `R: Rotation`).
     /// Parsed but not yet consumed; `deny_unknown_fields` means we have
     /// to declare it explicitly.
@@ -487,15 +511,15 @@ mod tests {
 
             [[package.metadata.array_vis_bench.components]]
             role  = "Partition"
-            type  = "Lomuto"
-            label = "lomuto"
+            type  = "LeftLeftPartition"
+            label = "left-left pointer"
             "#,
         );
         let out = scan_manifest(f.path()).unwrap();
         assert_eq!(out.len(), 1);
         assert_eq!(out[0].role, "Partition");
-        assert_eq!(out[0].type_expr, "Lomuto");
-        assert_eq!(out[0].label, "lomuto");
+        assert_eq!(out[0].type_expr, "LeftLeftPartition");
+        assert_eq!(out[0].label, "left-left pointer");
     }
 
     #[test]
@@ -537,20 +561,20 @@ version = "0.1.0""#);
 
             [[package.metadata.array_vis_bench.components]]
             role  = "Partition"
-            type  = "Lomuto"
-            label = "lomuto"
+            type  = "LeftLeftPartition"
+            label = "left-left pointer"
 
             [[package.metadata.array_vis_bench.components]]
             role  = "Partition"
-            type  = "Hoare"
-            label = "hoare"
+            type  = "LeftRightPartition"
+            label = "left-right pointer"
             "#,
         );
         let out = scan_manifest(f.path()).unwrap();
         assert_eq!(out.len(), 2);
         // TOML array order is preserved.
-        assert_eq!(out[0].label, "lomuto");
-        assert_eq!(out[1].label, "hoare");
+        assert_eq!(out[0].label, "left-left pointer");
+        assert_eq!(out[1].label, "left-right pointer");
     }
 
     #[test]
@@ -580,8 +604,8 @@ version = "0.1.0""#);
 
             [[package.metadata.array_vis_bench.components]]
             role  = "Partition"
-            type  = "Lomuto"
-            lable = "lomuto"
+            type  = "LeftLeftPartition"
+            lable = "left-left pointer"
             "#,
         );
         let err = scan_manifest(f.path()).unwrap_err();

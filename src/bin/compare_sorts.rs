@@ -10,7 +10,7 @@
 //!
 //! | sort      | partition / strategy           | small sort | other       |
 //! |-----------|--------------------------------|------------|-------------|
-//! | quick     | Lomuto + first pivot           | ins ≤32    | recursive   |
+//! | quick     | LeftLeftPartition + first pivot           | ins ≤32    | recursive   |
 //! | merge     | top-down, copy-back            | ins ≤32    | aux Vec<T>  |
 //! | heap      | binary max-forward (sift-down) | none       | iterative build |
 //!
@@ -51,9 +51,9 @@ use array_vis_bench_full::sorts::heap_sort::arity::Binary;
 use array_vis_bench_full::sorts::heap_sort::arity_heap::ArityHeap;
 use array_vis_bench_full::sorts::heap_sort::deep_heapify::Iterative;
 use array_vis_bench_full::sorts::heap_sort::direction::MaxForward;
-use array_vis_bench_full::sorts::heap_sort::heap_sort::HeapSort;
+use array_vis_bench_full::sorts::heap_sort::heap_sort::NaryHeapSort;
 use array_vis_bench_full::sorts::merge_sorts::top_down::TopDownMergeSort;
-use array_vis_bench_full::sorts::quick_sorts::partitions::Lomuto;
+use array_vis_bench_full::sorts::quick_sorts::partitions::LeftLeftPartition;
 use array_vis_bench_full::sorts::quick_sorts::pivot_selectors::FirstElement;
 use array_vis_bench_full::sorts::quick_sorts::quick_sort::QuickSort;
 use array_vis_bench_full::traits::log_traits::NoOpLogger;
@@ -76,7 +76,7 @@ fn hand_insertion_sort(arr: &mut [u64]) {
     }
 }
 
-/// Lomuto + first-element pivot + insertion-sort under-32 threshold.
+/// LeftLeftPartition + first-element pivot + insertion-sort under-32 threshold.
 ///
 /// `#[inline(never)] #[no_mangle]` so the bin exposes a clean
 /// `hand_quicksort` symbol — pair with the `asm_quick_sort_classic_*`
@@ -210,9 +210,9 @@ fn sift_down(arr: &mut [u64], heap_size: usize, mut i: usize) {
 
 // ── System counterparts ──────────────────────────────────────────────────────
 
-type SystemQS = QuickSort<Lomuto, FirstElement, InsertionSmallSort<LinearInsertion, 32>>;
+type SystemQS = QuickSort<LeftLeftPartition, FirstElement, InsertionSmallSort<LinearInsertion, 32>>;
 type SystemMS = TopDownMergeSort<InsertionSmallSort<LinearInsertion, 32>, false, false>;
-type SystemHS = HeapSort<ArityHeap<Binary, MaxForward>, Iterative>;
+type SystemHS = NaryHeapSort<ArityHeap<Binary, MaxForward>, Iterative>;
 
 // Stable `#[no_mangle]` wrappers around each system sort's u64 entry —
 // the asm-side counterpart to `hand_quicksort` etc. `cargo asm` can pull

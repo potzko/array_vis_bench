@@ -15,7 +15,7 @@ pub trait Compare {
     /// `arr[a]` is more-or-equally rootward than `arr[b]`. Min: `arr[a] ≤
     /// arr[b]`. Max: `arr[a] ≥ arr[b]`. Used by partition variants whose
     /// non-strict equivalent of `comes_first` matters for grouping equal
-    /// keys (Lomuto, Block) the same way the standard Ord-based partitions
+    /// keys (LeftLeftPartition, Block) the same way the standard Ord-based partitions
     /// do.
     fn comes_first_or_eq<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         logger: &mut U,

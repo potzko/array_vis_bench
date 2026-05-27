@@ -65,6 +65,61 @@ fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
         .collect()
 }
 
+/// Resolve an event address to the live array lifetime that owns it,
+/// returning the lifetime's index into the `scales` vec. Mirrors
+/// `ArrStore::lookup_mut`: the array with the largest base ≤ `addr`,
+/// bounds-checked against its element length.
+fn resolve_live(live: &BTreeMap<usize, (usize, usize)>, addr: usize, size_t: usize) -> Option<usize> {
+    let (&base, &(idx, len)) = live.range(..=addr).next_back()?;
+    if addr < base + len * size_t {
+        Some(idx)
+    } else {
+        None
+    }
+}
+
+/// One pass over `actions` to compute the rendering scale (max value) of
+/// every array lifetime in stream order. The N-th `CreateAuxArr*` event
+/// in the log maps to `scales[N]`; the renderer reads from this vec at
+/// Create time instead of growing `max` on the fly.
+///
+/// A `name` (base pointer) can be reused after a `FreeAuxArr`, so each
+/// Create…Free window is a distinct lifetime with its own slot. Only
+/// `WriteData*` introduce values; `Swap` / `WriteInArr` shuffle existing
+/// ones, so they can't raise the max.
+fn compute_array_scales(actions: &[SortLog<usize>]) -> Vec<f64> {
+    let size_t = size_of::<usize>();
+    let mut scales: Vec<f64> = Vec::new();
+    // base address -> (lifetime index into `scales`, element length)
+    let mut live: BTreeMap<usize, (usize, usize)> = BTreeMap::new();
+
+    for action in actions {
+        match action {
+            SortLog::CreateAuxArr { name, length }
+            | SortLog::CreateAuxArrT { name, length } => {
+                let idx = scales.len();
+                scales.push(0.0);
+                live.insert(*name, (idx, *length));
+            }
+            SortLog::FreeAuxArr { name } => {
+                live.remove(name);
+            }
+            SortLog::WriteData { name, data, .. } => {
+                if let Some(idx) = resolve_live(&live, *name, size_t) {
+                    scales[idx] = scales[idx].max(*data as f64);
+                }
+            }
+            SortLog::WriteDataU { name, data, .. } => {
+                if let Some(idx) = resolve_live(&live, *name, size_t) {
+                    scales[idx] = scales[idx].max(*data as f64);
+                }
+            }
+            _ => {}
+        }
+    }
+    scales
+}
+
 impl Mp4Visualizer {
     pub fn new(config: Mp4Config) -> Self {
         Self { config }
@@ -144,6 +199,11 @@ impl Visualizer for Mp4Visualizer {
         let screen_view = SubImg { x: 0, y: 0, width: out_w, height: out_h };
         let mut store = ArrStore::new();
 
+        // Precompute each array lifetime's rendering scale up-front. The
+        // N-th Create event consumes `scales[N]`.
+        let scales = compute_array_scales(actions);
+        let mut next_lifetime = 0usize;
+
         let mut ffmpeg = self.spawn_ffmpeg();
         let stdin = ffmpeg.stdin.as_mut().expect("ffmpeg stdin not available");
 
@@ -180,7 +240,9 @@ impl Visualizer for Mp4Visualizer {
                             vec![0; length],
                             SubImg { x: 0, y: 0, width: 0, height: 0 },
                             name,
+                            scales.get(next_lifetime).copied().unwrap_or(0.0),
                         ));
+                        next_lifetime += 1;
                         redistribute(&mut store, &screen_view, &mut fb);
                     }
                     SortLog::FreeAuxArr { name } => {
@@ -326,56 +388,14 @@ impl ArrStore {
                     if let Some((a, off)) = self.lookup_mut(*name) {
                         let idx = ind + off;
                         a.arr[idx] = *data;
-                        let v = *data as f64;
-                        if v < a.min { a.min = v; }
-                        // Growing max changes the scale every previously-drawn
-                        // column was rasterised at. Without invalidating those
-                        // columns, their pixels stay at the old, smaller-max
-                        // height — which means every column drawn before the
-                        // current write reads as "full bar" relative to the
-                        // value at write time. The CreateAuxArrT + N×WriteData
-                        // init sequence triggers this on every visualisation
-                        // (each write is the new max), so the array begins
-                        // entirely white. Mark every index dirty whenever max
-                        // grows; `idx` is included by that pass.
-                        if v > a.max {
-                            a.max = v;
-                            a.mark_all_dirty();
-                        } else {
-                            a.mark_dirty(idx);
-                        }
+                        a.mark_dirty(idx);
                     }
                 }
                 SortLog::WriteDataU { name, ind, data } => {
                     if let Some((a, off)) = self.lookup_mut(*name) {
                         let idx = ind + off;
                         a.arr[idx] = *data;
-                        let v = *data as f64;
-                        if v < a.min { a.min = v; }
-                        if v > a.max {
-                            a.max = v;
-                            a.mark_all_dirty();
-                        } else {
-                            a.mark_dirty(idx);
-                        }
-                    }
-                }
-                SortLog::SetScale { name, max } => {
-                    if let Some((a, _off)) = self.lookup_mut(*name) {
-                        let v = *max as f64;
-                        if v != a.max {
-                            a.max = v;
-                            a.mark_all_dirty();
-                        }
-                    }
-                }
-                SortLog::SetScaleU { name, max } => {
-                    if let Some((a, _off)) = self.lookup_mut(*name) {
-                        let v = *max as f64;
-                        if v != a.max {
-                            a.max = v;
-                            a.mark_all_dirty();
-                        }
+                        a.mark_dirty(idx);
                     }
                 }
                 SortLog::WriteInArr { name, ind_a, ind_b } => {
@@ -473,7 +493,6 @@ struct ArrActions {
 
     view: SubImg,
     name: usize,
-    min: f64,
     max: f64,
 }
 
@@ -484,9 +503,7 @@ impl Hash for ArrActions {
 }
 
 impl ArrActions {
-    fn new(arr: Vec<usize>, view: SubImg, name: usize) -> ArrActions {
-        let min = *arr.iter().min().unwrap_or(&0);
-        let max = *arr.iter().max().unwrap_or(&0);
+    fn new(arr: Vec<usize>, view: SubImg, name: usize, max: f64) -> ArrActions {
         let len = arr.len();
         let mut a = ArrActions {
             arr,
@@ -505,8 +522,7 @@ impl ArrActions {
             diff_colored: Vec::new(),
             view: SubImg { x: 0, y: 0, width: 0, height: 0 },
             name,
-            min: min as f64,
-            max: max as f64,
+            max,
         };
         a.set_view(view);
         a
@@ -578,18 +594,6 @@ impl ArrActions {
         if !self.dirty_flag[i] {
             self.dirty_flag[i] = true;
             self.dirty.push(i);
-        }
-    }
-
-    /// Mark every index dirty. Called when the rendering scale changes
-    /// (max grew) so that finalize_frame repaints every column at the
-    /// new scale rather than leaving stale, too-tall bars behind.
-    fn mark_all_dirty(&mut self) {
-        for i in 0..self.arr.len() {
-            if !self.dirty_flag[i] {
-                self.dirty_flag[i] = true;
-                self.dirty.push(i);
-            }
         }
     }
 

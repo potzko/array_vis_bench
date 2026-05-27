@@ -1,12 +1,12 @@
-//! Heap sort family — `HeapSort<H, DH>` + the supporting trait layers
-//! (`HeapLayout`, `Heap`, `HeapAlgorithm`, `Compare`, `Layout`,
-//! `Direction`, `Arity`, `DeepHeapify`, `HeapPartition`). Three sort
-//! families self-register via TOML declarations in this crate's
-//! `Cargo.toml`:
+//! Heap sort family — `HeapSort<HA>` marker + the `NaryHeapSort<H, DH>`
+//! stateless-heap adapter + the supporting trait layers (`HeapLayout`,
+//! `Heap`, `HeapAlgorithm`, `Compare`, `Layout`, `Direction`, `Arity`,
+//! `DeepHeapify`, `HeapPartition`). Three sort families self-register via
+//! TOML declarations in this crate's `Cargo.toml`:
 //!
-//! - `HeapSort<ArityHeap<A, D>, DH>` — classic heap sort
-//! - `HeapSort<ArityHeap<A, D>, QDH<HP, V>>` — quickselect-build variant
-//! - `HeapSort<ArityHeap<A, D>, DPQDH<DPS>>` — dual-pivot quickselect-build
+//! - `HeapSort<NaryHeapSort<ArityHeap<A, D>, DH>>` — classic heap sort
+//! - `HeapSort<NaryHeapSort<ArityHeap<A, D>, QDH<HP, V>>>` — quickselect-build
+//! - `HeapSort<NaryHeapSort<ArityHeap<A, D>, DPQDH<DPS>>>` — dual-pivot build
 //!
 //! Component metadata for `Arity`, `HeapDirection`, `HeapPartition`,
 //! `DeepHeapify`, `QuickDeepHeapify`, `DualPivotQuickDeepHeapify` lives
@@ -32,8 +32,8 @@ pub use deep_heapify::{DeepHeapify, Iterative, Recursive};
 pub use direction::{Direction, MaxForward, MaxReverse, MinForward, MinReverse};
 pub use heap::{Heap, HeapLayout};
 pub use heap_algorithm::HeapAlgorithm;
-pub use heap_partition::{Block, HeapPartition, Hoare, Lomuto};
-pub use heap_sort::HeapSort;
+pub use heap_partition::{Block, HeapPartition, LeftRightPartition, LeftLeftPartition};
+pub use heap_sort::{HeapSort, NaryHeapSort};
 pub use layout::{Forward, Layout, Reverse};
 pub use quick_deep_heapify::{
     RecursivePartialQuickDeepHeapify, SequentialQuickDeepHeapify,

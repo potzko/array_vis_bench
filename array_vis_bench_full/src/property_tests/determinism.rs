@@ -213,14 +213,6 @@ fn normalize_trace(trace: &[SortLog<usize>]) -> Vec<SortLog<usize>> {
                 ind: *ind,
                 data: *data,
             },
-            SortLog::SetScale { name, max } => SortLog::SetScale {
-                name: assign(*name),
-                max: *max,
-            },
-            SortLog::SetScaleU { name, max } => SortLog::SetScaleU {
-                name: assign(*name),
-                max: *max,
-            },
         });
     }
     out

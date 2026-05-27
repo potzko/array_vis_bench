@@ -232,13 +232,13 @@ impl<HP: HeapPartition, V: PivotSelector> DeepHeapify for StackPartialQuickDeepH
 
 /// Same iterative culling skeleton as `StackPartialQuickDeepHeapify`, but
 /// each pop drops three sub-ranges instead of two by partitioning around
-/// two pivots (Yaroslavskiy) in heap-logical coordinates. Wider fan-out
+/// two pivots (DualPivotPartition) in heap-logical coordinates. Wider fan-out
 /// per pass = more aggressive culling against the layer-boundary set, so
 /// fewer partition passes are needed to reach all boundaries.
 ///
 /// Parametrised only over the [`DualPivotSelector`] — the partition itself
-/// is fixed to Yaroslavskiy's three-region scan, since (unlike the
-/// single-pivot path) it has no Lomuto/Hoare/Block siblings to swap in.
+/// is fixed to DualPivotPartition's three-region scan, since (unlike the
+/// single-pivot path) it has no LeftLeftPartition/LeftRightPartition/Block siblings to swap in.
 pub struct StackDualPivotPartialQuickDeepHeapify<DPS: DualPivotSelector>(PhantomData<DPS>);
 impl<DPS: DualPivotSelector> DeepHeapify for StackDualPivotPartialQuickDeepHeapify<DPS> {
     fn deep_heapify<H: Heap, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -313,7 +313,7 @@ where
     (p1_logical, p2_logical)
 }
 
-/// Yaroslavskiy three-region partition in heap-logical coordinates.
+/// DualPivotPartition three-region partition in heap-logical coordinates.
 ///
 /// Places pivot `p1` at logical `lo` and pivot `p2` at logical `hi - 1`,
 /// normalised so `arr[lo]` is more rootward than `arr[hi - 1]` per

@@ -21,3 +21,4 @@ rotation_reversal = { path = "../rotation_reversal" }
 role  = "Partition"
 type  = "MovingPivotV3<ReversalRotation>"
 label = "moving pivot v3<reversal>"
+uses  = ["partition_moving_pivot_v3::MovingPivotV3", "rotation_reversal::ReversalRotation"]

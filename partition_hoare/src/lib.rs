@@ -3,14 +3,15 @@ use array_vis_bench_traits::{
 };
 use sort_logger::SortLogger;
 
-/// Hoare partition (left-right two-pointer scan).
+/// Left-right two-pointer (crossing) partition — the *Hoare* scheme
+/// (C. A. R. Hoare).
 ///
 /// Moves the pivot to the start, scans inward from both ends, then swaps
 /// the pivot into its final position.
-pub struct Hoare;
+pub struct LeftRightPartition;
 
-impl PartitionScheme for Hoare {
-    const NAME: &'static str = "hoare";
+impl PartitionScheme for LeftRightPartition {
+    const NAME: &'static str = "left-right pointer";
     const N_PIVOTS: usize = 1;
     #[inline]
     fn partition<T, U, V>(
@@ -49,14 +50,14 @@ impl PartitionScheme for Hoare {
 }
 
 // Single-pass partition: O(N) time, O(1) aux space, not stable.
-impl HasTimeBounds for Hoare {
+impl HasTimeBounds for LeftRightPartition {
     const WORST: Complexity = Complexity::N1;
     const BEST: Complexity = Complexity::N1;
     const AVERAGE: Complexity = Complexity::N1;
 }
-impl HasSpace for Hoare {
+impl HasSpace for LeftRightPartition {
     const SPACE: Complexity = Complexity::CONST;
 }
-impl HasStability for Hoare {
+impl HasStability for LeftRightPartition {
     const STABLE: bool = false;
 }

@@ -24,16 +24,18 @@ rand = "0.8"
 module = "fun_sorts"
 type   = "CyclentSort<{P}>"
 uses   = [
-    "partition_block::Block",
-    "partition_hoare::Hoare",
-    "partition_lomuto::Lomuto",
-    "partition_three_way::ThreeWay",
     "fun_sorts_lib::cyclent_sort::CyclentSort",
+    "partition_lomuto::LeftLeftPartition",
+    "partition_hoare::LeftRightPartition",
+    "partition_three_way::ThreeWay",
+    "partition_block::Block",
+    "pivot_first::FirstElement",
+    "pivot_middle::MiddleElement",
 ]
 axes = [
     { var = "P", inline = [
-        { type = "Lomuto",   label = "lomuto" },
-        { type = "Hoare",    label = "hoare" },
+        { type = "LeftLeftPartition",   label = "left-left pointer" },
+        { type = "LeftRightPartition",    label = "left-right pointer" },
         { type = "ThreeWay", label = "three-way" },
         { type = "Block",    label = "block" },
     ] },
@@ -48,16 +50,12 @@ path        = ["fun sorts", "cyclent sort", "{P}"]
 module = "fun_sorts"
 type   = "CyclentSortOpt<{P}>"
 uses   = [
-    "partition_block::Block",
-    "partition_hoare::Hoare",
-    "partition_lomuto::Lomuto",
-    "partition_three_way::ThreeWay",
     "fun_sorts_lib::cyclent_sort_opt::CyclentSortOpt",
 ]
 axes = [
     { var = "P", inline = [
-        { type = "Lomuto",   label = "lomuto" },
-        { type = "Hoare",    label = "hoare" },
+        { type = "LeftLeftPartition",   label = "left-left pointer" },
+        { type = "LeftRightPartition",    label = "left-right pointer" },
         { type = "ThreeWay", label = "three-way" },
         { type = "Block",    label = "block" },
     ] },
@@ -72,16 +70,12 @@ path        = ["fun sorts", "cyclent sort opt", "{P}"]
 module = "fun_sorts"
 type   = "CyclentSortStack<{P}>"
 uses   = [
-    "partition_block::Block",
-    "partition_hoare::Hoare",
-    "partition_lomuto::Lomuto",
-    "partition_three_way::ThreeWay",
     "fun_sorts_lib::cyclent_sort_stack::CyclentSortStack",
 ]
 axes = [
     { var = "P", inline = [
-        { type = "Lomuto",   label = "lomuto" },
-        { type = "Hoare",    label = "hoare" },
+        { type = "LeftLeftPartition",   label = "left-left pointer" },
+        { type = "LeftRightPartition",    label = "left-right pointer" },
         { type = "ThreeWay", label = "three-way" },
         { type = "Block",    label = "block" },
     ] },
@@ -96,16 +90,12 @@ path        = ["fun sorts", "cyclent sort stack", "{P}"]
 module = "fun_sorts"
 type   = "CyclentSortStackOptimized<{P}>"
 uses   = [
-    "partition_block::Block",
-    "partition_hoare::Hoare",
-    "partition_lomuto::Lomuto",
-    "partition_three_way::ThreeWay",
     "fun_sorts_lib::cyclent_sort_stack_optimized::CyclentSortStackOptimized",
 ]
 axes = [
     { var = "P", inline = [
-        { type = "Lomuto",   label = "lomuto" },
-        { type = "Hoare",    label = "hoare" },
+        { type = "LeftLeftPartition",   label = "left-left pointer" },
+        { type = "LeftRightPartition",    label = "left-right pointer" },
         { type = "ThreeWay", label = "three-way" },
         { type = "Block",    label = "block" },
     ] },
@@ -121,10 +111,6 @@ path        = ["fun sorts", "cyclent sort stack optimized", "{P}"]
 module = "fun_sorts"
 type   = "StoogeSort<{SS}>"
 uses   = [
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
     "fun_sorts_lib::stooge_sort::StoogeSort",
 ]
 axes = [
@@ -150,7 +136,6 @@ module = "fun_sorts"
 type   = "RandomShellSort<{D}>"
 uses   = [
     "fun_sorts_lib::random_shell_sort::RandomShellSort",
-    "gap_distribution_lib::{UniformDist, ParabolicDist, CubicDist, LogUniformDist, Distinct}",
 ]
 axes = [
     { var = "D", role = "GapDistribution" },
@@ -167,24 +152,13 @@ max_n_for_tests  = 1000
 module = "fun_sorts"
 type   = "QuickSurrender<{Alg}<{P}, {V}>>"
 uses   = [
-    "partition_block::Block",
-    "partition_hoare::Hoare",
-    "partition_lomuto::Lomuto",
-    "partition_three_way::ThreeWay",
-    "pivot_first::FirstElement",
-    "pivot_last::LastElement",
-    "pivot_median3::MedianOfThree",
-    "pivot_median_of_medians::MedianOfMedians",
-    "pivot_middle::MiddleElement",
-    "pivot_ninther::Ninther",
-    "quick_select_lib::{IterativeQuickSelect, RecursiveQuickSelect}",
     "fun_sorts_lib::quick_surrender::QuickSurrender",
 ]
 axes = [
     { var = "Alg", role = "QuickSelect" },
     { var = "P", inline = [
-        { type = "Lomuto",   label = "lomuto" },
-        { type = "Hoare",    label = "hoare" },
+        { type = "LeftLeftPartition",   label = "left-left pointer" },
+        { type = "LeftRightPartition",    label = "left-right pointer" },
         { type = "ThreeWay", label = "three-way" },
         { type = "Block",    label = "block" },
     ] },
@@ -197,18 +171,15 @@ direct_sort      = true
 path             = ["fun sorts", "quick surrender", "{Alg}", "{P}", "{V}"]
 max_n_for_tests  = 500
 
-# ── Quick surrender (dual pivot: Yaroslavskiy partition × dual selector) ──
+# ── Quick surrender (dual pivot: DualPivotPartition partition × dual selector) ──
 # Folded into the unified QuickSelect<P, V> types: dual-pivot is just the
 # `yaroslavskiy` partition with a dual-pivot PivotInput selector.
 [[package.metadata.array_vis_bench.families]]
 module = "fun_sorts"
-type   = "QuickSurrender<{Alg}<Yaroslavskiy, {DPS}>>"
+type   = "QuickSurrender<{Alg}<DualPivotPartition, {DPS}>>"
 uses   = [
     "quick_sort_lib::pivot_selectors::{CombinedSelector, NintherDualPivot}",
-    "quick_sort_lib::Yaroslavskiy",
-    "quick_select_lib::{IterativeQuickSelect, RecursiveQuickSelect}",
-    "pivot_first::FirstElement",
-    "pivot_middle::MiddleElement",
+    "quick_sort_lib::DualPivotPartition",
     "fun_sorts_lib::quick_surrender::QuickSurrender",
 ]
 axes = [
@@ -223,7 +194,7 @@ name             = "quick surrender"
 big_o            = "O(N^2)"
 stable           = false
 direct_sort      = true
-path             = ["fun sorts", "quick surrender", "{Alg}", "yaroslavskiy", "{DPS}"]
+path             = ["fun sorts", "quick surrender", "{Alg}", "dual pivot", "{DPS}"]
 max_n_for_tests  = 500
 
 # ── Quick surrender optimised (single pivot, plus SS) ──
@@ -231,29 +202,13 @@ max_n_for_tests  = 500
 module = "fun_sorts"
 type   = "QuickSurrenderOptimised<{Alg}<{P}, {V}>, {SS}>"
 uses   = [
-    "partition_block::Block",
-    "partition_hoare::Hoare",
-    "partition_lomuto::Lomuto",
-    "partition_three_way::ThreeWay",
-    "pivot_first::FirstElement",
-    "pivot_last::LastElement",
-    "pivot_median3::MedianOfThree",
-    "pivot_median_of_medians::MedianOfMedians",
-    "pivot_middle::MiddleElement",
-    "pivot_ninther::Ninther",
-    "quick_select_lib::{IterativeQuickSelect, RecursiveQuickSelect}",
-    "small_sort_basic::Size2SmallSort",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
     "fun_sorts_lib::quick_surrender_optimised::QuickSurrenderOptimised",
 ]
 axes = [
     { var = "Alg", role = "QuickSelect" },
     { var = "P", inline = [
-        { type = "Lomuto",   label = "lomuto" },
-        { type = "Hoare",    label = "hoare" },
+        { type = "LeftLeftPartition",   label = "left-left pointer" },
+        { type = "LeftRightPartition",    label = "left-right pointer" },
         { type = "ThreeWay", label = "three-way" },
         { type = "Block",    label = "block" },
     ] },
@@ -267,23 +222,15 @@ direct_sort      = true
 path             = ["fun sorts", "quick surrender optimised", "{Alg}", "{P}", "{V}", "{SS}"]
 max_n_for_tests  = 1000
 
-# ── Quick surrender optimised (dual pivot: Yaroslavskiy × dual selector) ──
+# ── Quick surrender optimised (dual pivot: DualPivotPartition × dual selector) ──
 # Folded into the unified QuickSelect<P, V> types — dual-pivot is the
 # `yaroslavskiy` partition with a dual-pivot PivotInput selector.
 [[package.metadata.array_vis_bench.families]]
 module = "fun_sorts"
-type   = "QuickSurrenderOptimised<{Alg}<Yaroslavskiy, {DPS}>, {SS}>"
+type   = "QuickSurrenderOptimised<{Alg}<DualPivotPartition, {DPS}>, {SS}>"
 uses   = [
     "quick_sort_lib::pivot_selectors::{CombinedSelector, NintherDualPivot}",
-    "quick_sort_lib::Yaroslavskiy",
-    "quick_select_lib::{IterativeQuickSelect, RecursiveQuickSelect}",
-    "pivot_first::FirstElement",
-    "pivot_middle::MiddleElement",
-    "small_sort_basic::Size2SmallSort",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
+    "quick_sort_lib::DualPivotPartition",
     "fun_sorts_lib::quick_surrender_optimised::QuickSurrenderOptimised",
 ]
 axes = [
@@ -299,5 +246,5 @@ name             = "quick surrender optimised"
 big_o            = "O(N log N)"
 stable           = false
 direct_sort      = true
-path             = ["fun sorts", "quick surrender optimised", "{Alg}", "yaroslavskiy", "{DPS}", "{SS}"]
+path             = ["fun sorts", "quick surrender optimised", "{Alg}", "dual pivot", "{DPS}", "{SS}"]
 max_n_for_tests  = 1000

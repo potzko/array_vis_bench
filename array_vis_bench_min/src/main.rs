@@ -16,7 +16,7 @@ use heap_sort_lib::arity::Binary;
 use heap_sort_lib::arity_heap::ArityHeap;
 use heap_sort_lib::deep_heapify::Iterative;
 use heap_sort_lib::direction::MaxForward;
-use heap_sort_lib::heap_sort::HeapSort;
+use heap_sort_lib::heap_sort::NaryHeapSort;
 use insertion_sort_lib::InsertionSort;
 use small_sort_insertion_strategy::LinearInsertion;
 use sort_logger::NoOpLogger;
@@ -53,7 +53,7 @@ fn main() {
     {
         let mut a = shuffled(large_n, 0xC0FFEE);
         time("HeapSort<Binary>", large_n, || {
-            HeapSort::<ArityHeap<Binary, MaxForward>, Iterative>::sort(&mut a, &mut NoOpLogger);
+            NaryHeapSort::<ArityHeap<Binary, MaxForward>, Iterative>::sort(&mut a, &mut NoOpLogger);
         });
         assert!(a.is_sorted());
     }

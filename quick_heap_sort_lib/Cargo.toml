@@ -18,14 +18,8 @@ sort_logger = { path = "../sort_logger" }
 module = "quick_heap_sort"
 type   = "QuickHeapSort<{A}, Iterative, {SS}>"
 uses   = [
-    "heap_sort_lib::arity::{Binary, Ternary, Base16, Base256}",
-    "heap_sort_lib::deep_heapify::Iterative",
-    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
     "quick_heap_sort_lib::quick_heap_sort::QuickHeapSort",
+    "heap_sort_lib::deep_heapify::Iterative",
 ]
 axes = [
     { var = "A",  role = "Arity" },
@@ -42,18 +36,6 @@ path        = ["quick heap sorts", "classic", "{A}", "{SS}"]
 module = "quick_heap_sort"
 type   = "QuickHeapSort<{A}, {QDH}<{HP}, {V}>, {SS}>"
 uses   = [
-    "heap_sort_lib::arity::{Binary, Ternary, Base16, Base256}",
-    "heap_sort_lib::quick_deep_heapify::{RecursivePartialQuickDeepHeapify, SequentialQuickDeepHeapify, StackPartialQuickDeepHeapify}",
-    "heap_sort_lib::heap_partition::{Block, Hoare, Lomuto}",
-    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
-    "pivot_first::FirstElement",
-    "pivot_median_of_medians::MedianOfMedians",
-    "pivot_median3::MedianOfThree",
-    "pivot_middle::MiddleElement",
     "quick_heap_sort_lib::quick_heap_sort::QuickHeapSort",
 ]
 axes = [
@@ -83,16 +65,11 @@ path        = ["quick heap sorts", "quick build", "{A}", "{QDH}", "{HP}", "{V}",
 module = "quick_heap_sort"
 type   = "QuickHeapSort<{A}, {QDH}<{DPS}>, {SS}>"
 uses   = [
-    "heap_sort_lib::quick_deep_heapify::StackDualPivotPartialQuickDeepHeapify",
     "quick_sort_lib::pivot_selectors::{CombinedSelector, NintherDualPivot}",
     "pivot_first::FirstElement",
     "pivot_middle::MiddleElement",
-    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
-    "heap_sort_lib::arity::{Binary, Ternary, Base16, Base256}",
+    "pivot_median3::MedianOfThree",
+    "pivot_median_of_medians::MedianOfMedians",
     "quick_heap_sort_lib::quick_heap_sort::QuickHeapSort",
 ]
 axes = [
@@ -120,9 +97,6 @@ path        = ["quick heap sorts", "quick build", "dual pivot", "{A}", "{QDH}", 
 module = "quick_heap_sort"
 type   = "DeferredQuickHeapSort<{A}, {DSS}>"
 uses   = [
-    "heap_sort_lib::arity::{Binary, Ternary, Base16, Base256}",
-    "small_sort_deferred_insertion::DeferredInsertion",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
     "quick_heap_sort_lib::deferred_quick_heap_sort::DeferredQuickHeapSort",
 ]
 axes = [

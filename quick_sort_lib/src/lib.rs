@@ -1,9 +1,9 @@
 //! Quick sort family. The unified [`QuickSort<P, V, SS>`] handles both
-//! single-pivot (`P::N_PIVOTS = 1`, e.g. `Lomuto` + a [`PivotSelector`])
-//! and dual-pivot (`P::N_PIVOTS = 2`, e.g. [`yaroslavskiy::Yaroslavskiy`]
+//! single-pivot (`P::N_PIVOTS = 1`, e.g. `LeftLeftPartition` + a [`PivotSelector`])
+//! and dual-pivot (`P::N_PIVOTS = 2`, e.g. [`yaroslavskiy::DualPivotPartition`]
 //! + a `DualPivotSelector` like [`CombinedSelector`] or
 //! [`NintherDualPivot`]) variants — the old standalone
-//! `DualPivotQuickSort` is gone, replaced by `QuickSort<Yaroslavskiy,
+//! `DualPivotQuickSort` is gone, replaced by `QuickSort<DualPivotPartition,
 //! <DPS>, <SS>>`. Family declarations live in this crate's `Cargo.toml`.
 //! The 30 standalone `(P × V)` partition registrations live in the
 //! sibling `quick_partition_registry` crate so this leaf doesn't drag
@@ -19,4 +19,4 @@ pub mod yaroslavskiy;
 pub use deferred_quick_sort::DeferredQuickSort;
 pub use pivot_selectors::{CombinedSelector, NintherDualPivot};
 pub use quick_sort::QuickSort;
-pub use yaroslavskiy::Yaroslavskiy;
+pub use yaroslavskiy::DualPivotPartition;
