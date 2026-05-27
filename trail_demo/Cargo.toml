@@ -1,0 +1,54 @@
+[package]
+name = "trail_demo"
+version = "0.1.0"
+edition = "2021"
+
+# Standalone workspace: this crate is an isolated test fixture for the
+# combo_codegen trail rule. Its own `[workspace]` keeps it out of the
+# parent array_vis_bench workspace so its recursive demo families can
+# never leak into the real sort catalog.
+[workspace]
+
+[lib]
+name = "trail_demo"
+path = "src/lib.rs"
+
+[build-dependencies]
+combo_codegen = { path = "../combo_codegen" }
+
+# ── Mutually-recursive component graph ────────────────────────────────
+# Partition can be a heap-extraction partition, whose heap is built by a
+# HeapBuild, which can itself be a quickselect build parameterised by a
+# Partition — a cycle. Without the trail rule, expansion never terminates.
+
+[[package.metadata.array_vis_bench.components]]
+role  = "Partition"
+type  = "Lomuto"
+label = "lomuto"
+uses  = ["trail_demo::Lomuto"]
+
+[[package.metadata.array_vis_bench.components]]
+role  = "Partition"
+type  = "Hoare"
+label = "hoare"
+uses  = ["trail_demo::Hoare"]
+
+[[package.metadata.array_vis_bench.components]]
+role  = "Partition"
+type  = "HeapExtract<{B}>"
+label = "heap extract<{B}>"
+uses  = ["trail_demo::HeapExtract"]
+slots = [{ param = "B", role = "HeapBuild" }]
+
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapBuild"
+type  = "SimpleBuild"
+label = "simple build"
+uses  = ["trail_demo::SimpleBuild"]
+
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapBuild"
+type  = "QuickBuild<{P}>"
+label = "quick build<{P}>"
+uses  = ["trail_demo::QuickBuild"]
+slots = [{ param = "P", role = "Partition" }]

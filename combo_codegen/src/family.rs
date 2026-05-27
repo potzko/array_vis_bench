@@ -1,5 +1,23 @@
 use std::collections::HashMap;
 
+// ── Slot ─────────────────────────────────────────────────────────────────────
+
+/// A recursive parameter slot on a composite [`ComponentDef`]. `param` is the
+/// `{param}` placeholder inside the component's `type_expr` / `label`; `role`
+/// is the registry role whose components may fill it. Expansion (see
+/// [`expand_role`]) recursively fills slots, bounded by the trail rule.
+#[derive(Debug, Clone)]
+pub struct Slot {
+    pub param: String,
+    pub role: String,
+}
+
+impl Slot {
+    pub fn new(param: impl Into<String>, role: impl Into<String>) -> Self {
+        Self { param: param.into(), role: role.into() }
+    }
+}
+
 // ── ComponentDef ─────────────────────────────────────────────────────────────
 
 /// A single concrete type that fills a role in a generic family.
@@ -7,6 +25,10 @@ use std::collections::HashMap;
 /// `type_expr` is the Rust type as it should appear inside `<…>`, e.g.
 /// `"InsertionSmallSort<16>"`. `label` is the human-readable name used in
 /// downstream registries, e.g. `"insertion: 16"`.
+///
+/// When `slots` is non-empty the component is *composite*: `type_expr` and
+/// `label` carry `{param}` placeholders that [`expand_role`] fills from other
+/// roles, recursively. A leaf component has an empty `slots`.
 #[derive(Debug, Clone)]
 pub struct ComponentDef {
     pub type_expr: String,
@@ -15,11 +37,13 @@ pub struct ComponentDef {
     /// plus any generic-argument types). Unioned per family at emit time so
     /// families no longer have to list component imports themselves.
     pub uses: Vec<String>,
+    /// Recursive parameter slots. Empty for leaf components (the common case).
+    pub slots: Vec<Slot>,
 }
 
 impl ComponentDef {
     pub fn new(type_expr: impl Into<String>, label: impl Into<String>) -> Self {
-        Self { type_expr: type_expr.into(), label: label.into(), uses: Vec::new() }
+        Self { type_expr: type_expr.into(), label: label.into(), uses: Vec::new(), slots: Vec::new() }
     }
 
     pub fn with_uses(
@@ -27,7 +51,16 @@ impl ComponentDef {
         label: impl Into<String>,
         uses: Vec<String>,
     ) -> Self {
-        Self { type_expr: type_expr.into(), label: label.into(), uses }
+        Self { type_expr: type_expr.into(), label: label.into(), uses, slots: Vec::new() }
+    }
+
+    pub fn with_uses_and_slots(
+        type_expr: impl Into<String>,
+        label: impl Into<String>,
+        uses: Vec<String>,
+        slots: Vec<Slot>,
+    ) -> Self {
+        Self { type_expr: type_expr.into(), label: label.into(), uses, slots }
     }
 }
 
@@ -96,11 +129,137 @@ impl ComponentRegistry {
             .insert(0, ComponentDef::with_uses(type_expr, label, uses));
     }
 
+    /// Like [`add_front_with_uses`](Self::add_front_with_uses) but also records
+    /// recursive [`Slot`]s, making the component composite. Used by the
+    /// metadata scanner to register components generic over a role.
+    pub fn add_front_full(
+        &mut self,
+        role: impl Into<String>,
+        type_expr: impl Into<String>,
+        label: impl Into<String>,
+        uses: Vec<String>,
+        slots: Vec<Slot>,
+    ) {
+        self.roles
+            .entry(role.into())
+            .or_default()
+            .insert(0, ComponentDef::with_uses_and_slots(type_expr, label, uses, slots));
+    }
+
 
     /// All role names present in the registry, in arbitrary order.
     pub fn roles(&self) -> impl Iterator<Item = &str> {
         self.roles.keys().map(String::as_str)
     }
+}
+
+// ── Recursive expansion (trail rule) ──────────────────────────────────────────
+
+/// Head identifier of a type expression — everything before the first `<`,
+/// trimmed. `"QuickBuild<{P}>"` → `"QuickBuild"`, `"Lomuto"` → `"Lomuto"`.
+/// Used as the type identity in trail edges.
+fn type_head(type_expr: &str) -> &str {
+    type_expr.split('<').next().unwrap_or(type_expr).trim()
+}
+
+/// One step on a composition path: `(parent head, slot param, child head)`.
+/// The trail rule forbids the same edge appearing twice on a single
+/// root→leaf path — this is what makes a recursive role graph enumerable.
+type Edge = (String, String, String);
+
+/// Expand every component registered under `role` into concrete, slot-free
+/// [`ComponentDef`]s, recursively filling composite slots from the registry.
+///
+/// Recursion is bounded by the **trail rule**: along any single root→leaf
+/// path, the same `(parent, slot, child)` edge may not be reused. A type may
+/// recur in a slot if it arrives via a different parent; only the exact edge
+/// is pruned. Termination follows from edge-exhaustion — a path is a trail, so
+/// its length is bounded by the (finite) number of distinct edges.
+///
+/// Leaf components (empty `slots`) expand to themselves, so a registry with no
+/// composite components returns each role's list unchanged.
+pub fn expand_role(registry: &ComponentRegistry, role: &str) -> Vec<ComponentDef> {
+    let mut out = Vec::new();
+    for comp in registry.role(role) {
+        expand_component(registry, comp, &mut Vec::new(), &mut out);
+    }
+    out
+}
+
+/// Expand one component, appending its concrete instantiations to `out`.
+/// `used_edges` is the set of trail edges already taken on the path to here
+/// (push-on-enter / pop-on-exit, so it stays per-path).
+fn expand_component(
+    registry: &ComponentRegistry,
+    comp: &ComponentDef,
+    used_edges: &mut Vec<Edge>,
+    out: &mut Vec<ComponentDef>,
+) {
+    if comp.slots.is_empty() {
+        out.push(comp.clone());
+        return;
+    }
+
+    let parent_head = type_head(&comp.type_expr).to_string();
+
+    // For each slot, the concrete child options legal at this point on the
+    // path (trail-pruned, then recursively expanded to leaves).
+    let mut slot_options: Vec<Vec<ComponentDef>> = Vec::with_capacity(comp.slots.len());
+    for slot in &comp.slots {
+        let mut opts = Vec::new();
+        for child in registry.role(&slot.role) {
+            let edge = (
+                parent_head.clone(),
+                slot.param.clone(),
+                type_head(&child.type_expr).to_string(),
+            );
+            if used_edges.contains(&edge) {
+                continue; // trail rule: this exact edge is already on the path
+            }
+            used_edges.push(edge);
+            expand_component(registry, child, used_edges, &mut opts);
+            used_edges.pop();
+        }
+        slot_options.push(opts);
+    }
+
+    // Cartesian product across slots → one concrete ComponentDef per combo,
+    // substituting `{param}` in both type_expr and label and unioning uses.
+    for combo in cartesian(&slot_options) {
+        let mut type_expr = comp.type_expr.clone();
+        let mut label = comp.label.clone();
+        let mut uses = comp.uses.clone();
+        for (slot, chosen) in comp.slots.iter().zip(&combo) {
+            let ph = format!("{{{}}}", slot.param);
+            type_expr = type_expr.replace(&ph, &chosen.type_expr);
+            label = label.replace(&ph, &chosen.label);
+            for u in &chosen.uses {
+                if !uses.contains(u) {
+                    uses.push(u.clone());
+                }
+            }
+        }
+        out.push(ComponentDef { type_expr, label, uses, slots: Vec::new() });
+    }
+}
+
+/// Cartesian product of per-slot option lists. Returns one `Vec` of chosen
+/// components per combination. An empty option list (every child pruned)
+/// collapses the product to nothing — that path simply yields no variants.
+fn cartesian<'a>(slot_options: &'a [Vec<ComponentDef>]) -> Vec<Vec<&'a ComponentDef>> {
+    let mut combos: Vec<Vec<&ComponentDef>> = vec![Vec::new()];
+    for opts in slot_options {
+        let mut next = Vec::with_capacity(combos.len() * opts.len());
+        for combo in &combos {
+            for opt in opts {
+                let mut extended = combo.clone();
+                extended.push(opt);
+                next.push(extended);
+            }
+        }
+        combos = next;
+    }
+    combos
 }
 
 // ── Axis helpers ─────────────────────────────────────────────────────────────
@@ -463,13 +622,13 @@ fn humanize_role(role: &str) -> String {
 /// Resolve an [`AxisSpec`] to a concrete list of [`ComponentDef`]s.
 fn resolve_axis_spec(spec: &AxisSpec, registry: &ComponentRegistry) -> Vec<ComponentDef> {
     match spec {
-        AxisSpec::Role(role) => registry.role(role).to_vec(),
+        AxisSpec::Role(role) => expand_role(registry, role),
         AxisSpec::Cross { left, right, type_tmpl, label_tmpl, extras } => {
             let tt = type_tmpl.as_str();
             let lt = label_tmpl.as_str();
             let mut result = cross_axis(
-                registry.role(left),
-                registry.role(right),
+                &expand_role(registry, left),
+                &expand_role(registry, right),
                 |l, r| tt.replace("{0}", &l.type_expr).replace("{1}", &r.type_expr),
                 |l, r| lt.replace("{0}", &l.label).replace("{1}", &r.label),
             );
@@ -561,5 +720,112 @@ mod tests {
         assert_eq!(c.output_macro, "sort_registry_macro::sort_family");
         assert_eq!(c.type_prefix, "type Sort = ");
         assert_eq!(c.path_field.as_deref(), Some("path"));
+    }
+
+    // ── Recursive expansion / trail rule ───────────────────────────────────────
+
+    #[test]
+    fn expand_role_leaves_passthrough() {
+        // A registry with no composite components returns each role unchanged.
+        let mut reg = ComponentRegistry::default();
+        reg.add("Partition", "Lomuto", "lomuto");
+        reg.add("Partition", "Hoare", "hoare");
+        let out = expand_role(&reg, "Partition");
+        let types: Vec<&str> = out.iter().map(|c| c.type_expr.as_str()).collect();
+        assert_eq!(types, vec!["Lomuto", "Hoare"]);
+    }
+
+    /// The mutually-recursive demo graph:
+    ///   Partition  = { Lomuto, Hoare, HeapExtract<{B}: HeapBuild> }
+    ///   HeapBuild  = { SimpleBuild, QuickBuild<{P}: Partition> }
+    /// Without the trail rule this loops forever
+    /// (HeapExtract→QuickBuild→HeapExtract→…).
+    fn recursive_registry() -> ComponentRegistry {
+        let mut reg = ComponentRegistry::default();
+        reg.add("Partition", "Lomuto", "lomuto");
+        reg.add("Partition", "Hoare", "hoare");
+        reg.roles
+            .get_mut("Partition")
+            .unwrap()
+            .push(ComponentDef::with_uses_and_slots(
+                "HeapExtract<{B}>",
+                "heap extract<{B}>",
+                Vec::new(),
+                vec![Slot::new("B", "HeapBuild")],
+            ));
+        reg.add("HeapBuild", "SimpleBuild", "simple build");
+        reg.roles
+            .get_mut("HeapBuild")
+            .unwrap()
+            .push(ComponentDef::with_uses_and_slots(
+                "QuickBuild<{P}>",
+                "quick build<{P}>",
+                Vec::new(),
+                vec![Slot::new("P", "Partition")],
+            ));
+        reg
+    }
+
+    #[test]
+    fn expand_role_trail_bounded_terminates_with_expected_set() {
+        let reg = recursive_registry();
+        let out = expand_role(&reg, "Partition");
+        let types: Vec<&str> = out.iter().map(|c| c.type_expr.as_str()).collect();
+        // Six variants: two leaves, then HeapExtract over each non-looping
+        // HeapBuild. The deepest re-nest (variant 6) is forced to bottom out
+        // in SimpleBuild because the (HeapExtract, B, QuickBuild) edge is
+        // already on the path.
+        assert_eq!(
+            types,
+            vec![
+                "Lomuto",
+                "Hoare",
+                "HeapExtract<SimpleBuild>",
+                "HeapExtract<QuickBuild<Lomuto>>",
+                "HeapExtract<QuickBuild<Hoare>>",
+                "HeapExtract<QuickBuild<HeapExtract<SimpleBuild>>>",
+            ],
+        );
+    }
+
+    #[test]
+    fn expand_role_prunes_the_looping_edge() {
+        let reg = recursive_registry();
+        let types: Vec<String> =
+            expand_role(&reg, "Partition").into_iter().map(|c| c.type_expr).collect();
+        // The looped shape — QuickBuild nested inside a HeapExtract that is
+        // itself inside a QuickBuild — must never appear: that repeats the
+        // (HeapExtract, B, QuickBuild) edge.
+        assert!(
+            !types.iter().any(|t| t.contains("QuickBuild<HeapExtract<QuickBuild")),
+            "looped edge leaked: {types:?}",
+        );
+        // Labels are templated too.
+        let labels: Vec<String> =
+            expand_role(&reg, "Partition").into_iter().map(|c| c.label).collect();
+        assert!(labels.contains(&"heap extract<quick build<lomuto>>".to_string()));
+    }
+
+    #[test]
+    fn expand_role_unions_child_uses() {
+        let mut reg = ComponentRegistry::default();
+        reg.add_front_full(
+            "Partition",
+            "HeapExtract<{B}>",
+            "heap extract<{B}>",
+            vec!["demo::HeapExtract".to_string()],
+            vec![Slot::new("B", "HeapBuild")],
+        );
+        reg.add_front_with_uses(
+            "HeapBuild",
+            "SimpleBuild",
+            "simple build",
+            vec!["demo::SimpleBuild".to_string()],
+        );
+        let out = expand_role(&reg, "Partition");
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].type_expr, "HeapExtract<SimpleBuild>");
+        assert!(out[0].uses.contains(&"demo::HeapExtract".to_string()));
+        assert!(out[0].uses.contains(&"demo::SimpleBuild".to_string()));
     }
 }

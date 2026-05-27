@@ -30,7 +30,7 @@ use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 
-use crate::family::{AxisSpec, ComponentDef, FamilyDef, FieldValue};
+use crate::family::{AxisSpec, ComponentDef, FamilyDef, FieldValue, Slot};
 
 /// One component discovered from a Cargo.toml metadata block.
 #[derive(Debug, Clone)]
@@ -40,6 +40,10 @@ pub struct MetadataComponent {
     pub label: String,
     /// `use` paths this component needs in the generated file.
     pub uses: Vec<String>,
+    /// Recursive parameter slots (`{ param, role }`). Empty for leaf
+    /// components; non-empty makes the component generic over a role, expanded
+    /// by [`crate::expand_role`] under the trail rule.
+    pub slots: Vec<Slot>,
     /// Path to the `Cargo.toml` it came from — used for `cargo:rerun-if-changed`.
     pub source_manifest: PathBuf,
 }
@@ -154,6 +158,7 @@ pub fn scan_workspace_components(
                 type_expr: decl.type_expr,
                 label: decl.label,
                 uses,
+                slots: decl.slots.into_iter().map(SlotDecl::into_slot).collect(),
                 source_manifest: pkg.manifest_path.clone().into_std_path_buf(),
             });
         }
@@ -239,6 +244,7 @@ pub fn scan_manifest(manifest: impl AsRef<Path>) -> Result<Vec<MetadataComponent
             type_expr: decl.type_expr,
             label: decl.label,
             uses: decl.uses,
+            slots: decl.slots.into_iter().map(SlotDecl::into_slot).collect(),
             source_manifest: path.to_path_buf(),
         })
         .collect();
@@ -466,7 +472,6 @@ struct AvbMetadata {
 /// silently producing a component with the wrong label.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
-#[allow(dead_code)] // reserved fields are accepted but not yet consumed
 struct ComponentDecl {
     role: String,
     #[serde(rename = "type")]
@@ -478,14 +483,27 @@ struct ComponentDecl {
     /// longer have to list component imports.
     #[serde(default)]
     uses: Vec<String>,
-    /// Reserved for future use (generic over a role — e.g. `R: Rotation`).
-    /// Parsed but not yet consumed; `deny_unknown_fields` means we have
-    /// to declare it explicitly.
+    /// Recursive parameter slots making this component generic over a role.
+    /// Each `{ param, role }` binds a `{param}` placeholder in `type` /
+    /// `label` to the components of `role`, expanded recursively under the
+    /// trail rule. Empty (the default) means a leaf component.
     #[serde(default)]
-    generic_axes: Option<toml::Value>,
-    /// Reserved for future use (template expanded once per axis binding).
-    #[serde(default)]
-    label_template: Option<String>,
+    slots: Vec<SlotDecl>,
+}
+
+/// One recursive slot on a [`ComponentDecl`]. `param` is the `{param}`
+/// placeholder; `role` is the registry role whose components fill it.
+#[derive(Debug, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+struct SlotDecl {
+    param: String,
+    role: String,
+}
+
+impl SlotDecl {
+    fn into_slot(self) -> Slot {
+        Slot::new(self.param, self.role)
+    }
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -523,7 +541,7 @@ mod tests {
     }
 
     #[test]
-    fn reserved_fields_parse_but_are_ignored() {
+    fn parses_recursive_slots() {
         let f = write_manifest(
             r#"
             [package]
@@ -532,15 +550,17 @@ mod tests {
 
             [[package.metadata.array_vis_bench.components]]
             role  = "Partition"
-            type  = "MovingPivotV3<ReversalRotation>"
-            label = "moving pivot v3<reversal>"
-            generic_axes = [{ param = "R", role = "Rotation" }]
-            label_template = "moving pivot v3<{R}>"
+            type  = "MovingPivotV3<{R}>"
+            label = "moving pivot v3<{R}>"
+            slots = [{ param = "R", role = "Rotation" }]
             "#,
         );
         let out = scan_manifest(f.path()).unwrap();
         assert_eq!(out.len(), 1);
-        assert_eq!(out[0].label, "moving pivot v3<reversal>");
+        assert_eq!(out[0].type_expr, "MovingPivotV3<{R}>");
+        assert_eq!(out[0].slots.len(), 1);
+        assert_eq!(out[0].slots[0].param, "R");
+        assert_eq!(out[0].slots[0].role, "Rotation");
     }
 
     #[test]

@@ -19,11 +19,12 @@ fn main() {
     let metadata_components = combo_codegen::scan_workspace_components(&manifest_path)
         .expect("combo_codegen metadata scan failed");
     for c in metadata_components.iter().rev() {
-        result.registry.add_front_with_uses(
+        result.registry.add_front_full(
             c.role.clone(),
             c.type_expr.clone(),
             c.label.clone(),
             c.uses.clone(),
+            c.slots.clone(),
         );
     }
 
