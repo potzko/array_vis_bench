@@ -193,7 +193,10 @@ impl ScanResult {
                         crate::family::AxisSpec::Inline(_) => {}
                     }
                     for role in role_list {
-                        for comp in self.registry.role(role) {
+                        // Expand so we also pick up the `use` paths of types
+                        // reached only through recursive slots (e.g. a child
+                        // role never referenced directly by a family axis).
+                        for comp in crate::family::expand_role(&self.registry, role) {
                             for u in &comp.uses {
                                 emit_use(&mut out, u);
                             }

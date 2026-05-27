@@ -90,8 +90,8 @@ pub mod metadata_scanner;
 pub mod scanner;
 
 pub use family::{
-    cross_axis, inline, Axis, AxisSpec, CodegenConfig, Combination, ComponentDef,
-    ComponentRegistry, Family, FamilyDef, FieldValue,
+    cross_axis, expand_role, inline, Axis, AxisSpec, CodegenConfig, Combination, ComponentDef,
+    ComponentRegistry, Family, FamilyDef, FieldValue, Slot,
 };
 pub use metadata_scanner::{
     scan_manifest, scan_workspace_components, scan_workspace_families, MetadataComponent,
