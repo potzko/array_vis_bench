@@ -59,7 +59,6 @@ comb_ratio_components = { path = "../comb_ratio_components" }
 gap_distribution_lib = { path = "../gap_distribution_lib" }
 reverse_storage_lib = { path = "../reverse_storage_lib" }
 quick_select_lib = { path = "../quick_select_lib" }
-dual_pivot_quick_select_lib = { path = "../dual_pivot_quick_select_lib" }
 shell_sort_lib = { path = "../shell_sort_lib" }
 insertion_sort_lib = { path = "../insertion_sort_lib" }
 comb_sort_lib = { path = "../comb_sort_lib" }

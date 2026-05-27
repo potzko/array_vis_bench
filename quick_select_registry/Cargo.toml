@@ -2,7 +2,7 @@
 name = "quick_select_registry"
 version = "0.1.0"
 edition = "2021"
-description = "Standalone-quick-select registry: registers the 40 single-pivot (strategy × partition × pivot) + 8 dual-pivot quick-select combinations as `Category::QuickSelect` algorithms. Split out of the wiring crate so the quick-select algorithm leaves (`quick_select_lib`, `dual_pivot_quick_select_lib`) stay lean — depend on this crate only if you want the standalone quick-select menu entries."
+description = "Standalone-quick-select registry: registers the 40 single-pivot (strategy × partition × pivot) + 8 dual-pivot (strategy × Yaroslavskiy × dual selector) quick-select combinations as `Category::QuickSelect` algorithms. All route through the unified `QuickSelect<P, V>` types in `quick_select_lib`. Split out of the wiring crate so the algorithm leaf stays lean — depend on this crate only if you want the standalone quick-select menu entries."
 
 [lib]
 name = "quick_select_registry"
@@ -17,8 +17,7 @@ linkme = "0.3"
 ctor = "0.2"
 const_format = "0.2"
 quick_select_lib = { path = "../quick_select_lib" }
-dual_pivot_quick_select_lib = { path = "../dual_pivot_quick_select_lib" }
-quick_sort_lib = { path = "../quick_sort_lib" }  # for CombinedSelector + NintherDualPivot
+quick_sort_lib = { path = "../quick_sort_lib" }  # for Yaroslavskiy + CombinedSelector + NintherDualPivot
 # Single-pivot side uses 4 of the 5 partitions (Lomuto, Hoare, ThreeWay, Block)
 # and 5 of the 6 pivots (everything except MedianOfMedians).
 partition_block = { path = "../partition_block" }

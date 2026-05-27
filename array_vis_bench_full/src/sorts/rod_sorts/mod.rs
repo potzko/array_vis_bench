@@ -4,8 +4,6 @@
 
 pub mod branching {
     pub use rod_sort_lib::branching::*;
-    pub use rod_sort_lib::shell_branching::*;
-    pub use rod_sort_lib::merge::*;
 }
 pub mod merge {
     pub use rod_sort_lib::merge::*;

@@ -44,7 +44,6 @@ members = [
     "gap_distribution_lib",
     "reverse_storage_lib",
     "quick_select_lib",
-    "dual_pivot_quick_select_lib",
     "shell_sort_lib",
     "insertion_sort_lib",
     "comb_sort_lib",
