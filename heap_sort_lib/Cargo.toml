@@ -2,7 +2,7 @@
 name = "heap_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Heap sort family — `HeapSort<H, DH>` generic over a `Heap` impl + `DeepHeapify` strategy, with `ArityHeap<A, D>` covering the (Arity × Direction) lattice, plus three quickselect-build strategies (Sequential/RecursivePartial/StackPartial) and a dual-pivot Yaroslavskiy build. The matching component roles (Arity, HeapDirection, HeapPartition, DeepHeapify, QuickDeepHeapify, DualPivotQuickDeepHeapify) live in `heap_internals_components`."
+description = "Heap sort family — `HeapSort<H, DH>` generic over a `Heap` impl + `DeepHeapify` strategy, with `ArityHeap<A, D>` covering the (Arity × Direction) lattice, plus three quickselect-build strategies (Sequential/RecursivePartial/StackPartial) and a dual-pivot DualPivotPartition build. The matching component roles (Arity, HeapDirection, HeapPartition, DeepHeapify, QuickDeepHeapify, DualPivotQuickDeepHeapify) live in `heap_internals_components`."
 
 [lib]
 name = "heap_sort_lib"
@@ -15,13 +15,10 @@ sort_logger = { path = "../sort_logger" }
 # ── Heap sort classic ──
 [[package.metadata.array_vis_bench.families]]
 module = "heap_sort"
-type   = "HeapSort<ArityHeap<{A}, {D}>, {DH}>"
+type   = "HeapSort<NaryHeapSort<ArityHeap<{A}, {D}>, {DH}>>"
 uses   = [
-    "heap_sort_lib::arity::{Binary, Ternary, Base16, Base256}",
-    "heap_sort_lib::direction::{MinReverse, MaxForward}",
     "heap_sort_lib::arity_heap::ArityHeap",
-    "heap_sort_lib::deep_heapify::{Recursive, Iterative}",
-    "heap_sort_lib::heap_sort::HeapSort",
+    "heap_sort_lib::heap_sort::{HeapSort, NaryHeapSort}",
 ]
 axes = [
     { var = "A",  role = "Arity" },
@@ -32,21 +29,13 @@ name        = "heap sort"
 big_o       = "@inherited"
 stable      = false
 direct_sort = true
-path        = ["heap sorts", "{D}", "{A}", "{DH}"]
+path        = ["heap sorts", "d-ary", "classic", "{D}", "{A}", "{DH}"]
 
 # ── Heap sort quick build (single pivot) ──
 [[package.metadata.array_vis_bench.families]]
 module = "heap_sort"
-type   = "HeapSort<ArityHeap<{A}, {D}>, {DH}<{HP}, {V}>>"
+type   = "HeapSort<NaryHeapSort<ArityHeap<{A}, {D}>, {DH}<{HP}, {V}>>>"
 uses   = [
-    "heap_sort_lib::quick_deep_heapify::{SequentialQuickDeepHeapify, RecursivePartialQuickDeepHeapify, StackPartialQuickDeepHeapify}",
-    "heap_sort_lib::heap_partition::{Block, Hoare, Lomuto}",
-    "pivot_first::FirstElement",
-    "pivot_last::LastElement",
-    "pivot_median3::MedianOfThree",
-    "pivot_median_of_medians::MedianOfMedians",
-    "pivot_middle::MiddleElement",
-    "pivot_ninther::Ninther",
 ]
 axes = [
     { var = "A",  role = "Arity" },
@@ -59,7 +48,7 @@ name        = "heap sort quick build"
 big_o       = "@inherited"
 stable      = false
 direct_sort = true
-path        = ["heap sorts", "quick build", "{D}", "{A}", "{DH}", "{HP}", "{V}"]
+path        = ["heap sorts", "d-ary", "quick build", "single pivot", "{D}", "{A}", "{DH}", "{HP}", "{V}"]
 
 # ── Heap sort quick build (dual pivot) ──
 # CombinedSelector / NintherDualPivot live in `quick_sort_lib` because
@@ -68,12 +57,9 @@ path        = ["heap sorts", "quick build", "{D}", "{A}", "{DH}", "{HP}", "{V}"]
 # itself — only `uses` paths the codegen emits into the generated file.
 [[package.metadata.array_vis_bench.families]]
 module = "heap_sort"
-type   = "HeapSort<ArityHeap<{A}, {D}>, {DH}<{DPS}>>"
+type   = "HeapSort<NaryHeapSort<ArityHeap<{A}, {D}>, {DH}<{DPS}>>>"
 uses   = [
-    "heap_sort_lib::quick_deep_heapify::StackDualPivotPartialQuickDeepHeapify",
     "quick_sort_lib::pivot_selectors::{CombinedSelector, NintherDualPivot}",
-    "pivot_first::FirstElement",
-    "pivot_middle::MiddleElement",
 ]
 axes = [
     { var = "A",  role = "Arity" },
@@ -89,4 +75,4 @@ name        = "heap sort quick build dual pivot"
 big_o       = "@inherited"
 stable      = false
 direct_sort = true
-path        = ["heap sorts", "quick build", "dual pivot", "{D}", "{A}", "{DH}", "{DPS}"]
+path        = ["heap sorts", "d-ary", "quick build", "dual pivot", "{D}", "{A}", "{DH}", "{DPS}"]

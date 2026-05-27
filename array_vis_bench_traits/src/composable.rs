@@ -12,7 +12,7 @@
 use super::complexity::Complexity;
 
 /// Time-complexity bounds. Most components have `WORST = BEST = AVERAGE`
-/// (e.g. Lomuto partition is `O(N)` regardless of input shape); the
+/// (e.g. LeftLeftPartition partition is `O(N)` regardless of input shape); the
 /// distinction matters for the *outer* sort, where worst-case can
 /// differ from best/average depending on pivot behaviour.
 ///

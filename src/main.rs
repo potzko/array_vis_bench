@@ -1,17 +1,17 @@
 use array_vis_bench_full::bench_registry::{list_inputs, RunConfig};
 use array_vis_bench_full::traits::complexity::Complexity;
-use array_vis_bench_full::traits::get_sort_tree;
 use array_vis_bench_full::traits::log_traits::VisualizerLogger;
 use array_vis_bench_full::visualise::{find, visualise};
+use sort_registry_core::VariantDesc;
 use sort_vis::{Encoding, Mp4Config, Pacing, COMMON_FRAMERATES, COMMON_RESOLUTIONS};
+use std::collections::{HashMap, HashSet};
 use std::io::{self, Write};
 
 fn main() {
     println!("Array Visualization Benchmark");
     println!("==============================");
 
-    let tree = get_sort_tree();
-    let sort_name = select_sort(&tree);
+    let sort_name = select_sort();
     println!("Selected: {sort_name}");
 
     let entry = find(&sort_name).unwrap_or_else(|| {
@@ -161,34 +161,114 @@ fn get_user_selection_inner(
     }
 }
 
-fn select_sort(tree: &sort_registry_core::SortTree) -> String {
-    select_sort_inner(tree)
+type Chosen = Vec<(String, String)>;
+
+fn select_sort() -> String {
+    let variants = sort_registry_core::all_variants();
+    let cands: Vec<&VariantDesc> = variants.iter().collect();
+    pick(&cands, 0, &Vec::new())
 }
 
-fn select_sort_inner(tree: &sort_registry_core::SortTree) -> String {
+/// One step of the picker.
+///
+/// `depth` is how many `category` segments have been consumed. While any
+/// candidate still has a category segment at `depth`, this is structural
+/// navigation (one branch per distinct segment). Once category is
+/// exhausted, it switches to **faceted** navigation over the variants'
+/// `(role, value)` axes: at each step it presents the single axis with the
+/// most distinct values (max-first), never mixing two axes in one list.
+fn pick(cands: &[&VariantDesc], depth: usize, chosen: &Chosen) -> String {
     enum Opt<'a> {
-        Branch(&'a str, &'a sort_registry_core::SortTree),
-        Leaf(&'a str, &'a str),
+        Branch { label: String, cands: Vec<&'a VariantDesc>, depth: usize, chosen: Chosen },
+        Leaf(&'a str),
     }
+
+    let mut cat_order: Vec<String> = Vec::new();
+    let mut cat_groups: HashMap<String, Vec<&VariantDesc>> = HashMap::new();
+    let mut faceted: Vec<&VariantDesc> = Vec::new();
+    for v in cands {
+        if v.category.len() > depth {
+            let key = v.category[depth].clone();
+            if !cat_groups.contains_key(&key) {
+                cat_order.push(key.clone());
+            }
+            cat_groups.entry(key).or_default().push(*v);
+        } else {
+            faceted.push(*v);
+        }
+    }
+
+    let chosen_roles: HashSet<&str> = chosen.iter().map(|(r, _)| r.as_str()).collect();
+    let resolved = |v: &VariantDesc| v.axes.iter().all(|a| chosen_roles.contains(a.role.as_str()));
+
     let mut opts: Vec<Opt> = Vec::new();
-    for (label, sub) in &tree.children {
-        opts.push(Opt::Branch(label, sub));
+    let mut axis_role: Option<String> = None;
+
+    if !cat_groups.is_empty() {
+        for key in &cat_order {
+            opts.push(Opt::Branch {
+                label: key.clone(),
+                cands: cat_groups[key].clone(),
+                depth: depth + 1,
+                chosen: chosen.clone(),
+            });
+        }
+        for &v in &faceted {
+            if resolved(v) {
+                opts.push(Opt::Leaf(&v.name));
+            }
+        }
+    } else {
+        for &v in &faceted {
+            if resolved(v) {
+                opts.push(Opt::Leaf(&v.name));
+            }
+        }
+        let axis_vars: Vec<&VariantDesc> = faceted
+            .iter()
+            .copied()
+            .filter(|v| v.axes.iter().any(|a| !chosen_roles.contains(a.role.as_str())))
+            .collect();
+        if !axis_vars.is_empty() {
+            let role = choose_axis(&axis_vars, &chosen_roles);
+            let mut val_order: Vec<String> = Vec::new();
+            let mut val_groups: HashMap<String, Vec<&VariantDesc>> = HashMap::new();
+            for v in &axis_vars {
+                if let Some(ab) = v.axes.iter().find(|a| a.role == role) {
+                    if !val_groups.contains_key(&ab.value) {
+                        val_order.push(ab.value.clone());
+                    }
+                    val_groups.entry(ab.value.clone()).or_default().push(*v);
+                }
+            }
+            for val in &val_order {
+                let mut sub_chosen = chosen.clone();
+                sub_chosen.push((role.clone(), val.clone()));
+                opts.push(Opt::Branch {
+                    label: val.clone(),
+                    cands: val_groups[val].clone(),
+                    depth,
+                    chosen: sub_chosen,
+                });
+            }
+            axis_role = Some(role);
+        }
     }
-    for (display, name) in &tree.leaves {
-        opts.push(Opt::Leaf(display, name));
-    }
+
     if opts.len() == 1 {
-        return match &opts[0] {
-            Opt::Branch(_, sub) => select_sort_inner(sub),
-            Opt::Leaf(_, name) => name.to_string(),
+        return match opts.pop().unwrap() {
+            Opt::Branch { cands, depth, chosen, .. } => pick(&cands, depth, &chosen),
+            Opt::Leaf(name) => name.to_string(),
         };
     }
-    println!();
+
+    let category = cands.first().map(|v| v.category.as_slice()).unwrap_or(&[]);
+    print_breadcrumb(category, depth, chosen, axis_role.as_deref());
     for (i, opt) in opts.iter().enumerate() {
         match opt {
-            Opt::Branch(label, sub) => {
-                let n = sub.count_leaves();
-                let range = average_complexity_range(sub);
+            Opt::Branch { label, cands, .. } => {
+                let n = cands.len();
+                let range = complexity_range(cands);
                 println!(
                     "  {}: {} ({} variant{}){}",
                     i + 1, label, n,
@@ -196,60 +276,86 @@ fn select_sort_inner(tree: &sort_registry_core::SortTree) -> String {
                     range,
                 );
             }
-            Opt::Leaf(display, name) => {
-                // Skip the suffix when the bound is unanalysed — showing
-                // "(O(?))" next to a leaf is noise; the bare display
-                // name reads better.
+            Opt::Leaf(name) => {
                 let suffix = find(name)
                     .filter(|e| !e.average.is_unknown())
                     .map(|e| format!(" ({})", e.average.as_str()))
                     .unwrap_or_default();
-                println!("  {}: {}{}", i + 1, display, suffix);
+                println!("  {}: {}{}", i + 1, name, suffix);
             }
         }
     }
     let sel = get_user_selection("Select", 1, opts.len()) - 1;
-    match &opts[sel] {
-        Opt::Branch(_, sub) => select_sort_inner(sub),
-        Opt::Leaf(_, name) => name.to_string(),
+    match opts.into_iter().nth(sel).unwrap() {
+        Opt::Branch { cands, depth, chosen, .. } => pick(&cands, depth, &chosen),
+        Opt::Leaf(name) => name.to_string(),
     }
 }
 
-/// Walk every leaf in `tree`, look up each name in `ALGORITHMS`, and
-/// return a printable " (O(min) - O(max))" tag describing the spread of
-/// average-case complexities. Returns "" when no leaves resolve to an
-/// entry (the picker degrades to its previous behaviour for unknown
-/// trees rather than printing "(O(?) - O(?))").
-fn average_complexity_range(tree: &sort_registry_core::SortTree) -> String {
-    // Filter `Complexity::UNKNOWN` out of the range — the UI should
-    // surface the spread across *known* bounds in the subtree. Doing
-    // this via `Complexity::sum` would have Unknown dominate and the
-    // whole branch would render as "O(?)".
+/// Pick the next axis to present: the unfixed role with the most distinct
+/// values (max-first). Prefers roles present on *every* candidate so the
+/// list never mixes axes that only some variants have.
+fn choose_axis(axis_vars: &[&VariantDesc], chosen_roles: &HashSet<&str>) -> String {
+    let n = axis_vars.len();
+    let mut distinct: HashMap<&str, HashSet<&str>> = HashMap::new();
+    let mut present: HashMap<&str, usize> = HashMap::new();
+    for v in axis_vars {
+        for a in &v.axes {
+            if !chosen_roles.contains(a.role.as_str()) {
+                distinct.entry(&a.role).or_default().insert(&a.value);
+                *present.entry(&a.role).or_default() += 1;
+            }
+        }
+    }
+    let universal: Vec<&str> =
+        present.iter().filter(|(_, c)| **c == n).map(|(r, _)| *r).collect();
+    let pool: Vec<&str> = if universal.is_empty() {
+        present.keys().copied().collect()
+    } else {
+        universal
+    };
+    pool.into_iter()
+        .max_by(|a, b| distinct[a].len().cmp(&distinct[b].len()).then_with(|| b.cmp(a)))
+        .unwrap()
+        .to_string()
+}
+
+/// Print the partial type being built, one element per line, with the
+/// current hole marked `_`.
+fn print_breadcrumb(category: &[String], depth: usize, chosen: &Chosen, axis_role: Option<&str>) {
+    println!();
+    let mut indent = 0;
+    for seg in &category[..depth.min(category.len())] {
+        println!("{}{}<", "  ".repeat(indent), seg);
+        indent += 1;
+    }
+    for (role, val) in chosen {
+        println!("{}{}: {},", "  ".repeat(indent), role, val);
+    }
+    if let Some(role) = axis_role {
+        println!("{}{}: _", "  ".repeat(indent), role);
+    }
+}
+
+/// " (O(min) - O(max))" tag describing the spread of average-case
+/// complexities across the variants. Returns "" when none resolve.
+fn complexity_range(cands: &[&VariantDesc]) -> String {
     let mut min: Option<Complexity> = None;
     let mut max: Option<Complexity> = None;
-    walk_leaves(tree, &mut |name| {
-        if let Some(entry) = find(name) {
+    for v in cands {
+        if let Some(entry) = find(&v.name) {
             let a = entry.average;
             if a.is_unknown() {
-                return;
+                continue;
             }
             min = Some(min.map_or(a, |m| if cmp_complexity(a, m).is_lt() { a } else { m }));
             max = Some(max.map_or(a, |m| Complexity::sum(a, m)));
         }
-    });
+    }
     match (min, max) {
         (Some(lo), Some(hi)) if lo == hi => format!(" ({})", lo.as_str()),
         (Some(lo), Some(hi)) => format!(" ({} - {})", lo.as_str(), hi.as_str()),
         _ => String::new(),
-    }
-}
-
-fn walk_leaves(tree: &sort_registry_core::SortTree, f: &mut dyn FnMut(&str)) {
-    for (_, name) in &tree.leaves {
-        f(name);
-    }
-    for (_, sub) in &tree.children {
-        walk_leaves(sub, f);
     }
 }
 

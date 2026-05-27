@@ -40,12 +40,12 @@ use heap_sort_lib::arity_heap::ArityHeap;
 use heap_sort_lib::deep_heapify::DeepHeapify;
 use heap_sort_lib::direction::{MaxForward, MinReverse};
 use heap_sort_lib::heap_algorithm::HeapAlgorithm;
-use heap_sort_lib::heap_sort::HeapSort;
+use heap_sort_lib::heap_sort::NaryHeapSort;
 use sort_logger::SortLogger;
 use array_vis_bench_traits::SmallSort;
 
-type LeftHeap<A, DH> = HeapSort<ArityHeap<A, MaxForward>, DH>;
-type RightHeap<A, DH> = HeapSort<ArityHeap<A, MinReverse>, DH>;
+type LeftHeap<A, DH> = NaryHeapSort<ArityHeap<A, MaxForward>, DH>;
+type RightHeap<A, DH> = NaryHeapSort<ArityHeap<A, MinReverse>, DH>;
 
 pub struct QuickHeapSort<A: Arity, DH: DeepHeapify, SS: SmallSort> {
     _phantom: PhantomData<(A, DH, SS)>,

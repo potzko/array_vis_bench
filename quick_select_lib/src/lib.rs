@@ -5,8 +5,8 @@
 //! guaranteed to be in order; elements before / after the target form
 //! unsorted partitions.
 //!
-//! Concrete impls are parametrised over a [`PartitionScheme`] (Lomuto,
-//! Hoare, ThreeWay, Block, Yaroslavskiy, …) and a [`PivotInput`] (a
+//! Concrete impls are parametrised over a [`PartitionScheme`] (LeftLeftPartition,
+//! LeftRightPartition, ThreeWay, Block, DualPivotPartition, …) and a [`PivotInput`] (a
 //! single [`PivotSelector`] for `N_PIVOTS = 1`, or a dual-pivot selector
 //! like `CombinedSelector` / `NintherDualPivot` for `N_PIVOTS = 2`). The
 //! two arities must agree: `P::N_PIVOTS == V::N`. Two strategies are
@@ -21,7 +21,7 @@
 //! This is the one-sided cousin of `QuickSort<P, V, SS>`: where quicksort
 //! recurses into *every* unsorted region the partition emits, quickselect
 //! recurses into the *single* region containing `target` and drops the
-//! rest. Dual-pivot quickselect is just `QuickSelect<Yaroslavskiy, DPS>`
+//! rest. Dual-pivot quickselect is just `QuickSelect<DualPivotPartition, DPS>`
 //! — the old standalone `RecursiveDualPivotQuickSelect` /
 //! `IterativeDualPivotQuickSelect` types are gone.
 
@@ -35,7 +35,7 @@ use array_vis_bench_traits::{
 use sort_logger::SortLogger;
 
 /// Stack-resident visitor collecting up to 4 unsorted ranges per
-/// partition call (3 for Yaroslavskiy dual-pivot, 2 for single-pivot).
+/// partition call (3 for DualPivotPartition dual-pivot, 2 for single-pivot).
 /// The partition emits them in ascending position order; quickselect
 /// relies on that ordering to locate the region holding `target`.
 struct RegionVisitor {

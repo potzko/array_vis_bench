@@ -2,7 +2,7 @@
 name = "partition_hoare"
 version = "0.1.0"
 edition = "2021"
-description = "Hoare partition leaf crate."
+description = "LeftRightPartition partition leaf crate."
 
 [lib]
 name = "partition_hoare"
@@ -14,5 +14,5 @@ sort_logger = { path = "../sort_logger" }
 
 [[package.metadata.array_vis_bench.components]]
 role  = "Partition"
-type  = "Hoare"
-label = "hoare"
+type  = "LeftRightPartition"
+label = "left-right pointer"

@@ -16,8 +16,8 @@
 pub static LINK_ANCHOR: () = ();
 
 use partition_block::Block;
-use partition_hoare::Hoare;
-use partition_lomuto::Lomuto;
+use partition_hoare::LeftRightPartition;
+use partition_lomuto::LeftLeftPartition;
 use partition_moving_pivot::MovingPivot;
 use partition_three_way::ThreeWay;
 use pivot_first::FirstElement;
@@ -111,7 +111,7 @@ macro_rules! register_partition {
 
             // One partition step = partition scan + pivot selection. Both
             // axes declare their own `HasTimeBounds` impls; sum picks the
-            // dominant cost (Block / Hoare / Lomuto / ThreeWay / MovingPivot
+            // dominant cost (Block / LeftRightPartition / LeftLeftPartition / ThreeWay / MovingPivot
             // are all O(N), MedianOfMedians is O(N), the rest are O(1)).
             #[linkme::distributed_slice(array_vis_bench_core::bench_registry::ALGORITHMS)]
             pub(super) static ENTRY: array_vis_bench_core::bench_registry::AlgorithmEntry =
@@ -160,21 +160,21 @@ macro_rules! register_partition {
     };
 }
 
-// ── Lomuto × pivots ──────────────────────────────────────────────────────────
-register_partition!(lomuto_first,    Lomuto, FirstElement);
-register_partition!(lomuto_middle,   Lomuto, MiddleElement);
-register_partition!(lomuto_last,     Lomuto, LastElement);
-register_partition!(lomuto_med3,     Lomuto, MedianOfThree);
-register_partition!(lomuto_medmeds,  Lomuto, MedianOfMedians);
-register_partition!(lomuto_ninther,  Lomuto, Ninther);
+// ── LeftLeftPartition × pivots ──────────────────────────────────────────────────────────
+register_partition!(lomuto_first,    LeftLeftPartition, FirstElement);
+register_partition!(lomuto_middle,   LeftLeftPartition, MiddleElement);
+register_partition!(lomuto_last,     LeftLeftPartition, LastElement);
+register_partition!(lomuto_med3,     LeftLeftPartition, MedianOfThree);
+register_partition!(lomuto_medmeds,  LeftLeftPartition, MedianOfMedians);
+register_partition!(lomuto_ninther,  LeftLeftPartition, Ninther);
 
-// ── Hoare × pivots ───────────────────────────────────────────────────────────
-register_partition!(hoare_first,     Hoare, FirstElement);
-register_partition!(hoare_middle,    Hoare, MiddleElement);
-register_partition!(hoare_last,      Hoare, LastElement);
-register_partition!(hoare_med3,      Hoare, MedianOfThree);
-register_partition!(hoare_medmeds,   Hoare, MedianOfMedians);
-register_partition!(hoare_ninther,   Hoare, Ninther);
+// ── LeftRightPartition × pivots ───────────────────────────────────────────────────────────
+register_partition!(hoare_first,     LeftRightPartition, FirstElement);
+register_partition!(hoare_middle,    LeftRightPartition, MiddleElement);
+register_partition!(hoare_last,      LeftRightPartition, LastElement);
+register_partition!(hoare_med3,      LeftRightPartition, MedianOfThree);
+register_partition!(hoare_medmeds,   LeftRightPartition, MedianOfMedians);
+register_partition!(hoare_ninther,   LeftRightPartition, Ninther);
 
 // ── ThreeWay × pivots ────────────────────────────────────────────────────────
 register_partition!(threeway_first,    ThreeWay, FirstElement);

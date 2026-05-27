@@ -17,7 +17,6 @@ sort_logger = { path = "../sort_logger" }
 module = "insertion_sorts"
 type   = "InsertionSort<{S}>"
 uses   = [
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
     "insertion_sort_lib::InsertionSort",
 ]
 axes = [

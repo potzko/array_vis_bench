@@ -20,11 +20,6 @@ module = "merge_sorts"
 type   = "TopDownMergeSort<{SS}, {PP}, {EE}>"
 uses   = [
     "merge_sort_lib::top_down::TopDownMergeSort",
-    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
 ]
 axes = [
     { var = "SS", role = "SmallSort" },
@@ -50,11 +45,6 @@ module = "merge_sorts"
 type   = "BottomUpMergeSort<{SS}, {PP}, {EE}>"
 uses   = [
     "merge_sort_lib::bottom_up::BottomUpMergeSort",
-    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
 ]
 axes = [
     { var = "SS", role = "SmallSort" },
@@ -80,11 +70,6 @@ module = "merge_sorts"
 type   = "NaiveMergeSort<{SS}>"
 uses   = [
     "merge_sort_lib::naive::NaiveMergeSort",
-    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
 ]
 axes = [
     { var = "SS", role = "SmallSort" },
@@ -131,22 +116,6 @@ type   = "TopDownRotationMergeSort<{SS}, NaiveRotationMerge<{R}>, false>"
 uses   = [
     "merge_sort_lib::rotation::TopDownRotationMergeSort",
     "merge_sort_lib::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge}",
-    "rotation_reversal::ReversalRotation",
-    "rotation_auxiliary::AuxiliaryRotation",
-    "rotation_bridge::BridgeRotation",
-    "rotation_contrev::ContrevRotation",
-    "rotation_trinity::TrinityRotation",
-    "rotation_gries_mills::GriesMillsRotation",
-    "rotation_grail::GrailRotation",
-    "rotation_piston::PistonRotation",
-    "rotation_helix::HelixRotation",
-    "rotation_drill::DrillRotation",
-    "rotation_juggling::JugglingRotation",
-    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
 ]
 axes = [
     { var = "R",  role = "Rotation" },
@@ -165,22 +134,6 @@ type   = "TopDownRotationMergeSort<{SS}, SmallerSideRotationMerge<{R}>, false>"
 uses   = [
     "merge_sort_lib::rotation::TopDownRotationMergeSort",
     "merge_sort_lib::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge}",
-    "rotation_reversal::ReversalRotation",
-    "rotation_auxiliary::AuxiliaryRotation",
-    "rotation_bridge::BridgeRotation",
-    "rotation_contrev::ContrevRotation",
-    "rotation_trinity::TrinityRotation",
-    "rotation_gries_mills::GriesMillsRotation",
-    "rotation_grail::GrailRotation",
-    "rotation_piston::PistonRotation",
-    "rotation_helix::HelixRotation",
-    "rotation_drill::DrillRotation",
-    "rotation_juggling::JugglingRotation",
-    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
 ]
 axes = [
     { var = "R",  role = "Rotation" },
@@ -199,22 +152,6 @@ type   = "BottomUpRotationMergeSort<{SS}, NaiveRotationMerge<{R}>, false>"
 uses   = [
     "merge_sort_lib::rotation::BottomUpRotationMergeSort",
     "merge_sort_lib::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge}",
-    "rotation_reversal::ReversalRotation",
-    "rotation_auxiliary::AuxiliaryRotation",
-    "rotation_bridge::BridgeRotation",
-    "rotation_contrev::ContrevRotation",
-    "rotation_trinity::TrinityRotation",
-    "rotation_gries_mills::GriesMillsRotation",
-    "rotation_grail::GrailRotation",
-    "rotation_piston::PistonRotation",
-    "rotation_helix::HelixRotation",
-    "rotation_drill::DrillRotation",
-    "rotation_juggling::JugglingRotation",
-    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
 ]
 axes = [
     { var = "R",  role = "Rotation" },
@@ -233,22 +170,6 @@ type   = "BottomUpRotationMergeSort<{SS}, SmallerSideRotationMerge<{R}>, false>"
 uses   = [
     "merge_sort_lib::rotation::BottomUpRotationMergeSort",
     "merge_sort_lib::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge}",
-    "rotation_reversal::ReversalRotation",
-    "rotation_auxiliary::AuxiliaryRotation",
-    "rotation_bridge::BridgeRotation",
-    "rotation_contrev::ContrevRotation",
-    "rotation_trinity::TrinityRotation",
-    "rotation_gries_mills::GriesMillsRotation",
-    "rotation_grail::GrailRotation",
-    "rotation_piston::PistonRotation",
-    "rotation_helix::HelixRotation",
-    "rotation_drill::DrillRotation",
-    "rotation_juggling::JugglingRotation",
-    "small_sort_basic::{NoSmallSort, Size1SmallSort, Size2SmallSort}",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
 ]
 axes = [
     { var = "R",  role = "Rotation" },

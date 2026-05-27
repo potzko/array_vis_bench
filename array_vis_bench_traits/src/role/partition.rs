@@ -9,9 +9,9 @@
 //! [`PartitionVisitor`]; sorted regions (the pivots themselves, any
 //! equal-pinned runs) are the implicit gaps between successive
 //! `unsorted` calls. The trait generalises over pivot arity via
-//! [`PartitionScheme::N_PIVOTS`] so single-pivot impls (Lomuto, Hoare,
+//! [`PartitionScheme::N_PIVOTS`] so single-pivot impls (LeftLeftPartition, LeftRightPartition,
 //! ThreeWay, MovingPivot, Block, …) and dual-pivot impls
-//! (Yaroslavskiy) share one surface.
+//! (DualPivotPartition) share one surface.
 
 use core::ops::Range;
 use sort_logger::SortLogger;

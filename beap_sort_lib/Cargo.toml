@@ -16,11 +16,9 @@ sort_logger = { path = "../sort_logger" }
 # ── Beap sort classic (D × Iterative) ──
 [[package.metadata.array_vis_bench.families]]
 module = "beap_sort"
-type   = "HeapSort<BeapHeap<{D}>, {DH}>"
+type   = "HeapSort<NaryHeapSort<BeapHeap<{D}>, {DH}>>"
 uses   = [
-    "heap_sort_lib::direction::{MinReverse, MaxForward}",
-    "heap_sort_lib::heap_sort::HeapSort",
-    "heap_sort_lib::deep_heapify::Iterative",
+    "heap_sort_lib::heap_sort::{HeapSort, NaryHeapSort}",
     "beap_sort_lib::beap_heap::BeapHeap",
 ]
 axes = [
@@ -31,21 +29,14 @@ name        = "beap sort"
 big_o       = "@inherited"
 stable      = false
 direct_sort = true
-path        = ["beap sorts", "{D}", "{DH}"]
+path        = ["heap sorts", "beap", "classic", "{D}", "{DH}"]
 
 # ── Beap sort quick build (single pivot) ──
 [[package.metadata.array_vis_bench.families]]
 module = "beap_sort"
-type   = "HeapSort<BeapHeap<{D}>, {DH}<{HP}, {V}>>"
+type   = "HeapSort<NaryHeapSort<BeapHeap<{D}>, {DH}<{HP}, {V}>>>"
 uses   = [
-    "heap_sort_lib::direction::{MinReverse, MaxForward}",
-    "heap_sort_lib::heap_sort::HeapSort",
-    "heap_sort_lib::quick_deep_heapify::{RecursivePartialQuickDeepHeapify, SequentialQuickDeepHeapify, StackPartialQuickDeepHeapify}",
-    "heap_sort_lib::heap_partition::{Block, Hoare, Lomuto}",
-    "pivot_first::FirstElement",
-    "pivot_median_of_medians::MedianOfMedians",
-    "pivot_median3::MedianOfThree",
-    "pivot_middle::MiddleElement",
+    "heap_sort_lib::heap_sort::{HeapSort, NaryHeapSort}",
     "beap_sort_lib::beap_heap::BeapHeap",
 ]
 axes = [
@@ -63,19 +54,20 @@ name        = "beap sort quick build"
 big_o       = "@inherited"
 stable      = false
 direct_sort = true
-path        = ["beap sorts", "quick build", "{D}", "{DH}", "{HP}", "{V}"]
+path        = ["heap sorts", "beap", "quick build", "{D}", "{DH}", "{HP}", "{V}"]
 
 # ── Beap sort quick build (dual pivot) ──
 [[package.metadata.array_vis_bench.families]]
 module = "beap_sort"
-type   = "HeapSort<BeapHeap<{D}>, {DH}<{DPS}>>"
+type   = "HeapSort<NaryHeapSort<BeapHeap<{D}>, {DH}<{DPS}>>>"
 uses   = [
-    "heap_sort_lib::direction::{MinReverse, MaxForward}",
-    "heap_sort_lib::heap_sort::HeapSort",
-    "heap_sort_lib::quick_deep_heapify::StackDualPivotPartialQuickDeepHeapify",
+    "heap_sort_lib::heap_sort::{HeapSort, NaryHeapSort}",
+    "heap_sort_lib::deep_heapify::Iterative",
     "quick_sort_lib::pivot_selectors::{CombinedSelector, NintherDualPivot}",
     "pivot_first::FirstElement",
     "pivot_middle::MiddleElement",
+    "pivot_median3::MedianOfThree",
+    "pivot_median_of_medians::MedianOfMedians",
     "beap_sort_lib::beap_heap::BeapHeap",
 ]
 axes = [
@@ -91,4 +83,4 @@ name        = "beap sort quick build dual pivot"
 big_o       = "@inherited"
 stable      = false
 direct_sort = true
-path        = ["beap sorts", "quick build", "dual pivot", "{D}", "{DH}", "{DPS}"]
+path        = ["heap sorts", "beap", "quick build", "dual pivot", "{D}", "{DH}", "{DPS}"]

@@ -14,9 +14,9 @@ use array_vis_bench_traits::{PartitionScheme, PartitionVisitor, PivotInput};
 /// dual-pivot — see [`PivotInput::N`]). The two arities must agree at
 /// the type level: `P::N_PIVOTS == V::N`.
 ///
-/// Single-pivot variants are written as `QuickSort<Lomuto, FirstElement,
+/// Single-pivot variants are written as `QuickSort<LeftLeftPartition, FirstElement,
 /// NoSmallSort>`; dual-pivot as
-/// `QuickSort<Yaroslavskiy, CombinedSelector<First, Middle>, NoSmallSort>`.
+/// `QuickSort<DualPivotPartition, CombinedSelector<First, Middle>, NoSmallSort>`.
 /// The old `DualPivotQuickSort` is gone — both shapes route through one
 /// recursive driver below.
 pub struct QuickSort<P: PartitionScheme, V: PivotInput, SS: SmallSort>(
@@ -31,7 +31,7 @@ impl<P: PartitionScheme, V: PivotInput, SS: SmallSort> QuickSort<P, V, SS> {
 
 /// Stack-resident visitor: collects up to 4 unsorted ranges the
 /// partition emits per call. 4 is the upper bound across every
-/// `PartitionScheme` impl in the workspace (3 for Yaroslavskiy
+/// `PartitionScheme` impl in the workspace (3 for DualPivotPartition
 /// dual-pivot, 2 for single-pivot). Tagged `#[inline(always)]` so the
 /// visitor dispatch lowers to direct stack writes after monomorphisation.
 struct QuickSortVisitor {

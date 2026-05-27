@@ -10,8 +10,8 @@
 //! ```toml
 //! [[package.metadata.array_vis_bench.components]]
 //! role  = "Partition"
-//! type  = "Lomuto"
-//! label = "lomuto"
+//! type  = "LeftLeftPartition"
+//! label = "left-left pointer"
 //!
 //! [[package.metadata.array_vis_bench.components]]
 //! role  = "SmallSort"
@@ -29,7 +29,7 @@
 //! combo_codegen::family!(
 //!     type = QuickSort<{P}, {V}, {SS}>,
 //!     uses = [
-//!         "super::partitions::{Lomuto, Hoare}",
+//!         "super::partitions::{LeftLeftPartition, LeftRightPartition}",
 //!         "super::pivot_selectors::FirstElement",
 //!         "super::quick_sort::QuickSort",
 //!     ],

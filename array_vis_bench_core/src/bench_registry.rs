@@ -216,7 +216,7 @@ pub fn validate_registries() -> Result<(), String> {
     // ── Algorithm name uniqueness (per-category scope) ───────────────
     //
     // Names live in a category-scoped namespace: a sort and a partition
-    // can both be called "lomuto" without colliding (in practice they
+    // can both be called "left-left pointer" without colliding (in practice they
     // won't because the rotation/partition/small-sort macros bake a
     // category-prefix into the name anyway, but the check enforces it
     // independent of that convention). Two algorithms in the *same*
@@ -467,16 +467,12 @@ pub fn run_small_sort_with_input(
 }
 
 /// Emit the visualiser's "this array exists with these initial values"
-/// event sequence: one CreateAuxArrT + one SetScale (so the visualiser
-/// fixes its bar-height scale before the writes arrive) + one WriteData
-/// per element. Without the SetScale, ascending init sequences like
-/// `0..n` trigger an O(n²) cascade of full-redraws because each write
-/// becomes the new max. The log alone fully describes the initial state.
+/// event sequence: one CreateAuxArrT + one WriteData per element. The
+/// visualiser derives each array's bar-height scale from a pre-pass over
+/// the log, so no scale hint is needed here. The log alone fully
+/// describes the initial state.
 fn emit_init_events(arr: &[usize], logger: &mut dyn sort_logger::SortLogger<usize>) {
     logger.log_aux_arr_t(arr);
-    if let Some(&max) = arr.iter().max() {
-        logger.set_scale(arr, max);
-    }
     let name = arr.as_ptr() as usize;
     for (i, &v) in arr.iter().enumerate() {
         logger.log(sort_logger::SortLog::WriteData { name, ind: i, data: v });

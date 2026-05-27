@@ -21,7 +21,7 @@ use crate::sort_log::SortLog;
 /// visualiser handles any integer width uniformly. Each expansion produces
 /// non-generic methods, preserving trait dyn-compatibility.
 macro_rules! int_aux_family {
-    ($ty:ty, $log:ident, $create:ident, $free:ident, $write_data:ident, $set_scale:ident) => {
+    ($ty:ty, $log:ident, $create:ident, $free:ident, $write_data:ident) => {
         #[inline(always)]
         fn $log(&mut self, arr: &[$ty]) {
             self.log(SortLog::CreateAuxArr {
@@ -49,19 +49,6 @@ macro_rules! int_aux_family {
                 data: data as usize,
             });
             arr[ind] = data;
-        }
-        /// Declare the maximum value this array will hold, so the
-        /// visualiser fixes its scale up-front. Especially useful for
-        /// boolean / small-domain arrays (e.g. `Vec<u8>` flags) where
-        /// the actual max is known to be tiny and would otherwise be
-        /// inferred from writes — making every first-write column
-        /// render at full bar height until a larger value arrives.
-        #[inline(always)]
-        fn $set_scale(&mut self, arr: &[$ty], max: $ty) {
-            self.log(SortLog::SetScaleU {
-                name: arr_name!(arr),
-                max: max as usize,
-            })
         }
     };
 }
@@ -124,21 +111,8 @@ pub trait SortLogger<T: Copy + Ord> {
     }
     // Integer-typed aux array families. Adding a new width is one line:
     //     int_aux_family!(u16, log_aux_arr_u16, create_aux_arr_u16, ...);
-    int_aux_family!(usize, log_aux_arr_u, create_aux_arr, free_aux_arr, write_data_u, set_scale_u);
-    int_aux_family!(u8, log_aux_arr_u8, create_aux_arr_u8, free_aux_arr_u8, write_data_u8, set_scale_u8);
-
-    /// Declare the maximum value the T-typed array will ever hold. See
-    /// `SortLog::SetScale` for why this matters. No-op on `NoOpLogger`;
-    /// optional everywhere — sorts that don't declare a scale still
-    /// render correctly, just with a one-time mark-all-dirty when the
-    /// first writes exceed the current max.
-    #[inline(always)]
-    fn set_scale(&mut self, arr: &[T], max: T) {
-        self.log(SortLog::SetScale {
-            name: arr_name!(arr),
-            max,
-        })
-    }
+    int_aux_family!(usize, log_aux_arr_u, create_aux_arr, free_aux_arr, write_data_u);
+    int_aux_family!(u8, log_aux_arr_u8, create_aux_arr_u8, free_aux_arr_u8, write_data_u8);
 
     /*----------------
         Cmps

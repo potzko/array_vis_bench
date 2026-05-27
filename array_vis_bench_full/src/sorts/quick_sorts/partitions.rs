@@ -11,8 +11,8 @@
 pub use array_vis_bench_traits::PartitionScheme;
 
 pub use partition_block::Block;
-pub use partition_hoare::Hoare;
-pub use partition_lomuto::Lomuto;
+pub use partition_hoare::LeftRightPartition;
+pub use partition_lomuto::LeftLeftPartition;
 pub use partition_moving_pivot::MovingPivot;
 pub use partition_moving_pivot_v3::MovingPivotV3;
 pub use partition_three_way::ThreeWay;

@@ -17,18 +17,22 @@ small_sort_insertion_strategy = { path = "../small_sort_insertion_strategy" }
 role  = "DeferredSmallSort"
 type  = "DeferredInsertion<LinearInsertion, 16>"
 label = "deferred insertion: 16"
+uses  = ["small_sort_deferred_insertion::DeferredInsertion", "small_sort_insertion_strategy::LinearInsertion", "small_sort_insertion_strategy::BinaryInsertion"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "DeferredSmallSort"
 type  = "DeferredInsertion<LinearInsertion, 32>"
 label = "deferred insertion: 32"
+uses  = ["small_sort_deferred_insertion::DeferredInsertion", "small_sort_insertion_strategy::LinearInsertion", "small_sort_insertion_strategy::BinaryInsertion"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "DeferredSmallSort"
 type  = "DeferredInsertion<BinaryInsertion, 16>"
 label = "deferred binary insertion: 16"
+uses  = ["small_sort_deferred_insertion::DeferredInsertion", "small_sort_insertion_strategy::LinearInsertion", "small_sort_insertion_strategy::BinaryInsertion"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "DeferredSmallSort"
 type  = "DeferredInsertion<BinaryInsertion, 32>"
 label = "deferred binary insertion: 32"
+uses  = ["small_sort_deferred_insertion::DeferredInsertion", "small_sort_insertion_strategy::LinearInsertion", "small_sort_insertion_strategy::BinaryInsertion"]

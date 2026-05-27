@@ -17,12 +17,12 @@ use heap_sort_lib::arity_heap::ArityHeap;
 use heap_sort_lib::deep_heapify::Iterative;
 use heap_sort_lib::direction::{MaxForward, MinReverse};
 use heap_sort_lib::heap_algorithm::HeapAlgorithm;
-use heap_sort_lib::heap_sort::HeapSort;
+use heap_sort_lib::heap_sort::NaryHeapSort;
 use sort_logger::SortLogger;
 use array_vis_bench_traits::DeferredSmallSort;
 
-type LeftHeap<A> = HeapSort<ArityHeap<A, MaxForward>, Iterative>;
-type RightHeap<A> = HeapSort<ArityHeap<A, MinReverse>, Iterative>;
+type LeftHeap<A> = NaryHeapSort<ArityHeap<A, MaxForward>, Iterative>;
+type RightHeap<A> = NaryHeapSort<ArityHeap<A, MinReverse>, Iterative>;
 
 pub struct DeferredQuickHeapSort<A: Arity, DSS: DeferredSmallSort> {
     _phantom: PhantomData<(A, DSS)>,

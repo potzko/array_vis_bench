@@ -4,10 +4,10 @@
 //! standalone fn signature is just `(&mut [usize], target, &mut Logger)`.
 //!
 //! Single-pivot cross-product: 2 (Recursive/Iterative) × 4 partitions
-//! (Lomuto/Hoare/ThreeWay/Block) × 5 pivots = 40 leaves.
-//! Dual-pivot cross-product: 2 × Yaroslavskiy × 4 dual selectors = 8
+//! (LeftLeftPartition/LeftRightPartition/ThreeWay/Block) × 5 pivots = 40 leaves.
+//! Dual-pivot cross-product: 2 × DualPivotPartition × 4 dual selectors = 8
 //! leaves — registered through the *same* `QuickSelect<P, V>` types as
-//! the single-pivot side, with `P = Yaroslavskiy` and `V` a dual-pivot
+//! the single-pivot side, with `P = DualPivotPartition` and `V` a dual-pivot
 //! `PivotInput` (`N = 2`). The old `dual_pivot_quick_select_lib` types
 //! are gone.
 //!
@@ -22,11 +22,11 @@ pub static LINK_ANCHOR: () = ();
 
 use quick_select_lib::{IterativeQuickSelect, RecursiveQuickSelect};
 use partition_block::Block;
-use partition_hoare::Hoare;
-use partition_lomuto::Lomuto;
+use partition_hoare::LeftRightPartition;
+use partition_lomuto::LeftLeftPartition;
 use partition_three_way::ThreeWay;
 use quick_sort_lib::pivot_selectors::{CombinedSelector, NintherDualPivot};
-use quick_sort_lib::Yaroslavskiy;
+use quick_sort_lib::DualPivotPartition;
 use pivot_first::FirstElement;
 use pivot_last::LastElement;
 use pivot_median3::MedianOfThree;
@@ -40,7 +40,7 @@ use pivot_ninther::Ninther;
 // `$piv_label` give the menu strings. For single-pivot leaves
 // `$piv_label` is the `PivotSelector::NAME`; for dual-pivot it's a
 // human-readable combination label ("first / first", "ninther 1/3 +
-// 2/3", …). `$part` is `Yaroslavskiy` for the dual-pivot rows.
+// 2/3", …). `$part` is `DualPivotPartition` for the dual-pivot rows.
 
 macro_rules! register_quick_select {
     ($mod:ident, $strategy:ident, $strat_name:expr, $part:ty, $part_name:expr, $piv:ty, $piv_label:expr) => {
@@ -128,18 +128,18 @@ macro_rules! register_quick_select {
 
 // ── Single-pivot cross-product ───────────────────────────────────────────────
 //
-// {Recursive, Iterative} × {Lomuto, Hoare, ThreeWay, Block} × pivots
-register_quick_select!(rec_lomuto_first,    RecursiveQuickSelect, "recursive", Lomuto,   "lomuto",    FirstElement,  "first");
-register_quick_select!(rec_lomuto_middle,   RecursiveQuickSelect, "recursive", Lomuto,   "lomuto",    MiddleElement, "middle");
-register_quick_select!(rec_lomuto_last,     RecursiveQuickSelect, "recursive", Lomuto,   "lomuto",    LastElement,   "last");
-register_quick_select!(rec_lomuto_med3,     RecursiveQuickSelect, "recursive", Lomuto,   "lomuto",    MedianOfThree, "median of 3");
-register_quick_select!(rec_lomuto_ninther,  RecursiveQuickSelect, "recursive", Lomuto,   "lomuto",    Ninther,       "ninther");
+// {Recursive, Iterative} × {LeftLeftPartition, LeftRightPartition, ThreeWay, Block} × pivots
+register_quick_select!(rec_lomuto_first,    RecursiveQuickSelect, "recursive", LeftLeftPartition,   "left-left pointer",    FirstElement,  "first");
+register_quick_select!(rec_lomuto_middle,   RecursiveQuickSelect, "recursive", LeftLeftPartition,   "left-left pointer",    MiddleElement, "middle");
+register_quick_select!(rec_lomuto_last,     RecursiveQuickSelect, "recursive", LeftLeftPartition,   "left-left pointer",    LastElement,   "last");
+register_quick_select!(rec_lomuto_med3,     RecursiveQuickSelect, "recursive", LeftLeftPartition,   "left-left pointer",    MedianOfThree, "median of 3");
+register_quick_select!(rec_lomuto_ninther,  RecursiveQuickSelect, "recursive", LeftLeftPartition,   "left-left pointer",    Ninther,       "ninther");
 
-register_quick_select!(rec_hoare_first,     RecursiveQuickSelect, "recursive", Hoare,    "hoare",     FirstElement,  "first");
-register_quick_select!(rec_hoare_middle,    RecursiveQuickSelect, "recursive", Hoare,    "hoare",     MiddleElement, "middle");
-register_quick_select!(rec_hoare_last,      RecursiveQuickSelect, "recursive", Hoare,    "hoare",     LastElement,   "last");
-register_quick_select!(rec_hoare_med3,      RecursiveQuickSelect, "recursive", Hoare,    "hoare",     MedianOfThree, "median of 3");
-register_quick_select!(rec_hoare_ninther,   RecursiveQuickSelect, "recursive", Hoare,    "hoare",     Ninther,       "ninther");
+register_quick_select!(rec_hoare_first,     RecursiveQuickSelect, "recursive", LeftRightPartition,    "left-right pointer",     FirstElement,  "first");
+register_quick_select!(rec_hoare_middle,    RecursiveQuickSelect, "recursive", LeftRightPartition,    "left-right pointer",     MiddleElement, "middle");
+register_quick_select!(rec_hoare_last,      RecursiveQuickSelect, "recursive", LeftRightPartition,    "left-right pointer",     LastElement,   "last");
+register_quick_select!(rec_hoare_med3,      RecursiveQuickSelect, "recursive", LeftRightPartition,    "left-right pointer",     MedianOfThree, "median of 3");
+register_quick_select!(rec_hoare_ninther,   RecursiveQuickSelect, "recursive", LeftRightPartition,    "left-right pointer",     Ninther,       "ninther");
 
 register_quick_select!(rec_3way_first,      RecursiveQuickSelect, "recursive", ThreeWay, "three-way", FirstElement,  "first");
 register_quick_select!(rec_3way_middle,     RecursiveQuickSelect, "recursive", ThreeWay, "three-way", MiddleElement, "middle");
@@ -153,17 +153,17 @@ register_quick_select!(rec_block_last,      RecursiveQuickSelect, "recursive", B
 register_quick_select!(rec_block_med3,      RecursiveQuickSelect, "recursive", Block,    "block",     MedianOfThree, "median of 3");
 register_quick_select!(rec_block_ninther,   RecursiveQuickSelect, "recursive", Block,    "block",     Ninther,       "ninther");
 
-register_quick_select!(it_lomuto_first,     IterativeQuickSelect, "iterative", Lomuto,   "lomuto",    FirstElement,  "first");
-register_quick_select!(it_lomuto_middle,    IterativeQuickSelect, "iterative", Lomuto,   "lomuto",    MiddleElement, "middle");
-register_quick_select!(it_lomuto_last,      IterativeQuickSelect, "iterative", Lomuto,   "lomuto",    LastElement,   "last");
-register_quick_select!(it_lomuto_med3,      IterativeQuickSelect, "iterative", Lomuto,   "lomuto",    MedianOfThree, "median of 3");
-register_quick_select!(it_lomuto_ninther,   IterativeQuickSelect, "iterative", Lomuto,   "lomuto",    Ninther,       "ninther");
+register_quick_select!(it_lomuto_first,     IterativeQuickSelect, "iterative", LeftLeftPartition,   "left-left pointer",    FirstElement,  "first");
+register_quick_select!(it_lomuto_middle,    IterativeQuickSelect, "iterative", LeftLeftPartition,   "left-left pointer",    MiddleElement, "middle");
+register_quick_select!(it_lomuto_last,      IterativeQuickSelect, "iterative", LeftLeftPartition,   "left-left pointer",    LastElement,   "last");
+register_quick_select!(it_lomuto_med3,      IterativeQuickSelect, "iterative", LeftLeftPartition,   "left-left pointer",    MedianOfThree, "median of 3");
+register_quick_select!(it_lomuto_ninther,   IterativeQuickSelect, "iterative", LeftLeftPartition,   "left-left pointer",    Ninther,       "ninther");
 
-register_quick_select!(it_hoare_first,      IterativeQuickSelect, "iterative", Hoare,    "hoare",     FirstElement,  "first");
-register_quick_select!(it_hoare_middle,     IterativeQuickSelect, "iterative", Hoare,    "hoare",     MiddleElement, "middle");
-register_quick_select!(it_hoare_last,       IterativeQuickSelect, "iterative", Hoare,    "hoare",     LastElement,   "last");
-register_quick_select!(it_hoare_med3,       IterativeQuickSelect, "iterative", Hoare,    "hoare",     MedianOfThree, "median of 3");
-register_quick_select!(it_hoare_ninther,    IterativeQuickSelect, "iterative", Hoare,    "hoare",     Ninther,       "ninther");
+register_quick_select!(it_hoare_first,      IterativeQuickSelect, "iterative", LeftRightPartition,    "left-right pointer",     FirstElement,  "first");
+register_quick_select!(it_hoare_middle,     IterativeQuickSelect, "iterative", LeftRightPartition,    "left-right pointer",     MiddleElement, "middle");
+register_quick_select!(it_hoare_last,       IterativeQuickSelect, "iterative", LeftRightPartition,    "left-right pointer",     LastElement,   "last");
+register_quick_select!(it_hoare_med3,       IterativeQuickSelect, "iterative", LeftRightPartition,    "left-right pointer",     MedianOfThree, "median of 3");
+register_quick_select!(it_hoare_ninther,    IterativeQuickSelect, "iterative", LeftRightPartition,    "left-right pointer",     Ninther,       "ninther");
 
 register_quick_select!(it_3way_first,       IterativeQuickSelect, "iterative", ThreeWay, "three-way", FirstElement,  "first");
 register_quick_select!(it_3way_middle,      IterativeQuickSelect, "iterative", ThreeWay, "three-way", MiddleElement, "middle");
@@ -177,21 +177,21 @@ register_quick_select!(it_block_last,       IterativeQuickSelect, "iterative", B
 register_quick_select!(it_block_med3,       IterativeQuickSelect, "iterative", Block,    "block",     MedianOfThree, "median of 3");
 register_quick_select!(it_block_ninther,    IterativeQuickSelect, "iterative", Block,    "block",     Ninther,       "ninther");
 
-// ── Dual-pivot cross-product (Yaroslavskiy partition) ────────────────────────
+// ── Dual-pivot cross-product (DualPivotPartition partition) ────────────────────────
 //
-// Same `QuickSelect<P, V>` types, with `P = Yaroslavskiy` (N_PIVOTS = 2)
+// Same `QuickSelect<P, V>` types, with `P = DualPivotPartition` (N_PIVOTS = 2)
 // and a dual-pivot `PivotInput` (N = 2). Dual-pivot is now just the
-// "yaroslavskiy" partition row in the menu.
+// "dual pivot" partition row in the menu.
 type FirstFirst   = CombinedSelector<FirstElement, FirstElement>;
 type MiddleMiddle = CombinedSelector<MiddleElement, MiddleElement>;
 type FirstLast    = CombinedSelector<FirstElement, LastElement>;
 
-register_quick_select!(dp_rec_first_first, RecursiveQuickSelect, "recursive", Yaroslavskiy, "yaroslavskiy", FirstFirst,       "first / first");
-register_quick_select!(dp_rec_mid_mid,     RecursiveQuickSelect, "recursive", Yaroslavskiy, "yaroslavskiy", MiddleMiddle,     "middle / middle");
-register_quick_select!(dp_rec_first_last,  RecursiveQuickSelect, "recursive", Yaroslavskiy, "yaroslavskiy", FirstLast,        "first / last");
-register_quick_select!(dp_rec_ninther,     RecursiveQuickSelect, "recursive", Yaroslavskiy, "yaroslavskiy", NintherDualPivot, "ninther 1/3 + 2/3");
+register_quick_select!(dp_rec_first_first, RecursiveQuickSelect, "recursive", DualPivotPartition, "dual pivot", FirstFirst,       "first / first");
+register_quick_select!(dp_rec_mid_mid,     RecursiveQuickSelect, "recursive", DualPivotPartition, "dual pivot", MiddleMiddle,     "middle / middle");
+register_quick_select!(dp_rec_first_last,  RecursiveQuickSelect, "recursive", DualPivotPartition, "dual pivot", FirstLast,        "first / last");
+register_quick_select!(dp_rec_ninther,     RecursiveQuickSelect, "recursive", DualPivotPartition, "dual pivot", NintherDualPivot, "ninther 1/3 + 2/3");
 
-register_quick_select!(dp_it_first_first,  IterativeQuickSelect, "iterative", Yaroslavskiy, "yaroslavskiy", FirstFirst,       "first / first");
-register_quick_select!(dp_it_mid_mid,      IterativeQuickSelect, "iterative", Yaroslavskiy, "yaroslavskiy", MiddleMiddle,     "middle / middle");
-register_quick_select!(dp_it_first_last,   IterativeQuickSelect, "iterative", Yaroslavskiy, "yaroslavskiy", FirstLast,        "first / last");
-register_quick_select!(dp_it_ninther,      IterativeQuickSelect, "iterative", Yaroslavskiy, "yaroslavskiy", NintherDualPivot, "ninther 1/3 + 2/3");
+register_quick_select!(dp_it_first_first,  IterativeQuickSelect, "iterative", DualPivotPartition, "dual pivot", FirstFirst,       "first / first");
+register_quick_select!(dp_it_mid_mid,      IterativeQuickSelect, "iterative", DualPivotPartition, "dual pivot", MiddleMiddle,     "middle / middle");
+register_quick_select!(dp_it_first_last,   IterativeQuickSelect, "iterative", DualPivotPartition, "dual pivot", FirstLast,        "first / last");
+register_quick_select!(dp_it_ninther,      IterativeQuickSelect, "iterative", DualPivotPartition, "dual pivot", NintherDualPivot, "ninther 1/3 + 2/3");

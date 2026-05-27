@@ -10,7 +10,7 @@ use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 
-use partition_lomuto::Lomuto;
+use partition_lomuto::LeftLeftPartition;
 use pivot_first::FirstElement;
 use quick_sort_lib::quick_sort::QuickSort;
 use small_sort_basic::NoSmallSort;
@@ -24,12 +24,12 @@ fn shuffled(n: usize, seed: u64) -> Vec<u64> {
 }
 
 fn main() {
-    println!("array_vis_bench_min_with_quick — Lomuto + FirstElement QuickSort, no wiring crate");
+    println!("array_vis_bench_min_with_quick — LeftLeftPartition + FirstElement QuickSort, no wiring crate");
 
     let n = 100_000;
     let mut a = shuffled(n, 0xC0FFEE);
     let t = Instant::now();
-    QuickSort::<Lomuto, FirstElement, NoSmallSort>::sort(&mut a, &mut NoOpLogger);
-    println!("  QuickSort<Lomuto, First, NoSmall>  N={n}  {:>8.2?}", t.elapsed());
+    QuickSort::<LeftLeftPartition, FirstElement, NoSmallSort>::sort(&mut a, &mut NoOpLogger);
+    println!("  QuickSort<LeftLeftPartition, First, NoSmall>  N={n}  {:>8.2?}", t.elapsed());
     assert!(a.is_sorted());
 }

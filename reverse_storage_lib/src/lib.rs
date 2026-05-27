@@ -43,10 +43,6 @@ impl ReverseStorage for ByteStorage {
     fn new<T: Ord + Copy, U: ?Sized + SortLogger<T>>(n: usize, logger: &mut U) -> Vec<u8> {
         let reverse = vec![0u8; n];
         logger.log_aux_arr_u8(&reverse);
-        // Bits are 0 or 1, so pin scale up-front; without this the first
-        // flip-to-1 establishes max=1 mid-render and every previously-rendered
-        // 0-cell would suddenly become full-height retroactively.
-        logger.set_scale_u8(&reverse, 1);
         reverse
     }
 
@@ -77,9 +73,6 @@ impl ReverseStorage for BitStorage {
     fn new<T: Ord + Copy, U: ?Sized + SortLogger<T>>(n: usize, logger: &mut U) -> Vec<u8> {
         let reverse = vec![0u8; n.div_ceil(8)];
         logger.log_aux_arr_u8(&reverse);
-        // Each cell is a *byte* of up-to-8 packed bits; values span 0..=255
-        // so the visualiser needs the full u8 range to render correctly.
-        logger.set_scale_u8(&reverse, 255);
         reverse
     }
 

@@ -1,9 +1,10 @@
-//! Lomuto partition (left-left single-pointer scan).
+//! Left-left single-pointer partition (historically the *Lomuto* scheme,
+//! after Nico Lomuto).
 //!
 //! Phase 3 pilot leaf crate. The struct + `PartitionScheme` impl + the
 //! composable annotations (`HasTimeBounds` / `HasSpace` / `HasStability`)
-//! all live here so the wiring crate doesn't carry Lomuto's source at all
-//! — just a dep edge. Component discovery happens via the
+//! all live here so the wiring crate doesn't carry this partition's source
+//! at all — just a dep edge. Component discovery happens via the
 //! `[[package.metadata.array_vis_bench.components]]` block in this
 //! crate's `Cargo.toml`.
 
@@ -12,14 +13,14 @@ use array_vis_bench_traits::{
 };
 use sort_logger::SortLogger;
 
-/// Lomuto partition (left-left single-pointer scan).
+/// Left-left single-pointer partition — the *Lomuto* scheme (Nico Lomuto).
 ///
 /// Moves the pivot to the end, scans left-to-right placing small elements
 /// at the front, then swaps the pivot into its final position.
-pub struct Lomuto;
+pub struct LeftLeftPartition;
 
-impl PartitionScheme for Lomuto {
-    const NAME: &'static str = "lomuto";
+impl PartitionScheme for LeftLeftPartition {
+    const NAME: &'static str = "left-left pointer";
     const N_PIVOTS: usize = 1;
     #[inline]
     fn partition<T, U, V>(
@@ -50,14 +51,14 @@ impl PartitionScheme for Lomuto {
 }
 
 // Single-pass partition: O(N) time, O(1) aux space, not stable.
-impl HasTimeBounds for Lomuto {
+impl HasTimeBounds for LeftLeftPartition {
     const WORST: Complexity = Complexity::N1;
     const BEST: Complexity = Complexity::N1;
     const AVERAGE: Complexity = Complexity::N1;
 }
-impl HasSpace for Lomuto {
+impl HasSpace for LeftLeftPartition {
     const SPACE: Complexity = Complexity::CONST;
 }
-impl HasStability for Lomuto {
+impl HasStability for LeftLeftPartition {
     const STABLE: bool = false;
 }

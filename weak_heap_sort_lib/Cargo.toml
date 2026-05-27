@@ -16,11 +16,10 @@ sort_logger = { path = "../sort_logger" }
 
 [[package.metadata.array_vis_bench.families]]
 module = "weak_heap_sort"
-type   = "WeakHeapSort<{D}, {R}>"
+type   = "HeapSort<WeakHeapSort<{D}, {R}>>"
 uses   = [
-    "heap_sort_lib::direction::{MinReverse, MaxForward}",
-    "reverse_storage_lib::{ByteStorage, BitStorage}",
     "weak_heap_sort_lib::weak_heap_sort::WeakHeapSort",
+    "heap_sort_lib::heap_sort::HeapSort",
 ]
 axes = [
     { var = "D", role = "HeapDirection" },
@@ -30,4 +29,4 @@ name        = "weak heap sort"
 big_o       = "@inherited"
 stable      = false
 direct_sort = true
-path        = ["weak heap sorts", "{D}", "{R}"]
+path        = ["heap sorts", "weak", "{D}", "{R}"]

@@ -164,15 +164,40 @@ impl ScanResult {
 
             let mut out = String::new();
 
-            let mut seen_uses: Vec<&str> = Vec::new();
+            // Each family contributes (a) its own declared `uses` (wrapper
+            // type, inline-axis types, fixed-slot types) plus (b) the `uses`
+            // of every component in the roles its axes reference — so a
+            // component's import lives only in the component's own metadata
+            // and families don't have to list them.
+            let mut seen_uses: Vec<String> = Vec::new();
+            let mut emit_use = |out: &mut String, u: &str| {
+                if !seen_uses.iter().any(|s| s == u) {
+                    seen_uses.push(u.to_string());
+                    out.push_str("use ");
+                    out.push_str(u);
+                    out.push_str(";\n");
+                }
+            };
             for fam in &fams {
                 for u in &fam.uses {
-                    let u = u.as_str();
-                    if !seen_uses.contains(&u) {
-                        seen_uses.push(u);
-                        out.push_str("use ");
-                        out.push_str(u);
-                        out.push_str(";\n");
+                    emit_use(&mut out, u);
+                }
+                for (_, spec) in &fam.axes {
+                    let mut role_list: Vec<&str> = Vec::new();
+                    match spec {
+                        crate::family::AxisSpec::Role(r) => role_list.push(r),
+                        crate::family::AxisSpec::Cross { left, right, .. } => {
+                            role_list.push(left);
+                            role_list.push(right);
+                        }
+                        crate::family::AxisSpec::Inline(_) => {}
+                    }
+                    for role in role_list {
+                        for comp in self.registry.role(role) {
+                            for u in &comp.uses {
+                                emit_use(&mut out, u);
+                            }
+                        }
                     }
                 }
             }
@@ -716,12 +741,12 @@ mod tests {
     #[test]
     fn validate_catches_duplicate_component() {
         let mut r = empty_result();
-        r.registry.add("Partition", "Lomuto", "lomuto");
-        r.registry.add("Partition", "Lomuto", "lomuto-again");
+        r.registry.add("Partition", "LeftLeftPartition", "left-left pointer");
+        r.registry.add("Partition", "LeftLeftPartition", "lomuto-again");
         let err = r.validate().unwrap_err();
         assert!(
             matches!(err, ValidationError::DuplicateComponent { ref role, ref type_expr }
-                if role == "Partition" && type_expr == "Lomuto"),
+                if role == "Partition" && type_expr == "LeftLeftPartition"),
             "got {err:?}",
         );
     }
@@ -765,7 +790,7 @@ mod tests {
         );"#;
         let mut r = empty_result();
         r.families = scan_families(src, std::path::Path::new("src/qs.rs"), &marker());
-        r.registry.add("Partition", "Lomuto", "lomuto");
+        r.registry.add("Partition", "LeftLeftPartition", "left-left pointer");
         r.validate().unwrap();
     }
 
@@ -779,7 +804,7 @@ mod tests {
         );"#;
         let mut r = empty_result();
         r.families = scan_families(src, std::path::Path::new("src/qs.rs"), &marker());
-        r.registry.add("Partition", "Lomuto", "lomuto");
+        r.registry.add("Partition", "LeftLeftPartition", "left-left pointer");
         // `ReverseStorage` has a component but no family references it.
         r.registry.add("ReverseStorage", "BitStorage", "bit storage");
         // `Aux` is registered but only via an inline axis below — that

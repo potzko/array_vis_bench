@@ -1,10 +1,11 @@
-//! Yaroslavskiy dual-pivot partition (the JDK's `DualPivotQuicksort`
-//! split), as a [`PartitionScheme`] with `N_PIVOTS = 2`.
+//! Dual-pivot partition — *Yaroslavskiy*'s scheme (Vladimir Yaroslavskiy),
+//! as used in the JDK's `DualPivotQuicksort`. A [`PartitionScheme`] with
+//! `N_PIVOTS = 2`.
 //!
 //! Takes two pivot indices, places them at the ends, scans inward
 //! splitting `arr` into `< p1 | p1 ≤ x ≤ p2 | > p2`, and emits the
 //! three unsorted regions through the visitor. The unified
-//! `QuickSort<Yaroslavskiy, V, SS>` (with `V: PivotInput<N = 2>`)
+//! `QuickSort<DualPivotPartition, V, SS>` (with `V: PivotInput<N = 2>`)
 //! supersedes the old separate `DualPivotQuickSort` family.
 
 use array_vis_bench_traits::{
@@ -12,11 +13,11 @@ use array_vis_bench_traits::{
 };
 use sort_logger::SortLogger;
 
-/// Yaroslavskiy's dual-pivot partition.
-pub struct Yaroslavskiy;
+/// Dual-pivot partition — *Yaroslavskiy*'s scheme (Vladimir Yaroslavskiy).
+pub struct DualPivotPartition;
 
-impl PartitionScheme for Yaroslavskiy {
-    const NAME: &'static str = "yaroslavskiy";
+impl PartitionScheme for DualPivotPartition {
+    const NAME: &'static str = "dual pivot";
     const N_PIVOTS: usize = 2;
 
     #[inline]
@@ -101,14 +102,14 @@ impl PartitionScheme for Yaroslavskiy {
 }
 
 // One pass over the array, no aux storage, not stable.
-impl HasTimeBounds for Yaroslavskiy {
+impl HasTimeBounds for DualPivotPartition {
     const WORST: Complexity = Complexity::N1;
     const BEST: Complexity = Complexity::N1;
     const AVERAGE: Complexity = Complexity::N1;
 }
-impl HasSpace for Yaroslavskiy {
+impl HasSpace for DualPivotPartition {
     const SPACE: Complexity = Complexity::CONST;
 }
-impl HasStability for Yaroslavskiy {
+impl HasStability for DualPivotPartition {
     const STABLE: bool = false;
 }

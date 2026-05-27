@@ -41,10 +41,10 @@ pub trait HeapPartition {
         H: HeapLayout;
 }
 
-/// Lomuto partition (rootward-on-left single-pointer scan).
-pub struct Lomuto;
+/// Left-left single-pointer partition — *Lomuto*-style (rootward-on-left scan).
+pub struct LeftLeftPartition;
 
-impl HeapPartition for Lomuto {
+impl HeapPartition for LeftLeftPartition {
     fn partition<T, U, H>(
         arr: &mut [T],
         n: usize,
@@ -75,10 +75,10 @@ impl HeapPartition for Lomuto {
     }
 }
 
-/// Hoare partition (two-pointer scan from both ends of the logical range).
-pub struct Hoare;
+/// Left-right two-pointer partition — *Hoare*-style (scan inward from both ends).
+pub struct LeftRightPartition;
 
-impl HeapPartition for Hoare {
+impl HeapPartition for LeftRightPartition {
     fn partition<T, U, H>(
         arr: &mut [T],
         n: usize,
@@ -136,7 +136,7 @@ impl HeapPartition for Hoare {
 }
 
 /// Block partition — classify-then-swap in fixed-size blocks. Reduces
-/// branch mispredictions on large slices; falls back to Lomuto-style
+/// branch mispredictions on large slices; falls back to LeftLeftPartition-style
 /// remainder loop.
 pub struct Block;
 
@@ -208,7 +208,7 @@ impl HeapPartition for Block {
         logger.free_aux_arr(&offsets_l);
         logger.free_aux_arr(&offsets_r);
 
-        // Lomuto-style remainder.
+        // LeftLeftPartition-style remainder.
         let mut small = left;
         for i in left..right {
             let i_phys = H::phys(i, n);

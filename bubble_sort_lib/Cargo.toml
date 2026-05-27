@@ -21,11 +21,6 @@ ctor = "0.2"
 module = "bubble_sorts"
 type   = "OddEvenBubbleSort<{S}>"
 uses   = [
-    "small_sort_basic::Size2SmallSort",
-    "small_sort_insertion::InsertionSmallSort",
-    "small_sort_network::NetworkSmallSort",
-    "small_sort_network_16::Network16SmallSort",
-    "small_sort_insertion_strategy::{LinearInsertion, BinaryInsertion}",
     "bubble_sort_lib::OddEvenBubbleSort",
 ]
 axes = [

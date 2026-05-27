@@ -1,12 +1,20 @@
-//! Generic n-ary heap sort.
+//! Generic n-ary heap sort + the family marker.
 //!
-//! `HeapSort<H, DH>` is layout/compare/arity-agnostic — all of that lives
-//! in `H` — and also deep-heapify-strategy-agnostic via `DH`. The actual
-//! build-then-extract loop is the default implementation on
-//! [`HeapAlgorithm`]; this type only supplies the primitives.
+//! Two types live here:
 //!
-//! The `family!` call below cross-products `Arity` × `HeapDirection` ×
-//! `DeepHeapify` to register every ascending-producing variant.
+//! - [`NaryHeapSort<H, DH>`] — the stateless-heap adapter. Layout / compare
+//!   / arity-agnostic (all of that lives in `H: Heap`) and
+//!   deep-heapify-strategy-agnostic via `DH`. It implements
+//!   [`HeapAlgorithm`] by supplying the build / swap-root / push-down
+//!   primitives; the build-then-extract loop is the trait default. Used by
+//!   the d-ary family (`ArityHeap`) and the beap family (`BeapHeap`).
+//! - [`HeapSort<HA>`] — the family marker. A zero-cost pass-through generic
+//!   over *any* [`HeapAlgorithm`] (including the stateful `WeakHeapSort`),
+//!   so every heap-family sort routes through one canonical type. It only
+//!   exposes `sort`; monomorphization collapses the indirection away.
+//!
+//! The `family!` calls in the crate `Cargo.toml`s cross-product the
+//! supporting axes to register every ascending-producing variant.
 //! `HeapDirection` only has component! markers on `MinReverse` and
 //! `MaxForward`, so the other two directions (which would sort to
 //! descending) are excluded.
@@ -20,11 +28,11 @@ use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use sort_logger::SortLogger;
 
-pub struct HeapSort<H: Heap, DH: DeepHeapify> {
+pub struct NaryHeapSort<H: Heap, DH: DeepHeapify> {
     _phantom: PhantomData<(H, DH)>,
 }
 
-impl<H: Heap, DH: DeepHeapify> HeapAlgorithm for HeapSort<H, DH> {
+impl<H: Heap, DH: DeepHeapify> HeapAlgorithm for NaryHeapSort<H, DH> {
     type State = ();
 
     #[inline(always)]
@@ -65,13 +73,47 @@ impl<H: Heap, DH: DeepHeapify> HeapAlgorithm for HeapSort<H, DH> {
     }
 }
 
-impl<H: Heap, DH: DeepHeapify> HeapSort<H, DH> {
-    /// Inherent thin delegate so `<HeapSort<...>>::sort(arr, logger)` keeps
-    /// working from `family!`-generated code without needing the
+impl<H: Heap, DH: DeepHeapify> NaryHeapSort<H, DH> {
+    /// Inherent thin delegate so `<NaryHeapSort<...>>::sort(arr, logger)`
+    /// keeps working from `family!`-generated code without needing the
     /// `HeapAlgorithm` trait in scope at the call site.
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         <Self as HeapAlgorithm>::sort(arr, logger)
     }
+}
+
+/// Family marker: a zero-cost pass-through over any [`HeapAlgorithm`].
+///
+/// Every heap-family sort (d-ary `NaryHeapSort<ArityHeap<…>, DH>`, beap
+/// `NaryHeapSort<BeapHeap<…>, DH>`, and the stateful `WeakHeapSort<D, R>`)
+/// is registered as `HeapSort<…>` so they share one canonical type. The
+/// wrapper holds no data and forwards `sort` straight to the inner
+/// algorithm; monomorphization erases it entirely.
+pub struct HeapSort<HA: HeapAlgorithm> {
+    _phantom: PhantomData<HA>,
+}
+
+impl<HA: HeapAlgorithm> HeapSort<HA> {
+    #[inline(always)]
+    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        HA::sort(arr, logger)
+    }
+}
+
+// Forward the composable annotations from the inner algorithm so the
+// marker carries the same complexity / stability facts.
+impl<HA: HeapAlgorithm + HasTimeBounds> HasTimeBounds for HeapSort<HA> {
+    const WORST: Complexity = HA::WORST;
+    const BEST: Complexity = HA::BEST;
+    const AVERAGE: Complexity = HA::AVERAGE;
+}
+
+impl<HA: HeapAlgorithm + HasSpace> HasSpace for HeapSort<HA> {
+    const SPACE: Complexity = HA::SPACE;
+}
+
+impl<HA: HeapAlgorithm + HasStability> HasStability for HeapSort<HA> {
+    const STABLE: bool = HA::STABLE;
 }
 
 // Family declaration is now `[[package.metadata.array_vis_bench.families]]`
@@ -90,19 +132,19 @@ impl<H: Heap, DH: DeepHeapify> HeapSort<H, DH> {
 // reorders equal keys). Space is `O(log N)` recursion stack worst
 // case (recursive deep-heapify); the iterative variant is `O(1)`.
 
-impl<H: Heap + HasTimeBounds, DH: DeepHeapify> HasTimeBounds for HeapSort<H, DH> {
+impl<H: Heap + HasTimeBounds, DH: DeepHeapify> HasTimeBounds for NaryHeapSort<H, DH> {
     /// N extractions × per-operation heapify complexity (H::WORST).
     const WORST: Complexity = Complexity::product(Complexity::N1, H::WORST);
     const BEST: Complexity = Complexity::product(Complexity::N1, H::BEST);
     const AVERAGE: Complexity = Complexity::product(Complexity::N1, H::AVERAGE);
 }
 
-impl<H: Heap, DH: DeepHeapify> HasSpace for HeapSort<H, DH> {
+impl<H: Heap, DH: DeepHeapify> HasSpace for NaryHeapSort<H, DH> {
     /// Conservative bound — Recursive deep-heapify uses O(log N) stack;
     /// Iterative uses O(1).
     const SPACE: Complexity = Complexity::LOG_N;
 }
 
-impl<H: Heap, DH: DeepHeapify> HasStability for HeapSort<H, DH> {
+impl<H: Heap, DH: DeepHeapify> HasStability for NaryHeapSort<H, DH> {
     const STABLE: bool = false;
 }

@@ -41,10 +41,20 @@ pub(crate) struct SortFamilyInput {
     /// symbol. Off by default; flip on for the family you're investigating
     /// and pair with `cargo asm` for a clean ASM dump.
     asm_friendly: bool,
+    /// Fixed `(role, value)` axis bindings applied to every variant of this
+    /// family, on top of the enumerated axes. Used when a family hard-codes
+    /// part of its type (e.g. `QuickSort<DualPivotPartition, …>`) but still wants
+    /// that choice to appear as a faceted axis (`partition = "dual pivot"`).
+    /// Declared in metadata as `fixed = ["role=value", …]`.
+    fixed: Vec<(String, String)>,
 }
 
 struct AxisDef {
     slot: String,
+    /// Humanized trait/role label (e.g. `"partition"`). `None` for axes
+    /// without a role — those are treated as structural category segments
+    /// rather than faceted axes by the navigation registry.
+    role: Option<String>,
     variants: Vec<VariantNode>,
 }
 
@@ -197,13 +207,21 @@ fn parse_type_expr_arg(input: ParseStream) -> Result<TypeExprArg> {
 
 fn parse_axis_def(input: ParseStream) -> Result<AxisDef> {
     let slot: Ident = input.parse()?;
+    // Optional `: "role"` after the slot name tags the axis with a
+    // humanized trait/role label for the faceted picker.
+    let role = if input.peek(Token![:]) {
+        let _: Token![:] = input.parse()?;
+        Some(input.parse::<LitStr>()?.value())
+    } else {
+        None
+    };
     let content;
     braced!(content in input);
     let mut variants = vec![];
     while !content.is_empty() {
         variants.push(parse_variant_node(&content)?);
     }
-    Ok(AxisDef { slot: slot.to_string(), variants })
+    Ok(AxisDef { slot: slot.to_string(), role, variants })
 }
 
 fn parse_variant_node(input: ParseStream) -> Result<VariantNode> {
@@ -244,9 +262,10 @@ impl Parse for SortFamilyInput {
         let mut direct_sort: bool = false;
         let mut max_n_for_tests: Option<u64> = None;
         let mut asm_friendly: bool = false;
+        let mut fixed: Vec<(String, String)> = vec![];
 
         while !input.is_empty() {
-            if input.peek(Ident) && input.peek2(syn::token::Brace) {
+            if input.peek(Ident) && (input.peek2(syn::token::Brace) || input.peek2(Token![:])) {
                 axes.push(parse_axis_def(input)?);
             } else if input.peek(Ident) && input.peek2(Token![=]) {
                 let field: Ident = input.parse()?;
@@ -349,11 +368,27 @@ impl Parse for SortFamilyInput {
                         asm_friendly = input.parse::<LitBool>()?.value();
                         let _: Token![;] = input.parse()?;
                     }
+                    "fixed" => {
+                        // `fixed = ["role=value", ...]` — constant axis
+                        // bindings applied to every variant.
+                        let content;
+                        bracketed!(content in input);
+                        let parts: Punctuated<LitStr, Token![,]> =
+                            Punctuated::parse_terminated(&content)?;
+                        for p in parts {
+                            let s = p.value();
+                            let (role, value) = s.split_once('=').ok_or_else(|| {
+                                syn::Error::new(p.span(), "expected `role=value` in `fixed`")
+                            })?;
+                            fixed.push((role.trim().to_string(), value.trim().to_string()));
+                        }
+                        let _: Token![;] = input.parse()?;
+                    }
                     other => {
                         return Err(syn::Error::new(
                             field.span(),
                             format!(
-                                "Unknown field `{other}`. Expected: name, big_o, space, stable, adaptive, path, direct_sort, max_n_for_tests, asm"
+                                "Unknown field `{other}`. Expected: name, big_o, space, stable, adaptive, path, direct_sort, max_n_for_tests, asm, fixed"
                             ),
                         ));
                     }
@@ -384,6 +419,7 @@ impl Parse for SortFamilyInput {
             direct_sort,
             max_n_for_tests,
             asm_friendly,
+            fixed,
         })
     }
 }
@@ -532,6 +568,17 @@ fn sanitize(s: &str) -> String {
         .collect()
 }
 
+/// Collect every slot's role (including nested sub-axis slots) into a
+/// `slot_name → Option<role>` map for path-template classification.
+fn collect_roles(axes: &[AxisDef], out: &mut HashMap<String, Option<String>>) {
+    for ax in axes {
+        out.insert(ax.slot.clone(), ax.role.clone());
+        for v in &ax.variants {
+            collect_roles(&v.sub_axes, out);
+        }
+    }
+}
+
 fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenStream2 {
     let concrete_ty = &leaf.concrete_ty;
 
@@ -544,25 +591,43 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
         format!("{}<{}>", family.name, non_empty.join(", "))
     };
 
-    // Navigation path substitution rules:
-    // - `{variant}`: all non-empty labels joined with " + ", or "classic" if none.
-    // - `{SlotName}`: that slot's label, omitted if empty.
-    // - literal string: kept as-is.
-    let path_elems: Vec<String> = family
-        .path_template
-        .iter()
-        .filter_map(|p| {
-            if p == "{variant}" {
-                let joined = non_empty.join(" + ");
-                Some(if joined.is_empty() { "classic".to_string() } else { joined })
-            } else if let Some(inner) = p.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
-                let label = leaf.slot_labels.get(inner).map(|s| s.as_str()).unwrap_or("");
-                if label.is_empty() { None } else { Some(label.to_string()) }
-            } else {
-                Some(p.clone())
+    // Split the path template into a structural `category` prefix and a list
+    // of faceted `(role, value)` axes for the navigation registry:
+    //   - literal segment            → category segment
+    //   - `{variant}`                → category segment (joined labels / "classic")
+    //   - `{Slot}` with a role       → faceted axis (role, slot's label)
+    //   - `{Slot}` without a role    → category segment (slot's label; inline
+    //                                  bool toggles like ping-pong/early-exit)
+    // Fixed axis bindings declared on the family are prepended to the axes.
+    let mut slot_roles: HashMap<String, Option<String>> = HashMap::new();
+    collect_roles(&family.axes, &mut slot_roles);
+
+    let mut category: Vec<String> = Vec::new();
+    let mut axes_rv: Vec<(String, String)> = family.fixed.clone();
+    for p in &family.path_template {
+        if p == "{variant}" {
+            let joined = non_empty.join(" + ");
+            category.push(if joined.is_empty() { "classic".to_string() } else { joined });
+        } else if let Some(inner) = p.strip_prefix('{').and_then(|s| s.strip_suffix('}')) {
+            let label = leaf.slot_labels.get(inner).map(|s| s.as_str()).unwrap_or("");
+            match slot_roles.get(inner) {
+                Some(Some(role)) if !role.is_empty() => {
+                    if !label.is_empty() {
+                        axes_rv.push((role.clone(), label.to_string()));
+                    }
+                }
+                _ => {
+                    if !label.is_empty() {
+                        category.push(label.to_string());
+                    }
+                }
             }
-        })
-        .collect();
+        } else {
+            category.push(p.clone());
+        }
+    }
+    let cat_roles: Vec<String> = axes_rv.iter().map(|(r, _)| r.clone()).collect();
+    let cat_vals: Vec<String> = axes_rv.iter().map(|(_, v)| v.clone()).collect();
 
     let stable = family.stable;
     let adaptive = family.adaptive;
@@ -602,15 +667,6 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
     } else {
         quote! { #stable }
     };
-    // Display form used at the legacy register_sort_path call (string-typed
-    // and currently ignored downstream — kept for API stability).
-    let big_o_display: TokenStream2 = match &family.big_o {
-        BigOValue::Literal(s) => quote! { #s },
-        BigOValue::Inherited => quote! {
-            <#concrete_ty as ::array_vis_bench_traits::composable::HasTimeBounds>::WORST.as_str()
-        },
-    };
-
     // Unique identifier prefix: __sf_<family>_<idx>_<labels>
     let fam_s = sanitize(&family.name);
     let lbl_s = if non_empty.is_empty() {
@@ -775,11 +831,10 @@ fn gen_combination(family: &SortFamilyInput, leaf: &Leaf, idx: usize) -> TokenSt
             // small-sorts — falls out of tree shape rather than living in
             // a separate piece of code. Rotations / partitions / small-sorts
             // register their own category prefix at their respective sites.
-            sort_registry_core::register_sort_path(
+            sort_registry_core::register_sort_variant(
                 #sort_name,
-                #big_o_display,
-                #stable,
-                &["sorts", #(#path_elems),*],
+                &["sorts", #(#category),*],
+                &[ #( (#cat_roles, #cat_vals) ),* ],
             );
         }
     }
