@@ -1,0 +1,23 @@
+[package]
+name = "small_sort_insertion_strategy"
+version = "0.1.0"
+edition = "2021"
+description = "LinearInsertion / BinaryInsertion strategy leaf crate (impls of array_vis_bench_traits::InsertionStrategy)."
+
+[lib]
+name = "small_sort_insertion_strategy"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
+
+[[package.metadata.array_vis_bench.components]]
+role  = "InsertionStrategy"
+type  = "LinearInsertion"
+label = "linear"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "InsertionStrategy"
+type  = "BinaryInsertion"
+label = "binary"

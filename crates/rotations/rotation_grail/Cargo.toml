@@ -1,0 +1,18 @@
+[package]
+name = "rotation_grail"
+version = "0.1.0"
+edition = "2021"
+description = "GrailRotation leaf crate."
+
+[lib]
+name = "rotation_grail"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
+
+[[package.metadata.array_vis_bench.components]]
+role  = "Rotation"
+type  = "GrailRotation"
+label = "grail"

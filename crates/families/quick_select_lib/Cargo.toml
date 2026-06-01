@@ -1,0 +1,23 @@
+[package]
+name = "quick_select_lib"
+version = "0.1.0"
+edition = "2021"
+description = "Recursive / iterative quickselect, generic over PartitionScheme + PivotSelector. Trait lives in array_vis_bench_traits; this crate has the two QuickSelect impls."
+
+[lib]
+name = "quick_select_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
+
+[[package.metadata.array_vis_bench.components]]
+role  = "QuickSelect"
+type  = "RecursiveQuickSelect"
+label = "recursive"
+
+[[package.metadata.array_vis_bench.components]]
+role  = "QuickSelect"
+type  = "IterativeQuickSelect"
+label = "iterative"

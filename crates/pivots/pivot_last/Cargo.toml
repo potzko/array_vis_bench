@@ -1,0 +1,21 @@
+[package]
+name = "pivot_last"
+version = "0.1.0"
+edition = "2021"
+description = "LastElement pivot selector leaf crate."
+
+[lib]
+name = "pivot_last"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
+
+# DEV-DEFAULT TRIM: `LastElement` registration is commented out to shrink
+# the partition × pivot × small-sort cross product during development. The
+# type still exists; uncomment to re-include it in the catalog.
+# [[package.metadata.array_vis_bench.components]]
+# role  = "PivotSelector"
+# type  = "LastElement"
+# label = "last"
