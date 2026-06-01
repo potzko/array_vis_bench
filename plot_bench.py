@@ -6,6 +6,8 @@ generate an interactive N-scaling chart with a tree-based selector.
 Usage:
     python3 plot_bench.py [target/bench_archive.json]
     # Then open bench_report.html in a browser.
+
+very very early prototype...
 """
 
 import json
