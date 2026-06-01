@@ -16,13 +16,13 @@ path = "src/main_with_quick.rs"
 rand = "0.8"
 array_vis_bench_traits = { path = "../array_vis_bench_traits" }
 sort_logger = { path = "../sort_logger" }
-heap_sort_lib = { path = "../heap_sort_lib" }
-insertion_sort_lib = { path = "../insertion_sort_lib" }
-small_sort_insertion_strategy = { path = "../small_sort_insertion_strategy" }
+heap_sort_lib = { path = "../crates/families/heap_sort_lib" }
+insertion_sort_lib = { path = "../crates/families/insertion_sort_lib" }
+small_sort_insertion_strategy = { path = "../crates/small_sorts/small_sort_insertion_strategy" }
 # Adding quick_sort_lib + a single (partition, pivot) pair only — to
 # demonstrate that after the partitions_standalone extraction, picking
 # QuickSort no longer forces every other partition/pivot leaf.
-quick_sort_lib = { path = "../quick_sort_lib" }
-partition_lomuto = { path = "../partition_lomuto" }
-pivot_first = { path = "../pivot_first" }
-small_sort_basic = { path = "../small_sort_basic" }
+quick_sort_lib = { path = "../crates/families/quick_sort_lib" }
+partition_lomuto = { path = "../crates/partitions/partition_lomuto" }
+pivot_first = { path = "../crates/pivots/pivot_first" }
+small_sort_basic = { path = "../crates/small_sorts/small_sort_basic" }

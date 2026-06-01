@@ -1,0 +1,182 @@
+[package]
+name = "merge_sort_lib"
+version = "0.1.0"
+edition = "2021"
+description = "Merge sort family — TopDown/BottomUp/Naive/Natural classic merge sorts plus rotation-based merge sorts (TopDownRotationMergeSort, BottomUpRotationMergeSort), each cross-producted over its axes. The 22 rotation-based + 2 auxiliary standalone-merge registrations now live in the sibling `merge_standalone_registry` crate."
+
+[lib]
+name = "merge_sort_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
+
+# ── Family declarations ──────────────────────────────────────────────
+
+# Classic top-down merge sort × small-sort × ping-pong × early-exit
+[[package.metadata.array_vis_bench.families]]
+module = "merge_sorts"
+type   = "TopDownMergeSort<{SS}, {PP}, {EE}>"
+uses   = [
+    "merge_sort_lib::top_down::TopDownMergeSort",
+]
+axes = [
+    { var = "SS", role = "SmallSort" },
+    { var = "PP", inline = [
+        { type = "false", label = "" },
+        { type = "true",  label = "ping-pong" },
+    ] },
+    { var = "EE", inline = [
+        { type = "false", label = "" },
+        { type = "true",  label = "early-exit" },
+    ] },
+]
+name        = "merge sort"
+big_o       = "O(N log N)"
+space       = "O(N)"
+stable      = true
+direct_sort = true
+path        = ["merge sorts", "classic", "top-down", "{variant}"]
+
+# Bottom-up merge sort × small-sort × ping-pong × early-exit
+[[package.metadata.array_vis_bench.families]]
+module = "merge_sorts"
+type   = "BottomUpMergeSort<{SS}, {PP}, {EE}>"
+uses   = [
+    "merge_sort_lib::bottom_up::BottomUpMergeSort",
+]
+axes = [
+    { var = "SS", role = "SmallSort" },
+    { var = "PP", inline = [
+        { type = "false", label = "" },
+        { type = "true",  label = "ping-pong" },
+    ] },
+    { var = "EE", inline = [
+        { type = "false", label = "" },
+        { type = "true",  label = "early-exit" },
+    ] },
+]
+name        = "bottom-up merge sort"
+big_o       = "O(N log N)"
+space       = "O(N)"
+stable      = true
+direct_sort = true
+path        = ["merge sorts", "classic", "bottom-up", "{variant}"]
+
+# Naive merge sort × small-sort
+[[package.metadata.array_vis_bench.families]]
+module = "merge_sorts"
+type   = "NaiveMergeSort<{SS}>"
+uses   = [
+    "merge_sort_lib::naive::NaiveMergeSort",
+]
+axes = [
+    { var = "SS", role = "SmallSort" },
+]
+name        = "naive merge sort"
+big_o       = "O(N log N)"
+# Naive recursion allocates a fresh L+R pair at every active frame, so
+# all frames coexist → log N levels × N total per level = N log N peak
+# aux. Other merge sorts reuse one N-sized scratch.
+space       = "O(N log N)"
+stable      = true
+direct_sort = true
+path        = ["merge sorts", "classic", "naive", "{variant}"]
+
+# Natural merge sort × ping-pong × early-exit
+[[package.metadata.array_vis_bench.families]]
+module = "merge_sorts"
+type   = "NaturalMergeSort<{PP}, {EE}>"
+uses   = [
+    "merge_sort_lib::natural::NaturalMergeSort",
+]
+axes = [
+    { var = "PP", inline = [
+        { type = "false", label = "" },
+        { type = "true",  label = "ping-pong" },
+    ] },
+    { var = "EE", inline = [
+        { type = "false", label = "" },
+        { type = "true",  label = "early-exit" },
+    ] },
+]
+name        = "natural merge sort"
+big_o       = "O(N log N)"
+space       = "O(N)"
+stable      = true
+adaptive    = true
+direct_sort = true
+path        = ["merge sorts", "classic", "natural", "{variant}"]
+
+# Rotation merge — TopDown × Naive
+[[package.metadata.array_vis_bench.families]]
+module = "merge_sorts"
+type   = "TopDownRotationMergeSort<{SS}, NaiveRotationMerge<{R}>, false>"
+uses   = [
+    "merge_sort_lib::rotation::TopDownRotationMergeSort",
+    "merge_sort_lib::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge}",
+]
+axes = [
+    { var = "R",  role = "Rotation" },
+    { var = "SS", role = "SmallSort" },
+]
+name        = "rotation merge sort"
+big_o       = "O(N^2)"
+stable      = true
+direct_sort = true
+path        = ["merge sorts", "rotation", "top-down", "{R}", "{SS}"]
+
+# Rotation merge — TopDown × SmallerSide
+[[package.metadata.array_vis_bench.families]]
+module = "merge_sorts"
+type   = "TopDownRotationMergeSort<{SS}, SmallerSideRotationMerge<{R}>, false>"
+uses   = [
+    "merge_sort_lib::rotation::TopDownRotationMergeSort",
+    "merge_sort_lib::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge}",
+]
+axes = [
+    { var = "R",  role = "Rotation" },
+    { var = "SS", role = "SmallSort" },
+]
+name        = "rotation merge sort<smaller-side>"
+big_o       = "O(N log² N)"
+stable      = true
+direct_sort = true
+path        = ["merge sorts", "rotation", "top-down smaller-side", "{R}", "{SS}"]
+
+# Rotation merge — BottomUp × Naive
+[[package.metadata.array_vis_bench.families]]
+module = "merge_sorts"
+type   = "BottomUpRotationMergeSort<{SS}, NaiveRotationMerge<{R}>, false>"
+uses   = [
+    "merge_sort_lib::rotation::BottomUpRotationMergeSort",
+    "merge_sort_lib::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge}",
+]
+axes = [
+    { var = "R",  role = "Rotation" },
+    { var = "SS", role = "SmallSort" },
+]
+name        = "bottom-up rotation merge sort"
+big_o       = "O(N^2)"
+stable      = true
+direct_sort = true
+path        = ["merge sorts", "rotation", "bottom-up", "{R}", "{SS}"]
+
+# Rotation merge — BottomUp × SmallerSide
+[[package.metadata.array_vis_bench.families]]
+module = "merge_sorts"
+type   = "BottomUpRotationMergeSort<{SS}, SmallerSideRotationMerge<{R}>, false>"
+uses   = [
+    "merge_sort_lib::rotation::BottomUpRotationMergeSort",
+    "merge_sort_lib::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge}",
+]
+axes = [
+    { var = "R",  role = "Rotation" },
+    { var = "SS", role = "SmallSort" },
+]
+name        = "bottom-up rotation merge sort<smaller-side>"
+big_o       = "O(N log² N)"
+stable      = true
+direct_sort = true
+path        = ["merge sorts", "rotation", "bottom-up smaller-side", "{R}", "{SS}"]

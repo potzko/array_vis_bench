@@ -1,0 +1,362 @@
+[package]
+name = "quick_heap_sort_lib"
+version = "0.1.0"
+edition = "2021"
+description = "Quick heap sort family — `QuickHeapSort<A, DH, SS>` and `DeferredQuickHeapSort<A, DSS>`. Hybrid that builds a max-forward heap on the left and a min-reverse heap on the right and converges by head-swapping. Three classic families + one deferred family declared as TOML metadata below."
+
+[lib]
+name = "quick_heap_sort_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+heap_sort_lib = { path = "../heap_sort_lib" }
+# `HeapAlgorithmPair` lets `HeapExtract` pick which underlying heap kind to
+# build (d-ary via `AryPair<A>` or bi-parental via `BeapPair`). The dep is
+# only for the `BeapHeap` type — pure type-level wiring, no algorithm code.
+beap_sort_lib = { path = "../beap_sort_lib" }
+sort_logger = { path = "../../../sort_logger" }
+
+# Tests exercise the SetQuickSelect-driven cycle replacement for the old
+# `PartitionDrivenDeepHeapify`: `SequentialSet<RecursiveQuickSelect<HeapExtract<...>, NoPivot>>`.
+[dev-dependencies]
+quick_select_lib = { path = "../quick_select_lib" }
+quick_sort_lib = { path = "../quick_sort_lib" }
+small_sort_basic = { path = "../../small_sorts/small_sort_basic" }
+
+# ── Quick heap sort classic (A × Iterative-DH × SS) ──
+[[package.metadata.array_vis_bench.families]]
+module = "quick_heap_sort"
+type   = "QuickHeapSort<{A}, Iterative, {SS}>"
+uses   = [
+    "quick_heap_sort_lib::quick_heap_sort::QuickHeapSort",
+    "heap_sort_lib::deep_heapify::Iterative",
+]
+axes = [
+    { var = "A",  role = "Arity" },
+    { var = "SS", role = "SmallSort" },
+]
+name        = "quick heap sort"
+big_o       = "@inherited"
+stable      = false
+direct_sort = true
+path        = ["quick heap sorts", "classic", "{A}", "{SS}"]
+
+# ── MultiQuickSelect role ──
+# Unifies the heap-build "do quickselect at multiple boundary positions"
+# strategies under one slot-aware role. Each composite carries its own
+# inner slot list: single-pivot variants slot `HP:HeapPartition` plus
+# `V:PivotSelector`; the multi-lane dual-pivot variant slots
+# `DPS:DualPivotSelector`; the partition-driven flat-slice variant slots
+# `P:PivotlessPartition` with `V` fixed to `NoPivot`.
+#
+# Parallel to the older flat `QuickDeepHeapify` / `DualPivotQuickDeepHeapify`
+# roles still consumed by `heap_sort` / `beap_sort` — those families keep
+# their current shape; only `QuickHeapSort`'s quick build moves to MQS.
+
+[[package.metadata.array_vis_bench.components]]
+role  = "MultiQuickSelect"
+type  = "SequentialQuickDeepHeapify<{HP}, {V}>"
+label = "sequential<{HP}, {V}>"
+uses  = ["heap_sort_lib::quick_deep_heapify::SequentialQuickDeepHeapify"]
+slots = [
+    { param = "HP", role = "HeapPartition" },
+    { param = "V",  role = "PivotSelector" },
+]
+
+[[package.metadata.array_vis_bench.components]]
+role  = "MultiQuickSelect"
+type  = "RecursivePartialQuickDeepHeapify<{HP}, {V}>"
+label = "recursive partition<{HP}, {V}>"
+uses  = ["heap_sort_lib::quick_deep_heapify::RecursivePartialQuickDeepHeapify"]
+slots = [
+    { param = "HP", role = "HeapPartition" },
+    { param = "V",  role = "PivotSelector" },
+]
+
+[[package.metadata.array_vis_bench.components]]
+role  = "MultiQuickSelect"
+type  = "StackPartialQuickDeepHeapify<{HP}, {V}>"
+label = "stack partition<{HP}, {V}>"
+uses  = ["heap_sort_lib::quick_deep_heapify::StackPartialQuickDeepHeapify"]
+slots = [
+    { param = "HP", role = "HeapPartition" },
+    { param = "V",  role = "PivotSelector" },
+]
+
+[[package.metadata.array_vis_bench.components]]
+role  = "MultiQuickSelect"
+type  = "StackDualPivotPartialQuickDeepHeapify<{DPS}>"
+label = "stack dual-pivot<{DPS}>"
+uses  = ["heap_sort_lib::quick_deep_heapify::StackDualPivotPartialQuickDeepHeapify"]
+slots = [
+    { param = "DPS", role = "DualPivotSelector" },
+]
+
+# Cycle-forming MultiQuickSelect entries — `SequentialSet` / `RecursiveSet`
+# layer-boundary builds whose `QS` slot recurses through the
+# `PivotlessPartition` ↔ `HeapExtractBuild` cycle below.
+#
+# `max_visits = 1` on every cycle intermediate (SetQuickSelect impls + QS
+# wrappers) keeps each from appearing more than once per path. Only the
+# anchor `HeapExtract` keeps the default budget (2), so the cycle wraps
+# once instead of multiplying through every intermediate.
+[[package.metadata.array_vis_bench.components]]
+role  = "MultiQuickSelect"
+type  = "SequentialSet<{QS}>"
+label = "sequential set<{QS}>"
+uses  = ["heap_sort_lib::set_quick_select::SequentialSet"]
+slots = [
+    { param = "QS", role = "QS" },
+]
+max_visits = 1
+
+[[package.metadata.array_vis_bench.components]]
+role  = "MultiQuickSelect"
+type  = "RecursiveSet<{QS}>"
+label = "recursive set<{QS}>"
+uses  = ["heap_sort_lib::set_quick_select::RecursiveSet"]
+slots = [
+    { param = "QS", role = "QS" },
+]
+max_visits = 1
+
+# ── DualPivotSelector role ──
+# Three components matching the inline list the prior dual-pivot families
+# used. Promoted to a role here so `MultiQuickSelect`'s dual-pivot
+# composite can reference it as a slot.
+[[package.metadata.array_vis_bench.components]]
+role  = "DualPivotSelector"
+type  = "CombinedSelector<FirstElement, FirstElement>"
+label = "first / first"
+uses  = [
+    "quick_sort_lib::pivot_selectors::CombinedSelector",
+    "pivot_first::FirstElement",
+]
+
+[[package.metadata.array_vis_bench.components]]
+role  = "DualPivotSelector"
+type  = "CombinedSelector<MiddleElement, MiddleElement>"
+label = "middle / middle"
+uses  = [
+    "quick_sort_lib::pivot_selectors::CombinedSelector",
+    "pivot_middle::MiddleElement",
+]
+
+[[package.metadata.array_vis_bench.components]]
+role  = "DualPivotSelector"
+type  = "NintherDualPivot"
+label = "ninther 1/3 + 2/3"
+uses  = ["quick_sort_lib::pivot_selectors::NintherDualPivot"]
+
+# ── Quick heap sort, quick build (unified MultiQuickSelect axis) ──
+# Replaces the prior single-pivot / dual-pivot / heap-extract-partition trio
+# with one role-driven family. Picker:
+#   quick heap sorts > quick build > {A} > {MQS} > {SS}
+# where {MQS} lists every expanded build strategy on equal footing —
+# single-pivot HP×V combos, multi-lane dual-pivot DPS, and the
+# partition-driven cycle through PivotlessPartition.
+[[package.metadata.array_vis_bench.families]]
+module = "quick_heap_sort"
+type   = "QuickHeapSort<{A}, {MQS}, {SS}>"
+uses   = [
+    "quick_heap_sort_lib::quick_heap_sort::QuickHeapSort",
+]
+axes = [
+    { var = "A",   role = "Arity" },
+    { var = "MQS", role = "MultiQuickSelect" },
+    { var = "SS", inline = [
+        { type = "InsertionSmallSort<LinearInsertion, 32>",  label = "insertion: 32" },
+    ] },
+]
+name        = "quick heap sort"
+big_o       = "@inherited"
+stable      = false
+direct_sort = true
+path        = ["quick heap sorts", "quick build", "{A}", "{MQS}", "{SS}"]
+
+# ── Recursive role wiring: PivotlessPartition ↔ HeapExtractBuild cycle ──
+#
+# Forms the real `Partition → Build → Partition` cycle in the metadata
+# graph so the codegen's head-count rule bounds it in the actual catalog.
+# Kept on its own pair of roles (PivotlessPartition / HeapExtractBuild)
+# rather than extending the shared `Partition` / `DeepHeapify` roles —
+# otherwise every QuickSort and HeapSort family would inherit the
+# cross-product growth.
+#
+# Cycle: PivotlessPartition contains `HeapExtract<{A}, {DH}>`. The
+# cycle-forming HeapExtractBuild options are `SequentialSet<{QS}>` and
+# `RecursiveSet<{QS}>`, where `QS` is `(Recursive|Iterative)QuickSelect<{P},
+# NoPivot>` and the inner `P` slot draws from PivotlessPartition. Each cycle
+# trip increments the HeapExtract / SequentialSet|RecursiveSet head counts,
+# so with `max_visits = 2` the recursion bottoms out at depth 1 — the inner
+# HeapExtract's DH is forced to a leaf (Iterative / Recursive) or to
+# `StackSet<{HP}, {V}>` which doesn't continue the cycle (uses
+# HeapPartition, not PartitionScheme).
+
+# HeapPair role — picks which underlying heap kind backs `HeapExtract`.
+# `AryPair<{A}>` reproduces the original d-ary `HeapExtract<A, DH>` shape
+# (one entry per Arity); `BeapPair` adds a bi-parental heap variant with
+# no arity parameter. Adding more heap kinds (e.g. WeakHeap) is one more
+# component plus an `impl HeapAlgorithmPair`.
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapPair"
+type  = "AryPair<{A}>"
+label = "d-ary<{A}>"
+uses  = ["quick_heap_sort_lib::heap_pair::AryPair"]
+slots = [
+    { param = "A", role = "Arity" },
+]
+
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapPair"
+type  = "BeapPair"
+label = "beap"
+uses  = ["quick_heap_sort_lib::heap_pair::BeapPair"]
+
+# PivotlessPartition role — `HeapExtract<{P}, {DH}>` now picks both the
+# underlying heap kind (`P: HeapPair`) and the build strategy
+# (`DH: HeapExtractBuild`). The picker shows `... > heap extract >
+# <heap kind> > <build>` after `path_segments` tiering.
+[[package.metadata.array_vis_bench.components]]
+role  = "PivotlessPartition"
+type  = "HeapExtract<{P}, {DH}>"
+label = "heap extract<{P}, {DH}>"
+uses  = ["quick_heap_sort_lib::heap_extract::HeapExtract"]
+slots = [
+    { param = "P",  role = "HeapPair" },
+    { param = "DH", role = "HeapExtractBuild" },
+]
+
+# QS role — QuickSelect impls over the cycle's `PivotlessPartition` with
+# `V = NoPivot`. Two impls (Recursive / Iterative QuickSelect) feed
+# `SequentialSet` and `RecursiveSet` as their layer-boundary engine. Both
+# carry `max_visits = 1` so they don't multiply on a path — only the anchor
+# `HeapExtract` head gets the default budget.
+[[package.metadata.array_vis_bench.components]]
+role  = "QS"
+type  = "RecursiveQuickSelect<{P}, NoPivot>"
+label = "recursive quick select<{P}>"
+uses  = [
+    "quick_select_lib::RecursiveQuickSelect",
+    "array_vis_bench_traits::NoPivot",
+]
+slots = [
+    { param = "P", role = "PivotlessPartition" },
+]
+max_visits = 1
+
+[[package.metadata.array_vis_bench.components]]
+role  = "QS"
+type  = "IterativeQuickSelect<{P}, NoPivot>"
+label = "iterative quick select<{P}>"
+uses  = [
+    "quick_select_lib::IterativeQuickSelect",
+    "array_vis_bench_traits::NoPivot",
+]
+slots = [
+    { param = "P", role = "PivotlessPartition" },
+]
+max_visits = 1
+
+# HeapExtractBuild role — leaves (re-registered DeepHeapify leaves) plus
+# the three SetQuickSelect composites that close the cycle (Sequential /
+# Recursive via QS) or terminate it (Stack via HeapPartition).
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapExtractBuild"
+type  = "Iterative"
+label = "iterative"
+uses  = ["heap_sort_lib::deep_heapify::Iterative"]
+
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapExtractBuild"
+type  = "Recursive"
+label = "recursive"
+uses  = ["heap_sort_lib::deep_heapify::Recursive"]
+
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapExtractBuild"
+type  = "SequentialSet<{QS}>"
+label = "sequential set<{QS}>"
+uses  = ["heap_sort_lib::set_quick_select::SequentialSet"]
+slots = [
+    { param = "QS", role = "QS" },
+]
+max_visits = 1
+
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapExtractBuild"
+type  = "RecursiveSet<{QS}>"
+label = "recursive set<{QS}>"
+uses  = ["heap_sort_lib::set_quick_select::RecursiveSet"]
+slots = [
+    { param = "QS", role = "QS" },
+]
+max_visits = 1
+
+# Third SetQuickSelect algorithm, surfaced as a *single fixed leaf*
+# (`StackSet<LeftLeftPartition, FirstElement>`) rather than the
+# slot-aware `StackSet<{HP}, {V}>`. The slot-aware form's `HP × V`
+# cross product (~25 leaves) landing at every inner-cycle DH slot blows
+# the catalog past available RAM during compilation; fixing one
+# representative (HP, V) pair keeps Stack reachable in the picker
+# (`quick sorts > heap extract > ... > stack set`) with O(1) growth.
+# The codegen's per-path aliasing handles the `LeftLeftPartition`
+# namespace clash against the quicksort `partition_lomuto::LeftLeftPartition`
+# in the same generated file.
+[[package.metadata.array_vis_bench.components]]
+role  = "HeapExtractBuild"
+type  = "StackSet<LeftLeftPartition, FirstElement>"
+label = "stack set"
+uses  = [
+    "heap_sort_lib::set_quick_select::StackSet",
+    "heap_sort_lib::heap_partition::LeftLeftPartition",
+    "pivot_first::FirstElement",
+]
+max_visits = 1
+
+# ── Quick sort over heap-extract partition (cycle-bounded by trail rule) ──
+# Same dual-heap convergence partition as the bespoke `QuickHeapSort` family
+# above, but plugged into the generic `QuickSort` driver via the
+# `HeapExtract` PartitionScheme. The driver recurses on plain slices, so the
+# outer-half reuse optimisation (`left_built` / `right_built`) does NOT
+# apply here — every recursive level rebuilds both heaps from scratch.
+#
+# Axis `{PP}` resolves via role `PivotlessPartition`, which the codegen
+# expands recursively through the cycle above (trail-bounded to depth 1).
+[[package.metadata.array_vis_bench.families]]
+module = "quick_sorts"
+type   = "QuickSort<{PP}, NoPivot, {SS}>"
+uses   = [
+    "quick_sort_lib::quick_sort::QuickSort",
+    "array_vis_bench_traits::NoPivot",
+]
+axes = [
+    { var = "PP", role = "PivotlessPartition" },
+    { var = "SS", role = "SmallSort" },
+]
+name        = "quick sort over heap extract"
+big_o       = "@inherited"
+stable      = false
+direct_sort = true
+# {PP} auto-expands to ["heap extract", "{A}", "{DH}"] (and deeper through
+# the cycle), so the literal "heap extract" lives in the component's
+# path_segments rather than the family path.
+path        = ["quick sorts", "{PP}", "{SS}"]
+
+# ── Deferred quick heap sort (A × DSS) ──
+[[package.metadata.array_vis_bench.families]]
+module = "quick_heap_sort"
+type   = "DeferredQuickHeapSort<{A}, {DSS}>"
+uses   = [
+    "quick_heap_sort_lib::deferred_quick_heap_sort::DeferredQuickHeapSort",
+]
+axes = [
+    { var = "A",   role = "Arity" },
+    { var = "DSS", role = "DeferredSmallSort" },
+]
+name        = "quick heap sort deferred"
+big_o       = "@inherited"
+stable      = false
+direct_sort = true
+path        = ["quick heap sorts", "deferred", "{A}", "{DSS}"]

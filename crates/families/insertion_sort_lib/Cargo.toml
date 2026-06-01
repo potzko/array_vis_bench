@@ -1,0 +1,30 @@
+[package]
+name = "insertion_sort_lib"
+version = "0.1.0"
+edition = "2021"
+description = "InsertionSort<S> generic over an InsertionStrategy (linear / binary). Single-axis family — registered into array_vis_bench_core::ALGORITHMS via the `[[package.metadata.array_vis_bench.families]]` block below."
+
+[lib]
+name = "insertion_sort_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+small_sort_insertion_strategy = { path = "../../small_sorts/small_sort_insertion_strategy" }
+sort_logger = { path = "../../../sort_logger" }
+
+[[package.metadata.array_vis_bench.families]]
+module = "insertion_sorts"
+type   = "InsertionSort<{S}>"
+uses   = [
+    "insertion_sort_lib::InsertionSort",
+]
+axes = [
+    { var = "S", role = "InsertionStrategy" },
+]
+name        = "insertion sort"
+big_o       = "O(N^2)"
+stable      = true
+adaptive    = true
+direct_sort = true
+path        = ["insertion sorts", "{S}"]

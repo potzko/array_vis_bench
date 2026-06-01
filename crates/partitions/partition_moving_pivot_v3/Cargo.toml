@@ -1,0 +1,24 @@
+[package]
+name = "partition_moving_pivot_v3"
+version = "0.1.0"
+edition = "2021"
+description = "Stable in-place moving-pivot partition, generic over a Rotation strategy. Holds the generic struct + algorithm body; the `impl PartitionScheme for MovingPivotV3<X>` lines live here too (orphan rule), so this crate depends on each rotation it specialises against."
+
+[lib]
+name = "partition_moving_pivot_v3"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
+# Each specialisation `MovingPivotV3<X>` needs `X` in scope here — orphan
+# rule forbids impl'ing PartitionScheme for a generic with parameters
+# from a third crate. Add another rotation dep + another component block
+# below to expose more variants.
+rotation_reversal = { path = "../../rotations/rotation_reversal" }
+
+[[package.metadata.array_vis_bench.components]]
+role  = "Partition"
+type  = "MovingPivotV3<ReversalRotation>"
+label = "moving pivot v3<reversal>"
+uses  = ["partition_moving_pivot_v3::MovingPivotV3", "rotation_reversal::ReversalRotation"]

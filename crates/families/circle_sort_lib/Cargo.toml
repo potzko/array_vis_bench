@@ -1,0 +1,19 @@
+[package]
+name = "circle_sort_lib"
+version = "0.1.0"
+edition = "2021"
+description = "Circle sort family — recursive (parametrised over an ordering of the three sub-operations) and bottom-up (parametrised over a size-traversal direction), with optional near-sort finishing. Self-registers via the `CIRCLE_ENTRIES` distributed slice + ctor."
+
+[lib]
+name = "circle_sort_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_core = { path = "../../../array_vis_bench_core" }
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
+sort_registry_core = { path = "../../../sort_registry_core" }
+small_sort_insertion_strategy = { path = "../../small_sorts/small_sort_insertion_strategy" }
+linkme = "0.3"
+ctor = "0.2"
+const_format = "0.2"

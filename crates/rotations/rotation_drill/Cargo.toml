@@ -1,0 +1,18 @@
+[package]
+name = "rotation_drill"
+version = "0.1.0"
+edition = "2021"
+description = "DrillRotation leaf crate."
+
+[lib]
+name = "rotation_drill"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
+
+[[package.metadata.array_vis_bench.components]]
+role  = "Rotation"
+type  = "DrillRotation"
+label = "drill"

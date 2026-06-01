@@ -1,0 +1,30 @@
+[package]
+name = "merge_standalone_registry"
+version = "0.1.0"
+edition = "2021"
+description = "Standalone-merge registry: registers each (rotation × naive|smaller-side) pair plus the two auxiliary merges as `Category::Merge` algorithms in `array_vis_bench_core::bench_registry::ALGORITHMS`. Split out of `merge_sort_lib` so the algorithm crate doesn't drag every rotation leaf into every consumer — depend on this crate only if you want the standalone merge menu entries."
+
+[lib]
+name = "merge_standalone_registry"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_core = { path = "../../../array_vis_bench_core" }
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
+sort_registry_core = { path = "../../../sort_registry_core" }
+merge_sort_lib = { path = "../../families/merge_sort_lib" }
+linkme = "0.3"
+ctor = "0.2"
+const_format = "0.2"
+rotation_auxiliary = { path = "../../rotations/rotation_auxiliary" }
+rotation_bridge = { path = "../../rotations/rotation_bridge" }
+rotation_contrev = { path = "../../rotations/rotation_contrev" }
+rotation_drill = { path = "../../rotations/rotation_drill" }
+rotation_grail = { path = "../../rotations/rotation_grail" }
+rotation_gries_mills = { path = "../../rotations/rotation_gries_mills" }
+rotation_helix = { path = "../../rotations/rotation_helix" }
+rotation_juggling = { path = "../../rotations/rotation_juggling" }
+rotation_piston = { path = "../../rotations/rotation_piston" }
+rotation_reversal = { path = "../../rotations/rotation_reversal" }
+rotation_trinity = { path = "../../rotations/rotation_trinity" }
