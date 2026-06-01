@@ -18,7 +18,7 @@
 use std::marker::PhantomData;
 use std::ops::Range;
 
-use array_vis_bench_traits::{PartitionScheme, PartitionVisitor};
+use array_vis_bench_traits::{with_partition_scratch, PartitionScheme, PartitionVisitor};
 use sort_logger::SortLogger;
 
 pub struct CyclentSort<P: PartitionScheme>(PhantomData<P>);
@@ -40,19 +40,21 @@ impl PartitionVisitor for RightStart {
 impl<P: PartitionScheme> CyclentSort<P> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         let n = arr.len();
-        for i in (0..n).rev() {
-            loop {
-                let slice_len = i + 1;
-                if slice_len < 2 {
-                    break;
-                }
-                let mut v = RightStart { right_start: slice_len, n: 0 };
-                P::partition(&mut arr[..slice_len], logger, &[slice_len - 1], &mut v);
-                if v.right_start == slice_len {
-                    break;
+        with_partition_scratch::<P, T, U, _>(logger, |logger, scratch| {
+            for i in (0..n).rev() {
+                loop {
+                    let slice_len = i + 1;
+                    if slice_len < 2 {
+                        break;
+                    }
+                    let mut v = RightStart { right_start: slice_len, n: 0 };
+                    P::partition(&mut arr[..slice_len], logger, &[slice_len - 1], scratch, &mut v);
+                    if v.right_start == slice_len {
+                        break;
+                    }
                 }
             }
-        }
+        });
     }
 }
 

@@ -17,50 +17,54 @@ sort_logger = { path = "../sort_logger" }
 # instantiations next to the generic struct.
 small_sort_insertion_strategy = { path = "../small_sort_insertion_strategy" }
 
-[[package.metadata.array_vis_bench.components]]
-role  = "SmallSort"
-type  = "InsertionSmallSort<LinearInsertion, 16>"
-label = "insertion: 16"
-uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion", "small_sort_insertion_strategy::BinaryInsertion"]
+# DEV-DEFAULT TRIM: dev catalog keeps only `InsertionSmallSort<LinearInsertion, 32>`.
+# The other three insertion specialisations (linear-16, binary-16, binary-32) are
+# commented out to shrink every SmallSort cross product. Uncomment for full-test runs.
 
 [[package.metadata.array_vis_bench.components]]
 role  = "SmallSort"
 type  = "InsertionSmallSort<LinearInsertion, 32>"
 label = "insertion: 32"
-uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion", "small_sort_insertion_strategy::BinaryInsertion"]
+uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion"]
 
-[[package.metadata.array_vis_bench.components]]
-role  = "SmallSort"
-type  = "InsertionSmallSort<BinaryInsertion, 16>"
-label = "binary insertion: 16"
-uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion", "small_sort_insertion_strategy::BinaryInsertion"]
+# [[package.metadata.array_vis_bench.components]]
+# role  = "SmallSort"
+# type  = "InsertionSmallSort<LinearInsertion, 16>"
+# label = "insertion: 16"
+# uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion"]
 
-[[package.metadata.array_vis_bench.components]]
-role  = "SmallSort"
-type  = "InsertionSmallSort<BinaryInsertion, 32>"
-label = "binary insertion: 32"
-uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion", "small_sort_insertion_strategy::BinaryInsertion"]
+# [[package.metadata.array_vis_bench.components]]
+# role  = "SmallSort"
+# type  = "InsertionSmallSort<BinaryInsertion, 16>"
+# label = "binary insertion: 16"
+# uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion"]
 
-[[package.metadata.array_vis_bench.components]]
-role  = "NonTrivialSmallSort"
-type  = "InsertionSmallSort<LinearInsertion, 16>"
-label = "insertion: 16"
-uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion", "small_sort_insertion_strategy::BinaryInsertion"]
+# [[package.metadata.array_vis_bench.components]]
+# role  = "SmallSort"
+# type  = "InsertionSmallSort<BinaryInsertion, 32>"
+# label = "binary insertion: 32"
+# uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion"]
 
 [[package.metadata.array_vis_bench.components]]
 role  = "NonTrivialSmallSort"
 type  = "InsertionSmallSort<LinearInsertion, 32>"
 label = "insertion: 32"
-uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion", "small_sort_insertion_strategy::BinaryInsertion"]
+uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion"]
 
-[[package.metadata.array_vis_bench.components]]
-role  = "NonTrivialSmallSort"
-type  = "InsertionSmallSort<BinaryInsertion, 16>"
-label = "binary insertion: 16"
-uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion", "small_sort_insertion_strategy::BinaryInsertion"]
+# [[package.metadata.array_vis_bench.components]]
+# role  = "NonTrivialSmallSort"
+# type  = "InsertionSmallSort<LinearInsertion, 16>"
+# label = "insertion: 16"
+# uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion"]
 
-[[package.metadata.array_vis_bench.components]]
-role  = "NonTrivialSmallSort"
-type  = "InsertionSmallSort<BinaryInsertion, 32>"
-label = "binary insertion: 32"
-uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion", "small_sort_insertion_strategy::BinaryInsertion"]
+# [[package.metadata.array_vis_bench.components]]
+# role  = "NonTrivialSmallSort"
+# type  = "InsertionSmallSort<BinaryInsertion, 16>"
+# label = "binary insertion: 16"
+# uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion"]
+
+# [[package.metadata.array_vis_bench.components]]
+# role  = "NonTrivialSmallSort"
+# type  = "InsertionSmallSort<BinaryInsertion, 32>"
+# label = "binary insertion: 32"
+# uses  = ["small_sort_insertion::InsertionSmallSort", "small_sort_insertion_strategy::LinearInsertion"]

@@ -12,6 +12,16 @@ path = "src/lib.rs"
 array_vis_bench_traits = { path = "../array_vis_bench_traits" }
 sort_logger = { path = "../sort_logger" }
 
+# Used only by `#[cfg(test)]` checks of `SetQuickSelect` impls — concrete
+# `QuickSelect` + Partition + PivotSelector to drive the new `Sequential`,
+# `Recursive`, `Stack` wrappers.
+[dev-dependencies]
+quick_select_lib = { path = "../quick_select_lib" }
+partition_lomuto = { path = "../partition_lomuto" }
+partition_hoare = { path = "../partition_hoare" }
+pivot_first = { path = "../pivot_first" }
+pivot_median3 = { path = "../pivot_median3" }
+
 # ── Heap sort classic ──
 [[package.metadata.array_vis_bench.families]]
 module = "heap_sort"

@@ -4,7 +4,7 @@
 
 use std::marker::PhantomData;
 
-use array_vis_bench_traits::{insertion_sort_with, DeferredSmallSort, InsertionStrategy};
+use array_vis_bench_traits::{windowed_insertion_sort_with, DeferredSmallSort, InsertionStrategy};
 use sort_logger::SortLogger;
 
 // Strategy types are needed for the registered specialisations to land
@@ -18,6 +18,10 @@ impl<S: InsertionStrategy, const N: usize> DeferredSmallSort for DeferredInserti
     const THRESHOLD: usize = N;
     #[inline(always)]
     fn final_pass<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        let _ = insertion_sort_with::<S, _, _>(arr, logger);
+        // Quicksort guaranteed each element is at most N positions away
+        // from its sorted home, so the scan-back is capped at N. Cost is
+        // O(n · N), and visually each insertion only swaps inside its
+        // K-window instead of sweeping the whole array.
+        let _ = windowed_insertion_sort_with::<S, _, _>(arr, N, logger);
     }
 }

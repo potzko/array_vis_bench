@@ -4,7 +4,12 @@
 //! `Cargo.toml`.
 
 pub mod deferred_quick_heap_sort;
+pub mod heap_extract;
+pub mod heap_pair;
+pub mod heap_partition_core;
 pub mod quick_heap_sort;
 
 pub use deferred_quick_heap_sort::DeferredQuickHeapSort;
+pub use heap_extract::HeapExtract;
+pub use heap_pair::{AryPair, BeapPair, HeapAlgorithmPair};
 pub use quick_heap_sort::QuickHeapSort;

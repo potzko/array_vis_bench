@@ -101,6 +101,7 @@ impl PartitionScheme for MovingPivotV3<ReversalRotation> {
         arr: &mut [T],
         logger: &mut U,
         pivots: &[usize],
+        _scratch: &mut [usize],
         visitor: &mut V,
     ) where
         T: Ord + Copy,

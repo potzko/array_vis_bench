@@ -21,10 +21,10 @@ pub mod sort_traits;
 pub use complexity::{Complexity, Special};
 pub use composable::{HasSpace, HasStability, HasTimeBounds, PivotQuality};
 pub use role::{
-    DeferredSmallSort, DualPivotSelector, InsertionStrategy, NonTrivialSmallSort, PartitionScheme,
-    PartitionVisitor, PivotInput, PivotSelector, QuickSelect, Rotation, SetSizeSmallSort,
-    SmallSort, SmallSortAdapter,
+    with_partition_scratch, DeferredSmallSort, DualPivotSelector, InsertionStrategy, NoPivot,
+    NonTrivialSmallSort, PartitionScheme, PartitionVisitor, PivotInput, PivotSelector, QuickSelect,
+    Rotation, SetSizeSmallSort, SmallSort, SmallSortAdapter,
 };
 pub use role::rotation::reverse;
-pub use role::small_sort::insertion_sort_with;
+pub use role::small_sort::{insertion_sort_with, windowed_insertion_sort_with};
 pub use sort_traits::SortAlgo;

@@ -29,8 +29,8 @@ use std::marker::PhantomData;
 use std::ops::Range;
 
 use array_vis_bench_traits::{
-    Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme, PartitionVisitor,
-    PivotInput, PivotQuality, QuickSelect,
+    with_partition_scratch, Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme,
+    PartitionVisitor, PivotInput, PivotQuality, QuickSelect,
 };
 use sort_logger::SortLogger;
 
@@ -90,11 +90,13 @@ impl<P: PartitionScheme, V: PivotInput> QuickSelect for RecursiveQuickSelect<P, 
         logger: &mut U,
         target: usize,
     ) {
-        recursive::<T, U, P, V>(arr, logger, target);
+        with_partition_scratch::<P, T, U, _>(logger, |logger, scratch| {
+            recursive::<T, U, P, V>(arr, scratch, logger, target);
+        });
     }
 }
 
-fn recursive<T, U, P, V>(arr: &mut [T], logger: &mut U, target: usize)
+fn recursive<T, U, P, V>(arr: &mut [T], scratch: &mut [usize], logger: &mut U, target: usize)
 where
     T: Ord + Copy,
     U: ?Sized + SortLogger<T>,
@@ -107,10 +109,10 @@ where
     let mut pivots = [0usize; 2];
     V::pick(arr, logger, &mut pivots);
     let mut v = RegionVisitor::new();
-    P::partition::<T, U, _>(arr, logger, &pivots[..V::N], &mut v);
+    P::partition::<T, U, _>(arr, logger, &pivots[..V::N], scratch, &mut v);
     if let Some(r) = region_for(&v, target) {
         let (start, end) = (r.start, r.end);
-        recursive::<T, U, P, V>(&mut arr[start..end], logger, target - start);
+        recursive::<T, U, P, V>(&mut arr[start..end], scratch, logger, target - start);
     }
 }
 
@@ -124,26 +126,28 @@ impl<P: PartitionScheme, V: PivotInput> QuickSelect for IterativeQuickSelect<P, 
         logger: &mut U,
         target: usize,
     ) {
-        let mut lo = 0usize;
-        let mut hi = arr.len();
-        let mut target = target;
-        while hi - lo >= 2 {
-            let slice = &mut arr[lo..hi];
-            let mut pivots = [0usize; 2];
-            V::pick(slice, logger, &mut pivots);
-            let mut v = RegionVisitor::new();
-            P::partition::<T, U, _>(slice, logger, &pivots[..V::N], &mut v);
-            match region_for(&v, target) {
-                Some(r) => {
-                    // Narrow the window to the chosen region and rebase
-                    // target into its local coordinates.
-                    hi = lo + r.end;
-                    lo += r.start;
-                    target -= r.start;
+        with_partition_scratch::<P, T, U, _>(logger, |logger, scratch| {
+            let mut lo = 0usize;
+            let mut hi = arr.len();
+            let mut target = target;
+            while hi - lo >= 2 {
+                let slice = &mut arr[lo..hi];
+                let mut pivots = [0usize; 2];
+                V::pick(slice, logger, &mut pivots);
+                let mut v = RegionVisitor::new();
+                P::partition::<T, U, _>(slice, logger, &pivots[..V::N], scratch, &mut v);
+                match region_for(&v, target) {
+                    Some(r) => {
+                        // Narrow the window to the chosen region and rebase
+                        // target into its local coordinates.
+                        hi = lo + r.end;
+                        lo += r.start;
+                        target -= r.start;
+                    }
+                    None => return,
                 }
-                None => return,
             }
-        }
+        });
     }
 }
 

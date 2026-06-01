@@ -27,6 +27,7 @@ impl PartitionScheme for LeftLeftPartition {
         arr: &mut [T],
         logger: &mut U,
         pivots: &[usize],
+        _scratch: &mut [usize],
         visitor: &mut V,
     ) where
         T: Ord + Copy,

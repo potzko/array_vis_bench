@@ -520,6 +520,11 @@ name = "heap_sort_lib"
 version = "0.1.0"
 dependencies = [
  "array_vis_bench_traits",
+ "partition_hoare",
+ "partition_lomuto",
+ "pivot_first",
+ "pivot_median3",
+ "quick_select_lib",
  "sort_logger",
 ]
 
@@ -803,7 +808,11 @@ name = "quick_heap_sort_lib"
 version = "0.1.0"
 dependencies = [
  "array_vis_bench_traits",
+ "beap_sort_lib",
  "heap_sort_lib",
+ "quick_select_lib",
+ "quick_sort_lib",
+ "small_sort_basic",
  "sort_logger",
 ]
 
@@ -847,6 +856,7 @@ dependencies = [
  "array_vis_bench_traits",
  "const_format",
  "ctor",
+ "heap_sort_lib",
  "linkme",
  "partition_block",
  "partition_hoare",
@@ -857,6 +867,7 @@ dependencies = [
  "pivot_median3",
  "pivot_middle",
  "pivot_ninther",
+ "quick_heap_sort_lib",
  "quick_select_lib",
  "quick_sort_lib",
  "sort_logger",

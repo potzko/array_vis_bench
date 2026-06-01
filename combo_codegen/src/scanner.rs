@@ -69,23 +69,34 @@ impl ScanResult {
     /// `partitions_standalone.rs` iterates the `Partition` registry
     /// directly). Surface this as a `cargo:warning` rather than an error.
     pub fn orphan_roles(&self) -> Vec<String> {
-        let mut referenced: Vec<&str> = Vec::new();
+        let mut referenced: Vec<String> = Vec::new();
         for fam in &self.families {
             for (_var, spec) in &fam.axes {
                 match spec {
-                    AxisSpec::Role(r) => referenced.push(r),
+                    AxisSpec::Role(r) => referenced.push(r.clone()),
                     AxisSpec::Cross { left, right, .. } => {
-                        referenced.push(left);
-                        referenced.push(right);
+                        referenced.push(left.clone());
+                        referenced.push(right.clone());
                     }
                     AxisSpec::Inline(_) => {}
+                }
+            }
+        }
+        // Roles reached through recursive expansion via component slots
+        // count as referenced too — otherwise a role consumed only via
+        // `expand_role`'s recursion (e.g. the partition-driven heap-build
+        // cycle) trips the orphan warning.
+        for role in self.registry.roles() {
+            for comp in self.registry.role(role) {
+                for slot in &comp.slots {
+                    referenced.push(slot.role.clone());
                 }
             }
         }
         let mut out: Vec<String> = self
             .registry
             .roles()
-            .filter(|r| !referenced.contains(r))
+            .filter(|r| !referenced.iter().any(|s| s == r))
             .map(|r| r.to_string())
             .collect();
         out.sort();
@@ -164,24 +175,23 @@ impl ScanResult {
 
             let mut out = String::new();
 
-            // Each family contributes (a) its own declared `uses` (wrapper
-            // type, inline-axis types, fixed-slot types) plus (b) the `uses`
-            // of every component in the roles its axes reference — so a
-            // component's import lives only in the component's own metadata
-            // and families don't have to list them.
-            let mut seen_uses: Vec<String> = Vec::new();
-            let mut emit_use = |out: &mut String, u: &str| {
-                if !seen_uses.iter().any(|s| s == u) {
-                    seen_uses.push(u.to_string());
-                    out.push_str("use ");
-                    out.push_str(u);
-                    out.push_str(";\n");
+            // Step 1 — collect every `use` path the module needs:
+            // (a) each family's own declared `uses` (wrapper type, inline-axis
+            //     types, fixed-slot types);
+            // (b) the `uses` of every component reachable through that family's
+            //     axes (expanded recursively so child-role types are included).
+            // Grouped imports like `foo::{A, B}` are split into one path per
+            // imported name so the aliaser can give each its own `use … as …`.
+            let mut raw_paths: Vec<String> = Vec::new();
+            let record = |paths: &[String], raw: &mut Vec<String>| {
+                for p in crate::family::expand_grouped_uses(paths) {
+                    if !raw.iter().any(|s| s == &p) {
+                        raw.push(p);
+                    }
                 }
             };
             for fam in &fams {
-                for u in &fam.uses {
-                    emit_use(&mut out, u);
-                }
+                record(&fam.uses, &mut raw_paths);
                 for (_, spec) in &fam.axes {
                     let mut role_list: Vec<&str> = Vec::new();
                     match spec {
@@ -193,21 +203,69 @@ impl ScanResult {
                         crate::family::AxisSpec::Inline(_) => {}
                     }
                     for role in role_list {
-                        // Expand so we also pick up the `use` paths of types
-                        // reached only through recursive slots (e.g. a child
-                        // role never referenced directly by a family axis).
                         for comp in crate::family::expand_role(&self.registry, role) {
-                            for u in &comp.uses {
-                                emit_use(&mut out, u);
-                            }
+                            record(&comp.uses, &mut raw_paths);
                         }
                     }
                 }
             }
+
+            // Step 2 — assign each unique full path a deterministic
+            // `<short_name>_<N>` alias. Two paths sharing a short name (the
+            // `LeftLeftPartition` collision case) get distinct N's and stop
+            // shadowing each other in the generated file.
+            let alias_map = crate::family::build_alias_map(&raw_paths);
+            let mut sorted_paths: Vec<&String> = raw_paths.iter().collect();
+            sorted_paths.sort_by_key(|p| alias_map.get(*p).cloned().unwrap_or_default());
+            // `#[allow(unused_imports)]` per line: a component may carry
+            // `uses` for a type that doesn't appear in its `type_expr` (trait
+            // imports needed only at expansion). Suppressing per-import is
+            // simpler than threading "actually-referenced" detection through
+            // the alias map.
+            for path in &sorted_paths {
+                if let Some(alias) = alias_map.get(*path) {
+                    out.push_str(&format!(
+                        "#[allow(unused_imports)] use {path} as {alias};\n"
+                    ));
+                }
+            }
             out.push('\n');
 
+            // Build a module-level `short_name → alias` fallback covering
+            // every identifier whose short name is unambiguous (no
+            // collision). Inline-axis components like
+            // `CombinedSelector<MiddleElement, MiddleElement>` carry no
+            // `uses` of their own and a family's `uses` doesn't always
+            // enumerate every constituent identifier; this fallback resolves
+            // them. Collision-prone names (e.g. `LeftLeftPartition` with two
+            // distinct paths) are *omitted* — those still rely on the
+            // component's or family's `uses` to disambiguate.
+            let mut short_counts: std::collections::HashMap<String, usize> =
+                std::collections::HashMap::new();
+            for path in &raw_paths {
+                let short = crate::family::use_short_name(path).to_string();
+                *short_counts.entry(short).or_insert(0) += 1;
+            }
+            let module_fallback: std::collections::HashMap<String, String> = raw_paths
+                .iter()
+                .filter_map(|path| {
+                    let short = crate::family::use_short_name(path);
+                    if short_counts.get(short).copied() == Some(1) {
+                        alias_map.get(path).map(|a| (short.to_string(), a.clone()))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
             for fam in &fams {
-                fam.render(&mut out, &self.registry, &self.config);
+                fam.render(
+                    &mut out,
+                    &self.registry,
+                    &self.config,
+                    &alias_map,
+                    &module_fallback,
+                );
             }
 
             let filename = format!("{}{}", module, self.config.filename_suffix);

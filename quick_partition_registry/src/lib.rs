@@ -34,7 +34,9 @@ macro_rules! register_partition {
     ($mod:ident, $part:ty, $piv:ty) => {
         mod $mod {
             use super::*;
-            use array_vis_bench_traits::{PartitionScheme, PartitionVisitor, PivotSelector};
+            use array_vis_bench_traits::{
+                with_partition_scratch, PartitionScheme, PartitionVisitor, PivotSelector,
+            };
             use sort_logger::{NoOpLogger, SortLogger};
             use std::ops::Range;
 
@@ -76,7 +78,9 @@ macro_rules! register_partition {
                 }
                 let pivot = <$piv as PivotSelector>::select(arr, logger);
                 let mut v = BoundsVisitor::new(arr.len());
-                <$part as PartitionScheme>::partition(arr, logger, &[pivot], &mut v);
+                with_partition_scratch::<$part, usize, _, _>(logger, |logger, scratch| {
+                    <$part as PartitionScheme>::partition(arr, logger, &[pivot], scratch, &mut v);
+                });
             }
 
             /// NoOp-logger entry — keeps the bounds so the battery can
@@ -90,7 +94,9 @@ macro_rules! register_partition {
                 }
                 let pivot = <$piv as PivotSelector>::select(arr, logger);
                 let mut v = BoundsVisitor::new(arr.len());
-                <$part as PartitionScheme>::partition(arr, logger, &[pivot], &mut v);
+                with_partition_scratch::<$part, usize, _, _>(logger, |logger, scratch| {
+                    <$part as PartitionScheme>::partition(arr, logger, &[pivot], scratch, &mut v);
+                });
                 (v.left_end, v.right_start)
             }
 

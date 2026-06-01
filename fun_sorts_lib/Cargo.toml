@@ -114,12 +114,16 @@ uses   = [
     "fun_sorts_lib::stooge_sort::StoogeSort",
 ]
 axes = [
+    # DEV-DEFAULT TRIM: aligned with the trimmed SmallSort registry. Leaving
+    # the commented-out entries active produces "type not in scope" because
+    # their `use` paths are no longer brought in by the role union.
+    # Uncomment together with the matching registry entries.
     { var = "SS", inline = [
-        { type = "InsertionSmallSort<LinearInsertion, 16>", label = "insertion: 16" },
+        # { type = "InsertionSmallSort<LinearInsertion, 16>", label = "insertion: 16" },
         { type = "InsertionSmallSort<LinearInsertion, 32>", label = "insertion: 32" },
-        { type = "InsertionSmallSort<BinaryInsertion, 16>", label = "binary insertion: 16" },
-        { type = "InsertionSmallSort<BinaryInsertion, 32>", label = "binary insertion: 32" },
-        { type = "NetworkSmallSort",                         label = "network: 8" },
+        # { type = "InsertionSmallSort<BinaryInsertion, 16>", label = "binary insertion: 16" },
+        # { type = "InsertionSmallSort<BinaryInsertion, 32>", label = "binary insertion: 32" },
+        # { type = "NetworkSmallSort",                         label = "network: 8" },
         { type = "Network16SmallSort",                       label = "network: 16" },
     ] },
 ]

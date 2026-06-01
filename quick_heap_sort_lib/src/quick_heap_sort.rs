@@ -36,16 +36,12 @@
 use std::marker::PhantomData;
 
 use heap_sort_lib::arity::Arity;
-use heap_sort_lib::arity_heap::ArityHeap;
 use heap_sort_lib::deep_heapify::DeepHeapify;
-use heap_sort_lib::direction::{MaxForward, MinReverse};
-use heap_sort_lib::heap_algorithm::HeapAlgorithm;
-use heap_sort_lib::heap_sort::NaryHeapSort;
 use sort_logger::SortLogger;
 use array_vis_bench_traits::SmallSort;
 
-type LeftHeap<A, DH> = NaryHeapSort<ArityHeap<A, MaxForward>, DH>;
-type RightHeap<A, DH> = NaryHeapSort<ArityHeap<A, MinReverse>, DH>;
+use crate::heap_pair::AryPair;
+use crate::heap_partition_core::build_and_converge;
 
 pub struct QuickHeapSort<A: Arity, DH: DeepHeapify, SS: SmallSort> {
     _phantom: PhantomData<(A, DH, SS)>,
@@ -71,36 +67,11 @@ fn recurse<T: Ord + Copy, U: ?Sized + SortLogger<T>, A: Arity, DH: DeepHeapify, 
         return;
     }
     let mid = arr.len() / 2;
-    let left_len = mid;
-    let right_len = arr.len() - mid;
 
-    let mut left_state = <LeftHeap<A, DH> as HeapAlgorithm>::new_state::<T, U>(left_len, logger);
-    let mut right_state = <RightHeap<A, DH> as HeapAlgorithm>::new_state::<T, U>(right_len, logger);
-
-    if !left_built {
-        <LeftHeap<A, DH> as HeapAlgorithm>::build(&mut arr[..mid], &mut left_state, logger);
-    }
-    if !right_built {
-        <RightHeap<A, DH> as HeapAlgorithm>::build(&mut arr[mid..], &mut right_state, logger);
-    }
-
-    let left_root = <LeftHeap<A, DH> as HeapAlgorithm>::root_phys(left_len);
-    let right_root = mid + <RightHeap<A, DH> as HeapAlgorithm>::root_phys(right_len);
-
-    while logger.cond_swap_gt(arr, left_root, right_root) {
-        <LeftHeap<A, DH> as HeapAlgorithm>::push_down(
-            &mut arr[..mid],
-            &mut left_state,
-            left_len,
-            logger,
-        );
-        <RightHeap<A, DH> as HeapAlgorithm>::push_down(
-            &mut arr[mid..],
-            &mut right_state,
-            right_len,
-            logger,
-        );
-    }
+    // QuickHeapSort is always d-ary (its recursion-rebuild optimization is
+    // specific to the ArityHeap shape). HeapExtract is where other heap
+    // kinds live — see [`crate::heap_extract`].
+    build_and_converge::<T, U, AryPair<A>, DH>(arr, mid, left_built, right_built, logger);
 
     // The outer-left of the left recursion is the upper half of left's
     // max-forward heap → already a max-forward heap. The outer-right of

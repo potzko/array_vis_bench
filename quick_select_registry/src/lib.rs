@@ -32,6 +32,10 @@ use pivot_last::LastElement;
 use pivot_median3::MedianOfThree;
 use pivot_middle::MiddleElement;
 use pivot_ninther::Ninther;
+use quick_heap_sort_lib::heap_extract::HeapExtract;
+use quick_heap_sort_lib::heap_pair::AryPair;
+use heap_sort_lib::{Binary, Ternary, Iterative, Recursive};
+use array_vis_bench_traits::NoPivot;
 
 // ── Unified wrapper ──────────────────────────────────────────────────────────
 //
@@ -195,3 +199,25 @@ register_quick_select!(dp_it_first_first,  IterativeQuickSelect, "iterative", Du
 register_quick_select!(dp_it_mid_mid,      IterativeQuickSelect, "iterative", DualPivotPartition, "dual pivot", MiddleMiddle,     "middle / middle");
 register_quick_select!(dp_it_first_last,   IterativeQuickSelect, "iterative", DualPivotPartition, "dual pivot", FirstLast,        "first / last");
 register_quick_select!(dp_it_ninther,      IterativeQuickSelect, "iterative", DualPivotPartition, "dual pivot", NintherDualPivot, "ninther 1/3 + 2/3");
+
+// ── Heap-extract partition (pivotless) ───────────────────────────────────────
+//
+// HeapExtract<A, DH> is a zero-pivot PartitionScheme — paired with NoPivot.
+// The four (Arity × build) combos share a single "heap extract" partition
+// branch in the menu; the leaf label carries the build descriptor.
+// Aliased to dodge the macro comma-in-angles edge cases (matches the
+// dual-pivot block's FirstFirst / FirstLast pattern).
+type HeBinIt = HeapExtract<AryPair<Binary>,  Iterative>;
+type HeBinRe = HeapExtract<AryPair<Binary>,  Recursive>;
+type HeTerIt = HeapExtract<AryPair<Ternary>, Iterative>;
+type HeTerRe = HeapExtract<AryPair<Ternary>, Recursive>;
+
+register_quick_select!(rec_heapext_bin_iter, RecursiveQuickSelect, "recursive", HeBinIt, "heap extract", NoPivot, "binary iterative");
+register_quick_select!(rec_heapext_bin_rec,  RecursiveQuickSelect, "recursive", HeBinRe, "heap extract", NoPivot, "binary recursive");
+register_quick_select!(rec_heapext_ter_iter, RecursiveQuickSelect, "recursive", HeTerIt, "heap extract", NoPivot, "ternary iterative");
+register_quick_select!(rec_heapext_ter_rec,  RecursiveQuickSelect, "recursive", HeTerRe, "heap extract", NoPivot, "ternary recursive");
+
+register_quick_select!(it_heapext_bin_iter,  IterativeQuickSelect, "iterative", HeBinIt, "heap extract", NoPivot, "binary iterative");
+register_quick_select!(it_heapext_bin_rec,   IterativeQuickSelect, "iterative", HeBinRe, "heap extract", NoPivot, "binary recursive");
+register_quick_select!(it_heapext_ter_iter,  IterativeQuickSelect, "iterative", HeTerIt, "heap extract", NoPivot, "ternary iterative");
+register_quick_select!(it_heapext_ter_rec,   IterativeQuickSelect, "iterative", HeTerRe, "heap extract", NoPivot, "ternary recursive");
