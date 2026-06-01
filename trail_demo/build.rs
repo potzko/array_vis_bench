@@ -30,6 +30,10 @@ fn main() {
             c.uses.clone(),
             c.slots.clone(),
         );
+        if let Some(n) = c.max_visits {
+            let head = c.type_expr.split('<').next().unwrap_or(&c.type_expr).trim();
+            registry.set_head_max_visits(head, n);
+        }
     }
 
     // Trail-bounded recursive expansion of the cyclic role graph.

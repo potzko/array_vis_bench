@@ -6,7 +6,9 @@ use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds, 
 use array_vis_bench_traits::SmallSort;
 use sort_logger::SortLogger;
 
-use array_vis_bench_traits::{PartitionScheme, PartitionVisitor, PivotInput};
+use array_vis_bench_traits::{
+    with_partition_scratch, PartitionScheme, PartitionVisitor, PivotInput,
+};
 
 /// Generic quicksort. `P` decides how each partition step works
 /// (single- or dual-pivot — see [`PartitionScheme::N_PIVOTS`]); `V`
@@ -25,7 +27,12 @@ pub struct QuickSort<P: PartitionScheme, V: PivotInput, SS: SmallSort>(
 
 impl<P: PartitionScheme, V: PivotInput, SS: SmallSort> QuickSort<P, V, SS> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        quick_sort_recursive::<T, U, P, V, SS>(arr, logger);
+        // Pre-allocate the partition scheme's scratch buffer once for the
+        // whole sort and reuse it across every recursive partition call,
+        // exactly as the merge sorts allocate their aux array once.
+        with_partition_scratch::<P, T, U, _>(logger, |logger, scratch| {
+            quick_sort_recursive::<T, U, P, V, SS>(arr, scratch, logger);
+        });
     }
 }
 
@@ -63,6 +70,7 @@ fn quick_sort_recursive<
     SS: SmallSort,
 >(
     arr: &mut [T],
+    scratch: &mut [usize],
     logger: &mut U,
 ) {
     if SS::THRESHOLD > 0 && arr.len() <= SS::THRESHOLD {
@@ -78,12 +86,12 @@ fn quick_sort_recursive<
     let mut pivots = [0usize; 2];
     V::pick(arr, logger, &mut pivots);
     let mut visitor = QuickSortVisitor::new();
-    P::partition::<T, U, _>(arr, logger, &pivots[..V::N], &mut visitor);
+    P::partition::<T, U, _>(arr, logger, &pivots[..V::N], scratch, &mut visitor);
     let n = visitor.n as usize;
     let mut i = 0;
     while i < n {
         let r = visitor.ranges[i].clone();
-        quick_sort_recursive::<T, U, P, V, SS>(&mut arr[r], logger);
+        quick_sort_recursive::<T, U, P, V, SS>(&mut arr[r], scratch, logger);
         i += 1;
     }
 }

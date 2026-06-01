@@ -38,6 +38,32 @@ pub fn insertion_sort_with<S: InsertionStrategy, T: Ord + Copy, U: ?Sized + Sort
     mutated
 }
 
+/// Insertion sort with a bounded scan-back window of size `K`.
+///
+/// Caller contract: every element is at most `K` positions from its
+/// final sorted position. Each element is then placed by running
+/// `S::insert_one` on the slice `arr[i.saturating_sub(K)..=i]`, so the
+/// inner loop never scans past `K` predecessors regardless of input
+/// size. Total cost is `O(n · K)`.
+///
+/// Used by `DeferredInsertion` to clean up after a deferred quicksort
+/// whose recursion stopped at chunks of size ≤ `K`.
+#[inline(always)]
+pub fn windowed_insertion_sort_with<S: InsertionStrategy, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    k: usize,
+    logger: &mut U,
+) -> bool {
+    let mut mutated = false;
+    for i in 1..arr.len() {
+        let lo = i.saturating_sub(k);
+        let sub = &mut arr[lo..=i];
+        let local_i = sub.len() - 1;
+        mutated |= S::insert_one(sub, local_i, logger);
+    }
+    mutated
+}
+
 // ── SmallSort ────────────────────────────────────────────────────────────────
 
 /// Strategy for sorting small sub-arrays before or during a merge /

@@ -52,7 +52,7 @@ big_o       = "@inherited"
 stable      = false
 direct_sort = true
 fixed       = ["strategy=standard", "partition=dual pivot", "dual pivot kind=combined"]
-path        = ["quick sorts", "{DPS}", "{SS}"]
+path        = ["quick sorts", "dual pivot", "combined", "{DPS}", "{SS}"]
 
 # ── QuickSort dual pivot: specialty (NintherDualPivot) ──
 [[package.metadata.array_vis_bench.families]]
@@ -71,7 +71,7 @@ big_o       = "@inherited"
 stable      = false
 direct_sort = true
 fixed       = ["strategy=standard", "partition=dual pivot", "dual pivot kind=ninther 1/3 + 2/3"]
-path        = ["quick sorts", "{SS}"]
+path        = ["quick sorts", "dual pivot", "ninther 1/3 + 2/3", "{SS}"]
 
 # ── DeferredQuickSort (P × V × DSS) ──
 [[package.metadata.array_vis_bench.families]]
@@ -110,7 +110,7 @@ big_o       = "@inherited"
 stable      = false
 direct_sort = true
 fixed       = ["strategy=deferred", "partition=dual pivot", "dual pivot kind=combined"]
-path        = ["quick sorts", "{DPS}", "{DSS}"]
+path        = ["quick sorts", "dual pivot", "combined", "{DPS}", "{DSS}"]
 
 # ── DeferredQuickSort dual pivot: specialty (NintherDualPivot) ──
 [[package.metadata.array_vis_bench.families]]
@@ -129,4 +129,4 @@ big_o       = "@inherited"
 stable      = false
 direct_sort = true
 fixed       = ["strategy=deferred", "partition=dual pivot", "dual pivot kind=ninther 1/3 + 2/3"]
-path        = ["quick sorts", "{DSS}"]
+path        = ["quick sorts", "dual pivot", "ninther 1/3 + 2/3", "{DSS}"]

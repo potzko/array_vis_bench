@@ -14,12 +14,15 @@ sort_logger = { path = "../sort_logger" }
 # Falls back to linear insertion for `len < 8`.
 small_sort_insertion_strategy = { path = "../small_sort_insertion_strategy" }
 
-[[package.metadata.array_vis_bench.components]]
-role  = "SmallSort"
-type  = "NetworkSmallSort"
-label = "network: 8"
+# DEV-DEFAULT TRIM: `NetworkSmallSort` (8-element network) is dropped from the
+# dev catalog — the 16-element network in `small_sort_network_16` covers the
+# "network sort" axis. Uncomment to restore the 8-element variant.
+# [[package.metadata.array_vis_bench.components]]
+# role  = "SmallSort"
+# type  = "NetworkSmallSort"
+# label = "network: 8"
 
-[[package.metadata.array_vis_bench.components]]
-role  = "NonTrivialSmallSort"
-type  = "NetworkSmallSort"
-label = "network: 8"
+# [[package.metadata.array_vis_bench.components]]
+# role  = "NonTrivialSmallSort"
+# type  = "NetworkSmallSort"
+# label = "network: 8"

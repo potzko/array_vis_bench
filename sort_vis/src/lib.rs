@@ -10,7 +10,7 @@
 //! `render(events)` — so an alternate backend (e.g. a GIF renderer or
 //! a WASM canvas) can be slotted in without touching the producer side.
 
-mod img_tmp;
+mod mp4_bar_visualiser;
 mod sub_image;
 
 use sort_logger::SortLog;
@@ -30,6 +30,6 @@ pub trait Visualizer {
     fn render(&mut self, actions: &[SortLog<usize>]);
 }
 
-pub use img_tmp::{
+pub use mp4_bar_visualiser::{
     Encoding, Mp4Config, Mp4Visualizer, Pacing, COMMON_FRAMERATES, COMMON_RESOLUTIONS,
 };

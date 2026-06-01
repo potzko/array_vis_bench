@@ -66,6 +66,47 @@ impl<V: PivotSelector> PivotInput for V {
     }
 }
 
+// ── NoPivot (N = 0) ──────────────────────────────────────────────────────────
+
+/// Zero-pivot [`PivotInput`] for partitions that decide their own split
+/// without consulting pivot values (e.g. midpoint splitters like the
+/// heap-extract partition). `pick` writes nothing; the partition receives
+/// an empty `pivots` slice.
+pub struct NoPivot;
+
+impl PivotInput for NoPivot {
+    const N: usize = 0;
+    #[inline(always)]
+    fn pick<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        _arr: &[T],
+        _logger: &mut U,
+        _out: &mut [usize],
+    ) {
+    }
+}
+
+// ── Composable annotations for NoPivot ───────────────────────────────────────
+//
+// Conceptually a no-op pivot picker: zero work, zero space, vacuously stable.
+// `DEGENERATES = false` because there's nothing to degenerate — partitions
+// paired with `NoPivot` (like `HeapExtract`) decide their own balanced split,
+// so QuickSort's worst-case recursion depth stays O(log N).
+
+impl crate::composable::HasTimeBounds for NoPivot {
+    const WORST: crate::Complexity = crate::Complexity::CONST;
+    const BEST: crate::Complexity = crate::Complexity::CONST;
+    const AVERAGE: crate::Complexity = crate::Complexity::CONST;
+}
+impl crate::composable::HasSpace for NoPivot {
+    const SPACE: crate::Complexity = crate::Complexity::CONST;
+}
+impl crate::composable::HasStability for NoPivot {
+    const STABLE: bool = true;
+}
+impl crate::composable::PivotQuality for NoPivot {
+    const DEGENERATES: bool = false;
+}
+
 // ── Shared helpers ───────────────────────────────────────────────────────────
 
 /// Return `(min_index, max_index)` among `arr[a]`, `arr[b]`, `arr[c]`

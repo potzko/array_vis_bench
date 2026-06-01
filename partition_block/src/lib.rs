@@ -10,14 +10,22 @@ use sort_logger::SortLogger;
 /// tight loop. Reduces branch mispredictions compared to LeftLeftPartition/LeftRightPartition.
 pub struct Block;
 
+/// Per-side offset-buffer length. The scheme needs two of these (left
+/// and right), so [`Block::SCRATCH_LEN`] is `2 * BLOCK`.
+const BLOCK: usize = 64;
+
 impl PartitionScheme for Block {
     const NAME: &'static str = "block";
     const N_PIVOTS: usize = 1;
+    /// Two `BLOCK`-sized offset buffers, allocated once by the driver and
+    /// reused for the whole sort instead of re-created per partition call.
+    const SCRATCH_LEN: usize = 2 * BLOCK;
     #[inline]
     fn partition<T, U, V>(
         arr: &mut [T],
         logger: &mut U,
         pivots: &[usize],
+        scratch: &mut [usize],
         visitor: &mut V,
     ) where
         T: Ord + Copy,
@@ -28,11 +36,14 @@ impl PartitionScheme for Block {
         logger.swap(arr, pivots[0], len - 1);
         let pivot = arr[len - 1];
 
-        const BLOCK: usize = 64;
-        let mut offsets_l = [0usize; BLOCK];
-        let mut offsets_r = [0usize; BLOCK];
-        logger.log_aux_arr_u(&offsets_l);
-        logger.log_aux_arr_u(&offsets_r);
+        // `scratch` is the driver's reusable buffer (length
+        // `SCRATCH_LEN == 2 * BLOCK`), logged once for the whole sort.
+        // The two offset regions are the lower/upper halves; we index
+        // them with absolute positions so every logged write targets the
+        // single persistent aux array rather than re-announcing a buffer
+        // on each call.
+        debug_assert!(scratch.len() >= 2 * BLOCK);
+        let off_r = BLOCK;
 
         let mut left = 0;
         let mut right = len - 1;
@@ -41,20 +52,20 @@ impl PartitionScheme for Block {
             let mut num_l = 0;
             for i in 0..BLOCK {
                 if logger.cmp_gt_data(arr, left + i, pivot) {
-                    logger.write_data_u(&mut offsets_l, num_l, i);
+                    logger.write_data_u(scratch, num_l, i);
                     num_l += 1;
                 }
             }
             let mut num_r = 0;
             for i in 0..BLOCK {
                 if logger.cmp_le_data(arr, right - 1 - i, pivot) {
-                    logger.write_data_u(&mut offsets_r, num_r, i);
+                    logger.write_data_u(scratch, off_r + num_r, i);
                     num_r += 1;
                 }
             }
             let swaps = num_l.min(num_r);
             for s in 0..swaps {
-                logger.swap(arr, left + offsets_l[s], right - 1 - offsets_r[s]);
+                logger.swap(arr, left + scratch[s], right - 1 - scratch[off_r + s]);
             }
             if num_l <= num_r {
                 left += BLOCK;
@@ -63,9 +74,6 @@ impl PartitionScheme for Block {
                 right -= BLOCK;
             }
         }
-
-        logger.free_aux_arr(&offsets_l);
-        logger.free_aux_arr(&offsets_r);
 
         let mut small = left;
         for i in left..right {

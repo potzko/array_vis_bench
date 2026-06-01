@@ -42,8 +42,14 @@ pub struct MetadataComponent {
     pub uses: Vec<String>,
     /// Recursive parameter slots (`{ param, role }`). Empty for leaf
     /// components; non-empty makes the component generic over a role, expanded
-    /// by [`crate::expand_role`] under the trail rule.
+    /// by [`crate::expand_role`] under the head-count rule.
     pub slots: Vec<Slot>,
+    /// Optional per-head visit cap. When set, the build script feeds this
+    /// into [`crate::ComponentRegistry::set_head_max_visits`] so this
+    /// component's head can have a different recursion budget than the
+    /// registry default. Used to keep intermediate cycle-participant heads
+    /// at `1` while one anchor head stays at the default.
+    pub max_visits: Option<usize>,
     /// Path to the `Cargo.toml` it came from — used for `cargo:rerun-if-changed`.
     pub source_manifest: PathBuf,
 }
@@ -159,6 +165,7 @@ pub fn scan_workspace_components(
                 label: decl.label,
                 uses,
                 slots: decl.slots.into_iter().map(SlotDecl::into_slot).collect(),
+                max_visits: decl.max_visits,
                 source_manifest: pkg.manifest_path.clone().into_std_path_buf(),
             });
         }
@@ -245,6 +252,7 @@ pub fn scan_manifest(manifest: impl AsRef<Path>) -> Result<Vec<MetadataComponent
             label: decl.label,
             uses: decl.uses,
             slots: decl.slots.into_iter().map(SlotDecl::into_slot).collect(),
+            max_visits: decl.max_visits,
             source_manifest: path.to_path_buf(),
         })
         .collect();
@@ -486,9 +494,15 @@ struct ComponentDecl {
     /// Recursive parameter slots making this component generic over a role.
     /// Each `{ param, role }` binds a `{param}` placeholder in `type` /
     /// `label` to the components of `role`, expanded recursively under the
-    /// trail rule. Empty (the default) means a leaf component.
+    /// head-count rule. Empty (the default) means a leaf component.
     #[serde(default)]
     slots: Vec<SlotDecl>,
+    /// Optional per-head visit cap. Overrides the registry default when set,
+    /// keyed by this component's head (`type_head(type_expr)`). Lets the
+    /// metadata pin one anchor head at the default budget and shrink the
+    /// rest to `1` so a cycle wraps once instead of multiplying.
+    #[serde(default)]
+    max_visits: Option<usize>,
 }
 
 /// One recursive slot on a [`ComponentDecl`]. `param` is the `{param}`

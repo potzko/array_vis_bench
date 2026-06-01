@@ -4,7 +4,9 @@ use std::ops::Range;
 use array_vis_bench_traits::DeferredSmallSort;
 use sort_logger::SortLogger;
 
-use array_vis_bench_traits::{PartitionScheme, PartitionVisitor, PivotInput};
+use array_vis_bench_traits::{
+    with_partition_scratch, PartitionScheme, PartitionVisitor, PivotInput,
+};
 
 /// `DeferredQuickSort` is to `DeferredSmallSort` what `QuickSort` is to
 /// `SmallSort`: each recursion skips slices of length `<= DSS::THRESHOLD`
@@ -17,7 +19,10 @@ pub struct DeferredQuickSort<P: PartitionScheme, V: PivotInput, DSS: DeferredSma
 
 impl<P: PartitionScheme, V: PivotInput, DSS: DeferredSmallSort> DeferredQuickSort<P, V, DSS> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        deferred_recursive::<T, U, P, V, DSS>(arr, logger);
+        // One scratch buffer for the whole recursion (see `QuickSort::sort`).
+        with_partition_scratch::<P, T, U, _>(logger, |logger, scratch| {
+            deferred_recursive::<T, U, P, V, DSS>(arr, scratch, logger);
+        });
         DSS::final_pass(arr, logger);
     }
 }
@@ -43,6 +48,7 @@ fn deferred_recursive<
     DSS: DeferredSmallSort,
 >(
     arr: &mut [T],
+    scratch: &mut [usize],
     logger: &mut U,
 ) {
     if arr.len() < 2 {
@@ -54,12 +60,12 @@ fn deferred_recursive<
     let mut pivots = [0usize; 2];
     V::pick(arr, logger, &mut pivots);
     let mut visitor = DeferredVisitor { ranges: [0..0, 0..0, 0..0, 0..0], n: 0 };
-    P::partition::<T, U, _>(arr, logger, &pivots[..V::N], &mut visitor);
+    P::partition::<T, U, _>(arr, logger, &pivots[..V::N], scratch, &mut visitor);
     let n = visitor.n as usize;
     let mut i = 0;
     while i < n {
         let r = visitor.ranges[i].clone();
-        deferred_recursive::<T, U, P, V, DSS>(&mut arr[r], logger);
+        deferred_recursive::<T, U, P, V, DSS>(&mut arr[r], scratch, logger);
         i += 1;
     }
 }

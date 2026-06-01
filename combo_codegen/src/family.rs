@@ -5,7 +5,7 @@ use std::collections::HashMap;
 /// A recursive parameter slot on a composite [`ComponentDef`]. `param` is the
 /// `{param}` placeholder inside the component's `type_expr` / `label`; `role`
 /// is the registry role whose components may fill it. Expansion (see
-/// [`expand_role`]) recursively fills slots, bounded by the trail rule.
+/// [`expand_role`]) recursively fills slots, bounded by the head-count rule.
 #[derive(Debug, Clone)]
 pub struct Slot {
     pub param: String,
@@ -39,11 +39,20 @@ pub struct ComponentDef {
     pub uses: Vec<String>,
     /// Recursive parameter slots. Empty for leaf components (the common case).
     pub slots: Vec<Slot>,
+    /// Menu navigation segments auto-derived from `label`. A leaf label like
+    /// `"binary"` produces `["binary"]`; a composite label like
+    /// `"heap extract<{A}, {DH}>"` produces `["heap extract", "{A}", "{DH}"]`,
+    /// whose `{param}` segments are spliced with the chosen child's
+    /// `path_segments` during recursive expansion. Used by the family renderer
+    /// to tier each composite slot into its own menu step.
+    pub path_segments: Vec<String>,
 }
 
 impl ComponentDef {
     pub fn new(type_expr: impl Into<String>, label: impl Into<String>) -> Self {
-        Self { type_expr: type_expr.into(), label: label.into(), uses: Vec::new(), slots: Vec::new() }
+        let label = label.into();
+        let path_segments = auto_path_segments(&label);
+        Self { type_expr: type_expr.into(), label, uses: Vec::new(), slots: Vec::new(), path_segments }
     }
 
     pub fn with_uses(
@@ -51,7 +60,9 @@ impl ComponentDef {
         label: impl Into<String>,
         uses: Vec<String>,
     ) -> Self {
-        Self { type_expr: type_expr.into(), label: label.into(), uses, slots: Vec::new() }
+        let label = label.into();
+        let path_segments = auto_path_segments(&label);
+        Self { type_expr: type_expr.into(), label, uses, slots: Vec::new(), path_segments }
     }
 
     pub fn with_uses_and_slots(
@@ -60,8 +71,193 @@ impl ComponentDef {
         uses: Vec<String>,
         slots: Vec<Slot>,
     ) -> Self {
-        Self { type_expr: type_expr.into(), label: label.into(), uses, slots }
+        let label = label.into();
+        let path_segments = auto_path_segments(&label);
+        Self { type_expr: type_expr.into(), label, uses, slots, path_segments }
     }
+}
+
+/// Auto-derive [`ComponentDef::path_segments`] from a label.
+///
+/// Convention: split on the first top-level `<` / matching `>` pair, with the
+/// inner part split by top-level commas. So `"heap extract<{A}, {DH}>"` →
+/// `["heap extract", "{A}", "{DH}"]`. Labels without `<` map to a single
+/// segment (`["binary"]` for `"binary"`). Malformed labels (mismatched
+/// brackets) fall back to a single segment.
+pub fn auto_path_segments(label: &str) -> Vec<String> {
+    let label = label.trim();
+    let Some(open) = label.find('<') else {
+        return vec![label.to_string()];
+    };
+    let head = label[..open].trim().to_string();
+    let bytes = label.as_bytes();
+    let mut depth = 1;
+    let mut close = label.len();
+    let mut i = open + 1;
+    while i < label.len() {
+        match bytes[i] as char {
+            '<' | '{' | '[' | '(' => depth += 1,
+            '>' | '}' | ']' | ')' => {
+                depth -= 1;
+                if depth == 0 {
+                    close = i;
+                    break;
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    if depth != 0 {
+        return vec![label.to_string()];
+    }
+    let inner = &label[open + 1..close];
+    let mut segments = vec![head];
+    segments.extend(split_top_level_args(inner));
+    segments
+}
+
+/// Split a comma-separated argument list at top level only, respecting
+/// nested `<…>` / `(…)` / `[…]` / `{…}` pairs. Empty parts are dropped.
+fn split_top_level_args(s: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut depth: i32 = 0;
+    let mut start = 0;
+    for (i, c) in s.char_indices() {
+        match c {
+            '<' | '{' | '[' | '(' => depth += 1,
+            '>' | '}' | ']' | ')' => depth -= 1,
+            ',' if depth == 0 => {
+                let seg = s[start..i].trim();
+                if !seg.is_empty() {
+                    out.push(seg.to_string());
+                }
+                start = i + 1;
+            }
+            _ => {}
+        }
+    }
+    let tail = s[start..].trim();
+    if !tail.is_empty() {
+        out.push(tail.to_string());
+    }
+    out
+}
+
+// ── Alias-substitution helpers ───────────────────────────────────────────────
+
+/// Expand grouped `use` paths into one entry per imported name.
+///
+/// Metadata entries like `"heap_sort_lib::heap_sort::{HeapSort, NaryHeapSort}"`
+/// are split into `"heap_sort_lib::heap_sort::HeapSort"` and
+/// `"heap_sort_lib::heap_sort::NaryHeapSort"`. Plain (non-grouped) paths pass
+/// through unchanged. The aliaser needs one path per *target name* so it can
+/// assign each its own `use … as …;` line.
+pub fn expand_grouped_uses(uses: &[String]) -> Vec<String> {
+    let mut out = Vec::new();
+    for raw in uses {
+        let trimmed = raw.trim();
+        if let Some(open) = trimmed.find('{') {
+            let Some(close) = trimmed.rfind('}') else {
+                out.push(trimmed.to_string());
+                continue;
+            };
+            let prefix = trimmed[..open].trim_end();
+            let inner = &trimmed[open + 1..close];
+            for name in inner.split(',') {
+                let name = name.trim();
+                if name.is_empty() {
+                    continue;
+                }
+                out.push(format!("{prefix}{name}"));
+            }
+        } else {
+            out.push(trimmed.to_string());
+        }
+    }
+    out
+}
+
+/// Last `::`-separated segment of a path — the imported short name. Used as
+/// the basename for alias generation and as the identifier to substitute in
+/// `type_expr` strings.
+pub fn use_short_name(path: &str) -> &str {
+    path.rsplit("::").next().unwrap_or(path).trim()
+}
+
+/// Assign a deterministic, unique alias to every input path. Aliases are
+/// `<short_name>_<N>` where `N` increments per short name in path-sorted
+/// order, so two different paths sharing a short name (the collision case)
+/// land at `LeftLeftPartition_0` and `LeftLeftPartition_1`, and pure
+/// singletons still get `_0` for a uniform shape across the generated file.
+pub fn build_alias_map(paths: &[String]) -> HashMap<String, String> {
+    let mut unique: Vec<String> = paths.iter().cloned().collect();
+    unique.sort();
+    unique.dedup();
+
+    let mut counters: HashMap<String, usize> = HashMap::new();
+    let mut out = HashMap::new();
+    for path in &unique {
+        let short = use_short_name(path);
+        let idx = counters.entry(short.to_string()).or_insert(0);
+        let alias = format!("{short}_{}", *idx);
+        *idx += 1;
+        out.insert(path.clone(), alias);
+    }
+    out
+}
+
+/// For a single component's `uses`, build a `short_name → alias` map by
+/// looking up each path in the module-level [`build_alias_map`]. The
+/// substitution helper consumes this to rewrite a component's `type_expr` so
+/// each identifier becomes the alias of the path the component's `uses`
+/// declared.
+pub fn local_alias_map(
+    uses: &[String],
+    global: &HashMap<String, String>,
+) -> HashMap<String, String> {
+    let mut out = HashMap::new();
+    for path in expand_grouped_uses(uses) {
+        if let Some(alias) = global.get(&path) {
+            out.insert(use_short_name(&path).to_string(), alias.clone());
+        }
+    }
+    out
+}
+
+/// Replace every identifier in `input` that matches a key in `map` with the
+/// corresponding alias. Identifiers are runs of `[A-Za-z0-9_]`; anything
+/// else (`<`, `>`, `,`, whitespace, `{`, `}`, etc.) is a boundary.
+///
+/// Numeric literals like `16` in `InsertionSmallSort<LinearInsertion, 16>`
+/// are technically identifier-shaped runs but won't appear as map keys
+/// (you can't `use foo::16`), so they pass through unchanged.
+pub fn substitute_aliases(input: &str, map: &HashMap<String, String>) -> String {
+    if map.is_empty() {
+        return input.to_string();
+    }
+    let mut out = String::with_capacity(input.len());
+    let mut ident = String::new();
+    let flush = |ident: &mut String, out: &mut String, map: &HashMap<String, String>| {
+        if !ident.is_empty() {
+            if let Some(alias) = map.get(ident.as_str()) {
+                out.push_str(alias);
+            } else {
+                out.push_str(ident);
+            }
+            ident.clear();
+        }
+    };
+    for c in input.chars() {
+        if c.is_alphanumeric() || c == '_' {
+            ident.push(c);
+        } else {
+            flush(&mut ident, &mut out, map);
+            out.push(c);
+        }
+    }
+    flush(&mut ident, &mut out, map);
+    out
 }
 
 // ── ComponentRegistry ────────────────────────────────────────────────────────
@@ -70,9 +266,26 @@ impl ComponentDef {
 ///
 /// Built by [`crate::scan`]; consumed by [`Family`] / [`FamilyDef`] to resolve
 /// axis definitions.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ComponentRegistry {
     roles: HashMap<String, Vec<ComponentDef>>,
+    max_visits: usize,
+    /// Per-head override of the visit limit. When a head appears in this map,
+    /// the value is used in place of [`Self::max_visits`] during expansion.
+    /// Lets one cycle-anchor head (e.g. `HeapExtract`) keep a higher budget
+    /// while intermediate types (e.g. `SequentialSet`, `RecursiveQuickSelect`)
+    /// stay at `1` so the cycle wraps once instead of multiplying.
+    head_max_visits: HashMap<String, usize>,
+}
+
+impl Default for ComponentRegistry {
+    fn default() -> Self {
+        Self {
+            roles: HashMap::new(),
+            max_visits: DEFAULT_MAX_VISITS,
+            head_max_visits: HashMap::new(),
+        }
+    }
 }
 
 impl ComponentRegistry {
@@ -80,6 +293,34 @@ impl ComponentRegistry {
     /// Returns an empty slice if the role is unknown.
     pub fn role(&self, role: &str) -> &[ComponentDef] {
         self.roles.get(role).map_or(&[], Vec::as_slice)
+    }
+
+    /// Default per-path head-visit limit honored by [`expand_role`]. Used for
+    /// any head not in [`Self::head_max_visits`]. Default is
+    /// [`DEFAULT_MAX_VISITS`].
+    pub fn max_visits(&self) -> usize {
+        self.max_visits
+    }
+
+    /// Override the *default* head-count limit. `n = 1` disables self-
+    /// recursion for every head without an explicit override (each head can
+    /// be entered at most once on a path, so cycles never close); `n = 2`
+    /// allows one self-recursion; larger values nest deeper.
+    pub fn set_max_visits(&mut self, n: usize) {
+        self.max_visits = n;
+    }
+
+    /// Per-head visit budget honored by [`expand_role`]. Returns the override
+    /// if present, otherwise [`Self::max_visits`].
+    pub fn max_visits_for(&self, head: &str) -> usize {
+        self.head_max_visits.get(head).copied().unwrap_or(self.max_visits)
+    }
+
+    /// Override the visit budget for one head identifier (the part before
+    /// the first `<` of a `type_expr`, see [`type_head`]). Intended for
+    /// metadata-declared `max_visits = N` on a composite component.
+    pub fn set_head_max_visits(&mut self, head: impl Into<String>, n: usize) {
+        self.head_max_visits.insert(head.into(), n);
     }
 
     /// Register a component. Called by the scanner; also available for manual
@@ -153,46 +394,50 @@ impl ComponentRegistry {
     }
 }
 
-// ── Recursive expansion (trail rule) ──────────────────────────────────────────
+// ── Recursive expansion (head-count rule) ────────────────────────────────────
+
+/// Default per-path head-visit limit. `2` lets a type self-recurse exactly
+/// once. Tunable per registry via [`ComponentRegistry::set_max_visits`].
+pub const DEFAULT_MAX_VISITS: usize = 2;
 
 /// Head identifier of a type expression — everything before the first `<`,
 /// trimmed. `"QuickBuild<{P}>"` → `"QuickBuild"`, `"Lomuto"` → `"Lomuto"`.
-/// Used as the type identity in trail edges.
+/// Used as the type identity in the per-path visit map.
 fn type_head(type_expr: &str) -> &str {
     type_expr.split('<').next().unwrap_or(type_expr).trim()
 }
 
-/// One step on a composition path: `(parent head, slot param, child head)`.
-/// The trail rule forbids the same edge appearing twice on a single
-/// root→leaf path — this is what makes a recursive role graph enumerable.
-type Edge = (String, String, String);
-
 /// Expand every component registered under `role` into concrete, slot-free
 /// [`ComponentDef`]s, recursively filling composite slots from the registry.
 ///
-/// Recursion is bounded by the **trail rule**: along any single root→leaf
-/// path, the same `(parent, slot, child)` edge may not be reused. A type may
-/// recur in a slot if it arrives via a different parent; only the exact edge
-/// is pruned. Termination follows from edge-exhaustion — a path is a trail, so
-/// its length is bounded by the (finite) number of distinct edges.
+/// Recursion is bounded by the **head-count rule**: on any single root→leaf
+/// path, each *composite* type head may be entered at most
+/// [`ComponentRegistry::max_visits`] times (default [`DEFAULT_MAX_VISITS`] = 2
+/// → one self-recursion). Termination follows because every recursive step
+/// increments some head's visit count, the catalog of heads is finite, and
+/// each count is capped — so the search tree has bounded depth.
 ///
-/// Leaf components (empty `slots`) expand to themselves, so a registry with no
-/// composite components returns each role's list unchanged.
+/// Leaf components (empty `slots`) expand to themselves and don't participate
+/// in the limit. A registry with no composite components returns each role's
+/// list unchanged.
 pub fn expand_role(registry: &ComponentRegistry, role: &str) -> Vec<ComponentDef> {
     let mut out = Vec::new();
+    let mut visits: HashMap<String, usize> = HashMap::new();
     for comp in registry.role(role) {
-        expand_component(registry, comp, &mut Vec::new(), &mut out);
+        expand_component(registry, comp, &mut visits, &mut out);
     }
     out
 }
 
 /// Expand one component, appending its concrete instantiations to `out`.
-/// `used_edges` is the set of trail edges already taken on the path to here
-/// (push-on-enter / pop-on-exit, so it stays per-path).
+/// `visits` tracks how many times each composite head has been entered on the
+/// current path (incremented on enter, decremented on exit, so it stays
+/// per-path). If the head is already at the registry's limit the component is
+/// silently skipped — this is the head-count rule's pruning step.
 fn expand_component(
     registry: &ComponentRegistry,
     comp: &ComponentDef,
-    used_edges: &mut Vec<Edge>,
+    visits: &mut HashMap<String, usize>,
     out: &mut Vec<ComponentDef>,
 ) {
     if comp.slots.is_empty() {
@@ -200,31 +445,29 @@ fn expand_component(
         return;
     }
 
-    let parent_head = type_head(&comp.type_expr).to_string();
+    let head = type_head(&comp.type_expr).to_string();
+    let prior = visits.get(&head).copied().unwrap_or(0);
+    if prior >= registry.max_visits_for(&head) {
+        return;
+    }
+    visits.insert(head.clone(), prior + 1);
 
     // For each slot, the concrete child options legal at this point on the
-    // path (trail-pruned, then recursively expanded to leaves).
+    // path (head-count-pruned, then recursively expanded to leaves).
     let mut slot_options: Vec<Vec<ComponentDef>> = Vec::with_capacity(comp.slots.len());
     for slot in &comp.slots {
         let mut opts = Vec::new();
         for child in registry.role(&slot.role) {
-            let edge = (
-                parent_head.clone(),
-                slot.param.clone(),
-                type_head(&child.type_expr).to_string(),
-            );
-            if used_edges.contains(&edge) {
-                continue; // trail rule: this exact edge is already on the path
-            }
-            used_edges.push(edge);
-            expand_component(registry, child, used_edges, &mut opts);
-            used_edges.pop();
+            expand_component(registry, child, visits, &mut opts);
         }
         slot_options.push(opts);
     }
 
     // Cartesian product across slots → one concrete ComponentDef per combo,
-    // substituting `{param}` in both type_expr and label and unioning uses.
+    // substituting `{param}` in type_expr / label / path_segments and unioning
+    // uses. Each `{param}` path segment is *spliced* — replaced by the chosen
+    // child's full path_segments — so a composite contributes one segment per
+    // recursion level rather than collapsing to a single flat segment.
     for combo in cartesian(&slot_options) {
         let mut type_expr = comp.type_expr.clone();
         let mut label = comp.label.clone();
@@ -239,7 +482,29 @@ fn expand_component(
                 }
             }
         }
-        out.push(ComponentDef { type_expr, label, uses, slots: Vec::new() });
+        let mut path_segments: Vec<String> = Vec::new();
+        for seg in &comp.path_segments {
+            let placeholder = seg.strip_prefix('{').and_then(|s| s.strip_suffix('}'));
+            let mut spliced = false;
+            if let Some(param) = placeholder {
+                if let Some((_, chosen)) =
+                    comp.slots.iter().zip(&combo).find(|(slot, _)| slot.param == param)
+                {
+                    path_segments.extend(chosen.path_segments.iter().cloned());
+                    spliced = true;
+                }
+            }
+            if !spliced {
+                path_segments.push(seg.clone());
+            }
+        }
+        out.push(ComponentDef { type_expr, label, uses, slots: Vec::new(), path_segments });
+    }
+
+    if prior == 0 {
+        visits.remove(&head);
+    } else {
+        visits.insert(head, prior);
     }
 }
 
@@ -274,6 +539,11 @@ pub fn inline(items: &[(&str, &str)]) -> Vec<ComponentDef> {
 
 /// Cross-product of two component lists, merging each pair into a single
 /// [`ComponentDef`] using caller-supplied combiners.
+///
+/// The merged component's `uses` is the union of both constituents' `uses`,
+/// so identifier-aliasing at emit time has the full lookup context for
+/// every name appearing in the combined `type_expr` (e.g. both `L` and `R`
+/// in `CombinedSelector<L, R>`).
 pub fn cross_axis(
     left: &[ComponentDef],
     right: &[ComponentDef],
@@ -283,7 +553,13 @@ pub fn cross_axis(
     let mut out = Vec::with_capacity(left.len() * right.len());
     for l in left {
         for r in right {
-            out.push(ComponentDef::new(type_fn(l, r), label_fn(l, r)));
+            let mut uses = l.uses.clone();
+            for u in &r.uses {
+                if !uses.contains(u) {
+                    uses.push(u.clone());
+                }
+            }
+            out.push(ComponentDef::with_uses(type_fn(l, r), label_fn(l, r), uses));
         }
     }
     out
@@ -551,8 +827,15 @@ impl FamilyDef {
     /// it with the whole combined type. The `path` field is emitted verbatim;
     /// the consumer derives the menu structure (category vs faceted axis) from
     /// it plus the per-axis roles.
-    pub fn render(&self, out: &mut String, registry: &ComponentRegistry, config: &CodegenConfig) {
-        self.render_single(out, registry, config);
+    pub fn render(
+        &self,
+        out: &mut String,
+        registry: &ComponentRegistry,
+        config: &CodegenConfig,
+        alias_map: &HashMap<String, String>,
+        module_fallback: &HashMap<String, String>,
+    ) {
+        self.render_single(out, registry, config, alias_map, module_fallback);
     }
 
     /// Humanized role label for an axis, or `""` for `Inline` axes (which the
@@ -573,23 +856,136 @@ impl FamilyDef {
         out: &mut String,
         registry: &ComponentRegistry,
         config: &CodegenConfig,
+        alias_map: &HashMap<String, String>,
+        module_fallback: &HashMap<String, String>,
+    ) {
+        // Resolve every axis upfront so we can inspect its components and
+        // decide on the emit strategy (flat vs. per-value explosion).
+        let resolved: Vec<(String, AxisSpec, Vec<ComponentDef>)> = self
+            .axes
+            .iter()
+            .map(|(v, s)| (v.clone(), s.clone(), resolve_axis_spec(s, registry)))
+            .collect();
+
+        // A "tiered" axis is one whose values include at least one composite
+        // — `path_segments.len() > 1`. We explode those axes: one emission per
+        // value, with the chosen path_segments spliced into the family's
+        // `path` field. Non-tiered axes stay as faceted blocks inside each
+        // emission.
+        let tiered: Vec<usize> = resolved
+            .iter()
+            .enumerate()
+            .filter(|(_, (_, _, comps))| comps.iter().any(|c| c.path_segments.len() > 1))
+            .map(|(i, _)| i)
+            .collect();
+
+        if tiered.is_empty() {
+            self.emit_one(out, config, &resolved, &[], alias_map, module_fallback);
+            return;
+        }
+
+        // Cartesian product over the tiered axes — emit one block per combo.
+        let tiered_options: Vec<&[ComponentDef]> =
+            tiered.iter().map(|&i| resolved[i].2.as_slice()).collect();
+        for picks in cartesian_indices(&tiered_options) {
+            let bindings: Vec<(usize, &ComponentDef)> = tiered
+                .iter()
+                .zip(&picks)
+                .map(|(&axis_idx, &val_idx)| (axis_idx, &resolved[axis_idx].2[val_idx]))
+                .collect();
+            self.emit_one(out, config, &resolved, &bindings, alias_map, module_fallback);
+        }
+    }
+
+    /// Emit one `<output_macro>! { … }` block.
+    ///
+    /// `bindings` is the per-emission pre-substituted slice of tiered axes:
+    /// each entry is `(axis index in resolved, chosen component)`. For those
+    /// axes:
+    ///
+    /// - The `{var}` placeholder in `type_template` is replaced by the
+    ///   component's `type_expr`.
+    /// - The `{var}` placeholder in the `path` field is *spliced* with the
+    ///   component's full `path_segments`, turning one segment into N.
+    /// - The axis is omitted from the macro's `axes` block (it's already
+    ///   resolved).
+    /// - The family `name` field is suffixed with the tiered labels to keep
+    ///   Rust identifiers unique across emissions (the consumer macro derives
+    ///   identifiers from `name`).
+    ///
+    /// Non-tiered axes render as faceted blocks just like the pre-explosion
+    /// behavior.
+    fn emit_one(
+        &self,
+        out: &mut String,
+        config: &CodegenConfig,
+        resolved: &[(String, AxisSpec, Vec<ComponentDef>)],
+        bindings: &[(usize, &ComponentDef)],
+        alias_map: &HashMap<String, String>,
+        module_fallback: &HashMap<String, String>,
     ) {
         use std::fmt::Write as _;
 
         writeln!(out, "{}! {{", config.output_macro).unwrap();
-        writeln!(out, "    {}{};", config.type_prefix, self.type_template).unwrap();
+
+        // Per-emission alias lookup order:
+        // 1. The component's own `uses` (always wins when present — disambiguates collisions).
+        // 2. The family's `uses` (e.g. inline-axis types listed only at the family level).
+        // 3. The module-level fallback (unambiguous short names from any
+        //    component/family in this module — catches the inline-axis case
+        //    where neither component nor family lists every identifier).
+        let family_local = local_alias_map(&self.uses, alias_map);
+        let alias_for_component = |comp: &ComponentDef| -> HashMap<String, String> {
+            let mut m = local_alias_map(&comp.uses, alias_map);
+            for (k, v) in &family_local {
+                m.entry(k.clone()).or_insert_with(|| v.clone());
+            }
+            for (k, v) in module_fallback {
+                m.entry(k.clone()).or_insert_with(|| v.clone());
+            }
+            m
+        };
+
+        // Substitute tiered placeholders in the type template, alias-rewriting
+        // each component's type_expr first so the final string carries the
+        // collision-safe `<short>_<N>` identifiers.
+        let mut type_template = self.type_template.clone();
+        for (axis_idx, comp) in bindings {
+            let var = &resolved[*axis_idx].0;
+            let ph = format!("{{{}}}", var);
+            let comp_aliased = substitute_aliases(&comp.type_expr, &alias_for_component(comp));
+            type_template = type_template.replace(&ph, &comp_aliased);
+        }
+        // Now alias the family-owned identifiers (e.g. `QuickSort`, `NoPivot`).
+        // Already-aliased component identifiers like `LeftLeftPartition_0` are
+        // single tokens and won't match a bare `LeftLeftPartition` in the
+        // family's local map, so double-aliasing can't happen. The module
+        // fallback fills in identifiers neither the component nor the
+        // family enumerated (inline-axis nested types).
+        let mut tpl_map = family_local.clone();
+        for (k, v) in module_fallback {
+            tpl_map.entry(k.clone()).or_insert_with(|| v.clone());
+        }
+        let type_template = substitute_aliases(&type_template, &tpl_map);
+        writeln!(out, "    {}{};", config.type_prefix, type_template).unwrap();
         out.push('\n');
 
-        for (var, spec) in &self.axes {
-            let components = resolve_axis_spec(spec, registry);
+        // Emit axes block for non-tiered axes only.
+        let bound: Vec<usize> = bindings.iter().map(|(i, _)| *i).collect();
+        for (i, (var, spec, components)) in resolved.iter().enumerate() {
+            if bound.contains(&i) {
+                continue;
+            }
             let role = Self::axis_role(spec);
             if role.is_empty() {
                 writeln!(out, "    {var} {{").unwrap();
             } else {
                 writeln!(out, "    {var} : \"{role}\" {{").unwrap();
             }
-            for comp in &components {
-                writeln!(out, "        {} => \"{}\"", comp.type_expr, comp.label).unwrap();
+            for comp in components {
+                let comp_aliased =
+                    substitute_aliases(&comp.type_expr, &alias_for_component(comp));
+                writeln!(out, "        {} => \"{}\"", comp_aliased, comp.label).unwrap();
             }
             out.push_str("    }\n");
         }
@@ -599,11 +995,102 @@ impl FamilyDef {
         let key_width = self.fields.iter().map(|(k, _)| k.len()).max().unwrap_or(0);
 
         for (key, value) in &self.fields {
-            writeln!(out, "    {key:<key_width$} = {};", value.render()).unwrap();
+            let rendered = self.render_field(key, value, config, resolved, bindings);
+            writeln!(out, "    {key:<key_width$} = {};", rendered).unwrap();
         }
 
         out.push_str("}\n\n");
     }
+
+    /// Per-emission field rendering. Two fields are special-cased:
+    ///
+    /// - The path field (named by [`CodegenConfig::path_field`]): each tiered
+    ///   `{var}` is spliced with the chosen component's path_segments.
+    /// - The `name` field: when there are tiered bindings, the chosen labels
+    ///   are joined and appended, making the per-emission name unique. The
+    ///   downstream `sort_family!` macro derives Rust identifiers from this
+    ///   name, so this is what keeps 40 explosions of the same family from
+    ///   colliding on `__sf_<family>_<idx>_<labels>` identifiers.
+    fn render_field(
+        &self,
+        key: &str,
+        value: &FieldValue,
+        config: &CodegenConfig,
+        resolved: &[(String, AxisSpec, Vec<ComponentDef>)],
+        bindings: &[(usize, &ComponentDef)],
+    ) -> String {
+        if Some(key) == config.path_field.as_deref() {
+            if let FieldValue::StringArray(segs) = value {
+                let expanded = expand_path_segments(segs, resolved, bindings);
+                let inner = expanded
+                    .iter()
+                    .map(|s| format!("\"{}\"", s))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                return format!("[{inner}]");
+            }
+        }
+        if key == "name" && !bindings.is_empty() {
+            if let FieldValue::String(base) = value {
+                let suffix = bindings
+                    .iter()
+                    .map(|(_, c)| c.label.as_str())
+                    .collect::<Vec<_>>()
+                    .join(" / ");
+                return format!("\"{base}: {suffix}\"");
+            }
+        }
+        value.render()
+    }
+}
+
+/// Substitute each `{var}` segment in `template` with the bound axis's
+/// `path_segments`. Untouched segments (literals and non-tiered placeholders)
+/// pass through verbatim — the consumer macro substitutes non-tiered
+/// placeholders on its own from the variant's leaf labels.
+fn expand_path_segments(
+    template: &[String],
+    resolved: &[(String, AxisSpec, Vec<ComponentDef>)],
+    bindings: &[(usize, &ComponentDef)],
+) -> Vec<String> {
+    let mut out = Vec::new();
+    for seg in template {
+        let placeholder = seg.strip_prefix('{').and_then(|s| s.strip_suffix('}'));
+        let mut spliced = false;
+        if let Some(var) = placeholder {
+            let bound_comp = resolved
+                .iter()
+                .enumerate()
+                .find(|(_, (v, _, _))| v == var)
+                .and_then(|(i, _)| bindings.iter().find(|(j, _)| *j == i).map(|(_, c)| *c));
+            if let Some(comp) = bound_comp {
+                out.extend(comp.path_segments.iter().cloned());
+                spliced = true;
+            }
+        }
+        if !spliced {
+            out.push(seg.clone());
+        }
+    }
+    out
+}
+
+/// Cartesian product of per-axis component index spaces. Each output is a
+/// `Vec<usize>` of the same length as `options`, picking one index from each.
+fn cartesian_indices(options: &[&[ComponentDef]]) -> Vec<Vec<usize>> {
+    let mut combos: Vec<Vec<usize>> = vec![Vec::new()];
+    for opts in options {
+        let mut next = Vec::with_capacity(combos.len() * opts.len());
+        for combo in &combos {
+            for i in 0..opts.len() {
+                let mut extended = combo.clone();
+                extended.push(i);
+                next.push(extended);
+            }
+        }
+        combos = next;
+    }
+    combos
 }
 
 /// Convert a Rust trait name like `PivotSelector` to `"pivot selector"` —
@@ -722,7 +1209,7 @@ mod tests {
         assert_eq!(c.path_field.as_deref(), Some("path"));
     }
 
-    // ── Recursive expansion / trail rule ───────────────────────────────────────
+    // ── Recursive expansion / head-count rule ──────────────────────────────────
 
     #[test]
     fn expand_role_leaves_passthrough() {
@@ -738,7 +1225,7 @@ mod tests {
     /// The mutually-recursive demo graph:
     ///   Partition  = { Lomuto, Hoare, HeapExtract<{B}: HeapBuild> }
     ///   HeapBuild  = { SimpleBuild, QuickBuild<{P}: Partition> }
-    /// Without the trail rule this loops forever
+    /// Without the head-count rule this loops forever
     /// (HeapExtract→QuickBuild→HeapExtract→…).
     fn recursive_registry() -> ComponentRegistry {
         let mut reg = ComponentRegistry::default();
@@ -767,14 +1254,15 @@ mod tests {
     }
 
     #[test]
-    fn expand_role_trail_bounded_terminates_with_expected_set() {
+    fn expand_role_head_count_default_terminates_with_expected_set() {
         let reg = recursive_registry();
+        assert_eq!(reg.max_visits(), DEFAULT_MAX_VISITS);
         let out = expand_role(&reg, "Partition");
         let types: Vec<&str> = out.iter().map(|c| c.type_expr.as_str()).collect();
-        // Six variants: two leaves, then HeapExtract over each non-looping
-        // HeapBuild. The deepest re-nest (variant 6) is forced to bottom out
-        // in SimpleBuild because the (HeapExtract, B, QuickBuild) edge is
-        // already on the path.
+        // With max_visits = 2, each composite head can be entered at most
+        // twice on a path. HeapExtract appears at the root and once inside,
+        // then can't appear again; same for QuickBuild. The deepest variants
+        // bottom out in Lomuto/Hoare leaves once both heads are at their cap.
         assert_eq!(
             types,
             vec![
@@ -784,26 +1272,150 @@ mod tests {
                 "HeapExtract<QuickBuild<Lomuto>>",
                 "HeapExtract<QuickBuild<Hoare>>",
                 "HeapExtract<QuickBuild<HeapExtract<SimpleBuild>>>",
+                "HeapExtract<QuickBuild<HeapExtract<QuickBuild<Lomuto>>>>",
+                "HeapExtract<QuickBuild<HeapExtract<QuickBuild<Hoare>>>>",
             ],
         );
     }
 
     #[test]
-    fn expand_role_prunes_the_looping_edge() {
+    fn expand_role_respects_head_visit_cap() {
         let reg = recursive_registry();
         let types: Vec<String> =
             expand_role(&reg, "Partition").into_iter().map(|c| c.type_expr).collect();
-        // The looped shape — QuickBuild nested inside a HeapExtract that is
-        // itself inside a QuickBuild — must never appear: that repeats the
-        // (HeapExtract, B, QuickBuild) edge.
-        assert!(
-            !types.iter().any(|t| t.contains("QuickBuild<HeapExtract<QuickBuild")),
-            "looped edge leaked: {types:?}",
-        );
+        // No type appears more than max_visits = 2 times on any path.
+        for t in &types {
+            assert!(
+                t.matches("HeapExtract").count() <= reg.max_visits(),
+                "HeapExtract exceeded max_visits in {t}",
+            );
+            assert!(
+                t.matches("QuickBuild").count() <= reg.max_visits(),
+                "QuickBuild exceeded max_visits in {t}",
+            );
+        }
         // Labels are templated too.
         let labels: Vec<String> =
             expand_role(&reg, "Partition").into_iter().map(|c| c.label).collect();
         assert!(labels.contains(&"heap extract<quick build<lomuto>>".to_string()));
+    }
+
+    #[test]
+    fn expand_role_max_visits_one_disables_recursion() {
+        let mut reg = recursive_registry();
+        reg.set_max_visits(1);
+        let out = expand_role(&reg, "Partition");
+        let types: Vec<&str> = out.iter().map(|c| c.type_expr.as_str()).collect();
+        // With max_visits = 1, no head can self-recurse: HeapExtract appears
+        // only at the root, QuickBuild can fill its slot but cannot wrap
+        // another HeapExtract.
+        assert_eq!(
+            types,
+            vec![
+                "Lomuto",
+                "Hoare",
+                "HeapExtract<SimpleBuild>",
+                "HeapExtract<QuickBuild<Lomuto>>",
+                "HeapExtract<QuickBuild<Hoare>>",
+            ],
+        );
+    }
+
+    #[test]
+    fn expand_role_per_head_limit_shrinks_intermediates() {
+        // Default global = 2 but cap QuickBuild to 1. HeapExtract still gets
+        // its full budget, so the cycle closes once via HeapExtract<...>, but
+        // QuickBuild — used as the intermediate — can't reappear at depth 2.
+        let mut reg = recursive_registry();
+        reg.set_head_max_visits("QuickBuild", 1);
+        let types: Vec<String> =
+            expand_role(&reg, "Partition").into_iter().map(|c| c.type_expr).collect();
+        assert_eq!(
+            types,
+            vec![
+                "Lomuto".to_string(),
+                "Hoare".to_string(),
+                "HeapExtract<SimpleBuild>".to_string(),
+                "HeapExtract<QuickBuild<Lomuto>>".to_string(),
+                "HeapExtract<QuickBuild<Hoare>>".to_string(),
+                "HeapExtract<QuickBuild<HeapExtract<SimpleBuild>>>".to_string(),
+            ],
+        );
+        // No occurrence of QuickBuild twice on any path.
+        for t in &types {
+            assert!(
+                t.matches("QuickBuild").count() <= 1,
+                "QuickBuild exceeded its per-head cap of 1 in {t}",
+            );
+        }
+    }
+
+    #[test]
+    fn expand_role_max_visits_three_allows_deeper_nesting() {
+        let mut reg = recursive_registry();
+        reg.set_max_visits(3);
+        let types: Vec<String> =
+            expand_role(&reg, "Partition").into_iter().map(|c| c.type_expr).collect();
+        // With max_visits = 3, each head may appear up to 3 times, so we get
+        // strictly more variants than the default. Sanity-check via the
+        // deepest expected shape.
+        assert!(
+            types.iter().any(|t| t.matches("HeapExtract").count() == 3),
+            "expected a triple-nested HeapExtract at max_visits=3: {types:?}",
+        );
+        for t in &types {
+            assert!(t.matches("HeapExtract").count() <= 3);
+            assert!(t.matches("QuickBuild").count() <= 3);
+        }
+    }
+
+    #[test]
+    fn alias_map_disambiguates_short_name_collision() {
+        let paths = vec![
+            "heap_sort_lib::heap_partition::LeftLeftPartition".to_string(),
+            "partition_lomuto::LeftLeftPartition".to_string(),
+            "heap_sort_lib::arity::Binary".to_string(),
+        ];
+        let map = build_alias_map(&paths);
+        // The two LeftLeftPartition paths must end up with distinct aliases —
+        // that's the whole point.
+        let a = map.get("heap_sort_lib::heap_partition::LeftLeftPartition").unwrap();
+        let b = map.get("partition_lomuto::LeftLeftPartition").unwrap();
+        assert_ne!(a, b);
+        assert!(a.starts_with("LeftLeftPartition_"));
+        assert!(b.starts_with("LeftLeftPartition_"));
+        // Singletons still take a `_<N>` suffix (uniform shape).
+        let bin = map.get("heap_sort_lib::arity::Binary").unwrap();
+        assert!(bin.starts_with("Binary_"));
+    }
+
+    #[test]
+    fn substitute_aliases_respects_identifier_boundaries() {
+        let mut map = HashMap::new();
+        map.insert("HeapExtract".to_string(), "HeapExtract_3".to_string());
+        map.insert("Binary".to_string(), "Binary_0".to_string());
+        // `HeapExtract` and `Binary` get rewritten as whole tokens; the `<`,
+        // `,`, ` ` are boundaries; `BinaryFoo` (no map entry) must NOT be
+        // partially rewritten to `Binary_0Foo`.
+        let out = substitute_aliases("HeapExtract<Binary, BinaryFoo>", &map);
+        assert_eq!(out, "HeapExtract_3<Binary_0, BinaryFoo>");
+    }
+
+    #[test]
+    fn expand_grouped_uses_splits_brace_groups() {
+        let uses = vec![
+            "heap_sort_lib::heap_sort::{HeapSort, NaryHeapSort}".to_string(),
+            "plain::Path".to_string(),
+        ];
+        let out = expand_grouped_uses(&uses);
+        assert_eq!(
+            out,
+            vec![
+                "heap_sort_lib::heap_sort::HeapSort".to_string(),
+                "heap_sort_lib::heap_sort::NaryHeapSort".to_string(),
+                "plain::Path".to_string(),
+            ],
+        );
     }
 
     #[test]

@@ -26,6 +26,15 @@ fn main() {
             c.uses.clone(),
             c.slots.clone(),
         );
+        // Per-head visit cap (metadata-declared `max_visits = N`). The head
+        // is the part of `type_expr` before the first `<`. Used to keep
+        // cycle intermediates (e.g. SequentialSet, RecursiveQuickSelect) at
+        // `1` while one anchor head (e.g. HeapExtract) keeps the default
+        // budget so the cycle wraps once instead of multiplying.
+        if let Some(n) = c.max_visits {
+            let head = c.type_expr.split('<').next().unwrap_or(&c.type_expr).trim();
+            result.registry.set_head_max_visits(head, n);
+        }
     }
 
     // Same dep-graph walk, but for families. TOML-declared families

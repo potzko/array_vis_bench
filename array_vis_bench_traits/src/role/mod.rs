@@ -11,11 +11,11 @@ pub mod quick_select;
 pub mod rotation;
 pub mod small_sort;
 
-pub use partition::{PartitionScheme, PartitionVisitor};
-pub use pivot::{DualPivotSelector, PivotInput, PivotSelector};
+pub use partition::{with_partition_scratch, PartitionScheme, PartitionVisitor};
+pub use pivot::{DualPivotSelector, NoPivot, PivotInput, PivotSelector};
 pub use quick_select::QuickSelect;
 pub use rotation::Rotation;
 pub use small_sort::{
-    insertion_sort_with, DeferredSmallSort, InsertionStrategy, NonTrivialSmallSort,
-    SetSizeSmallSort, SmallSort, SmallSortAdapter,
+    insertion_sort_with, windowed_insertion_sort_with, DeferredSmallSort, InsertionStrategy,
+    NonTrivialSmallSort, SetSizeSmallSort, SmallSort, SmallSortAdapter,
 };
