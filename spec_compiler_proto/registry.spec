@@ -18,18 +18,24 @@ component quick_sort
   type     QuickSort<{partition}, {pivot}, {small_sort}>
   label    quick[{partition}/{pivot}/{small_sort}]
   provides Sort
+  category Sort
   uses     crate::quick_sort_lib::quick_sort::QuickSort
   slot     partition Partition
   slot     pivot Pivot
   slot     small_sort SmallSort no_small_sort
 end
 
-# ── partitions (real ones are unit structs; pivot is NOT nested here) ─────────
+# ── partitions (real ones are unit structs; pivot is NOT a type arg here). The
+#    `project pivot <arity-role>` is a STRUCTURAL-ONLY param: it never appears in
+#    the emitted type, it exists so `Partition[pivot = p]` can thread an arity
+#    role onto the shared pivot variable. A partition WITHOUT a `project pivot`
+#    cannot satisfy that refinement at all — that exclusion is the arity filter.
 component LL_partition
   type     LeftLeftPartition
   label    LL
   provides Partition
   uses     crate::partition_lomuto::LeftLeftPartition
+  project  pivot PivotSingle
 end
 
 component dual_pivot_partition
@@ -37,6 +43,7 @@ component dual_pivot_partition
   label    dual
   provides Partition
   uses     crate::quick_sort_lib::yaroslavskiy::DualPivotPartition
+  project  pivot PivotDual
 end
 
 # ── pivot selectors. They provide both the generic `Pivot` role (so the flat
@@ -82,7 +89,7 @@ end
 
 component insertion
   type     InsertionSmallSort<{strategy}, {N}>
-  label    ins:{N}
+  label    ins:{strategy}:{N}
   provides SmallSort
   uses     crate::small_sort_insertion::InsertionSmallSort
   slot     strategy InsertionStrategy linear
@@ -108,6 +115,8 @@ component top_down_merge
   type     TopDownMergeSort<{small_sort}, {ping_pong}, {early_exit}>
   label    merge[{small_sort}/pp={ping_pong}/ee={early_exit}]
   provides Sort
+  category Sort
+  adaptive true
   uses     crate::merge_sort_lib::top_down::TopDownMergeSort
   slot     small_sort SmallSort no_small_sort
   const    ping_pong false
@@ -119,6 +128,7 @@ component shell_sort
   type     ShellSort<{seq}>
   label    shell[{seq}]
   provides Sort
+  category Sort
   uses     crate::shell_sort_lib::shell_sort::ShellSort
   slot     seq GapSequence knuth
 end
@@ -142,4 +152,37 @@ component ciura
   label    ciura
   provides GapSequence
   uses     crate::shell_sort_lib::sequences::Ciura
+end
+
+# ── heap sort: a single CONST generic (the d-ary arity) with a declared set of
+#    "neat values" and a default. `heap_sort(arity = *)` enumerates the set,
+#    `heap_sort(arity = ?2@1)` samples it, `heap_sort()` takes the default, and a
+#    shared `let k: Width = 4; heap_sort(arity = k)` threads one number to many
+#    uses. The registry only checks MEMBERSHIP in the set — `arity >= 2` (a
+#    relation between numbers) stays rustc's job, the redundant backstop.
+component heap_sort
+  type     HeapSort<{arity}>
+  label    heap[d={arity}]
+  provides Sort
+  category Sort
+  uses     crate::heap_lib::HeapSort
+  const    arity 2 values 2 3 4
+end
+
+# ── recursive grammar: a sort whose `inner` slot is itself a RecSort, bounded by
+#    the per-query depth knob. Self-contained role (RecSort) so it nests into a
+#    clean linear chain instead of exploding across every Sort.
+component recursive_sort
+  type     RecursiveSort<{inner}>
+  label    rec[{inner}]
+  provides Sort RecSort
+  uses     crate::recursive_lib::RecursiveSort
+  slot     inner RecSort base_case
+end
+
+component base_case
+  type     BaseCase
+  label    base
+  provides RecSort
+  uses     crate::recursive_lib::BaseCase
 end

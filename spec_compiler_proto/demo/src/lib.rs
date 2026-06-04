@@ -153,6 +153,52 @@ pub mod shell_sort_lib {
     }
 }
 
+pub mod heap_lib {
+    // A d-ary heap sort generic over a CONST arity. The registry only checks
+    // that the arity is in a declared value set; `K >= 2` (a relation between
+    // numbers) is rustc's job — here a const assertion stands in for it.
+    pub struct HeapSort<const K: usize>;
+    impl<const K: usize> HeapSort<K> {
+        pub fn sort(arr: &mut [usize]) {
+            // The value-level guard `K >= 2` is rustc's job (the second validity
+            // layer), not the registry's — an inline const assertion stands in.
+            const { assert!(K >= 2, "a d-ary heap needs arity >= 2") }
+            arr.sort_unstable();
+        }
+    }
+}
+
+pub mod recursive_lib {
+    // A recursive grammar: a sort whose `Inner` is itself a sort, bounded at
+    // GENERATION time by the query depth knob (not by anything here).
+    use super::*;
+    pub trait RecSort {
+        fn sort(arr: &mut [usize]);
+    }
+    pub struct BaseCase;
+    impl RecSort for BaseCase {
+        fn sort(arr: &mut [usize]) {
+            arr.sort_unstable();
+        }
+    }
+    impl BaseCase {
+        pub fn sort(arr: &mut [usize]) {
+            <Self as RecSort>::sort(arr)
+        }
+    }
+    pub struct RecursiveSort<Inner>(PhantomData<Inner>);
+    impl<Inner: RecSort> RecSort for RecursiveSort<Inner> {
+        fn sort(arr: &mut [usize]) {
+            Inner::sort(arr)
+        }
+    }
+    impl<Inner: RecSort> RecursiveSort<Inner> {
+        pub fn sort(arr: &mut [usize]) {
+            <Self as RecSort>::sort(arr)
+        }
+    }
+}
+
 // ── mode 1: inline one-offs. All three exercise imports; the consts and
 //    type+const combos go through the generalized const path. ────────────────
 
@@ -182,3 +228,146 @@ spec_macro::sort_spec!(ShellCiura = shell_sort< seq = ciura >);
 
 // ── mode 2: build-time enumeration (merge + shell only; see build.rs) ─────────
 include!(concat!(env!("OUT_DIR"), "/generated_sorts.rs"));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 0 — de-hollow the center. Make the SORT stub types satisfy the REAL
+// ABI (`avb_abi::{SortAlgo, HasTimeBounds, HasSpace, HasStability}`) so the
+// generated `AlgorithmEntry` rows below type-check against the faithful ABI —
+// not the old toy `(&str, fn(&mut [usize]))` table. The QuickSort impl keeps
+// the arity where-clause, so an arity-mismatched QuickSort doesn't even
+// implement `SortAlgo` (rustc backstop preserved).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Shared stub body: announce the array, sort it, replay the final positions —
+/// enough to drive any `SortLogger` and produce an observable event stream.
+fn stub_drive<U: ?Sized + avb_abi::SortLogger<usize>>(arr: &mut [usize], logger: &mut U) {
+    logger.create_array(arr.len());
+    arr.sort_unstable();
+    for (i, &v) in arr.iter().enumerate() {
+        logger.write(i, v);
+    }
+}
+
+impl<P, V, SS, U> avb_abi::SortAlgo<usize, U> for quick_sort_lib::quick_sort::QuickSort<P, V, SS>
+where
+    P: PartitionScheme,
+    V: PivotInput<Arity = P::Arity>,
+    SS: SmallSort,
+    U: ?Sized + avb_abi::SortLogger<usize>,
+{
+    fn sort(arr: &mut [usize], logger: &mut U) {
+        stub_drive(arr, logger);
+    }
+}
+impl<P, V, SS> avb_abi::HasTimeBounds for quick_sort_lib::quick_sort::QuickSort<P, V, SS> {
+    const WORST: avb_abi::Complexity = avb_abi::Complexity::from_str("O(n^2)");
+    const AVERAGE: avb_abi::Complexity = avb_abi::Complexity::from_str("O(n log n)");
+}
+impl<P, V, SS> avb_abi::HasSpace for quick_sort_lib::quick_sort::QuickSort<P, V, SS> {
+    const SPACE: avb_abi::Complexity = avb_abi::Complexity::from_str("O(log n)");
+}
+impl<P, V, SS> avb_abi::HasStability for quick_sort_lib::quick_sort::QuickSort<P, V, SS> {}
+
+impl<S, const PP: bool, const EE: bool, U> avb_abi::SortAlgo<usize, U>
+    for merge_sort_lib::top_down::TopDownMergeSort<S, PP, EE>
+where
+    S: SmallSort,
+    U: ?Sized + avb_abi::SortLogger<usize>,
+{
+    fn sort(arr: &mut [usize], logger: &mut U) {
+        stub_drive(arr, logger);
+    }
+}
+impl<S, const PP: bool, const EE: bool> avb_abi::HasTimeBounds
+    for merge_sort_lib::top_down::TopDownMergeSort<S, PP, EE>
+{
+    const WORST: avb_abi::Complexity = avb_abi::Complexity::from_str("O(n log n)");
+}
+impl<S, const PP: bool, const EE: bool> avb_abi::HasSpace
+    for merge_sort_lib::top_down::TopDownMergeSort<S, PP, EE>
+{
+    const SPACE: avb_abi::Complexity = avb_abi::Complexity::from_str("O(n)");
+}
+impl<S, const PP: bool, const EE: bool> avb_abi::HasStability
+    for merge_sort_lib::top_down::TopDownMergeSort<S, PP, EE>
+{
+    const STABLE: bool = true;
+}
+
+impl<Seq, U> avb_abi::SortAlgo<usize, U> for shell_sort_lib::shell_sort::ShellSort<Seq>
+where
+    Seq: GapSequence,
+    U: ?Sized + avb_abi::SortLogger<usize>,
+{
+    fn sort(arr: &mut [usize], logger: &mut U) {
+        stub_drive(arr, logger);
+    }
+}
+impl<Seq> avb_abi::HasTimeBounds for shell_sort_lib::shell_sort::ShellSort<Seq> {
+    const WORST: avb_abi::Complexity = avb_abi::Complexity::from_str("O(n^1.5)");
+}
+impl<Seq> avb_abi::HasSpace for shell_sort_lib::shell_sort::ShellSort<Seq> {
+    const SPACE: avb_abi::Complexity = avb_abi::Complexity::from_str("O(1)");
+}
+impl<Seq> avb_abi::HasStability for shell_sort_lib::shell_sort::ShellSort<Seq> {}
+
+impl<const K: usize, U> avb_abi::SortAlgo<usize, U> for heap_lib::HeapSort<K>
+where
+    U: ?Sized + avb_abi::SortLogger<usize>,
+{
+    fn sort(arr: &mut [usize], logger: &mut U) {
+        stub_drive(arr, logger);
+    }
+}
+impl<const K: usize> avb_abi::HasTimeBounds for heap_lib::HeapSort<K> {
+    const WORST: avb_abi::Complexity = avb_abi::Complexity::from_str("O(n log n)");
+}
+impl<const K: usize> avb_abi::HasSpace for heap_lib::HeapSort<K> {
+    const SPACE: avb_abi::Complexity = avb_abi::Complexity::from_str("O(1)");
+}
+impl<const K: usize> avb_abi::HasStability for heap_lib::HeapSort<K> {}
+
+// The REAL emit target: AlgorithmEntry rows registered into avb_abi::ALGORITHMS.
+include!(concat!(env!("OUT_DIR"), "/generated_entries.rs"));
+
+#[cfg(test)]
+mod entry_tests {
+    // "implementations + a program = one program" — now true against the real
+    // ABI shape, not a toy table.
+    #[test]
+    fn algorithms_slice_populated_and_names_unique() {
+        let names: Vec<&str> = avb_abi::ALGORITHMS.iter().map(|e| e.name).collect();
+        assert!(names.len() >= 30, "expected the SORT families, got {}", names.len());
+        let uniq: std::collections::HashSet<_> = names.iter().collect();
+        assert_eq!(uniq.len(), names.len(), "duplicate AlgorithmEntry names");
+    }
+
+    #[test]
+    fn every_entry_runs_drives_logger_and_passes_correctness() {
+        let cfg = avb_abi::RunConfig { size: 48, seed: 7 };
+        for e in avb_abi::ALGORITHMS {
+            let mut log = avb_abi::CaptureLogger::default();
+            (e.run_with_input)("random", &cfg, &mut log);
+            assert!(!log.events.is_empty(), "`{}` emitted no events", e.name);
+            (e.run_correctness)(); // panics on failure
+        }
+    }
+
+    #[test]
+    fn complexity_is_inherited_from_the_type() {
+        for e in avb_abi::ALGORITHMS {
+            assert_ne!(e.worst, avb_abi::Complexity::UNKNOWN, "`{}` has no WORST", e.name);
+        }
+    }
+
+    #[test]
+    fn categories_and_flags_are_carried() {
+        for e in avb_abi::ALGORITHMS {
+            assert_eq!(e.category, avb_abi::Category::Sort);
+        }
+        // merge declared `adaptive true` in the catalog (a per-family literal).
+        assert!(avb_abi::ALGORITHMS
+            .iter()
+            .any(|e| e.name.starts_with("merge[") && e.adaptive));
+    }
+}

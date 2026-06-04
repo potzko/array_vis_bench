@@ -93,7 +93,7 @@ pub fn resolve(node: &SpecNode, reg: &Registry) -> Result<Resolved, String> {
                     }
                 }
             }
-            ParamKind::Const { default } => {
+            ParamKind::Const { default, .. } => {
                 let value = named_consts
                     .get(&p.name)
                     .cloned()
@@ -105,6 +105,9 @@ pub fn resolve(node: &SpecNode, reg: &Registry) -> Result<Resolved, String> {
                 type_expr = type_expr.replace(&hole, &value);
                 label = label.replace(&hole, &value);
             }
+            // Structural-only: never appears in the type template, nothing to
+            // emit. Its role constraint is enforced by the solver, not here.
+            ParamKind::Project { .. } => {}
         }
     }
     Ok(Resolved { type_expr, label, uses })
