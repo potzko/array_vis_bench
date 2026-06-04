@@ -80,6 +80,11 @@ own `run_with_input` driver + correctness battery + input slice.
 
 ## Phase 0 — De-hollow the center *(in `spec_compiler_proto/`, against a faithful ABI)*
 
+> **STATUS (commit `ae1442a`):** 0.1–0.3 + 0.5 done; Sort driver (0.4) done and
+> green (`avb_abi` + `emit_entries`, 30 `AlgorithmEntry` rows run through
+> `&mut dyn SortLogger` + pass correctness). Partition/Merge/Rotation drivers
+> (rest of 0.4) are the in-flight **fleet tasks** (`fleet/*-driver` worktrees).
+
 Make "implementations + a program = one program" true against the **real** ABI
 shape, before touching the main workspace. Reversible; the proto stays detached.
 
