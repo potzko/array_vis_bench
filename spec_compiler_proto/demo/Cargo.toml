@@ -1,0 +1,13 @@
+[package]
+name = "demo"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+spec_macro = { path = "../spec_macro" }
+
+# The build-time codegen step (the extra "compile step"): build.rs runs the
+# same engine to emit a dispatch table from the text registry.
+[build-dependencies]
+spec_core = { path = "../spec_core" }
