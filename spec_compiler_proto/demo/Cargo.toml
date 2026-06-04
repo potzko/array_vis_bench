@@ -6,6 +6,12 @@ publish = false
 
 [dependencies]
 spec_macro = { path = "../spec_macro" }
+# The runtime ABI the generated AlgorithmEntry rows link against, plus the
+# registration machinery the emitted code uses (faithful: real leaf crates
+# depend on linkme + ctor too).
+avb_abi = { path = "../avb_abi" }
+linkme = "0.3"
+ctor = "0.2"
 
 # The build-time codegen step (the extra "compile step"): build.rs runs the
 # same engine to emit a dispatch table from the text registry.

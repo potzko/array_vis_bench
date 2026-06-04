@@ -3,4 +3,4 @@
 # pipeline in isolation, so it can't break the main build.
 [workspace]
 resolver = "2"
-members = ["spec_core", "spec_macro", "generator", "demo"]
+members = ["spec_core", "spec_macro", "generator", "demo", "avb_abi"]

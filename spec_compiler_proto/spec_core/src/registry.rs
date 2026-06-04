@@ -10,7 +10,18 @@ pub enum ParamKind {
     /// Filled by a literal token (integer OR `true`/`false` — real const
     /// generics include `const N: usize` and `const PING_PONG: bool`). Matched
     /// either by name (`ping_pong = true`) or positionally (`insertion<32>`).
-    Const { default: Option<String> },
+    /// `values` is the declared finite set of "neat values" a quantified const
+    /// hole (`threshold = *`/`?`) ranges over — membership only, never
+    /// arithmetic. Empty = the const is literal-only and a hole degenerates to
+    /// `default`.
+    Const { default: Option<String>, values: Vec<String> },
+    /// A REFERENCEABLE STRUCTURAL PARAM that never appears in the type template
+    /// and is never emitted. It exists only so a refinement (`Partition[pivot =
+    /// p]`) can name it and the solver can thread a role constraint through a
+    /// shared variable. A component that does NOT declare a `project pivot`
+    /// simply cannot satisfy `Partition[pivot = …]` — that exclusion *is* the
+    /// arity filter. rustc remains the redundant backstop on the emitted type.
+    Project { role: String },
 }
 
 #[derive(Debug, Clone)]
@@ -30,6 +41,33 @@ pub struct Component {
     /// `quick_sort_lib::quick_sort::QuickSort`. Mirrors the real `uses = [...]`
     /// family field. Unioned with nested children's `uses` during resolve.
     pub uses: Vec<String>,
+    /// Which `AlgorithmEntry` driver/battery this component emits as. `None`
+    /// for non-emittable components (slot fillers like pivots/partitions). The
+    /// `emit_entries` backend reads this on a query's ROOT component.
+    pub category: Option<String>,
+    /// Per-family literal (NOT compositional — can't be inherited from the
+    /// type): true if the algorithm runs faster on nearly-sorted input.
+    pub adaptive: bool,
+    /// Contract-defined upper bound on input size → `AlgorithmEntry.max_input_size`.
+    pub max_input: Option<usize>,
+}
+
+impl Component {
+    /// A referenceable param by name — any of Type/Const/Project. A refinement
+    /// `[name = …]` is only valid if this returns `Some`.
+    pub fn param(&self, name: &str) -> Option<&Param> {
+        self.params.iter().find(|p| p.name == name)
+    }
+
+    /// The role a referenceable param contributes to whatever is bound to it.
+    /// `Type`/`Project` carry a role; `Const` carries none (its constraint is
+    /// the value set, not a role).
+    pub fn param_role(&self, name: &str) -> Option<&str> {
+        match &self.param(name)?.kind {
+            ParamKind::Type { role, .. } | ParamKind::Project { role } => Some(role),
+            ParamKind::Const { .. } => None,
+        }
+    }
 }
 
 #[derive(Debug, Default)]
@@ -60,6 +98,9 @@ impl Registry {
                         provides: vec![],
                         params: vec![],
                         uses: vec![],
+                        category: None,
+                        adaptive: false,
+                        max_input: None,
                     });
                 }
                 "end" => {
@@ -77,6 +118,17 @@ impl Registry {
                         "uses" => {
                             c.uses.extend(rest.split_whitespace().map(str::to_string))
                         }
+                        "category" => c.category = Some(rest.trim().to_string()),
+                        "adaptive" => {
+                            c.adaptive = rest.trim() == "true";
+                        }
+                        "max_input" => {
+                            c.max_input = Some(
+                                rest.trim()
+                                    .parse()
+                                    .map_err(|_| err("max_input needs an integer"))?,
+                            );
+                        }
                         "slot" => {
                             let mut it = rest.split_whitespace();
                             let name = it.next().ok_or_else(|| err("slot needs a name"))?;
@@ -88,12 +140,33 @@ impl Registry {
                             });
                         }
                         "const" => {
+                            // `const <name> [<default>] [values <v>...]`
                             let mut it = rest.split_whitespace();
                             let name = it.next().ok_or_else(|| err("const needs a name"))?;
-                            let default = it.next().map(str::to_string);
+                            let mut default = None;
+                            let mut values = Vec::new();
+                            match it.next() {
+                                Some("values") => values.extend(it.map(str::to_string)),
+                                Some(d) => {
+                                    default = Some(d.to_string());
+                                    if it.next() == Some("values") {
+                                        values.extend(it.map(str::to_string));
+                                    }
+                                }
+                                None => {}
+                            }
                             c.params.push(Param {
                                 name: name.to_string(),
-                                kind: ParamKind::Const { default },
+                                kind: ParamKind::Const { default, values },
+                            });
+                        }
+                        "project" => {
+                            let mut it = rest.split_whitespace();
+                            let name = it.next().ok_or_else(|| err("project needs a name"))?;
+                            let role = it.next().ok_or_else(|| err("project needs a role"))?;
+                            c.params.push(Param {
+                                name: name.to_string(),
+                                kind: ParamKind::Project { role: role.to_string() },
                             });
                         }
                         other => return Err(err(&format!("unknown keyword `{other}`"))),
