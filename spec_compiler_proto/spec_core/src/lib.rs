@@ -34,44 +34,61 @@ mod tests {
     }
 
     #[test]
-    fn registry_parses() {
+    fn registry_parses_with_imports() {
         let r = reg();
-        assert!(r.get("quick_sort").is_some());
-        assert_eq!(r.providing("SinglePivot").len(), 3); // first, mid, med3
-        assert_eq!(r.providing("DualPivot").len(), 1); // tukey
+        let qs = r.get("quick_sort").unwrap();
+        assert_eq!(qs.uses, vec!["crate::quick_sort_lib::quick_sort::QuickSort"]);
+        assert_eq!(r.providing("Pivot").len(), 4); // first, mid, ninther, combined
     }
 
     #[test]
-    fn resolves_nested_tree() {
-        let (alias, node) = parse_spec(
-            "QuickLLMidIns32 = quick_sort< small_sort = insertion_sort<32> partition = LL_partition< pivot = middle_element > >",
+    fn type_plus_const_resolves_and_collects_uses() {
+        // insertion is a TYPE slot (strategy) + a positional CONST (threshold).
+        let (_, node) = parse_spec(
+            "quick_sort< partition = LL_partition, pivot = middle_element, small_sort = insertion< strategy = binary, 32 > >",
         )
         .unwrap();
-        assert_eq!(alias.as_deref(), Some("QuickLLMidIns32"));
         let r = resolve(&node, &reg()).unwrap();
         assert_eq!(
             r.type_expr,
-            "QuickSort<LeftLeftPartition<MiddleElement>, InsertionSmallSort<32>>"
+            "QuickSort<LeftLeftPartition, MiddleElement, InsertionSmallSort<BinaryInsertion, 32>>"
         );
-        assert_eq!(r.label, "quick[LL<mid>/ins:32]");
+        // imports unioned from every nested component
+        assert!(r.uses.contains(&"crate::quick_sort_lib::quick_sort::QuickSort".to_string()));
+        assert!(r.uses.contains(&"crate::small_sort_insertion::InsertionSmallSort".to_string()));
+        assert!(r.uses.contains(&"crate::small_sort_insertion_strategy::BinaryInsertion".to_string()));
     }
 
     #[test]
-    fn fills_defaults_recursively() {
-        let (_, node) = parse_spec("quick_sort< partition = LL_partition<> >").unwrap();
+    fn bool_consts_named_and_positional() {
+        let (_, node) =
+            parse_spec("top_down_merge< small_sort = no_small_sort, ping_pong = true, early_exit = false >").unwrap();
         let r = resolve(&node, &reg()).unwrap();
-        // pivot -> first_element, small_sort -> no_small_sort
-        assert_eq!(r.type_expr, "QuickSort<LeftLeftPartition<FirstElement>, NoSmallSort>");
-        assert_eq!(r.label, "quick[LL<first>/none]");
+        assert_eq!(r.type_expr, "TopDownMergeSort<NoSmallSort, true, false>");
     }
 
     #[test]
-    fn arity_violation_is_rejected_by_the_engine() {
-        // dual-pivot selector into a single-pivot partition: nesting + roles
-        // catch it before rustc even sees it.
-        let (_, node) = parse_spec("LL_partition< pivot = tukey_dual >").unwrap();
-        let err = resolve(&node, &reg()).unwrap_err();
-        assert!(err.contains("SinglePivot"), "got: {err}");
+    fn const_defaults_apply() {
+        let (_, node) = parse_spec("insertion<>").unwrap();
+        let r = resolve(&node, &reg()).unwrap();
+        // strategy -> linear (default), N -> 16 (default)
+        assert_eq!(r.type_expr, "InsertionSmallSort<LinearInsertion, 16>");
+    }
+
+    // ── THE HIDDEN ISSUE: flat layout cannot pre-check cross-slot arity ───────
+    #[test]
+    fn flat_quicksort_accepts_arity_mismatch_at_registry_level() {
+        // single-pivot partition + DUAL selector. Each slot is individually
+        // role-valid (LL provides Partition, ninther provides Pivot), so the
+        // per-slot role check PASSES — the registry emits a type that only
+        // rustc rejects (via `V: PivotInput<Arity = P::Arity>`). The nested
+        // layout would have made arity local; the flat layout cannot.
+        let (_, node) = parse_spec(
+            "quick_sort< partition = LL_partition, pivot = ninther_dual, small_sort = no_small_sort >",
+        )
+        .unwrap();
+        let r = resolve(&node, &reg()).expect("registry accepts it (the gap)");
+        assert_eq!(r.type_expr, "QuickSort<LeftLeftPartition, NintherDualPivot, NoSmallSort>");
     }
 
     #[test]
@@ -83,14 +100,13 @@ mod tests {
     }
 
     #[test]
-    fn enumerates_only_legal_combos() {
+    fn enumeration_overproduces_quicksort_arity_combos() {
         let specs = enumerate(&reg(), "Sort", 5);
-        // 7 partitions (LL×3 + LR×3 + dual×1) × 2 small sorts = 14
-        assert_eq!(specs.len(), 14);
-        let labels: Vec<String> = specs.iter().map(|s| resolve(s, &reg()).unwrap().label).collect();
-        assert!(labels.iter().any(|l| l == "quick[dual<tukey>/none]"));
-        assert!(labels.iter().any(|l| l == "quick[LL<mid>/ins:16]"));
-        // never a single-pivot partition with the dual selector, nor vice-versa
-        assert!(!labels.iter().any(|l| l.contains("LL<tukey>") || l.contains("dual<mid>")));
+        let quick: Vec<_> = specs.iter().filter(|s| s.name == "quick_sort").collect();
+        // partitions(2) × pivots(7: first, mid, ninther, combined{first,mid}×{first,mid}=4) × small(3) = 42
+        assert_eq!(quick.len(), 42);
+        // ...and some are arity-illegal — e.g. LL partition with the dual ninther.
+        let labels: Vec<String> = quick.iter().map(|s| resolve(s, &reg()).unwrap().label).collect();
+        assert!(labels.iter().any(|l| l == "quick[LL/ninther/none]"));
     }
 }

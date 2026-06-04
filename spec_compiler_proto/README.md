@@ -61,6 +61,59 @@ Pivot is nested under the partition, and the slot role encodes arity:
   selector appears only with the dual-pivot partition, never with LL/LR.
 - rustc is the backstop: the bad composition also fails to compile.
 
+## Findings from porting the real sort shapes
+
+Porting QuickSort / merge / shell / insertion against faithful stubs (real
+module paths + real signatures, incl. rustc-enforced arity) surfaced four issues:
+
+1. **Imports were entirely unmodeled.** Real families carry `uses = [...]`. Added
+   a `uses` directive, unioned from every nested child during `resolve`. Gotcha:
+   emitting `use X;` at crate scope for two sorts that share an import is a
+   *duplicate-import compile error* — so `emit_one` now wraps each sort in its
+   own private module and re-exports the public names. (Alternative that kills
+   the whole class: put fully-qualified paths in the `type` templates and drop
+   `uses`.)
+
+2. **Const generics are richer than "positional usize".** Real sorts have
+   `const PING_PONG: bool`, `const EARLY_EXIT: bool`, and type+const components
+   (`InsertionSmallSort<S, const N>`). Generalized consts to string literals
+   (int **or** `true`/`false`), bindable by name (`ping_pong = true`) or
+   positionally (`insertion<32>`).
+
+3. **THE headline — flat vs nested arity is a real fork, and my earlier "it's
+   just a catalog edit" was wrong.** Real `QuickSort<P, V, SS>` keeps the pivot
+   `V` as a *sibling* of the partition `P`. Two consequences:
+   - The **nested** DSL we agreed on (`partition = LL< pivot = … >`) cannot emit
+     the real sibling type under the current local-substitution engine — the
+     pivot would get embedded into the partition's type, but real
+     `LeftLeftPartition` is a unit struct. Honoring nesting needs *either* a code
+     refactor (make partitions generic over pivot) *or* an engine hoist/project
+     mechanism. It is **not** a pure catalog edit.
+   - The **flat** layout (used here, matches the real type) emits fine, but the
+     per-slot role check **cannot express the cross-slot arity constraint**
+     (single partition ⇒ single pivot). So `resolve` *accepts*
+     `quick_sort<partition=LL, pivot=ninther_dual>` and only **rustc** rejects it
+     (`<NintherDualPivot as PivotInput>::Arity = One` unsatisfied). Proven by
+     `flat_quicksort_accepts_arity_mismatch_at_registry_level` + a manual
+     compile-fail check.
+
+4. **Flat enumeration overproduces.** `enumerate("Sort")` yields 48 variants, 42
+   of them `quick_sort` — and ~half are arity-illegal, so they can't be compiled.
+   build.rs has to *drop the whole quick_sort family* before emitting (see its
+   `cargo:warning`). The real codebase sidesteps this by **splitting into
+   separate family templates** (a single-pivot family and a dual-pivot family
+   with `DualPivotPartition` hardcoded), each internally arity-consistent.
+
+### Decision points this raises
+
+- **QuickSort layout:** (a) template-split single/dual like the real code does
+  (matches reality, duplicates the small-sort axis); (b) nest + make partitions
+  generic over pivot (ergonomic, arity local, needs a code refactor); (c) add a
+  cross-slot constraint to the registry (`require partition.Arity == pivot.Arity`);
+  or (d) add a hoist/projection so a nested DSL can emit sibling type args.
+- **Imports:** fully-qualified paths in templates (no `uses`, no scoping hazard)
+  vs. `uses` + per-sort module scoping (shorter templates).
+
 ## Known prototype simplifications
 
 - The registry is `include_str!`'d into the macro/generator; in production it's
