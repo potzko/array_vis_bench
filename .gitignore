@@ -1,4 +1,6 @@
 /target
+# Cargo build artifacts in any (nested) workspace, e.g. spec_compiler_proto/target
+target/
 output.mp4
 bench_report.html
 bench_archive.json
