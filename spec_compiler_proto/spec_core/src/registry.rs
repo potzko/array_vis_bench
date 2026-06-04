@@ -7,8 +7,10 @@ pub enum ParamKind {
     /// Filled by a nested component that `provides` `role`. `default` is the
     /// component name used when the slot is omitted; `None` = required.
     Type { role: String, default: Option<String> },
-    /// Filled positionally by a bare integer literal.
-    Const { default: Option<i64> },
+    /// Filled by a literal token (integer OR `true`/`false` — real const
+    /// generics include `const N: usize` and `const PING_PONG: bool`). Matched
+    /// either by name (`ping_pong = true`) or positionally (`insertion<32>`).
+    Const { default: Option<String> },
 }
 
 #[derive(Debug, Clone)]
@@ -24,6 +26,10 @@ pub struct Component {
     pub label_tmpl: String,
     pub provides: Vec<String>,
     pub params: Vec<Param>,
+    /// Module paths to bring into scope for `type_tmpl` to resolve, e.g.
+    /// `quick_sort_lib::quick_sort::QuickSort`. Mirrors the real `uses = [...]`
+    /// family field. Unioned with nested children's `uses` during resolve.
+    pub uses: Vec<String>,
 }
 
 #[derive(Debug, Default)]
@@ -53,6 +59,7 @@ impl Registry {
                         label_tmpl: String::new(),
                         provides: vec![],
                         params: vec![],
+                        uses: vec![],
                     });
                 }
                 "end" => {
@@ -67,6 +74,9 @@ impl Registry {
                         "provides" => {
                             c.provides = rest.split_whitespace().map(str::to_string).collect()
                         }
+                        "uses" => {
+                            c.uses.extend(rest.split_whitespace().map(str::to_string))
+                        }
                         "slot" => {
                             let mut it = rest.split_whitespace();
                             let name = it.next().ok_or_else(|| err("slot needs a name"))?;
@@ -80,10 +90,7 @@ impl Registry {
                         "const" => {
                             let mut it = rest.split_whitespace();
                             let name = it.next().ok_or_else(|| err("const needs a name"))?;
-                            let default = it
-                                .next()
-                                .map(|s| s.parse::<i64>().map_err(|_| err("bad const default")))
-                                .transpose()?;
+                            let default = it.next().map(str::to_string);
                             c.params.push(Param {
                                 name: name.to_string(),
                                 kind: ParamKind::Const { default },

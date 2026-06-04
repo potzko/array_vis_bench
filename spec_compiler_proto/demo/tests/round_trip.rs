@@ -1,40 +1,60 @@
+use demo::quick_sort_lib::pivot_selectors::CombinedSelector;
+use demo::quick_sort_lib::quick_sort::QuickSort;
+use demo::quick_sort_lib::yaroslavskiy::DualPivotPartition;
+use demo::small_sort_insertion::InsertionSmallSort;
+use demo::small_sort_insertion_strategy::BinaryInsertion;
 use demo::*;
 use std::marker::PhantomData;
 
-/// Compile-time proof the alias resolved to the EXACT concrete type expected.
 fn assert_same_type<T>(_: PhantomData<T>) {}
 
 #[test]
-fn inline_macro_resolves_to_concrete_type() {
-    assert_same_type::<QuickLLMidIns32>(PhantomData::<
-        QuickSort<LeftLeftPartition<MiddleElement>, InsertionSmallSort<32>>,
+fn type_plus_const_and_imports_resolve() {
+    // QuickSingle = QuickSort<LeftLeftPartition, MiddleElement, InsertionSmallSort<BinaryInsertion, 32>>
+    assert_same_type::<QuickSingle>(PhantomData::<
+        QuickSort<
+            partition_lomuto::LeftLeftPartition,
+            pivots::MiddleElement,
+            InsertionSmallSort<BinaryInsertion, 32>,
+        >,
     >);
-    assert_eq!(QuickLLMidIns32_NAME, "quick[LL<mid>/ins:32]");
-    let mut a = [5usize, 3, 8, 1, 2];
-    QuickLLMidIns32_run(&mut a);
-    assert_eq!(a, [1, 2, 3, 5, 8]);
+    assert_eq!(QuickSingle_NAME, "quick[LL/mid/ins:32]");
 }
 
 #[test]
-fn generated_table_has_every_legal_sort() {
-    // 7 partitions × 2 small sorts
-    assert_eq!(generated::SORTS.len(), 14);
+fn arity_composed_dual_selector_resolves() {
+    // QuickDual uses CombinedSelector<FirstElement, MiddleElement> on a dual partition.
+    assert_same_type::<QuickDual>(PhantomData::<
+        QuickSort<
+            DualPivotPartition,
+            CombinedSelector<pivots::FirstElement, pivots::MiddleElement>,
+            small_sorts::NoSmallSort,
+        >,
+    >);
+    assert_eq!(QuickDual_NAME, "quick[dual/combined<first,mid>/none]");
 }
 
 #[test]
-fn every_generated_sort_runs() {
+fn bool_consts_resolve() {
+    assert_eq!(MergePP_NAME, "merge[ins:64/pp=true/ee=false]");
+}
+
+#[test]
+fn all_inline_sorts_run() {
+    for run in [QuickSingle_run, QuickDual_run, MergePP_run, ShellCiura_run] {
+        let mut a = [5usize, 3, 8, 1, 2];
+        run(&mut a);
+        assert_eq!(a, [1, 2, 3, 5, 8]);
+    }
+}
+
+#[test]
+fn generated_table_runs() {
+    // merge (3 small-sorts) + shell (3 seqs) = 6, all legal
+    assert_eq!(generated::SORTS.len(), 6);
     for (name, run) in generated::SORTS {
         let mut a = [9usize, 1, 5, 3, 7, 2, 8, 4, 6, 0];
         run(&mut a);
         assert_eq!(a, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], "sort `{name}` failed");
     }
-}
-
-#[test]
-fn generated_labels_respect_arity() {
-    let names: Vec<&str> = generated::SORTS.iter().map(|(n, _)| *n).collect();
-    assert!(names.contains(&"quick[dual<tukey>/none]"));
-    assert!(names.iter().any(|n| n.starts_with("quick[LL<mid>")));
-    // dual selector never paired with a single-pivot partition, nor vice-versa
-    assert!(!names.iter().any(|n| n.contains("LL<tukey>") || n.contains("dual<mid>")));
 }

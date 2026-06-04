@@ -62,7 +62,7 @@ fn enumerate_component(reg: &Registry, comp: &Component, depth: usize) -> Vec<Sp
             name: comp.name.clone(),
             args: combo
                 .into_iter()
-                .map(|(name, value)| Arg::Named { name, value })
+                .map(|(name, value)| Arg::Slot { name, value })
                 .collect(),
         })
         .collect()

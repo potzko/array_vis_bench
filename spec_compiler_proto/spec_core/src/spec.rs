@@ -8,14 +8,18 @@ pub struct SpecNode {
 
 #[derive(Debug, Clone)]
 pub enum Arg {
-    Named { name: String, value: SpecNode },
-    Const(i64),
+    /// A nested type slot: `partition = LL_partition<…>`.
+    Slot { name: String, value: SpecNode },
+    /// A const bound by name: `ping_pong = true`.
+    NamedConst { name: String, value: String },
+    /// A positional const literal: the `32` in `insertion<32>`.
+    Const(String),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum Tok {
     Ident(String),
-    Num(i64),
+    Num(String),
     Lt,
     Gt,
     Eq,
@@ -45,7 +49,7 @@ fn tokenize(s: &str) -> Result<Vec<Tok>, String> {
                     }
                 }
                 if w.chars().all(|c| c.is_ascii_digit()) {
-                    out.push(Tok::Num(w.parse().map_err(|_| format!("bad number `{w}`"))?));
+                    out.push(Tok::Num(w));
                 } else {
                     out.push(Tok::Ident(w));
                 }
@@ -56,13 +60,26 @@ fn tokenize(s: &str) -> Result<Vec<Tok>, String> {
     Ok(out)
 }
 
+/// Is `tok` a const literal (`32`, `true`, `false`)?
+fn const_literal(tok: &Tok) -> Option<String> {
+    match tok {
+        Tok::Num(n) => Some(n.clone()),
+        Tok::Ident(id) if id == "true" || id == "false" => Some(id.clone()),
+        _ => None,
+    }
+}
+
 /// Parse `Alias = <tree>` or just `<tree>`. Returns the optional alias and the
 /// root node.
 pub fn parse_spec(text: &str) -> Result<(Option<String>, SpecNode), String> {
     let toks = tokenize(text)?;
     let mut pos = 0;
-    // Optional `Ident =` alias prefix.
-    let alias = if matches!(toks.first(), Some(Tok::Ident(_))) && matches!(toks.get(1), Some(Tok::Eq)) {
+    // Optional `Ident =` alias prefix (but not `Ident = <literal>`, which is a
+    // bare const-bound node — disambiguated by the value not being a literal).
+    let alias = if matches!(toks.first(), Some(Tok::Ident(_)))
+        && matches!(toks.get(1), Some(Tok::Eq))
+        && toks.get(2).and_then(const_literal).is_none()
+    {
         let name = if let Some(Tok::Ident(s)) = toks.first() { s.clone() } else { unreachable!() };
         pos = 2;
         Some(name)
@@ -90,8 +107,9 @@ fn parse_node(toks: &[Tok], pos: &mut usize) -> Result<SpecNode, String> {
         while !matches!(toks.get(*pos), Some(Tok::Gt)) {
             match toks.get(*pos) {
                 None => return Err("unterminated `<`".into()),
-                Some(Tok::Num(n)) => {
-                    args.push(Arg::Const(*n));
+                // positional const literal: `insertion<32>`
+                Some(t) if const_literal(t).is_some() => {
+                    args.push(Arg::Const(const_literal(t).unwrap()));
                     *pos += 1;
                 }
                 Some(Tok::Ident(name)) => {
@@ -101,10 +119,19 @@ fn parse_node(toks: &[Tok], pos: &mut usize) -> Result<SpecNode, String> {
                         return Err(format!("slot `{name}` must be written `{name} = <value>`"));
                     }
                     *pos += 1; // consume =
-                    let value = parse_node(toks, pos)?;
-                    args.push(Arg::Named { name, value });
+                    // `name = <literal>` is a named const; `name = comp<…>` is a slot.
+                    match toks.get(*pos).and_then(const_literal) {
+                        Some(value) => {
+                            args.push(Arg::NamedConst { name, value });
+                            *pos += 1;
+                        }
+                        None => {
+                            let value = parse_node(toks, pos)?;
+                            args.push(Arg::Slot { name, value });
+                        }
+                    }
                 }
-                _ => return Err("expected a slot binding or integer".into()),
+                _ => return Err("expected a slot binding or literal".into()),
             }
             if matches!(toks.get(*pos), Some(Tok::Comma)) {
                 *pos += 1; // commas optional
