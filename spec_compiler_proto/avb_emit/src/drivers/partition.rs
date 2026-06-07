@@ -3,14 +3,13 @@
 //! A partition isn't run like a whole sort: its `run_with_input` takes a pivot
 //! input, partitions the array around it, and emits the scan; its correctness
 //! battery checks the partition invariant (everything left of the returned
-//! index ≤ pivot ≤ everything right). Model it on the real
+//! index ≤ pivot ≤ everything right). Modelled on the real
 //! `crates/registries/quick_partition_registry/src/lib.rs` `run_with_input`.
 
 use super::{DriverCode, DriverCtx};
 
 pub fn driver(ctx: &DriverCtx) -> Result<DriverCode, String> {
-    // ABI surface assumed by the emitted code (the INTEGRATOR adds these to
-    // `avb_abi`):
+    // ABI surface the emitted code targets, present in `avb_abi`:
     //   - trait avb_abi::Partitioner { fn partition(arr: &mut [usize], pivot_index: usize, logger: &mut dyn avb_abi::SortLogger<usize>) -> usize; }
     //   - fn avb_abi::run_partition_with_input(input_name: &str, config: &avb_abi::RunConfig, partition_fn: fn(&mut [usize], usize, &mut dyn avb_abi::SortLogger<usize>) -> usize, logger: &mut dyn avb_abi::SortLogger<usize>)
     //   - fn avb_abi::assert_partitions(partition_fn: fn(&mut [usize], usize, &mut dyn avb_abi::SortLogger<usize>) -> usize)

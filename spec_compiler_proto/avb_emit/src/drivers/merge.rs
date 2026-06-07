@@ -5,7 +5,7 @@
 //! combines them in place, emitting the merge. The correctness battery checks
 //! the merged output is sorted (and a permutation of the inputs).
 //!
-//! ABI surface assumed (the integrator adds it to `avb_abi`), verbatim:
+//! ABI surface the emitted code targets, present in `avb_abi`:
 //!   - `trait avb_abi::Merger { fn merge(arr: &mut [usize], mid: usize, logger: &mut dyn avb_abi::SortLogger<usize>); }`
 //!   - `fn avb_abi::run_merge_with_input(input_name: &str, config: &avb_abi::RunConfig, merge_fn: fn(&mut [usize], usize, &mut dyn avb_abi::SortLogger<usize>), logger: &mut dyn avb_abi::SortLogger<usize>)`
 //!   - `fn avb_abi::assert_merges(merge_fn: fn(&mut [usize], usize, &mut dyn avb_abi::SortLogger<usize>))`

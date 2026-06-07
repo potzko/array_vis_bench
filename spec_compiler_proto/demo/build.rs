@@ -66,16 +66,17 @@ fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     fs::write(out_dir.join("generated_sorts.rs"), code).expect("write generated_sorts.rs");
 
-    // ── Phase 0: the REAL emit target — AlgorithmEntry rows for the SORT
-    //    families, registered into avb_abi::ALGORITHMS. Same evaluator, new
-    //    backend (`emit_entries` instead of the toy `generate_table`).
+    // ── Phase 0: the REAL emit target — AlgorithmEntry rows registered into
+    //    avb_abi::ALGORITHMS. The generic compiler (`spec_core`) emits the module
+    //    scaffold; the array-domain backend (`avb_emit::ArrayBackend`) supplies
+    //    each entry's registration body. Same evaluator, domain-pluggable emit.
     let mut entries = Vec::new();
     for (name, query) in ENTRY_QUERIES {
         let q = spec_core::parse_query(query).unwrap_or_else(|e| panic!("entry query `{name}`: {e}"));
         let out = spec_core::solve(&q, &reg).unwrap_or_else(|e| panic!("solve `{name}`: {e}"));
         entries.extend(out.sorts);
     }
-    let entry_code = spec_core::emit_entries(&reg, &entries, &spec_core::EmitConfig::default())
+    let entry_code = spec_core::emit_entries(&reg, &entries, &avb_emit::ArrayBackend::default())
         .expect("emit_entries");
     println!("cargo:warning=emitted {} AlgorithmEntry rows", entries.len());
     fs::write(out_dir.join("generated_entries.rs"), entry_code).expect("write generated_entries.rs");
