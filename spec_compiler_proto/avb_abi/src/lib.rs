@@ -148,8 +148,8 @@ pub fn assert_sorts(sort_dyn: fn(&mut [usize], &mut dyn SortLogger<usize>)) {
 // ── the non-Sort category contracts ──────────────────────────────────────────
 // Each mirrors `SortAlgo` in spirit (a single static entry point taking the
 // array + the op's parameter + a `&mut dyn SortLogger`), but with the shape the
-// category actually needs. The three emit drivers
-// (`spec_core::emit_drivers::{partition,merge,rotation}`) generate code against
+// category actually needs. The array-domain emit backend's drivers
+// (`avb_emit::drivers::{partition,merge,rotation}`) generate code against
 // exactly these signatures.
 
 /// `Category::Partition` contract. Partitions `arr` around the value at

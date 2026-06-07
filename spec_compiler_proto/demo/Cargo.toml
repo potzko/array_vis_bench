@@ -14,6 +14,8 @@ linkme = "0.3"
 ctor = "0.2"
 
 # The build-time codegen step (the extra "compile step"): build.rs runs the
-# same engine to emit a dispatch table from the text registry.
+# compiler (`spec_core`) to solve the queries, and the array-domain emit backend
+# (`avb_emit`) to turn each solved type into an `AlgorithmEntry` registration.
 [build-dependencies]
 spec_core = { path = "../spec_core" }
+avb_emit = { path = "../avb_emit" }

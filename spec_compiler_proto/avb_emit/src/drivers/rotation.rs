@@ -1,4 +1,4 @@
-//! `Category::Rotation` driver — FLEET TASK.
+//! `Category::Rotation` driver.
 //!
 //! A rotation takes an array + a split point `mid` and rotates the two blocks
 //! `arr[..mid]` and `arr[mid..]` (a left-rotation by `mid`), emitting the
@@ -6,8 +6,7 @@
 //! shift. Modelled on the real `ROTATION_INPUTS` shape
 //! (`generate -> (Vec<usize>, mid)`).
 //!
-//! The ABI surface assumed here does NOT exist yet — the integrator will add it
-//! to `avb_abi`. The exact signatures this driver assumes, verbatim:
+//! ABI surface the emitted code targets, present in `avb_abi`:
 //!   - trait avb_abi::Rotator { fn rotate(arr: &mut [usize], mid: usize, logger: &mut dyn avb_abi::SortLogger<usize>); }
 //!   - fn avb_abi::run_rotation_with_input(input_name: &str, config: &avb_abi::RunConfig, rotate_fn: fn(&mut [usize], usize, &mut dyn avb_abi::SortLogger<usize>), logger: &mut dyn avb_abi::SortLogger<usize>)
 //!   - fn avb_abi::assert_rotations(rotate_fn: fn(&mut [usize], usize, &mut dyn avb_abi::SortLogger<usize>))

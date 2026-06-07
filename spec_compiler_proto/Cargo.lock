@@ -10,6 +10,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "avb_emit"
+version = "0.0.0"
+dependencies = [
+ "spec_core",
+]
+
+[[package]]
 name = "ctor"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -24,6 +31,7 @@ name = "demo"
 version = "0.0.0"
 dependencies = [
  "avb_abi",
+ "avb_emit",
  "ctor",
  "linkme",
  "spec_core",

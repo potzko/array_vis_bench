@@ -7,21 +7,23 @@
 //!   - [`registry`]  stage 1 — load the text catalog (the specification contract)
 //!   - [`spec`]      stage 2 — parse ONE spec tree OR a constraint-language query
 //!   - [`resolve`]   stage 3 — name resolution + defaults + role/arity checks
-//!   - [`emit`]      stage 4 — produce Rust source
+//!   - [`emit`]      stage 4 — produce Rust source (structural scaffold only)
+//!   - [`backend`]   the domain seam — `emit` defers each entry's registration body to an [`EmitBackend`]
 //!   - [`enumerate`] stage 0 — naive flat enumeration (the contrast baseline)
 //!   - [`solve`]     stage 0′ — the typed constraint solver: a query → a SET of ground trees (pinned / partial / full are one code path)
 //!
 //! rustc then performs stage 5 (full type checking + monomorphization).
 
+pub mod backend;
 pub mod emit;
-pub mod emit_drivers;
 pub mod enumerate;
 pub mod registry;
 pub mod resolve;
 pub mod solve;
 pub mod spec;
 
-pub use emit::{emit_entries, emit_one, generate_table, EmitConfig};
+pub use backend::{EmitBackend, EntryCtx};
+pub use emit::{emit_entries, emit_one, generate_table};
 pub use enumerate::enumerate;
 pub use registry::{Component, Param, ParamKind, Registry};
 pub use resolve::{resolve, Resolved};

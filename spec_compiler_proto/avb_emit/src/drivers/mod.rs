@@ -1,10 +1,10 @@
 //! Per-category emit drivers. Each `Category` emits a different `run_with_input`
 //! body + correctness battery (a Sort runs on an array; a Partition takes a
-//! pivot and emits its scan; a Merge takes two runs; …). One file per category
-//! keeps these **disjoint** so they can be filled in by parallel agents — see
-//! `docs/todo.md` Phase 0.4 / "Parallelization". The dispatch + the module
-//! declarations below are owned by the integrator; a fleet task edits only its
-//! own `<category>.rs` (and adds its stub algorithm + a test).
+//! pivot and emits its scan; a Merge combines the two already-sorted halves of
+//! one array split at `mid`; a Rotation left-rotates the two blocks of one array
+//! by `mid`). One file per category keeps these disjoint. They are the
+//! domain-specific half of emission: they know how a leaf type is invoked
+//! through the `avb_abi` contract, knowledge the generic compiler must not hold.
 
 pub mod merge;
 pub mod partition;
@@ -33,7 +33,7 @@ pub fn driver(category: &str, ctx: &DriverCtx) -> Result<DriverCode, String> {
         "Merge" => merge::driver(ctx),
         "Rotation" => rotation::driver(ctx),
         other => Err(format!(
-            "no emit driver for category `{other}` — add `spec_core/src/emit_drivers/\
+            "no emit driver for category `{other}` — add `avb_emit/src/drivers/\
              {}.rs` and an arm in `driver()`",
             other.to_lowercase()
         )),
