@@ -186,3 +186,49 @@ component base_case
   provides RecSort
   uses     crate::recursive_lib::BaseCase
 end
+
+# ── non-Sort categories. Each is a ROOT algorithm in its own category (not a
+#    slot filler), so it carries a `category` and is emitted as its own
+#    AlgorithmEntry through the matching emit driver. A bare role hole
+#    (`let pa: PartitionAlgo = .;`) enumerates every component providing it. ─────
+
+component lomuto_partition
+  type     LomutoPartition
+  label    partition[lomuto]
+  provides PartitionAlgo
+  category Partition
+  uses     crate::partition_ops::LomutoPartition
+end
+
+component hoare_partition
+  type     HoarePartition
+  label    partition[hoare]
+  provides PartitionAlgo
+  category Partition
+  uses     crate::partition_ops::HoarePartition
+end
+
+component two_finger_merge
+  type     TwoFingerMerge
+  label    merge-op[two-finger]
+  provides MergeAlgo
+  category Merge
+  adaptive true
+  uses     crate::merge_ops::TwoFingerMerge
+end
+
+component reversal_rotation
+  type     ReversalRotation
+  label    rotation[reversal]
+  provides RotationAlgo
+  category Rotation
+  uses     crate::rotation_ops::ReversalRotation
+end
+
+component juggling_rotation
+  type     JugglingRotation
+  label    rotation[juggling]
+  provides RotationAlgo
+  category Rotation
+  uses     crate::rotation_ops::JugglingRotation
+end
