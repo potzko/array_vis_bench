@@ -81,9 +81,11 @@ fn main() {
     fs::write(out_dir.join("generated_entries.rs"), entry_code).expect("write generated_entries.rs");
 }
 
-/// The SORT-category families, emitted as real `AlgorithmEntry` rows. (The other
-/// categories — Partition/Merge/Rotation — are the parallel fleet tasks; their
-/// drivers are unimplemented stubs in `spec_core::emit_drivers`.)
+/// Families emitted as real `AlgorithmEntry` rows. The first four are the SORT
+/// category; the last three exercise the Partition/Merge/Rotation emit drivers
+/// — same evaluator, different per-category `run_with_input`/battery bodies. A
+/// bare role hole (`let pa: PartitionAlgo = .;`) enumerates every component
+/// providing that role.
 const ENTRY_QUERIES: &[(&str, &str)] = &[
     (
         "quick",
@@ -97,4 +99,7 @@ const ENTRY_QUERIES: &[(&str, &str)] = &[
     ),
     ("shell", "let sh: Sort = shell_sort(seq = .);"),
     ("heap", "let h: Sort = heap_sort(arity = *);"),
+    ("partition", "let pa: PartitionAlgo = .;"),
+    ("merge_op", "let mo: MergeAlgo = .;"),
+    ("rotation", "let ro: RotationAlgo = .;"),
 ];

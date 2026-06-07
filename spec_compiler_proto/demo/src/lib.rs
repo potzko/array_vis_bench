@@ -199,6 +199,25 @@ pub mod recursive_lib {
     }
 }
 
+// ── non-Sort category leaves: standalone partition / merge / rotation
+//    operations. Unlike the slot-filler `PartitionScheme` above (a type arg of
+//    QuickSort), these are ROOT algorithms in their own categories — each
+//    emitted as its own `AlgorithmEntry`, driven through the matching ABI
+//    contract (`avb_abi::{Partitioner, Merger, Rotator}`). ──────────────────────
+pub mod partition_ops {
+    pub struct LomutoPartition;
+    pub struct HoarePartition;
+}
+
+pub mod merge_ops {
+    pub struct TwoFingerMerge;
+}
+
+pub mod rotation_ops {
+    pub struct ReversalRotation;
+    pub struct JugglingRotation;
+}
+
 // ── mode 1: inline one-offs. All three exercise imports; the consts and
 //    type+const combos go through the generalized const path. ────────────────
 
@@ -327,6 +346,189 @@ impl<const K: usize> avb_abi::HasSpace for heap_lib::HeapSort<K> {
 }
 impl<const K: usize> avb_abi::HasStability for heap_lib::HeapSort<K> {}
 
+// ── non-Sort category impls: each leaf satisfies its category contract
+//    (`Partitioner`/`Merger`/`Rotator`) plus the same annotation traits the
+//    `AlgorithmEntry` complexity fields inherit from. The emit drivers generate
+//    `<Ty as avb_abi::Partitioner>::partition(...)` etc. against these. ──────────
+
+impl avb_abi::Partitioner for partition_ops::LomutoPartition {
+    fn partition(arr: &mut [usize], pivot_index: usize, logger: &mut dyn avb_abi::SortLogger<usize>) -> usize {
+        logger.create_array(arr.len());
+        let n = arr.len();
+        if n == 0 {
+            return 0;
+        }
+        let pivot_index = pivot_index.min(n - 1);
+        arr.swap(pivot_index, n - 1);
+        logger.swap(pivot_index, n - 1);
+        let pivot = arr[n - 1];
+        let mut store = 0;
+        for i in 0..n - 1 {
+            logger.compare(i, n - 1);
+            if arr[i] < pivot {
+                arr.swap(i, store);
+                logger.swap(i, store);
+                store += 1;
+            }
+        }
+        arr.swap(store, n - 1);
+        logger.swap(store, n - 1);
+        store
+    }
+}
+impl avb_abi::HasTimeBounds for partition_ops::LomutoPartition {
+    const WORST: avb_abi::Complexity = avb_abi::Complexity::from_str("O(n)");
+}
+impl avb_abi::HasSpace for partition_ops::LomutoPartition {
+    const SPACE: avb_abi::Complexity = avb_abi::Complexity::from_str("O(1)");
+}
+impl avb_abi::HasStability for partition_ops::LomutoPartition {}
+
+// A distinct scan (right-to-left, pivot parked at the front) that lands the
+// pivot at its sorted index with the same invariant — a genuinely different
+// code path, hence its own entry.
+impl avb_abi::Partitioner for partition_ops::HoarePartition {
+    fn partition(arr: &mut [usize], pivot_index: usize, logger: &mut dyn avb_abi::SortLogger<usize>) -> usize {
+        logger.create_array(arr.len());
+        let n = arr.len();
+        if n == 0 {
+            return 0;
+        }
+        let pivot_index = pivot_index.min(n - 1);
+        arr.swap(pivot_index, 0);
+        logger.swap(pivot_index, 0);
+        let pivot = arr[0];
+        let mut store = n - 1;
+        for i in (1..n).rev() {
+            logger.compare(i, 0);
+            if arr[i] > pivot {
+                arr.swap(i, store);
+                logger.swap(i, store);
+                store -= 1;
+            }
+        }
+        arr.swap(store, 0);
+        logger.swap(store, 0);
+        store
+    }
+}
+impl avb_abi::HasTimeBounds for partition_ops::HoarePartition {
+    const WORST: avb_abi::Complexity = avb_abi::Complexity::from_str("O(n)");
+}
+impl avb_abi::HasSpace for partition_ops::HoarePartition {
+    const SPACE: avb_abi::Complexity = avb_abi::Complexity::from_str("O(1)");
+}
+impl avb_abi::HasStability for partition_ops::HoarePartition {}
+
+impl avb_abi::Merger for merge_ops::TwoFingerMerge {
+    fn merge(arr: &mut [usize], mid: usize, logger: &mut dyn avb_abi::SortLogger<usize>) {
+        logger.create_array(arr.len());
+        let n = arr.len();
+        let mid = mid.min(n);
+        let mut merged = Vec::with_capacity(n);
+        let (mut i, mut ii) = (0usize, mid);
+        while i < mid && ii < n {
+            logger.compare(i, ii);
+            if arr[i] <= arr[ii] {
+                merged.push(arr[i]);
+                i += 1;
+            } else {
+                merged.push(arr[ii]);
+                ii += 1;
+            }
+        }
+        merged.extend_from_slice(&arr[i..mid]);
+        merged.extend_from_slice(&arr[ii..n]);
+        for (i, &v) in merged.iter().enumerate() {
+            arr[i] = v;
+            logger.write(i, v);
+        }
+    }
+}
+impl avb_abi::HasTimeBounds for merge_ops::TwoFingerMerge {
+    const WORST: avb_abi::Complexity = avb_abi::Complexity::from_str("O(n)");
+}
+impl avb_abi::HasSpace for merge_ops::TwoFingerMerge {
+    const SPACE: avb_abi::Complexity = avb_abi::Complexity::from_str("O(n)");
+}
+impl avb_abi::HasStability for merge_ops::TwoFingerMerge {
+    const STABLE: bool = true;
+}
+
+impl avb_abi::Rotator for rotation_ops::ReversalRotation {
+    fn rotate(arr: &mut [usize], mid: usize, logger: &mut dyn avb_abi::SortLogger<usize>) {
+        logger.create_array(arr.len());
+        let n = arr.len();
+        if n == 0 {
+            return;
+        }
+        let mid = mid % n;
+        arr[..mid].reverse();
+        arr[mid..].reverse();
+        arr.reverse();
+        for (i, &v) in arr.iter().enumerate() {
+            logger.write(i, v);
+        }
+    }
+}
+impl avb_abi::HasTimeBounds for rotation_ops::ReversalRotation {
+    const WORST: avb_abi::Complexity = avb_abi::Complexity::from_str("O(n)");
+}
+impl avb_abi::HasSpace for rotation_ops::ReversalRotation {
+    const SPACE: avb_abi::Complexity = avb_abi::Complexity::from_str("O(1)");
+}
+impl avb_abi::HasStability for rotation_ops::ReversalRotation {}
+
+/// Juggling (cyclic-leader) rotation: `gcd(mid, n)` independent cycles, each
+/// element moved exactly once — same result, distinct move pattern.
+impl avb_abi::Rotator for rotation_ops::JugglingRotation {
+    fn rotate(arr: &mut [usize], mid: usize, logger: &mut dyn avb_abi::SortLogger<usize>) {
+        logger.create_array(arr.len());
+        let n = arr.len();
+        if n == 0 {
+            return;
+        }
+        let mid = mid % n;
+        if mid == 0 {
+            return;
+        }
+        let cycles = gcd(mid, n);
+        for i in 0..cycles {
+            let temp = arr[i];
+            let mut ii = i;
+            loop {
+                let mut iii = ii + mid;
+                if iii >= n {
+                    iii -= n;
+                }
+                if iii == i {
+                    break;
+                }
+                arr[ii] = arr[iii];
+                logger.write(ii, arr[ii]);
+                ii = iii;
+            }
+            arr[ii] = temp;
+            logger.write(ii, temp);
+        }
+    }
+}
+impl avb_abi::HasTimeBounds for rotation_ops::JugglingRotation {
+    const WORST: avb_abi::Complexity = avb_abi::Complexity::from_str("O(n)");
+}
+impl avb_abi::HasSpace for rotation_ops::JugglingRotation {
+    const SPACE: avb_abi::Complexity = avb_abi::Complexity::from_str("O(1)");
+}
+impl avb_abi::HasStability for rotation_ops::JugglingRotation {}
+
+fn gcd(a: usize, b: usize) -> usize {
+    if b == 0 {
+        a
+    } else {
+        gcd(b, a % b)
+    }
+}
+
 // The REAL emit target: AlgorithmEntry rows registered into avb_abi::ALGORITHMS.
 include!(concat!(env!("OUT_DIR"), "/generated_entries.rs"));
 
@@ -362,12 +564,33 @@ mod entry_tests {
 
     #[test]
     fn categories_and_flags_are_carried() {
-        for e in avb_abi::ALGORITHMS {
-            assert_eq!(e.category, avb_abi::Category::Sort);
+        use avb_abi::Category::*;
+        // Every category that has a query is represented — the catalog's
+        // `category` field flows through the right emit driver to the entry.
+        for cat in [Sort, Partition, Merge, Rotation] {
+            assert!(
+                avb_abi::ALGORITHMS.iter().any(|e| e.category == cat),
+                "no entry for category {cat:?}"
+            );
         }
+        // QuickSelect/SmallSort have no query yet — none should appear.
+        assert!(avb_abi::ALGORITHMS
+            .iter()
+            .all(|e| !matches!(e.category, SmallSort | QuickSelect)));
         // merge declared `adaptive true` in the catalog (a per-family literal).
         assert!(avb_abi::ALGORITHMS
             .iter()
             .any(|e| e.name.starts_with("merge[") && e.adaptive));
+        // Category names line up with the labels the catalog assigned them.
+        for e in avb_abi::ALGORITHMS {
+            let ok = match e.category {
+                Sort => true,
+                Partition => e.name.starts_with("partition["),
+                Merge => e.name.starts_with("merge-op["),
+                Rotation => e.name.starts_with("rotation["),
+                _ => false,
+            };
+            assert!(ok, "`{}` mislabelled for category {:?}", e.name, e.category);
+        }
     }
 }

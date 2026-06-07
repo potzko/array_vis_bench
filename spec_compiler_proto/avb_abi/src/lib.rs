@@ -145,6 +145,125 @@ pub fn assert_sorts(sort_dyn: fn(&mut [usize], &mut dyn SortLogger<usize>)) {
     }
 }
 
+// ── the non-Sort category contracts ──────────────────────────────────────────
+// Each mirrors `SortAlgo` in spirit (a single static entry point taking the
+// array + the op's parameter + a `&mut dyn SortLogger`), but with the shape the
+// category actually needs. The three emit drivers
+// (`spec_core::emit_drivers::{partition,merge,rotation}`) generate code against
+// exactly these signatures.
+
+/// `Category::Partition` contract. Partitions `arr` around the value at
+/// `pivot_index`, emitting the scan, and returns the pivot's final index.
+pub trait Partitioner {
+    fn partition(arr: &mut [usize], pivot_index: usize, logger: &mut dyn SortLogger<usize>) -> usize;
+}
+
+/// `Category::Merge` contract. `arr[..mid]` and `arr[mid..]` are each already
+/// sorted; merges them in place, emitting the merge.
+pub trait Merger {
+    fn merge(arr: &mut [usize], mid: usize, logger: &mut dyn SortLogger<usize>);
+}
+
+/// `Category::Rotation` contract. Left-rotates `arr` by `mid` (swaps the two
+/// blocks `arr[..mid]` / `arr[mid..]`), emitting the moves.
+pub trait Rotator {
+    fn rotate(arr: &mut [usize], mid: usize, logger: &mut dyn SortLogger<usize>);
+}
+
+/// Build a partition input (array + a mid-ish pivot index) and run the op,
+/// emitting every event on `logger`. Mirrors `run_sort_with_input`'s shape.
+pub fn run_partition_with_input(
+    _input_name: &str,
+    config: &RunConfig,
+    partition_fn: fn(&mut [usize], usize, &mut dyn SortLogger<usize>) -> usize,
+    logger: &mut dyn SortLogger<usize>,
+) {
+    let n = config.size.max(1);
+    let mut arr: Vec<usize> = (0..config.size)
+        .map(|i| (i.wrapping_mul(2_654_435_761) ^ config.seed as usize) % n)
+        .collect();
+    let pivot_index = arr.len() / 2;
+    partition_fn(&mut arr, pivot_index, logger);
+}
+
+/// Build two sorted halves and merge them, emitting the merge on `logger`.
+pub fn run_merge_with_input(
+    _input_name: &str,
+    config: &RunConfig,
+    merge_fn: fn(&mut [usize], usize, &mut dyn SortLogger<usize>),
+    logger: &mut dyn SortLogger<usize>,
+) {
+    let n = config.size.max(1);
+    let mut arr: Vec<usize> = (0..config.size)
+        .map(|i| (i.wrapping_mul(2_654_435_761) ^ config.seed as usize) % n)
+        .collect();
+    let mid = arr.len() / 2;
+    arr[..mid].sort_unstable();
+    arr[mid..].sort_unstable();
+    merge_fn(&mut arr, mid, logger);
+}
+
+/// Build an input and rotate it, emitting the moves on `logger`.
+pub fn run_rotation_with_input(
+    _input_name: &str,
+    config: &RunConfig,
+    rotate_fn: fn(&mut [usize], usize, &mut dyn SortLogger<usize>),
+    logger: &mut dyn SortLogger<usize>,
+) {
+    let n = config.size.max(1);
+    let mut arr: Vec<usize> = (0..config.size)
+        .map(|i| (i.wrapping_mul(2_654_435_761) ^ config.seed as usize) % n)
+        .collect();
+    let mid = arr.len() / 3;
+    rotate_fn(&mut arr, mid, logger);
+}
+
+/// Correctness battery for `Category::Partition`: after partitioning around the
+/// value at the pivot index, everything left of the returned index is ≤ pivot
+/// and everything right is ≥ pivot.
+pub fn assert_partitions(partition_fn: fn(&mut [usize], usize, &mut dyn SortLogger<usize>) -> usize) {
+    for &n in &[1usize, 2, 7, 33, 128] {
+        let mut arr: Vec<usize> = (0..n).rev().collect();
+        let pivot_index = n / 2;
+        let p = partition_fn(&mut arr, pivot_index, &mut NoOpLogger);
+        assert!(p < n, "pivot index {p} out of bounds at n={n}");
+        let pivot = arr[p];
+        assert!(arr[..p].iter().all(|&x| x <= pivot), "left of pivot not ≤ pivot at n={n}");
+        assert!(arr[p + 1..].iter().all(|&x| x >= pivot), "right of pivot not ≥ pivot at n={n}");
+    }
+}
+
+/// Correctness battery for `Category::Merge`: merging two sorted halves yields a
+/// fully sorted permutation of the inputs.
+pub fn assert_merges(merge_fn: fn(&mut [usize], usize, &mut dyn SortLogger<usize>)) {
+    for &n in &[0usize, 1, 2, 7, 33, 128] {
+        let mut arr: Vec<usize> = (0..n).map(|i| (i * 7) % n.max(1)).collect();
+        let mid = n / 2;
+        arr[..mid].sort_unstable();
+        arr[mid..].sort_unstable();
+        let mut expected = arr.clone();
+        expected.sort_unstable();
+        merge_fn(&mut arr, mid, &mut NoOpLogger);
+        assert_eq!(arr, expected, "merge did not produce a sorted permutation at n={n}");
+    }
+}
+
+/// Correctness battery for `Category::Rotation`: rotating by `mid` equals the
+/// reference `rotate_left(mid)`.
+pub fn assert_rotations(rotate_fn: fn(&mut [usize], usize, &mut dyn SortLogger<usize>)) {
+    for &n in &[0usize, 1, 2, 7, 33, 128] {
+        for &mid in &[0usize, 1, n / 3, n / 2, n] {
+            let mut arr: Vec<usize> = (0..n).collect();
+            let mut expected = arr.clone();
+            if n > 0 {
+                expected.rotate_left(mid % n);
+            }
+            rotate_fn(&mut arr, mid, &mut NoOpLogger);
+            assert_eq!(arr, expected, "rotation by {mid} wrong at n={n}");
+        }
+    }
+}
+
 /// The menu-tree side effect (stub of `register_sort_variant`): records the
 /// path so a test could inspect the picker tree. Faithful shape, minimal body.
 static MENU: Mutex<Vec<String>> = Mutex::new(Vec::new());
