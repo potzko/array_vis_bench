@@ -1,0 +1,17 @@
+[package]
+name = "spec_core"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# The core engine is pure std (no syn/quote) so BOTH the proc-macro front-end and
+# the standalone generator binary share it. The pest-based AVBS *query* parser is
+# an OPTIONAL frontend behind `pest-frontend` — the default build (proc-macro +
+# build scripts) stays lean and dependency-free; only the language tooling and
+# tests opt in.
+[features]
+pest-frontend = ["dep:pest", "dep:pest_derive"]
+
+[dependencies]
+pest = { version = "2.7", optional = true }
+pest_derive = { version = "2.7", optional = true }

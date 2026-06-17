@@ -1,0 +1,15 @@
+# The array-domain emit backend, targeting the LIVE runtime ABI (not the
+# `avb_abi` stub the prototype used). Turns a `spec_core`-resolved algorithm
+# type into the same `AlgorithmEntry` block `sort_registry_macro::sort_family!`
+# emits. Build-time only; depends on the compiler (`spec_core`) and references
+# the real ABI crates purely as text, so the arrows point one way
+# (spec_emit -> spec_core) and no runtime crate gains a compile-time dependency.
+[package]
+name = "spec_emit"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+# The generic constraint compiler — the single source of truth for the engine.
+spec_core = { path = "../spec_core" }

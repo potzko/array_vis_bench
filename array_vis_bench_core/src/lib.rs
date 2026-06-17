@@ -10,4 +10,11 @@
 pub mod array_gen;
 pub mod bench_registry;
 pub mod inputs;
+/// The `Main` consumer abstraction (visualise / correctness / benchmark over a
+/// set of registered algorithms) — the Rust counterpart of AVBS `consumers`.
+pub mod mains;
+/// Per-kind correctness batteries as a trait (`CorrectnessSuite`), one impl per
+/// first-class algorithm kind — the seam the spec emit dispatches each leaf's
+/// `run_correctness` through.
+pub mod suites;
 pub mod visualise;

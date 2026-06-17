@@ -1,0 +1,88 @@
+// ─────────────────────────────────────────────────────────────────────────────
+//  AVBS — the query language (the surface the user authors).
+//
+//  The model: the user authors a big QUERY → the compiler generates code → the
+//  code generates the CATALOG → consumers (visualiser, correctness, benchmark)
+//  read the catalog. This grammar formalizes the QUERY only. The generated
+//  CATALOG stays line-oriented in `registry.rs` and is out of scope here (it
+//  needs a different, newline-significant whitespace model).
+//
+//  The query is FREE-FORM: whitespace, including newlines, is insignificant, so
+//  type-applications can span lines. Statements are `Name: Type = Value` with no
+//  `let` and no `;` — the value grammar is self-delimiting, so the next binding
+//  is found structurally.
+//
+//  North-star this must accept:
+//
+//    ShellSorts: SortingAlgorithm = SortingAlgorithm<ShellSort<_>>
+//
+//    QuickSorts: _ = SortingAlgorithm<QuickSort<
+//        partition = _ as p where (
+//            StandardPartition<pivot = _ as pp>
+//          | DualPivotPartition<pivot = (_ - {Combined<_, _>}) as pp>
+//          | HeapExtractionPartition<>
+//        ),
+//        pivot     = pp,
+//        smallSort = _ - {Insertion<16>},
+//    >>
+//
+//    Sorts:     List<SortingAlgorithm> = [ShellSorts, QuickSorts]
+//    consumers: List<Mains<Sorts>>     = [visualiser, correctness, benchmark]
+// ─────────────────────────────────────────────────────────────────────────────
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT    = _{ ("//" | "#") ~ (!NEWLINE ~ ANY)* | "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+
+ident   = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+integer = @{ ASCII_DIGIT+ }
+bool    = @{ ("true" | "false") ~ !(ASCII_ALPHANUMERIC | "_") }
+literal =  { integer | bool }
+
+// A query: optional directives, then one or more bindings.
+query     = { SOI ~ directive* ~ binding+ ~ EOI }
+directive = _{ depth_dir | take_dir }
+depth_dir = { "depth" ~ integer }            // recursion bound
+take_dir  = { integer ~ "of" ~ seed? }       // sample N whole results
+
+// `Name: Type[refinements] = Value` — the `[param = value, …]` refinements are
+// optional and constrain the binding's role (the solver threads them as shared
+// role constraints, e.g. `Partition[pivot = p]`).
+binding     = { ident ~ ":" ~ type_ann ~ refinements? ~ "=" ~ value }
+refinements = { "[" ~ refinement ~ ("," ~ refinement)* ~ ","? ~ "]" }
+refinement  = { ident ~ "=" ~ value }
+
+// Type annotations: roles, `_`, generic roles (List<…>), intersections (A & B).
+type_ann   = { type_atom ~ ("&" ~ type_atom)* }
+type_atom  = _{ underscore | type_app }
+type_app   = { ident ~ ("<" ~ type_ann ~ ("," ~ type_ann)* ~ ">")? }
+underscore = @{ "_" ~ !(ASCII_ALPHANUMERIC | "_") }
+
+// value := unary [as name] [where (alts)]
+value        = { unary ~ capture? ~ where_clause? }
+capture      = { "as" ~ ident }
+where_clause = { "where" ~ "(" ~ value ~ ("|" ~ value)* ~ ")" }
+
+// set difference, left-assoc: `_ - {X} - {Y}`
+unary = { term ~ ("-" ~ term)* }
+
+term     = _{ group | set_lit | list_lit | hole | literal | application }
+group    = { "(" ~ value ~ ")" }
+set_lit  = { "{" ~ (value ~ ("," ~ value)*)? ~ ","? ~ "}" }
+list_lit = { "[" ~ (value ~ ("," ~ value)*)? ~ ","? ~ "]" }
+
+// holes: `_` / `*` exhaustive, `?` / `?N` random (seedable with `@seed`)
+hole       = { sample_n | sample_one | exhaustive }
+exhaustive = @{ ("_" ~ !(ASCII_ALPHANUMERIC | "_")) | "*" }
+sample_n   = { "?" ~ integer ~ seed? }
+sample_one = { "?" ~ seed? }
+seed       = { "@" ~ integer }
+
+// applications mirror Rust generics; name-based OR positional:
+//   QuickSort<partition = _, pivot = pp, smallSort = _>   (named)
+//   Combined<_, _>   Insertion<16>                        (positional)
+//   foo                                                   (bare ref / nullary)
+application  = { ident ~ generic_args? }
+generic_args = { "<" ~ arg_list? ~ ">" | "(" ~ arg_list? ~ ")" }
+arg_list     = { arg ~ ("," ~ arg)* ~ ","? }
+arg          = _{ named_arg | value }
+named_arg    = { ident ~ "=" ~ value }

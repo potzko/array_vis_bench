@@ -1,0 +1,26 @@
+// MERGE families — query OWNED by merge_sort_lib (gathered by `spec_catalog` via
+// `[package.metadata.array_vis_bench] query = "merge.avbs"`).
+//
+// Classic: SmallSort role hole + two const-bool holes (fan over {false,true}).
+// Rotation: SmallSort hole × RotationMerge-strategy hole (nested over Rotation).
+//
+// Counts (216 total):
+//   TopDown   4 SmallSort × 2 PP × 2 EE = 16
+//   BottomUp  4 SmallSort × 2 PP × 2 EE = 16
+//   Naive     4 SmallSort               =  4
+//   Natural   2 PP × 2 EE               =  4    (classic subtotal = 40)
+//   TopDownRot   4 SmallSort × (2 strategies × 11 rotations) = 88
+//   BottomUpRot  4 SmallSort × (2 strategies × 11 rotations) = 88   (rotation = 176)
+//
+// `rmerge = _` fans over the RotationMerge role (mrm_naive | mrm_smaller_side),
+// and each of those has its own `rot` sub-slot the enumerator expands over all
+// 11 Rotation components. `early_exit` is omitted from the rotation queries so it
+// takes the component's pinned `false` default.
+
+TopDownMergeSorts:  SortingAlgorithm = SortingAlgorithm<TopDownMergeSort<small_sort = _, ping_pong = _, early_exit = _>>
+BottomUpMergeSorts: SortingAlgorithm = SortingAlgorithm<BottomUpMergeSort<small_sort = _, ping_pong = _, early_exit = _>>
+NaiveMergeSorts:    SortingAlgorithm = SortingAlgorithm<NaiveMergeSort<_>>
+NaturalMergeSorts:  SortingAlgorithm = SortingAlgorithm<NaturalMergeSort<ping_pong = _, early_exit = _>>
+
+TopDownRotationMergeSorts:  SortingAlgorithm = SortingAlgorithm<TopDownRotationMergeSort<small_sort = _, rmerge = _>>
+BottomUpRotationMergeSorts: SortingAlgorithm = SortingAlgorithm<BottomUpRotationMergeSort<small_sort = _, rmerge = _>>

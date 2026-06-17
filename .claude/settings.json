@@ -7,7 +7,10 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(cargo check:*)",
       "Bash(git add:*)",
-      "Bash(grep -E \"^-.*\\\\.\\(md|toml|rs\\)$\")"
+      "Bash(grep -E \"^-.*\\\\.\\(md|toml|rs\\)$\")",
+      "Bash(cargo tree:*)",
+      "Bash(nm:*)",
+      "Bash(objdump:*)"
     ],
     "additionalDirectories": [
       "/home/omer/Documents/dev/array_vis_bench/combo_codegen"

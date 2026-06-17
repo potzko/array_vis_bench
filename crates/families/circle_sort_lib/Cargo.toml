@@ -8,6 +8,15 @@ description = "Circle sort family — recursive (parametrised over an ordering o
 name = "circle_sort_lib"
 path = "src/lib.rs"
 
+[features]
+# Legacy in-crate self-registration: the `register_circle_sorts` ctor (menu
+# tree) and the per-variant `ALGORITHMS` statics emitted by `register_circle!`.
+# OFF by default and enabled nowhere — the spec compiler (`spec_catalog`) emits
+# the canonical circle entries via the `CircleRecursiveOf`/`CircleBottomUpOf`
+# drivers, so running these too would double-register circle sort.
+default = []
+self_register = []
+
 [dependencies]
 array_vis_bench_core = { path = "../../../array_vis_bench_core" }
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
@@ -17,3 +26,9 @@ small_sort_insertion_strategy = { path = "../../small_sorts/small_sort_insertion
 linkme = "0.3"
 ctor = "0.2"
 const_format = "0.2"
+
+# Spec-system catalog fragment + query, OWNED by this crate and gathered by
+# `spec_catalog`'s build via the dependency-graph walk.
+[package.metadata.array_vis_bench]
+spec  = "circle.spec"
+query = "circle.avbs"

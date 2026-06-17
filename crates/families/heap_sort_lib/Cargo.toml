@@ -22,6 +22,14 @@ partition_hoare = { path = "../../partitions/partition_hoare" }
 pivot_first = { path = "../../pivots/pivot_first" }
 pivot_median3 = { path = "../../pivots/pivot_median3" }
 
+# Spec-system catalog fragment + query, OWNED by this crate and gathered by
+# `spec_catalog`'s build via the dependency-graph walk. heap_sort_lib does not
+# self-register, so no feature/gating is needed. (The legacy [[…families]] arrays
+# below are combo_codegen build-time decls — inert in the spec build.)
+[package.metadata.array_vis_bench]
+spec  = "heap.spec"
+query = "heap.avbs"
+
 # ── Heap sort classic ──
 [[package.metadata.array_vis_bench.families]]
 module = "heap_sort"

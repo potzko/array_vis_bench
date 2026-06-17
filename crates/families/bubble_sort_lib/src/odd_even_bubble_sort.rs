@@ -1,10 +1,26 @@
 use std::marker::PhantomData;
 
-use array_vis_bench_traits::NonTrivialSmallSort;
+use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
+use array_vis_bench_traits::{Complexity, NonTrivialSmallSort};
 use sort_logger::SortLogger;
 
 pub struct OddEvenBubbleSort<S: NonTrivialSmallSort> {
     _phantom: PhantomData<S>,
+}
+
+// Composable annotations (spec compiler inherits these). Adaptive via the
+// `mutated` early-exit flag (O(N) best on sorted input); Θ(N²) average/worst;
+// in-place; stable.
+impl<S: NonTrivialSmallSort> HasTimeBounds for OddEvenBubbleSort<S> {
+    const WORST: Complexity = Complexity::N_SQUARED;
+    const BEST: Complexity = Complexity::N1;
+    const AVERAGE: Complexity = Complexity::N_SQUARED;
+}
+impl<S: NonTrivialSmallSort> HasSpace for OddEvenBubbleSort<S> {
+    const SPACE: Complexity = Complexity::CONST;
+}
+impl<S: NonTrivialSmallSort> HasStability for OddEvenBubbleSort<S> {
+    const STABLE: bool = true;
 }
 
 impl<S: NonTrivialSmallSort> OddEvenBubbleSort<S> {

@@ -1,0 +1,7 @@
+// ROD family — query OWNED by this crate (gathered by `spec_catalog` via
+// `[package.metadata.array_vis_bench] query = "rod.avbs"`). Two uncoupled
+// exhaustive holes: `strategy` over the RodBranching role (6) x `merge` over the
+// RodMerge role (2) -> RodSort x 12 = 12 entries. No helper bindings / coupling
+// needed (the two axes are independent, unlike quick's pivot<->partition arity).
+
+RodSorts: SortingAlgorithm = SortingAlgorithm<RodSort<strategy = _, merge = _>>

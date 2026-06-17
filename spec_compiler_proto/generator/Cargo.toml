@@ -1,8 +1,0 @@
-[package]
-name = "generator"
-version = "0.0.0"
-edition = "2021"
-publish = false
-
-[dependencies]
-spec_core = { path = "../spec_core" }

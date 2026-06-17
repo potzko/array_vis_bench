@@ -9,6 +9,14 @@
 > Companion docs: [architecture.md](architecture.md), [registration.md](registration.md),
 > [trait-system.md](trait-system.md), [adding-a-sort.md](adding-a-sort.md).
 > Design rationale & decision record: memory `project-compiler-consumer-architecture`.
+>
+> **Parked follow-on plans:** [implementation_plans/](implementation_plans/) — designed-but-not-started
+> work.
+> - [enumeration_strategies.md](implementation_plans/enumeration_strategies.md) — `finite`/`affine`/`sample`/`spread`
+>   to bound recursive variant enumeration (the quick-heap cycle) + the `_`/`.` rest-fill sugar.
+> - [pivot_under_partition.md](implementation_plans/pivot_under_partition.md) — move pivot off the
+>   base quicksort into a self-pivoting partition (heap-extract stops faking a pivot; arity coupling
+>   becomes structural).
 
 ## North star
 

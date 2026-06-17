@@ -37,6 +37,14 @@ pub static ROD_STRATEGIES: [RodEntry] = [..];
 // ---------------------------------------------------------------------------
 macro_rules! register_rod {
     ($mod:ident, $strat:ident, $merge:ident) => {
+        // Gated OFF by default: the spec compiler (`spec_catalog`) emits the
+        // canonical rod `ALGORITHMS` rows via the `RodSort<{strategy},{merge}>`
+        // driver. Linking this crate's link-time `ALGO_ENTRY` / `ENTRY` items
+        // too would double-register all 12 variants. Gating the whole generated
+        // module removes every link-time + ctor-consumed item in one edit; the
+        // types the spec needs (`RodSort`, the 6 strategies, the 2 merges) live
+        // OUTSIDE this macro and stay available. See `[features]` in Cargo.toml.
+        #[cfg(feature = "self_register")]
         mod $mod {
             use super::*;
             use crate::rod_sort::RodSort;

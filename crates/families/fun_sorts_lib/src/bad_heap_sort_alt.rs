@@ -55,6 +55,7 @@ fn first_heapify<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger
     }
 }
 
+#[cfg(feature = "self_register")]
 sort_registry_macro::sort_family! {
     type Sort = BadHeapSortAlt;
     name        = "bad heap sort alt";

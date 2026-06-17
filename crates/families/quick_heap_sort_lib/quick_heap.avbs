@@ -1,0 +1,7 @@
+// QUICK-HEAP families (portable subset) — query OWNED by quick_heap_sort_lib.
+// classic  = HeapArity(4) x SmallSort(4)         = 16
+// deferred = HeapArity(4) x DeferredSmallSort(4) = 16
+// total = 32.
+
+QuickHeapSortsClassic:  SortingAlgorithm = SortingAlgorithm<QuickHeapSort<arity = _, small = _>>
+QuickHeapSortsDeferred: SortingAlgorithm = SortingAlgorithm<DeferredQuickHeapSort<arity = _, dss = _>>

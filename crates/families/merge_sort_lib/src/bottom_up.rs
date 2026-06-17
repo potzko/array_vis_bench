@@ -2,6 +2,8 @@ use std::marker::PhantomData;
 use sort_logger::SortLogger;
 use super::utils::{copy_across, merge_inplace};
 use array_vis_bench_traits::SmallSort;
+use array_vis_bench_traits::Complexity;
+use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 
 /// Bottom-up (iterative) merge sort.
 ///
@@ -113,4 +115,26 @@ impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool>
             i += 2 * gap;
         }
     }
+}
+
+// Iterative bottom-up merge: log N doubling passes, each touching all N
+// elements → N log N in every case (EARLY_EXIT skips merges but still scans
+// every pass boundary, so best stays N log N).
+impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool> HasTimeBounds
+    for BottomUpMergeSort<S, PING_PONG, EARLY_EXIT>
+{
+    const WORST: Complexity = Complexity::N_LOG_N;
+    const BEST: Complexity = Complexity::N_LOG_N;
+    const AVERAGE: Complexity = Complexity::N_LOG_N;
+}
+// Single length-N scratch buffer.
+impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool> HasSpace
+    for BottomUpMergeSort<S, PING_PONG, EARLY_EXIT>
+{
+    const SPACE: Complexity = Complexity::N1;
+}
+impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool> HasStability
+    for BottomUpMergeSort<S, PING_PONG, EARLY_EXIT>
+{
+    const STABLE: bool = true;
 }

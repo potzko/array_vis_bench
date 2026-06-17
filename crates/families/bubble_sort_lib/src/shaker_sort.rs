@@ -1,6 +1,22 @@
+use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
+use array_vis_bench_traits::Complexity;
 use sort_logger::SortLogger;
 
 pub struct ShakerSort;
+
+// Composable annotations (spec compiler inherits these). This implementation has
+// no early-exit, so it is Θ(N²) on every input; in-place; stable.
+impl HasTimeBounds for ShakerSort {
+    const WORST: Complexity = Complexity::N_SQUARED;
+    const BEST: Complexity = Complexity::N_SQUARED;
+    const AVERAGE: Complexity = Complexity::N_SQUARED;
+}
+impl HasSpace for ShakerSort {
+    const SPACE: Complexity = Complexity::CONST;
+}
+impl HasStability for ShakerSort {
+    const STABLE: bool = true;
+}
 
 impl ShakerSort {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
@@ -22,6 +38,8 @@ impl ShakerSort {
     }
 }
 
+// Legacy self-registration — gated OFF by default (spec is the registrar).
+#[cfg(feature = "self_register")]
 sort_registry_macro::sort_family! {
     type Sort = ShakerSort;
     name        = "shaker sort";

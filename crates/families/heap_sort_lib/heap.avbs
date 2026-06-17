@@ -1,0 +1,11 @@
+// HEAP families — query OWNED by heap_sort_lib. Three independent driver heads,
+// each fanning over its own A x D x DH slots (named-arg holes, the proven form).
+//
+// classic       = A(4) x D(2) x DeepHeapifyClassic(2)               = 16
+// quick build   = A(4) x D(2) x DeepHeapifyQuick(3 x HP(3) x V(5))  = 4*2*45 = 360
+// quick dual    = A(4) x D(2) x DeepHeapifyDual(3)                  = 24
+// total = 400 (matches the legacy combo cross-product).
+
+HeapSorts:           SortingAlgorithm = SortingAlgorithm<HeapSortClassicOf<a = _, d = _, dh = _>>
+HeapSortsQuickBuild: SortingAlgorithm = SortingAlgorithm<HeapSortQuickBuildOf<a = _, d = _, dh = _>>
+HeapSortsDualBuild:  SortingAlgorithm = SortingAlgorithm<HeapSortDualBuildOf<a = _, d = _, dh = _>>

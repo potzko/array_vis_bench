@@ -25,6 +25,7 @@ pub mod heap_sort_quick_build;
 pub mod layout;
 pub mod quick_deep_heapify;
 pub mod set_quick_select;
+pub mod spec_drivers;
 
 pub use arity::{Arity, Base16, Base256, Binary, Ternary};
 pub use arity_heap::ArityHeap;
@@ -41,3 +42,4 @@ pub use quick_deep_heapify::{
     StackDualPivotPartialQuickDeepHeapify, StackPartialQuickDeepHeapify,
 };
 pub use set_quick_select::{RecursiveSet, SequentialSet, SetQuickSelect, StackSet};
+pub use spec_drivers::{HeapSortClassicOf, HeapSortDualBuildOf, HeapSortQuickBuildOf};

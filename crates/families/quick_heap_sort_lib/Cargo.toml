@@ -24,6 +24,13 @@ quick_select_lib = { path = "../quick_select_lib" }
 quick_sort_lib = { path = "../quick_sort_lib" }
 small_sort_basic = { path = "../../small_sorts/small_sort_basic" }
 
+# Spec-system catalog fragment + query (portable classic+deferred subset), OWNED
+# by this crate. No self-registration here, so no feature/gating. (The legacy
+# [[…families]]/[[…components]] arrays below are combo build-time only — inert.)
+[package.metadata.array_vis_bench]
+spec  = "quick_heap.spec"
+query = "quick_heap.avbs"
+
 # ── Quick heap sort classic (A × Iterative-DH × SS) ──
 [[package.metadata.array_vis_bench.families]]
 module = "quick_heap_sort"

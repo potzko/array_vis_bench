@@ -1,0 +1,19 @@
+// QUICK-SELECT families — query OWNED by quick_select_lib.
+//
+// `Selection<X>` wraps `X` as an emittable quick-select (role `QuickSelect`,
+// driver category `QuickSelect`) — the sort-track's `SortingAlgorithm<X>` analogue
+// for the first non-sort first-class kind.
+//
+// `p` / `part` are HELPER bindings (scoped to THIS file; spec_catalog lowers each
+// gathered query independently): `p` ranges over every QS pivot, `part` over every
+// QS partition refined arity-compatible with `p` (`QSPartition[pivot = p]`). The
+// shared `p` couples partition↔pivot exactly as quick.spec couples them, so only
+// the 56 valid `QuickSelect<P, V>` combinations are built.
+//
+// recursive = iterative = 4×5 single + 1×4 dual + 4×1 heap-extract = 28; total 56.
+
+p:    QSPivot = _
+part: QSPartition[pivot = p] = _
+
+RecursiveQuickSelects: Selection = Selection<RecursiveQuickSelect<partition = part, pivot = p>>
+IterativeQuickSelects: Selection = Selection<IterativeQuickSelect<partition = part, pivot = p>>

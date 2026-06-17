@@ -1,5 +1,7 @@
 use sort_logger::SortLogger;
 use super::utils::{copy_across, merge_inplace, reverse};
+use array_vis_bench_traits::Complexity;
+use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 
 /// Natural merge sort: detects maximal sorted runs and uses them as seeds.
 ///
@@ -56,6 +58,28 @@ impl<const PING_PONG: bool, const EARLY_EXIT: bool> NaturalMergeSort<PING_PONG, 
 
         logger.free_aux_arr_t(&tmp);
     }
+}
+
+// Natural merge is genuinely adaptive: detect_runs returns a single run on
+// already-sorted input and sort() returns immediately → O(N) best case. The
+// worst/average over log N merge passes is N log N.
+impl<const PING_PONG: bool, const EARLY_EXIT: bool> HasTimeBounds
+    for NaturalMergeSort<PING_PONG, EARLY_EXIT>
+{
+    const WORST: Complexity = Complexity::N_LOG_N;
+    const BEST: Complexity = Complexity::N1;
+    const AVERAGE: Complexity = Complexity::N_LOG_N;
+}
+// Single length-N scratch buffer.
+impl<const PING_PONG: bool, const EARLY_EXIT: bool> HasSpace
+    for NaturalMergeSort<PING_PONG, EARLY_EXIT>
+{
+    const SPACE: Complexity = Complexity::N1;
+}
+impl<const PING_PONG: bool, const EARLY_EXIT: bool> HasStability
+    for NaturalMergeSort<PING_PONG, EARLY_EXIT>
+{
+    const STABLE: bool = true;
 }
 
 fn merge_run_pass<T: Ord + Copy, U: ?Sized + SortLogger<T>, const EARLY_EXIT: bool>(

@@ -1,0 +1,4 @@
+// CYCLE family — query OWNED by this crate. Zero-axis: the concrete `CycleSort`
+// resolves to exactly one entry.
+
+CycleSorts: SortingAlgorithm = SortingAlgorithm<CycleSort>

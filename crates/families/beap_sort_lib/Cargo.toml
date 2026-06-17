@@ -13,6 +13,13 @@ array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 heap_sort_lib = { path = "../heap_sort_lib" }
 sort_logger = { path = "../../../sort_logger" }
 
+# Spec-system catalog fragment + query, OWNED by this crate (gathered by
+# `spec_catalog`). No self-registration here, so no feature/gating. (The legacy
+# [[…families]] arrays below are combo build-time only — inert in the spec build.)
+[package.metadata.array_vis_bench]
+spec  = "beap.spec"
+query = "beap.avbs"
+
 # ── Beap sort classic (D × Iterative) ──
 [[package.metadata.array_vis_bench.families]]
 module = "beap_sort"

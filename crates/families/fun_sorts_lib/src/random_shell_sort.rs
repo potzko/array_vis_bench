@@ -207,8 +207,13 @@ where
 // Random gap sequences pull entropy from `thread_rng()`, so successive runs
 // produce different `SortLog` traces even for identical input. Opt the
 // leaves out of the determinism check.
+#[cfg(feature = "self_register")]
 array_vis_bench_core::register_nondeterministic!("random shell sort<uniform>");
+#[cfg(feature = "self_register")]
 array_vis_bench_core::register_nondeterministic!("random shell sort<parabolic>");
+#[cfg(feature = "self_register")]
 array_vis_bench_core::register_nondeterministic!("random shell sort<cubic>");
+#[cfg(feature = "self_register")]
 array_vis_bench_core::register_nondeterministic!("random shell sort<log uniform>");
+#[cfg(feature = "self_register")]
 array_vis_bench_core::register_nondeterministic!("random shell sort<distinct parabolic>");

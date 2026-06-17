@@ -14,6 +14,13 @@ heap_sort_lib = { path = "../heap_sort_lib" }
 reverse_storage_lib = { path = "../../components/reverse_storage_lib" }
 sort_logger = { path = "../../../sort_logger" }
 
+# Spec-system catalog fragment + query, OWNED by this crate (gathered by
+# `spec_catalog`). No self-registration here, so no feature/gating. (The legacy
+# [[…families]] array below is combo build-time only — inert in the spec build.)
+[package.metadata.array_vis_bench]
+spec  = "weak.spec"
+query = "weak.avbs"
+
 [[package.metadata.array_vis_bench.families]]
 module = "weak_heap_sort"
 type   = "HeapSort<WeakHeapSort<{D}, {R}>>"

@@ -8,6 +8,14 @@ description = "Comb sort family — `CombSort::sort_with_gaps` driver, `CombSort
 name = "comb_sort_lib"
 path = "src/lib.rs"
 
+[features]
+# Legacy in-crate menu-tree self-registration (`register_comb_sorts` ctor). OFF
+# by default and enabled nowhere: the spec compiler registers the canonical comb
+# entries via the `CombSortOf<{ratio}>` driver, so running this too would
+# double-list comb in the picker.
+default = []
+self_register = []
+
 [dependencies]
 array_vis_bench_core = { path = "../../../array_vis_bench_core" }
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
@@ -16,6 +24,13 @@ sort_registry_core = { path = "../../../sort_registry_core" }
 linkme = "0.3"
 ctor = "0.2"
 const_format = "0.2"
+
+# Spec-system catalog fragment + query, OWNED by this crate and gathered by
+# `spec_catalog`'s build via the dependency-graph walk. (The `[[…families]]` array
+# below is the LEGACY combo_codegen declaration — inert in the default spec build.)
+[package.metadata.array_vis_bench]
+spec  = "comb.spec"
+query = "comb.avbs"
 
 [[package.metadata.array_vis_bench.families]]
 module = "comb_sorts"

@@ -10,6 +10,8 @@
 //!     registration that lets the wiring crate's harness discover the
 //!     variant at link time.
 
+// Only the gated registration modules reference the concrete sequences.
+#[cfg(feature = "self_register")]
 use crate::sequences::{
     Ciura, Classic, GapSequence, Hibbard, Knuth, Optimized256, Pratt, Sedgewick,
     SedgewickBranching, Tokuda,
@@ -41,6 +43,9 @@ macro_rules! register_shell_variant {
     // composable annotation pipeline. The legacy `$big_o` string is kept
     // for the in-house `GapSequenceEntry` slice (display only).
     ($mod:ident, $sort_name:expr, $path:expr, $big_o:expr, $sort_ty:ty, $call:expr) => {
+        // Gated: only compiled (and thus only registered) when the crate's
+        // `self_register` feature is on. Off → the crate provides types only.
+        #[cfg(feature = "self_register")]
         mod $mod {
             use super::*;
             use sort_logger::{NoOpLogger, SortLogger};
@@ -139,6 +144,7 @@ register_sequence!(optimized256,         optimized256_ordered,         Optimized
 /// Iterates the GAP_SEQUENCES distributed slice at startup and registers
 /// every variant into `sort_registry_core` so the interactive picker's
 /// menu tree includes the shell-sort branches in TOML declaration order.
+#[cfg(feature = "self_register")]
 #[ctor::ctor]
 fn register_shell_sorts() {
     for entry in GAP_SEQUENCES {

@@ -12,6 +12,12 @@ path = "src/lib.rs"
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 sort_logger = { path = "../../../sort_logger" }
 
+# Spec catalog fragment + query (gathered by `spec_catalog`'s build): the curated
+# 56-variant quick-select family, the first non-sort first-class kind.
+[package.metadata.array_vis_bench]
+spec  = "quick_select.spec"
+query = "quick_select.avbs"
+
 [[package.metadata.array_vis_bench.components]]
 role  = "QuickSelect"
 type  = "RecursiveQuickSelect"

@@ -11,6 +11,12 @@ path = "src/lib.rs"
 [dependencies]
 rand = "0.8"
 
+# Spec catalog fragment (gathered by `spec_catalog`'s build). Spec-only — this
+# crate contributes the 5 GapDistribution components but declares no top-level
+# query; `fun_sorts`'s `RandomShellSort` query fans over them.
+[package.metadata.array_vis_bench]
+spec = "gap_distribution.spec"
+
 [[package.metadata.array_vis_bench.components]]
 role  = "GapDistribution"
 type  = "UniformDist"

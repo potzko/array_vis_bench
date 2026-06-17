@@ -80,6 +80,11 @@ register_comb_vis!(five_fourths,      "5/4",           4,  5);
 
 /// Iterates COMB_SEQUENCES at startup and registers every variant into
 /// `sort_registry_core`'s navigation tree.
+///
+/// Gated OFF by default: the spec compiler (`spec_catalog`) registers the
+/// canonical comb entries (`CombSortOf<{ratio}>`), so running this ctor too would
+/// double-list comb in the picker. See `[features]` in Cargo.toml.
+#[cfg(feature = "self_register")]
 #[ctor::ctor]
 fn register_comb_sorts() {
     for entry in COMB_SEQUENCES {

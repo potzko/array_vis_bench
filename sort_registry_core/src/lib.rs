@@ -22,12 +22,16 @@ use lazy_static::lazy_static;
 use std::sync::Mutex;
 
 /// One filled generic slot of a variant's type: a humanized trait/role
-/// label (e.g. `"partition"`) and the chosen value's label (e.g.
-/// `"left-left pointer"`).
+/// label (e.g. `"Pivot"`), the chosen value's HEAD label (e.g. `"combined"`),
+/// and a `path` — a unique `/`-separated navigation key (e.g. `"pivot"`,
+/// `"pivot/a"`, `"pivot/b"`). The path encodes nesting so a composite filler
+/// (`combined<a, b>`) navigates as its own level with sub-levels; for a flat
+/// (non-nested) registration the path equals the role.
 #[derive(Clone, Debug)]
 pub struct AxisBinding {
     pub role: String,
     pub value: String,
+    pub path: String,
 }
 
 /// A single registered algorithm together with the structure the picker
@@ -42,6 +46,13 @@ pub struct VariantDesc {
     /// Faceted axes in declaration order. Empty for legacy flat-path
     /// registrations.
     pub axes: Vec<AxisBinding>,
+    /// Optional label template with one role-tagged hole per axis, e.g.
+    /// `"spec::quick sort<part: {Partition}, pivot: {Pivot}, small: {SmallSort}>"`.
+    /// When present, the picker renders the partial type in the catalog's own
+    /// label syntax — filling each `{Role}` hole with the chosen value or `_` —
+    /// instead of the generic category + role breadcrumb. `None` for combo /
+    /// legacy registrations, which keep the generic display.
+    pub label_template: Option<String>,
 }
 
 impl VariantDesc {
@@ -68,17 +79,63 @@ lazy_static! {
 /// reorders them at display time (largest axis first), so declaration
 /// order only breaks ties.
 pub fn register_sort_variant(name: &str, category: &[&str], axes: &[(&str, &str)]) {
+    push_variant(name, category, &flat(axes), None);
+}
+
+/// Like [`register_sort_variant`], but also records a `label_template` — the
+/// variant's label with each axis replaced by a `{Role}` hole (e.g.
+/// `"spec::quick sort<part: {Partition}, pivot: {Pivot}, small: {SmallSort}>"`).
+/// The picker uses it to render the partial type in the catalog's own label
+/// syntax (head, per-slot labels, brackets) instead of the generic category +
+/// role display. The template's holes share the `role` keys carried in `axes`.
+pub fn register_sort_variant_labeled(
+    name: &str,
+    category: &[&str],
+    axes: &[(&str, &str)],
+    label_template: &str,
+) {
+    push_variant(name, category, &flat(axes), Some(label_template.to_string()));
+}
+
+/// Like [`register_sort_variant_labeled`], but the axes carry an explicit
+/// navigation `path` (`(role, value, path)`) — used by the spec compiler to
+/// register STRUCTURAL axes, where a composite filler's sub-slots appear as
+/// nested paths (`"pivot"`, `"pivot/a"`, `"pivot/b"`) so the picker navigates
+/// them as their own levels.
+pub fn register_sort_variant_structured(
+    name: &str,
+    category: &[&str],
+    axes: &[(&str, &str, &str)],
+    label_template: &str,
+) {
+    push_variant(name, category, axes, Some(label_template.to_string()));
+}
+
+/// A flat `(role, value)` axis list → `(role, value, path)` with `path = role`
+/// (no nesting). Keeps the legacy / non-spec registrations unchanged.
+fn flat<'a>(axes: &[(&'a str, &'a str)]) -> Vec<(&'a str, &'a str, &'a str)> {
+    axes.iter().map(|(role, value)| (*role, *value, *role)).collect()
+}
+
+fn push_variant(
+    name: &str,
+    category: &[&str],
+    axes: &[(&str, &str, &str)],
+    label_template: Option<String>,
+) {
     let mut entries = VARIANTS.lock().unwrap();
     entries.push(VariantDesc {
         name: name.to_string(),
         category: category.iter().map(|s| s.to_string()).collect(),
         axes: axes
             .iter()
-            .map(|(role, value)| AxisBinding {
+            .map(|(role, value, path)| AxisBinding {
                 role: role.to_string(),
                 value: value.to_string(),
+                path: path.to_string(),
             })
             .collect(),
+        label_template,
     });
 }
 
@@ -94,6 +151,7 @@ pub fn register_sort_path(name: &str, _big_o: &str, _stable: bool, path: &[&str]
         name: name.to_string(),
         category: path.iter().map(|s| s.to_string()).collect(),
         axes: Vec::new(),
+        label_template: None,
     });
 }
 
@@ -185,6 +243,33 @@ impl SortTree {
         self.children
             .sort_by(|a, b| (a.1.count_leaves(), &a.0).cmp(&(b.1.count_leaves(), &b.0)));
         self.leaves.sort_by(|a, b| a.0.cmp(&b.0));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn structured_axes_round_trip_paths() {
+        register_sort_variant_structured(
+            "rt_x",
+            &["sorts"],
+            &[("Pivot", "combined", "pivot"), ("PivotSingle", "first", "pivot/a")],
+            "t",
+        );
+        let v = all_variants().into_iter().find(|v| v.name == "rt_x").unwrap();
+        let got: Vec<(&str, &str, &str)> =
+            v.axes.iter().map(|a| (a.role.as_str(), a.value.as_str(), a.path.as_str())).collect();
+        assert_eq!(got, vec![("Pivot", "combined", "pivot"), ("PivotSingle", "first", "pivot/a")]);
+    }
+
+    #[test]
+    fn flat_registration_sets_path_to_role() {
+        register_sort_variant_labeled("rt_y", &["sorts"], &[("GapSequence", "classic")], "t");
+        let v = all_variants().into_iter().find(|v| v.name == "rt_y").unwrap();
+        assert_eq!(v.axes[0].path, "GapSequence");
+        assert_eq!(v.axes[0].path, v.axes[0].role); // flat: path == role (no nesting)
     }
 }
 
