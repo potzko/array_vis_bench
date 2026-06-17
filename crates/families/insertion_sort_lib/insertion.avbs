@@ -1,0 +1,5 @@
+// INSERTION family — query OWNED by this crate. `_` is an exhaustive hole over
+// the `strategy` slot's role (InsertionStrategy), so the family fans out to
+// {linear, binary} → 2 entries.
+
+InsertionSorts: SortingAlgorithm = SortingAlgorithm<InsertionSort<_>>

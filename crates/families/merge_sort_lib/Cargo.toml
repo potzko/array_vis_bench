@@ -12,6 +12,14 @@ path = "src/lib.rs"
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 sort_logger = { path = "../../../sort_logger" }
 
+# Spec-system catalog fragment + query, OWNED by this crate and gathered by
+# `spec_catalog`'s build via the dependency-graph walk. (The `[[…families]]`
+# array below is the LEGACY combo_codegen declaration — inert in the default
+# spec build; combo and spec are never link-combined.)
+[package.metadata.array_vis_bench]
+spec  = "merge.spec"
+query = "merge.avbs"
+
 # ── Family declarations ──────────────────────────────────────────────
 
 # Classic top-down merge sort × small-sort × ping-pong × early-exit

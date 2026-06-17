@@ -2,11 +2,18 @@
 name = "cycle_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Cycle sort — `CycleSort` (no axes). Self-registers via an inline `sort_registry_macro::sort_family!` call."
+description = "Cycle sort — `CycleSort` (no axes). The spec compiler (`spec_catalog`) is the canonical registrar; legacy self-registration is behind the default-off `self_register` feature (see shell_sort_lib)."
 
 [lib]
 name = "cycle_sort_lib"
 path = "src/lib.rs"
+
+[features]
+# Legacy in-crate self-registration via `sort_family!`. OFF by default and
+# enabled nowhere: the spec compiler emits the canonical `cycle sort` entry, so
+# enabling this in a workspace build would duplicate it via feature unification.
+default = []
+self_register = []
 
 [dependencies]
 array_vis_bench_core = { path = "../../../array_vis_bench_core" }
@@ -16,3 +23,9 @@ sort_registry_core = { path = "../../../sort_registry_core" }
 sort_registry_macro = { path = "../../../sort_registry_macro" }
 linkme = "0.3"
 ctor = "0.2"
+
+# Spec-system catalog fragment + query, OWNED by this crate and gathered by
+# `spec_catalog`'s build via the dependency-graph walk.
+[package.metadata.array_vis_bench]
+spec  = "cycle.spec"
+query = "cycle.avbs"

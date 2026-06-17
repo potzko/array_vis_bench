@@ -12,6 +12,17 @@ path = "src/lib.rs"
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 sort_logger = { path = "../../../sort_logger" }
 
+# Spec-system catalog fragment + query, OWNED by this crate and gathered by
+# `spec_catalog`'s build via the dependency-graph walk. The fragment declares the
+# slotted quick decomposition (drivers + pivots + partitions + small sorts), some
+# of whose TYPES live in sibling leaf crates — referenced as plain `uses` text
+# resolved in the consumer, so NO compile-time dep is added here. (The `[[…
+# families]]` arrays below are the LEGACY combo_codegen declarations — inert in
+# the default spec build; combo and spec are never link-combined.)
+[package.metadata.array_vis_bench]
+spec  = "quick.spec"
+query = "quick.avbs"
+
 # ── QuickSort classic (P × V × SS) ──
 [[package.metadata.array_vis_bench.families]]
 module = "quick_sorts"

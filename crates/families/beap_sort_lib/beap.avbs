@@ -1,0 +1,10 @@
+// BEAP families — query OWNED by beap_sort_lib. Three distinct driver heads.
+//
+// classic     = D(2) x BeapDeepHeapifyClassic(1)                     = 2
+// quick build = D(2) x BeapDeepHeapifyQuick(3 x HP(3) x BeapPiv(4))  = 2*36 = 72
+// quick dual  = D(2) x BeapDeepHeapifyDual(1 x BeapDualPivot(3))     = 2*3  = 6
+// total = 80.
+
+BeapClassic:        SortingAlgorithm = SortingAlgorithm<BeapSortClassicOf<d = _, dh = _>>
+BeapQuickBuild:     SortingAlgorithm = SortingAlgorithm<BeapSortQuickOf<d = _, dh = _>>
+BeapQuickBuildDual: SortingAlgorithm = SortingAlgorithm<BeapSortDualOf<d = _, dh = _>>

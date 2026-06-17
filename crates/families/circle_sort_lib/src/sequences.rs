@@ -57,6 +57,8 @@ macro_rules! register_circle {
             fn sort_fn(arr: &mut [usize], logger: &mut NoOpLogger) { $call(arr, logger) }
             fn sort_vis(arr: &mut [usize], logger: &mut dyn SortLogger<usize>) { $call(arr, logger) }
 
+            // Only referenced by the `self_register`-gated ALGO_ENTRY below.
+            #[allow(dead_code)]
             fn run_with_input(
                 input_name: &str,
                 config: &array_vis_bench_core::bench_registry::RunConfig,
@@ -65,6 +67,7 @@ macro_rules! register_circle {
                 array_vis_bench_core::bench_registry::run_sort_with_input(input_name, config, sort_vis, logger);
             }
 
+            #[allow(dead_code)]
             fn run_correctness() {
                 array_vis_bench_core::bench_registry::correctness::sort_battery(sort_fn, SORT_NAME);
                 array_vis_bench_core::bench_registry::correctness::sort_stability_battery(sort_fn, SORT_NAME, false);
@@ -79,6 +82,7 @@ macro_rules! register_circle {
                 sort_vis,
             };
 
+            #[cfg(feature = "self_register")]
             #[linkme::distributed_slice(array_vis_bench_core::bench_registry::ALGORITHMS)]
             static ALGO_ENTRY: array_vis_bench_core::bench_registry::AlgorithmEntry =
                 array_vis_bench_core::bench_registry::AlgorithmEntry {

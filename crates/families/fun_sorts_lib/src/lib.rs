@@ -3,7 +3,14 @@
 //! `Cargo.toml`; the single-variant ones (`bad_heap_sort`,
 //! `bad_heap_sort_alt`, `slow_sort`, `slow_sort_potzko`) self-register
 //! via inline `sort_registry_macro::sort_family!` calls in their source
-//! files.
+//! files — gated behind the default-off `self_register` feature so the spec
+//! catalog can link this crate types-only and emit the entries itself (without
+//! the runtime self-registration that would duplicate them).
+
+/// Compositional complexity annotations (`HasTimeBounds`/`HasSpace`/
+/// `HasStability`) for every fun-sort type — what the spec emit reads. Always
+/// compiled (additive to the legacy `sort_family!` string `big_o`).
+pub mod composable;
 
 pub mod bad_heap_sort;
 pub mod bad_heap_sort_alt;

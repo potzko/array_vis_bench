@@ -1,0 +1,16 @@
+// CIRCLE families — query OWNED by this crate (gathered by `spec_catalog` via
+// `[package.metadata.array_vis_bench] query = "circle.avbs"`).
+//
+// `f` is a HELPER binding (scoped to this file) ranging over every finish
+// strategy (CircleFinish → {converge, short-circuit insertion}). Each driver
+// family fans `_` over its primary slot's role and shares `f` for the finish:
+//   recursive  : 4 orders     × 2 finishes = 8
+//   bottom-up  : 4 directions × 2 finishes = 8
+//   shaker     : zero-axis                 = 1
+// Total = 17 entries (matches the 17 legacy register_circle! variants).
+
+f: CircleFinish = _
+
+CircleRecursive: SortingAlgorithm = SortingAlgorithm<CircleRecursiveOf<order = _, finish = f>>
+CircleBottomUp:  SortingAlgorithm = SortingAlgorithm<CircleBottomUpOf<direction = _, finish = f>>
+CircleShaker:    SortingAlgorithm = SortingAlgorithm<CircleSortShakerRecursive>

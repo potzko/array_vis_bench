@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 use sort_logger::SortLogger;
 use array_vis_bench_traits::SmallSort;
+use array_vis_bench_traits::Complexity;
+use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 
 /// Classic naive merge sort: allocates fresh left and right sub-arrays at
 /// every recursion level, sorts each half, then merges back into the original.
@@ -64,5 +66,21 @@ impl<S: SmallSort> NaiveMergeSort<S> {
         logger.free_aux_arr_t(&right);
         logger.free_aux_arr_t(&left);
     }
+}
+
+// Same N log N comparison/movement profile as the buffer-reusing variants.
+impl<S: SmallSort> HasTimeBounds for NaiveMergeSort<S> {
+    const WORST: Complexity = Complexity::N_LOG_N;
+    const BEST: Complexity = Complexity::N_LOG_N;
+    const AVERAGE: Complexity = Complexity::N_LOG_N;
+}
+// Naive recursion allocates a fresh L+R pair at every live frame, so all
+// frames' buffers coexist: log N levels × N total per level → N log N peak
+// aux (NOT the N1 of the single-buffer variants).
+impl<S: SmallSort> HasSpace for NaiveMergeSort<S> {
+    const SPACE: Complexity = Complexity::N_LOG_N;
+}
+impl<S: SmallSort> HasStability for NaiveMergeSort<S> {
+    const STABLE: bool = true;
 }
 

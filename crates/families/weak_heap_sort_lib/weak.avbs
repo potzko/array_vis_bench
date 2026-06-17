@@ -1,0 +1,6 @@
+// WEAK HEAP family — query OWNED by weak_heap_sort_lib. Two holes: d over the
+// shared HeapDir role (2) x r over ReverseStorage (2) = 4 entries.
+
+// The component `weak_heap_sort` has type-head HeapSort with slots d, r (the
+// WeakHeapSort nesting is internal to its template); the query names the slots.
+WeakHeapSorts: SortingAlgorithm = SortingAlgorithm<HeapSort<d = _, r = _>>

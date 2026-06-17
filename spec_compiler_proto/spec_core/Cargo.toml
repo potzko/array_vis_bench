@@ -1,9 +1,0 @@
-[package]
-name = "spec_core"
-version = "0.0.0"
-edition = "2021"
-publish = false
-
-# Pure std — no syn/quote. This lets BOTH the proc-macro front-end and the
-# standalone generator binary share one engine.
-[dependencies]

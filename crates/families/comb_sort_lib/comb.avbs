@@ -1,0 +1,4 @@
+// COMB family — query OWNED by this crate. Single-axis: `_` fans out over the
+// `ratio` slot's role (CombRatio) → the 6 shrink factors → 6 entries.
+
+CombSorts: SortingAlgorithm = SortingAlgorithm<CombSortOf<_>>

@@ -8,6 +8,15 @@ description = "Rod sort family — `RodSort<S, M>` generic over a `BranchingStra
 name = "rod_sort_lib"
 path = "src/lib.rs"
 
+[features]
+# Legacy in-crate self-registration: the `register_rod_sorts` menu-tree ctor and
+# the per-variant link-time `ALGORITHMS` rows (`register_rod!` modules). OFF by
+# default and enabled nowhere: the spec compiler emits the canonical rod entries
+# via the `RodSort<{strategy},{merge}>` driver, so enabling this would
+# double-register all 12 variants via feature unification.
+default = []
+self_register = []
+
 [dependencies]
 array_vis_bench_core = { path = "../../../array_vis_bench_core" }
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
@@ -16,3 +25,11 @@ sort_registry_core = { path = "../../../sort_registry_core" }
 linkme = "0.3"
 ctor = "0.2"
 const_format = "0.2"
+
+# Spec-system catalog fragment + query, OWNED by this crate and gathered by
+# `spec_catalog`'s build via the dependency-graph walk. (Rod never used
+# combo_codegen — it self-registered via the in-crate `register_rod!` macro — so
+# there is no legacy `[[…families]]` array block here.)
+[package.metadata.array_vis_bench]
+spec  = "rod.spec"
+query = "rod.avbs"

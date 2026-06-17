@@ -1,0 +1,8 @@
+// BUBBLE family — query OWNED by this crate. Three zero-axis base sorts plus the
+// single-axis odd-even variant (`_` fans out over the NonTrivialSmallSort role →
+// 3 cutoffs). Total: 3 + 3 = 6 entries.
+
+BubbleSorts:          SortingAlgorithm = SortingAlgorithm<BubbleSort>
+ShakerSorts:          SortingAlgorithm = SortingAlgorithm<ShakerSort>
+BubbleSortsRecursive: SortingAlgorithm = SortingAlgorithm<BubbleSortRecursive>
+OddEvenBubbleSorts:   SortingAlgorithm = SortingAlgorithm<OddEvenBubbleSort<_>>

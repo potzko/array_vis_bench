@@ -2,6 +2,8 @@ use std::marker::PhantomData;
 use sort_logger::SortLogger;
 use super::rotation_merge::RotationMerge;
 use array_vis_bench_traits::SmallSort;
+use array_vis_bench_traits::Complexity;
+use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 
 // Outer merge sort variants. Per-merge cost dominates the total — using
 // NaiveRotationMerge (O(k²) per size-k merge) gives O(N²) overall;
@@ -60,6 +62,30 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
         }
         M::merge(arr, mid, scratch, logger);
     }
+}
+
+// The per-merge rotation strategy dominates the whole-sort cost: M's declared
+// WORST/AVERAGE (N_SQUARED for naive, N_LOG_SQUARED for smaller-side) already
+// equals the legacy whole-sort big_o, so forward M's bounds directly. BEST is
+// M's BEST (N1 — already-merged input walks the larger side once).
+impl<S: SmallSort, M: RotationMerge + HasTimeBounds, const EARLY_EXIT: bool> HasTimeBounds
+    for TopDownRotationMergeSort<S, M, EARLY_EXIT>
+{
+    const WORST: Complexity = <M as HasTimeBounds>::WORST;
+    const BEST: Complexity = <M as HasTimeBounds>::BEST;
+    const AVERAGE: Complexity = <M as HasTimeBounds>::AVERAGE;
+}
+// Rotation merges in-place; the only aux is whatever the rotation needs (CONST
+// for reversal etc.), surfaced via M::SPACE.
+impl<S: SmallSort, M: RotationMerge + HasSpace, const EARLY_EXIT: bool> HasSpace
+    for TopDownRotationMergeSort<S, M, EARLY_EXIT>
+{
+    const SPACE: Complexity = <M as HasSpace>::SPACE;
+}
+impl<S: SmallSort, M: RotationMerge + HasStability, const EARLY_EXIT: bool> HasStability
+    for TopDownRotationMergeSort<S, M, EARLY_EXIT>
+{
+    const STABLE: bool = <M as HasStability>::STABLE;
 }
 
 /// Bottom-up (iterative) rotation merge sort.
@@ -124,4 +150,24 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
             gap *= 2;
         }
     }
+}
+
+// Same forwarding shape as the top-down rotation head: the per-merge rotation
+// strategy M dictates the whole-sort bounds, space, and stability.
+impl<S: SmallSort, M: RotationMerge + HasTimeBounds, const EARLY_EXIT: bool> HasTimeBounds
+    for BottomUpRotationMergeSort<S, M, EARLY_EXIT>
+{
+    const WORST: Complexity = <M as HasTimeBounds>::WORST;
+    const BEST: Complexity = <M as HasTimeBounds>::BEST;
+    const AVERAGE: Complexity = <M as HasTimeBounds>::AVERAGE;
+}
+impl<S: SmallSort, M: RotationMerge + HasSpace, const EARLY_EXIT: bool> HasSpace
+    for BottomUpRotationMergeSort<S, M, EARLY_EXIT>
+{
+    const SPACE: Complexity = <M as HasSpace>::SPACE;
+}
+impl<S: SmallSort, M: RotationMerge + HasStability, const EARLY_EXIT: bool> HasStability
+    for BottomUpRotationMergeSort<S, M, EARLY_EXIT>
+{
+    const STABLE: bool = <M as HasStability>::STABLE;
 }

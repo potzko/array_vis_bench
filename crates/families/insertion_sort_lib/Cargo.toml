@@ -13,6 +13,14 @@ array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 small_sort_insertion_strategy = { path = "../../small_sorts/small_sort_insertion_strategy" }
 sort_logger = { path = "../../../sort_logger" }
 
+# Spec-system catalog fragment + query, OWNED by this crate and gathered by
+# `spec_catalog`'s build via the dependency-graph walk. (The `[[…families]]`
+# array below is the LEGACY combo_codegen declaration — inert in the default spec
+# build; combo and spec are never link-combined, so they don't duplicate.)
+[package.metadata.array_vis_bench]
+spec  = "insertion.spec"
+query = "insertion.avbs"
+
 [[package.metadata.array_vis_bench.families]]
 module = "insertion_sorts"
 type   = "InsertionSort<{S}>"

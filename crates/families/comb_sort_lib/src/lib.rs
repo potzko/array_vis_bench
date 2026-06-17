@@ -13,5 +13,5 @@ pub mod comb_sort_ratio;
 pub mod registration;
 
 pub use comb_sort::CombSort;
-pub use comb_sort_ratio::CombSortRatio;
+pub use comb_sort_ratio::{CombRatio, CombSortOf, CombSortRatio};
 pub use registration::{CombEntry, SortFn, COMB_SEQUENCES};

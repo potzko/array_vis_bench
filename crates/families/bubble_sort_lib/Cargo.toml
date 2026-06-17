@@ -8,6 +8,13 @@ description = "Bubble sort family — BubbleSort, ShakerSort, BubbleSortRecursiv
 name = "bubble_sort_lib"
 path = "src/lib.rs"
 
+[features]
+# Legacy in-crate self-registration via `sort_family!` (the 3 base algorithms).
+# OFF by default and enabled nowhere: the spec compiler emits the canonical
+# entries, so enabling this would duplicate them via feature unification.
+default = []
+self_register = []
+
 [dependencies]
 array_vis_bench_core = { path = "../../../array_vis_bench_core" }
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
@@ -16,6 +23,14 @@ sort_registry_core = { path = "../../../sort_registry_core" }
 sort_registry_macro = { path = "../../../sort_registry_macro" }
 linkme = "0.3"
 ctor = "0.2"
+
+# Spec-system catalog fragment + query, OWNED by this crate and gathered by
+# `spec_catalog`'s build via the dependency-graph walk. (The `[[…families]]`
+# array below is the LEGACY combo_codegen declaration of OddEvenBubbleSort — inert
+# in the default spec build; combo and spec are never link-combined.)
+[package.metadata.array_vis_bench]
+spec  = "bubble.spec"
+query = "bubble.avbs"
 
 [[package.metadata.array_vis_bench.families]]
 module = "bubble_sorts"

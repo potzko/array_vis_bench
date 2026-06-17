@@ -1,0 +1,36 @@
+// FUN-SORTS families — query OWNED by fun_sorts_lib.
+//
+// ORDER MATTERS: helper bindings prepend to every LATER emittable family, so the
+// `p`/`part` arity-coupling vars are declared AFTER the families that don't use
+// them (zero-axis / cyclent / stooge / random) and BEFORE the quick-surrender
+// families that nest a coupled QuickSelect. Putting them at the top would
+// spuriously fan the simple families over the pivot×partition product.
+//
+// Counts: 4 zero-axis + 4×4 cyclent + 2 stooge + 5 random = 27; quick surrender
+// 2×28 = 56; quick surrender optimised 2×28×2 small = 112. Total 195.
+
+// ── zero-axis chaos sorts ────────────────────────────────────────────────────
+SlowSorts:        SortingAlgorithm = SortingAlgorithm<SlowSort>
+SlowSortPotzkos:  SortingAlgorithm = SortingAlgorithm<SlowSortPotzko>
+BadHeapSorts:     SortingAlgorithm = SortingAlgorithm<BadHeapSort>
+BadHeapSortAlts:  SortingAlgorithm = SortingAlgorithm<BadHeapSortAlt>
+
+// ── cyclent ×4 partitions each ───────────────────────────────────────────────
+CyclentSorts:               SortingAlgorithm = SortingAlgorithm<CyclentSort<part = _>>
+CyclentSortOpts:            SortingAlgorithm = SortingAlgorithm<CyclentSortOpt<part = _>>
+CyclentSortStacks:          SortingAlgorithm = SortingAlgorithm<CyclentSortStack<part = _>>
+CyclentSortStackOptimizeds: SortingAlgorithm = SortingAlgorithm<CyclentSortStackOptimized<part = _>>
+
+// ── stooge ×2 small sorts; random shell ×5 gap distributions ─────────────────
+StoogeSorts:      SortingAlgorithm = SortingAlgorithm<StoogeSort<small = _>>
+RandomShellSorts: SortingAlgorithm = SortingAlgorithm<RandomShellSort<dist = _>>
+
+// ── arity-coupling helpers — scoped to the quick-surrender families below ─────
+p:    QSPivot = _
+part: QSPartition[pivot = p] = _
+
+// ── quick surrender: nests Phase 1's QuickSelect role as the inner selector ───
+QuickSurrenderRec:    SortingAlgorithm = SortingAlgorithm<QuickSurrender<inner = RecursiveQuickSelect<partition = part, pivot = p>>>
+QuickSurrenderIt:     SortingAlgorithm = SortingAlgorithm<QuickSurrender<inner = IterativeQuickSelect<partition = part, pivot = p>>>
+QuickSurrenderOptRec: SortingAlgorithm = SortingAlgorithm<QuickSurrenderOptimised<inner = RecursiveQuickSelect<partition = part, pivot = p>, small = _>>
+QuickSurrenderOptIt:  SortingAlgorithm = SortingAlgorithm<QuickSurrenderOptimised<inner = IterativeQuickSelect<partition = part, pivot = p>, small = _>>

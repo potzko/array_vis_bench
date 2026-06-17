@@ -2,6 +2,8 @@ use std::marker::PhantomData;
 use sort_logger::SortLogger;
 use super::utils::{copy_across, merge_inplace};
 use array_vis_bench_traits::SmallSort;
+use array_vis_bench_traits::Complexity;
+use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 
 /// Top-down (recursive) merge sort.
 ///
@@ -92,4 +94,27 @@ impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool>
         }
         copy_across(tmp, arr, logger);
     }
+}
+
+// Classic top-down merge sort: a perfectly balanced 2-way merge recurrence
+// T(N) = 2T(N/2) + O(N) gives N log N in all cases. EARLY_EXIT only skips an
+// already-ordered merge but still performs the full recursion + boundary scan,
+// so the best case stays N log N (no run-detection short-circuit).
+impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool> HasTimeBounds
+    for TopDownMergeSort<S, PING_PONG, EARLY_EXIT>
+{
+    const WORST: Complexity = Complexity::N_LOG_N;
+    const BEST: Complexity = Complexity::N_LOG_N;
+    const AVERAGE: Complexity = Complexity::N_LOG_N;
+}
+// Single length-N scratch buffer, reused across the whole recursion.
+impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool> HasSpace
+    for TopDownMergeSort<S, PING_PONG, EARLY_EXIT>
+{
+    const SPACE: Complexity = Complexity::N1;
+}
+impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool> HasStability
+    for TopDownMergeSort<S, PING_PONG, EARLY_EXIT>
+{
+    const STABLE: bool = true;
 }

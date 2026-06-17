@@ -19,6 +19,19 @@ ctor = "0.2"
 gap_distribution_lib = { path = "../../components/gap_distribution_lib" }
 rand = "0.8"
 
+[features]
+# Runtime self-registration (the inline `sort_family!` + `register_nondeterministic!`
+# calls). OFF by default and enabled by NOBODY — the spec catalog links this crate
+# types-only and emits the entries itself; a feature-unified `on` would duplicate.
+self_register = []
+
+# Spec catalog fragment + query (gathered by `spec_catalog`'s build): the fun-sorts
+# family. `spec` declares the components; the `.avbs` query nests the QuickSelect
+# role (Phase 1) inside the quick-surrender drivers.
+[package.metadata.array_vis_bench]
+spec  = "fun_sorts.spec"
+query = "fun_sorts.avbs"
+
 # ── Cyclent sort variants (P: Partition inline subset) ──
 [[package.metadata.array_vis_bench.families]]
 module = "fun_sorts"

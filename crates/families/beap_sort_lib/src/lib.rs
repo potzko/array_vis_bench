@@ -4,3 +4,6 @@
 
 pub mod beap_heap;
 pub use beap_heap::BeapHeap;
+
+pub mod spec_drivers;
+pub use spec_drivers::{BeapSortClassicOf, BeapSortDualOf, BeapSortQuickOf};

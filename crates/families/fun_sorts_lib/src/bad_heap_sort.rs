@@ -36,6 +36,7 @@ fn sort_rec<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     }
 }
 
+#[cfg(feature = "self_register")]
 sort_registry_macro::sort_family! {
     type Sort = BadHeapSort;
     name        = "bad heap sort";

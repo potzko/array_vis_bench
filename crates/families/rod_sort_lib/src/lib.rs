@@ -18,6 +18,11 @@ pub use shell_branching::{
 
 /// Iterates the ROD_STRATEGIES distributed slice at startup and
 /// registers every variant into `sort_registry_core`'s menu tree.
+///
+/// Gated OFF by default: the spec compiler (`spec_catalog`) registers the
+/// canonical rod entries (`RodSort<{strategy}, {merge}>`), so running this ctor
+/// too would double-list rod in the picker. See `[features]` in Cargo.toml.
+#[cfg(feature = "self_register")]
 #[ctor::ctor]
 fn register_rod_sorts() {
     for entry in ROD_STRATEGIES {

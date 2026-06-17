@@ -21,6 +21,7 @@ where
     self::slow_sort_rec::<T, U>(&mut arr[1..], logger);
 }
 
+#[cfg(feature = "self_register")]
 sort_registry_macro::sort_family! {
     type Sort = SlowSortPotzko;
     name        = "slow sort potzko";

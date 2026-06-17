@@ -1,0 +1,15 @@
+// QUICK families — query OWNED by this crate.
+//
+// `p` and `part` are HELPER bindings (scoped to THIS file — `spec_catalog` lowers
+// each gathered query independently): `p` ranges over every pivot, `part` over
+// every partition refined arity-compatible with `p` (`Partition[pivot = p]`).
+// Both prepend to each family's query, so the shared `p` couples partition↔pivot.
+// `small_sort = _` fans out over the family's small-sort role.
+//
+// Each family reproduces the baked port's 224 variants (6×5×4 single + 26×4 dual).
+
+p:    Pivot = _
+part: Partition[pivot = p] = _
+
+QuickSorts:         SortingAlgorithm = SortingAlgorithm<QuickSort<partition = part, pivot = p, small_sort = _>>
+DeferredQuickSorts: SortingAlgorithm = SortingAlgorithm<DeferredQuickSort<partition = part, pivot = p, small_sort = _>>

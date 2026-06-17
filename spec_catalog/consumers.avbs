@@ -1,0 +1,24 @@
+// The catalog's AVBS-defined CONSUMER program — the language's `consumers:
+// List<Mains<Set>>` surface, resolved at build time and run by the binary's
+// `--consumers` mode (`spec_catalog::run_declared_consumers`). This closes the
+// loop the unit test proves, but against the REAL emitted catalog:
+//   query → solve → emit AlgorithmEntry → Main consumers run over them.
+//
+// The set MIXES first-class kinds — shell sorts AND quick-selects. `correctness`
+// is kind-agnostic: it calls each entry's `run_correctness` pointer, which the
+// emit wired to the per-kind `CorrectnessSuite` (sort battery vs quick-select
+// battery). So ONE consumer program correctness-checks both kinds uniformly.
+//
+// Resolves to 9 + 9 + 28 = 46 algorithm labels under one `correctness` Main.
+
+ShellSorts:        SortingAlgorithm = SortingAlgorithm<ShellSort<_>>
+ShellSortsOrdered: SortingAlgorithm = SortingAlgorithm<ShellSortOrdered<_>>
+
+// arity-coupling helpers for the nested quick-select (declared before the family
+// that uses them — they prepend to LATER emittable families only).
+p:    QSPivot = _
+part: QSPartition[pivot = p] = _
+QuickSelects: Selection = Selection<RecursiveQuickSelect<partition = part, pivot = p>>
+
+SortsAndSelects: List<SortingAlgorithm> = [ShellSorts, ShellSortsOrdered, QuickSelects]
+checks:          List<Mains<SortsAndSelects>> = [correctness]

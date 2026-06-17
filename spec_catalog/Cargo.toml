@@ -1,0 +1,115 @@
+# The UNIFIED spec catalog: one registry (`catalog.spec`) that imports every
+# building-stone crate, and a set of AVBS query files (`*.avbs`) that build the
+# algorithm families over it. The constraint compiler (`spec_core`) + live-ABI
+# backend (`spec_emit`) solve and emit `AlgorithmEntry` rows for ALL families at
+# once — the default `array_vis_bench` binary anchors this single crate instead of
+# one pilot crate per family.
+#
+# Layer model (user's two-layer language):
+#   * Layer 1 — building stones: the leaf crates below (families + components),
+#     each self-contained Rust. Linked here TYPES-ONLY where they self-register
+#     (`shell_sort_lib` has `default-features = false`).
+#   * Layer 2 — query: `catalog.spec` declares every component; each `*.avbs`
+#     file is an AVBS program querying across them. `build.rs` lowers each query
+#     against the one shared registry. (Next step "B": push each `.spec` fragment
+#     back into its building-stone crate so the stones are fully self-describing.)
+[package]
+name = "spec_catalog"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+# The runtime ABI the generated AlgorithmEntry rows link against.
+array_vis_bench_core = { path = "../array_vis_bench_core" }
+array_vis_bench_traits = { path = "../array_vis_bench_traits" }
+sort_logger = { path = "../sort_logger" }
+sort_registry_core = { path = "../sort_registry_core" }
+linkme = "0.3"
+ctor = "0.2"
+
+# ── Building stones: shell family (TYPES ONLY — its self-registration is off) ──
+shell_sort_lib = { path = "../crates/families/shell_sort_lib", default-features = false }
+
+# ── Building stones: insertion family ─────────────────────────────────────────
+insertion_sort_lib = { path = "../crates/families/insertion_sort_lib" }
+
+# ── Building stones: cycle + bubble + comb families (TYPES ONLY — self_register off)
+cycle_sort_lib = { path = "../crates/families/cycle_sort_lib", default-features = false }
+bubble_sort_lib = { path = "../crates/families/bubble_sort_lib", default-features = false }
+comb_sort_lib = { path = "../crates/families/comb_sort_lib", default-features = false }
+
+# ── Building stones: quick-sort family + its partition / pivot / small-sort leaves
+quick_sort_lib = { path = "../crates/families/quick_sort_lib" }
+partition_lomuto = { path = "../crates/partitions/partition_lomuto" }
+partition_hoare = { path = "../crates/partitions/partition_hoare" }
+partition_block = { path = "../crates/partitions/partition_block" }
+partition_moving_pivot = { path = "../crates/partitions/partition_moving_pivot" }
+partition_moving_pivot_v3 = { path = "../crates/partitions/partition_moving_pivot_v3" }
+partition_three_way = { path = "../crates/partitions/partition_three_way" }
+rotation_reversal = { path = "../crates/rotations/rotation_reversal" }
+pivot_first = { path = "../crates/pivots/pivot_first" }
+pivot_middle = { path = "../crates/pivots/pivot_middle" }
+pivot_last = { path = "../crates/pivots/pivot_last" }
+pivot_median3 = { path = "../crates/pivots/pivot_median3" }
+pivot_median_of_medians = { path = "../crates/pivots/pivot_median_of_medians" }
+pivot_ninther = { path = "../crates/pivots/pivot_ninther" }
+small_sort_basic = { path = "../crates/small_sorts/small_sort_basic" }
+small_sort_insertion = { path = "../crates/small_sorts/small_sort_insertion" }
+small_sort_insertion_strategy = { path = "../crates/small_sorts/small_sort_insertion_strategy" }
+small_sort_network_16 = { path = "../crates/small_sorts/small_sort_network_16" }
+small_sort_deferred_insertion = { path = "../crates/small_sorts/small_sort_deferred_insertion" }
+
+# ── Building stones: rod + circle families (TYPES ONLY — self_register off) ────
+rod_sort_lib = { path = "../crates/families/rod_sort_lib", default-features = false }
+circle_sort_lib = { path = "../crates/families/circle_sort_lib", default-features = false }
+
+# ── Building stones: merge family + its 11 rotation leaves (none self-register) ─
+# (rotation_reversal already linked above for quick's MovingPivotV3.)
+merge_sort_lib = { path = "../crates/families/merge_sort_lib" }
+rotation_juggling = { path = "../crates/rotations/rotation_juggling" }
+rotation_gries_mills = { path = "../crates/rotations/rotation_gries_mills" }
+rotation_auxiliary = { path = "../crates/rotations/rotation_auxiliary" }
+rotation_grail = { path = "../crates/rotations/rotation_grail" }
+rotation_bridge = { path = "../crates/rotations/rotation_bridge" }
+rotation_contrev = { path = "../crates/rotations/rotation_contrev" }
+rotation_drill = { path = "../crates/rotations/rotation_drill" }
+rotation_helix = { path = "../crates/rotations/rotation_helix" }
+rotation_piston = { path = "../crates/rotations/rotation_piston" }
+rotation_trinity = { path = "../crates/rotations/rotation_trinity" }
+
+# ── Building stones: heap cluster (heap owns shared HeapDir+HeapPart; none self-register)
+heap_sort_lib = { path = "../crates/families/heap_sort_lib" }
+weak_heap_sort_lib = { path = "../crates/families/weak_heap_sort_lib" }
+reverse_storage_lib = { path = "../crates/components/reverse_storage_lib" }
+beap_sort_lib = { path = "../crates/families/beap_sort_lib" }
+# quick-heap (portable classic+deferred subset; reuses heap's HeapArity + quick's small sorts)
+quick_heap_sort_lib = { path = "../crates/families/quick_heap_sort_lib" }
+
+# ── Building stone: quick-SELECT family (first non-sort first-class kind) ──────
+# Reuses quicksort's partition/pivot leaf TYPES + quick_heap's HeapExtract; the
+# `.spec` declares a curated QS-only axis set (distinct QS* roles). Types-only —
+# the standalone `quick_select_registry` self-registers; this crate does not.
+quick_select_lib = { path = "../crates/families/quick_select_lib" }
+
+# ── Building stones: fun-sorts family (TYPES ONLY — self_register off) ─────────
+# Nests the QuickSelect role (quick_select_lib, above) inside quick-surrender.
+# `gap_distribution_lib` supplies the GapDistribution components for random shell.
+fun_sorts_lib = { path = "../crates/families/fun_sorts_lib", default-features = false }
+gap_distribution_lib = { path = "../crates/components/gap_distribution_lib" }
+
+# The codegen step. `cargo_metadata` walks the dependency graph and gathers each
+# building-stone crate's `[package.metadata.array_vis_bench] spec`/`query` files
+# (its catalog fragment + query). The build merges the fragments into one
+# `spec_core` registry, lowers each query with the pest frontend (host-side;
+# resolver 2 keeps pest out of the runtime graph), solves, and emits the entries.
+[build-dependencies]
+spec_core = { path = "../spec_core", features = ["pest-frontend"] }
+spec_emit = { path = "../spec_emit" }
+cargo_metadata = "0.18"
+
+# Tests drive the AVBS *language* end-to-end (lower → resolve → run consumers) and
+# the slotted-vs-baked equivalence golden, so they need the pest frontend. Dev-only:
+# resolver 2 keeps it host/test-side, out of any shipped artifact.
+[dev-dependencies]
+spec_core = { path = "../spec_core", features = ["pest-frontend"] }

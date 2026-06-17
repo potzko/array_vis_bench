@@ -1,0 +1,7 @@
+// SHELL families — query OWNED by this crate (gathered by `spec_catalog` via
+// `[package.metadata.array_vis_bench] query = "shell.avbs"`). `_` is an
+// exhaustive hole over the `seq` slot's role (GapSequence), so each family fans
+// out to all nine sequences → {ShellSort, ShellSortOrdered} × 9 = 18 entries.
+
+ShellSorts:        SortingAlgorithm = SortingAlgorithm<ShellSort<_>>
+ShellSortsOrdered: SortingAlgorithm = SortingAlgorithm<ShellSortOrdered<_>>
