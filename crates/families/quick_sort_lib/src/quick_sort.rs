@@ -10,6 +10,8 @@ use array_vis_bench_traits::{
     with_partition_scratch, PartitionScheme, PartitionVisitor, PivotInput,
 };
 
+use crate::pivoted::Pivoted;
+
 /// Generic quicksort. `P` decides how each partition step works
 /// (single- or dual-pivot — see [`PartitionScheme::N_PIVOTS`]); `V`
 /// decides where the pivots come from for each call (single- or
@@ -27,12 +29,12 @@ pub struct QuickSort<P: PartitionScheme, V: PivotInput, SS: SmallSort>(
 
 impl<P: PartitionScheme, V: PivotInput, SS: SmallSort> QuickSort<P, V, SS> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        // Pre-allocate the partition scheme's scratch buffer once for the
-        // whole sort and reuse it across every recursive partition call,
-        // exactly as the merge sorts allocate their aux array once.
-        with_partition_scratch::<P, T, U, _>(logger, |logger, scratch| {
-            quick_sort_recursive::<T, U, P, V, SS>(arr, scratch, logger);
-        });
+        // Pivot ownership now lives in the partition: fuse `P` + `V` into a
+        // self-pivoting `Pivoted<P, V>` and run it through the single
+        // pivot-free driver. `QuickSort<P, V, SS>` is kept as a thin
+        // compatibility shim (the catalog still emits this type name) — it
+        // owns no recursion of its own anymore.
+        PivotlessQuickSort::<Pivoted<P, V>, SS>::sort(arr, logger)
     }
 }
 
@@ -62,11 +64,10 @@ impl PartitionVisitor for QuickSortVisitor {
     }
 }
 
-fn quick_sort_recursive<
+fn pivotless_recursive<
     T: Ord + Copy,
     U: ?Sized + SortLogger<T>,
     P: PartitionScheme,
-    V: PivotInput,
     SS: SmallSort,
 >(
     arr: &mut [T],
@@ -80,19 +81,42 @@ fn quick_sort_recursive<
     if arr.len() < 2 {
         return;
     }
-    // Stack-allocated pivot buffer sized for the largest supported
-    // arity (2). After monomorphisation only `V::N` slots are
-    // populated; the rest are dead.
-    let mut pivots = [0usize; 2];
-    V::pick(arr, logger, &mut pivots);
+    // The partition is self-contained: it picks its own pivots (if any)
+    // and announces the unsorted regions. The driver supplies none.
     let mut visitor = QuickSortVisitor::new();
-    P::partition::<T, U, _>(arr, logger, &pivots[..V::N], scratch, &mut visitor);
+    P::partition::<T, U, _>(arr, logger, &[], scratch, &mut visitor);
     let n = visitor.n as usize;
     let mut i = 0;
     while i < n {
         let r = visitor.ranges[i].clone();
-        quick_sort_recursive::<T, U, P, V, SS>(&mut arr[r], scratch, logger);
+        pivotless_recursive::<T, U, P, SS>(&mut arr[r], scratch, logger);
         i += 1;
+    }
+}
+
+/// Pivotless quicksort: the partition decides its own split without
+/// consulting pivot *values* (e.g. [`HeapExtract`](https://docs.rs/quick_heap_sort_lib)
+/// splits at the midpoint). This is the structural counterpart to
+/// [`QuickSort`] — same recursive driver, but the sort carries **no pivot
+/// vocabulary at all** instead of papering over the absence with `NoPivot`.
+///
+/// `P` must be a zero-pivot scheme (`P::N_PIVOTS == 0`); it receives an
+/// empty `pivots` slice every call. Internally this routes through the
+/// shared [`QuickSort`] driver with the zero-pivot [`NoPivot`] input, so
+/// there is a single recursion to maintain — but the public type
+/// `PivotlessQuickSort<P, SS>` exposes no pivot parameter, which is the
+/// whole point: pivot-based and pivotless quicksorts are now distinct
+/// types rather than one type with a degenerate pivot slot.
+pub struct PivotlessQuickSort<P: PartitionScheme, SS: SmallSort>(PhantomData<(P, SS)>);
+
+impl<P: PartitionScheme, SS: SmallSort> PivotlessQuickSort<P, SS> {
+    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
+        // The single quicksort recursion. Pre-allocate the partition's
+        // scratch buffer once and thread it through every call (as the
+        // merge sorts allocate their aux array once).
+        with_partition_scratch::<P, T, U, _>(logger, |logger, scratch| {
+            pivotless_recursive::<T, U, P, SS>(arr, scratch, logger);
+        });
     }
 }
 
@@ -152,4 +176,45 @@ where
     SS: SmallSort + HasStability,
 {
     const STABLE: bool = P::STABLE && V::STABLE && SS::STABLE;
+}
+
+// ── Composable annotations for the pivotless driver ──────────────────
+//
+// The driver reads everything off the partition `P` alone — it is now
+// pivot-agnostic. Worst-case recursion depth is O(N) if the partition can
+// degenerate (a `Pivoted<…>` wrapping a degenerate selector) and O(log N)
+// otherwise (a self-balancing splitter like `HeapExtract`, whose
+// `PivotQuality::DEGENERATES` is `false`). Per-level cost is the
+// partition's; the small sort runs only on bounded leaves → O(1).
+
+impl<P, SS> HasTimeBounds for PivotlessQuickSort<P, SS>
+where
+    P: PartitionScheme + HasTimeBounds + PivotQuality,
+    SS: SmallSort,
+{
+    const WORST: Complexity = Complexity::product(
+        if P::DEGENERATES { Complexity::N1 } else { Complexity::LOG_N },
+        P::WORST,
+    );
+    const BEST: Complexity = Complexity::product(Complexity::LOG_N, P::BEST);
+    const AVERAGE: Complexity = Complexity::product(Complexity::LOG_N, P::AVERAGE);
+}
+
+impl<P, SS> HasSpace for PivotlessQuickSort<P, SS>
+where
+    P: PartitionScheme + HasSpace,
+    SS: SmallSort + HasSpace,
+{
+    const SPACE: Complexity = Complexity::sum(
+        Complexity::LOG_N,
+        Complexity::sum(P::SPACE, SS::SPACE),
+    );
+}
+
+impl<P, SS> HasStability for PivotlessQuickSort<P, SS>
+where
+    P: PartitionScheme + HasStability,
+    SS: SmallSort + HasStability,
+{
+    const STABLE: bool = P::STABLE && SS::STABLE;
 }

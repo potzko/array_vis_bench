@@ -8,8 +8,9 @@
 //! [`QuickSort`](https://docs.rs/quick_sort_lib) driver recurses into each.
 //!
 //! Pivotless ([`N_PIVOTS = 0`](PartitionScheme::N_PIVOTS)) — splits at the
-//! midpoint without consulting pivot values. Paired with `NoPivot` for
-//! `QuickSort<HeapExtract<P, DH>, NoPivot, SS>`.
+//! midpoint without consulting pivot values. Drives the pivot-free
+//! `PivotlessQuickSort<HeapExtract<P, DH>, SS>` (no pivot parameter; the
+//! driver routes through `NoPivot` internally).
 //!
 //! `P` selects which heap kind backs the build: [`crate::AryPair<A>`] for
 //! d-ary heaps (parameterised by [`heap_sort_lib::arity::Arity`]) or
@@ -26,7 +27,7 @@
 use std::marker::PhantomData;
 
 use array_vis_bench_traits::{Complexity, PartitionScheme, PartitionVisitor};
-use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
+use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds, PivotQuality};
 use heap_sort_lib::deep_heapify::DeepHeapify;
 use sort_logger::SortLogger;
 
@@ -103,4 +104,13 @@ where
     DH: DeepHeapify,
 {
     const STABLE: bool = false;
+}
+// Self-balancing midpoint split → recursion depth never degenerates, so the
+// pivotless driver keeps O(log N) depth (matches the old `NoPivot` pairing).
+impl<P, DH> PivotQuality for HeapExtract<P, DH>
+where
+    P: HeapAlgorithmPair<DH>,
+    DH: DeepHeapify,
+{
+    const DEGENERATES: bool = false;
 }

@@ -19,6 +19,13 @@ version = "0.0.0"
 edition = "2021"
 publish = false
 
+# Cross-leaf KIND fragments with no single home crate live here next to the
+# catalog. Gathered by build.rs exactly like any building-stone crate's
+# `spec`/`query` (spec_catalog is in its own dependency closure).
+[package.metadata.array_vis_bench]
+spec = "kinds.spec"
+query = "kinds.avbs"
+
 [dependencies]
 # The runtime ABI the generated AlgorithmEntry rows link against.
 array_vis_bench_core = { path = "../array_vis_bench_core" }

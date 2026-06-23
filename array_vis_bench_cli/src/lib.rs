@@ -466,20 +466,25 @@ fn print_breadcrumb(
 /// hole prints verbatim. The brackets are always balanced, so the partial type
 /// stays well-formed.
 fn print_typed_label(template: &str, chosen: &Chosen, current: Option<&str>) {
+    print!("{}", render_typed_label(template, chosen, current));
+}
+
+/// Build the partial-type string [`print_typed_label`] emits — factored out so
+/// the slot rendering is unit-testable without capturing stdout.
+fn render_typed_label(template: &str, chosen: &Chosen, current: Option<&str>) -> String {
     let chosen_val =
         |role: &str| chosen.iter().find(|p| p.role == role).map(|p| p.value.as_str());
 
     let Some(open) = template.find('<') else {
         // No generic parameters — the label itself is the whole partial type.
-        println!("{template}");
-        return;
+        return format!("{template}\n");
     };
     let close = template.rfind('>').unwrap_or(template.len());
     let head = &template[..open];
     let body = &template[open + 1..close];
     let tail = &template[close..];
 
-    println!("{head}<");
+    let mut out = format!("{head}<\n");
     for frag in split_top_level(body) {
         let frag = frag.trim();
         if frag.is_empty() {
@@ -499,14 +504,24 @@ fn print_typed_label(template: &str, chosen: &Chosen, current: Option<&str>) {
                 } else {
                     "-"
                 };
-                println!("  {prefix}{fill}{suffix},");
+                // A bare `{role}` hole (no label text around it, as in
+                // `quick select<{partition}, {pivot}>`) would otherwise print
+                // just the value; prefix the role name so each slot reads
+                // `partition = block`. Holes with their own label text (e.g.
+                // `part: {pivot}`) already name the slot, so leave them alone.
+                if prefix.is_empty() && suffix.is_empty() {
+                    out.push_str(&format!("  {role} = {fill},\n"));
+                } else {
+                    out.push_str(&format!("  {prefix}{fill}{suffix},\n"));
+                }
             }
             // A fragment with no `{Role}` hole (e.g. a const baked into the
             // label): show it literally.
-            _ => println!("  {frag},"),
+            _ => out.push_str(&format!("  {frag},\n")),
         }
     }
-    println!("{tail}");
+    out.push_str(&format!("{tail}\n"));
+    out
 }
 
 /// Split on top-level commas, ignoring those nested inside `<…>` / `(…)` /
@@ -589,6 +604,35 @@ mod tests {
         let (path_a, _r, vals_a, _g) = next_facet(&combined, &chosen2).unwrap();
         assert_eq!(path_a, "pivot/a");
         assert_eq!(vals_a, vec!["first".to_string(), "middle".to_string()]);
+    }
+
+    fn pick(role: &str, value: &str) -> Pick {
+        Pick { path: role.into(), role: role.into(), value: value.into() }
+    }
+
+    /// Bare `{role}` holes (quick select's `<{partition}, {pivot}>`) render with
+    /// the role name, so each slot reads `partition = block` rather than a bare
+    /// value.
+    #[test]
+    fn bare_holes_render_the_role_name() {
+        let tmpl = "quick select: iterative<{partition}, {pivot}>";
+        let chosen = vec![pick("partition", "block")];
+        let out = render_typed_label(tmpl, &chosen, Some("pivot"));
+        assert_eq!(
+            out,
+            "quick select: iterative<\n  partition = block,\n  pivot = _,\n>\n",
+        );
+    }
+
+    /// Holes that already carry their own label text (quick sort's `part: {…}`)
+    /// keep the catalog's `role: value` form — the role-name prefix is only for
+    /// bare holes.
+    #[test]
+    fn labeled_holes_keep_their_own_text() {
+        let tmpl = "quick sort<part: {Partition}, pivot: {Pivot}>";
+        let chosen = vec![pick("Partition", "block")];
+        let out = render_typed_label(tmpl, &chosen, Some("Pivot"));
+        assert_eq!(out, "quick sort<\n  part: block,\n  pivot: _,\n>\n");
     }
 
     /// A single (leaf) pivot has no sub-slots, so navigation goes straight from

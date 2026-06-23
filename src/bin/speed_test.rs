@@ -1,94 +1,90 @@
-/// Quick sort speed comparison — no criterion overhead.
-///
-/// Runs every registered sort a fixed number of times on random arrays,
-/// reports median elapsed time, prints a table sorted fastest-first.
-///
-/// Usage:
-///   cargo run --release --bin speed_test
-///   cargo run --release --bin speed_test -- 500000
-///   cargo run --release --bin speed_test -- 500000 20
-///
-/// Arguments (all optional, positional):
-///   1. N         — array size         (default: 100_000)
-///   2. runs      — timed runs / sort  (default: 7)
-
+//! Standalone speed benchmark across ALL first-class kinds.
+//!
+//! For each category, times every registered algorithm's `run_with_input`
+//! (median of `runs`) and prints a fastest-first table. Same timed-call style
+//! as the original sort-only benchmark, generalised: a rotation / merge /
+//! partition / small-sort / quick-select entry is just as much a single timed
+//! `run_with_input` call as a sort is. Args: `[N] [runs]`.
 use std::time::Instant;
 
-use array_vis_bench_full::bench_registry::{primary_input, ALGORITHMS, Category, RunConfig};
+use array_vis_bench_full::bench_registry::{
+    primary_input, AlgorithmEntry, Category, RunConfig, ALGORITHMS,
+};
 use array_vis_bench_full::traits::log_traits::NoOpLogger;
-use array_vis_bench_full::utils::array_gen::get_rand_arr;
-use rand::seq::SliceRandom;
-use rand::thread_rng;
 use sort_logger::SortLogger;
 
-fn median_ns(times: &mut Vec<u64>) -> u64 {
+// ponytail: the old `buf.shuffle` was dead — `run_with_input` regenerates its
+// input from the category's registry each call, so the external buffer + `rand`
+// were never timed. Dropped.
+
+const CATEGORIES: [Category; 6] = [
+    Category::Sort,
+    Category::QuickSelect,
+    Category::Merge,
+    Category::Partition,
+    Category::SmallSort,
+    Category::Rotation,
+];
+
+fn median_ns(times: &mut [u64]) -> u64 {
     times.sort_unstable();
     times[times.len() / 2]
 }
 
-fn main() {
-    let mut args = std::env::args().skip(1);
-    let n: usize = args
-        .next()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(100_000);
-    let runs: usize = args
-        .next()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(7);
+fn fmt_ns(ns: u64) -> (f64, &'static str) {
+    if ns < 1_000 {
+        (ns as f64, "ns")
+    } else if ns < 1_000_000 {
+        (ns as f64 / 1_000.0, "µs")
+    } else if ns < 1_000_000_000 {
+        (ns as f64 / 1_000_000.0, "ms")
+    } else {
+        (ns as f64 / 1_000_000_000.0, "s ")
+    }
+}
 
-    println!("Speed test  N={n}  runs_per_sort={runs}");
-    println!();
+fn bench_category(cat: Category, n: usize, runs: usize) {
+    let entries: Vec<&'static AlgorithmEntry> =
+        ALGORITHMS.iter().filter(|e| e.category == cat).collect();
+    if entries.is_empty() {
+        return;
+    }
+    let input = primary_input(cat);
 
-    let mut rng = thread_rng();
-    let mut buf = get_rand_arr(n);
-    let mut results: Vec<(&'static str, u64)> = Vec::new();
-
-    let cfg = RunConfig { size: n, seed: 0 };
-    for entry in ALGORITHMS {
-        // Only sorts have a "time how long to sort this array"
-        // interpretation. Other categories run via `run_correctness`-style
-        // harnesses that aren't a single timed call.
-        if entry.category != Category::Sort {
-            continue;
-        }
+    let mut results: Vec<(&'static str, u64)> = Vec::with_capacity(entries.len());
+    for e in entries {
+        // Clamp to the entry's contract cap — small sorts only run on inputs
+        // up to their threshold (their input generator clamps too, this just
+        // keeps the reported size honest).
+        let size = e.max_input_size.map_or(n, |c| n.min(c));
+        let cfg = RunConfig { size, seed: 0 };
         let mut times = Vec::with_capacity(runs);
         for _ in 0..runs {
-            buf.shuffle(&mut rng);
             let t = Instant::now();
-            let mut logger = NoOpLogger;
-            (entry.run_with_input)(
-                primary_input(Category::Sort),
-                &cfg,
-                &mut logger as &mut dyn SortLogger<usize>,
-            );
+            (e.run_with_input)(input, &cfg, &mut NoOpLogger as &mut dyn SortLogger<usize>);
             times.push(t.elapsed().as_nanos() as u64);
         }
-        let med = median_ns(&mut times);
-        results.push((entry.name, med));
+        results.push((e.name, median_ns(&mut times)));
     }
-
-    // Sort fastest first
     results.sort_by_key(|&(_, ns)| ns);
 
-    // Pretty-print table
     let name_w = results.iter().map(|(n, _)| n.len()).max().unwrap_or(20).max(20);
-    println!("{:<width$}  {:>12}", "sort", "median", width = name_w);
+    println!("\n=== {} ({} variants) ===", cat.as_str(), results.len());
+    println!("{:<width$}  {:>12}", "algorithm", "median", width = name_w);
     println!("{:-<width$}  {:->12}", "", "", width = name_w);
-
     for (name, ns) in &results {
-        let (val, unit) = if *ns < 1_000 {
-            (*ns as f64, "ns")
-        } else if *ns < 1_000_000 {
-            (*ns as f64 / 1_000.0, "µs")
-        } else if *ns < 1_000_000_000 {
-            (*ns as f64 / 1_000_000.0, "ms")
-        } else {
-            (*ns as f64 / 1_000_000_000.0, "s ")
-        };
+        let (val, unit) = fmt_ns(*ns);
         println!("{:<width$}  {:>9.2} {unit}", name, val, width = name_w);
     }
+}
 
-    println!();
-    println!("{} sorts timed", results.len());
+fn main() {
+    let mut args = std::env::args().skip(1);
+    let n: usize = args.next().and_then(|s| s.parse().ok()).unwrap_or(100_000);
+    let runs: usize = args.next().and_then(|s| s.parse().ok()).unwrap_or(7);
+
+    println!("Speed test  N={n}  runs={runs}");
+    for cat in CATEGORIES {
+        bench_category(cat, n, runs);
+    }
 }

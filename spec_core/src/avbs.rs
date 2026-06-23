@@ -44,7 +44,17 @@ pub fn parse(text: &str) -> Result<Pairs<'_, Rule>, Box<pest::error::Error<Rule>
 /// first-class kind. `List`/`Mains` are reserved for the aggregation/consumer
 /// track and not yet lowerable on the algorithm track.
 fn is_wrapper_name(name: &str) -> bool {
-    matches!(name, "SortingAlgorithm" | "Selection" | "List" | "Mains")
+    matches!(
+        name,
+        "SortingAlgorithm"
+            | "Selection"
+            | "RotationAlg"
+            | "SmallSortAlg"
+            | "PartitionAlg"
+            | "MergeAlg"
+            | "List"
+            | "Mains"
+    )
 }
 
 /// The role a wrapper contributes to the binding it heads. A wrapper exists per
@@ -55,6 +65,10 @@ fn wrapper_role(name: &str) -> Result<String, String> {
     match name {
         "SortingAlgorithm" => Ok("Sort".to_string()),
         "Selection" => Ok("QuickSelect".to_string()),
+        "RotationAlg" => Ok("RotationKind".to_string()),
+        "SmallSortAlg" => Ok("SmallSortKind".to_string()),
+        "PartitionAlg" => Ok("PartitionKind".to_string()),
+        "MergeAlg" => Ok("MergeKind".to_string()),
         other => Err(format!("`{other}<…>` is not lowerable yet (lists/consumers)")),
     }
 }

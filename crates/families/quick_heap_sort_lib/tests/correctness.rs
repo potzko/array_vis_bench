@@ -3,8 +3,8 @@
 //! Exercises both call sites with the same shuffled inputs:
 //!   - [`QuickHeapSort`] — confirms the shared-core refactor didn't break
 //!     the bespoke recursion-rebuild driver.
-//!   - [`QuickSort<HeapExtract<…>, NoPivot, …>`] — confirms the new
-//!     [`PartitionScheme`] sorts under the generic QuickSort driver.
+//!   - [`PivotlessQuickSort<HeapExtract<…>, …>`] — confirms the new
+//!     [`PartitionScheme`] sorts under the pivotless QuickSort driver.
 
 use array_vis_bench_traits::NoPivot;
 use heap_sort_lib::arity::{Binary, Ternary};
@@ -13,7 +13,7 @@ use heap_sort_lib::set_quick_select::SequentialSet;
 use quick_heap_sort_lib::heap_pair::AryPair;
 use quick_heap_sort_lib::{heap_extract::HeapExtract, quick_heap_sort::QuickHeapSort};
 use quick_select_lib::RecursiveQuickSelect;
-use quick_sort_lib::quick_sort::QuickSort;
+use quick_sort_lib::quick_sort::PivotlessQuickSort;
 use small_sort_basic::NoSmallSort;
 use sort_logger::NoOpLogger;
 
@@ -62,17 +62,17 @@ fn quick_heap_sort_still_sorts_after_shared_core_refactor() {
 #[test]
 fn quick_sort_over_heap_extract_sorts() {
     check_sorts(
-        "QuickSort<HeapExtract<AryPair<Binary>, Iterative>, NoPivot, NoSmallSort>",
+        "PivotlessQuickSort<HeapExtract<AryPair<Binary>, Iterative>, NoSmallSort>",
         |a, l| {
-            QuickSort::<HeapExtract<AryPair<Binary>, Iterative>, NoPivot, NoSmallSort>::sort(
+            PivotlessQuickSort::<HeapExtract<AryPair<Binary>, Iterative>, NoSmallSort>::sort(
                 a, l,
             )
         },
     );
     check_sorts(
-        "QuickSort<HeapExtract<AryPair<Ternary>, Recursive>, NoPivot, NoSmallSort>",
+        "PivotlessQuickSort<HeapExtract<AryPair<Ternary>, Recursive>, NoSmallSort>",
         |a, l| {
-            QuickSort::<HeapExtract<AryPair<Ternary>, Recursive>, NoPivot, NoSmallSort>::sort(
+            PivotlessQuickSort::<HeapExtract<AryPair<Ternary>, Recursive>, NoSmallSort>::sort(
                 a, l,
             )
         },
@@ -119,7 +119,7 @@ fn cycle_bounded_set_quick_select_heapextract_sorts() {
     type InnerHE = HeapExtract<AryPair<Binary>, Iterative>;
     type Cycle =
         HeapExtract<AryPair<Binary>, SequentialSet<RecursiveQuickSelect<InnerHE, NoPivot>>>;
-    type Sort = QuickSort<Cycle, NoPivot, NoSmallSort>;
+    type Sort = PivotlessQuickSort<Cycle, NoSmallSort>;
 
     for &n in &[0usize, 1, 2, 3, 7, 16, 50, 128] {
         for seed in 0..2u64 {

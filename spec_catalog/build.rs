@@ -160,7 +160,11 @@ fn main() {
         }
         let n = all_sorts.len() - before;
         total += n;
-        println!("cargo:warning=spec_catalog: {} ({}) → {n} AlgorithmEntry rows", stem, f.krate);
+        // Informational tally (per-family row count). Plain stdout, not
+        // `cargo::warning=` — captured to the build script's `output` file and
+        // shown only under `cargo build -vv`, so default builds stay quiet.
+        // Genuine problems (unsatisfiable query, dup name) still warn/panic.
+        println!("spec_catalog: {} ({}) → {n} AlgorithmEntry rows", stem, f.krate);
         count_consts.push_str(&format!(
             "#[allow(dead_code)] const COUNT_{}: usize = {n};\n",
             stem.to_uppercase()
@@ -170,7 +174,7 @@ fn main() {
             .unwrap_or_else(|_| panic!("write q_{stem}.avbs"));
     }
 
-    println!("cargo:warning=spec_catalog: emitting {total} AlgorithmEntry rows total");
+    println!("spec_catalog: emitting {total} AlgorithmEntry rows total");
 
     let code = spec_core::emit_entries(&reg, &all_sorts, &spec_emit::ArrayBackend::default())
         .expect("emit_entries");
@@ -206,7 +210,7 @@ fn main() {
                 c.algo_labels.len()
             ));
             println!(
-                "cargo:warning=spec_catalog: consumer `{}` → {} main(s) over {} algorithms",
+                "spec_catalog: consumer `{}` → {} main(s) over {} algorithms",
                 c.name,
                 c.mains.len(),
                 c.algo_labels.len()

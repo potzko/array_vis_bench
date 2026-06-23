@@ -13,10 +13,12 @@
 
 pub mod deferred_quick_sort;
 pub mod pivot_selectors;
+pub mod pivoted;
 pub mod quick_sort;
 pub mod yaroslavskiy;
 
-pub use deferred_quick_sort::DeferredQuickSort;
+pub use deferred_quick_sort::{DeferredPivotlessQuickSort, DeferredQuickSort};
 pub use pivot_selectors::{CombinedSelector, NintherDualPivot};
-pub use quick_sort::QuickSort;
+pub use pivoted::Pivoted;
+pub use quick_sort::{PivotlessQuickSort, QuickSort};
 pub use yaroslavskiy::DualPivotPartition;

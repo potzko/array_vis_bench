@@ -81,10 +81,13 @@ impl EmitBackend for ArrayBackend {
         match ctx.category.unwrap_or("Sort") {
             "Sort" => Ok(self.sort_entry_body(ctx)),
             "QuickSelect" => Ok(self.quick_select_entry_body(ctx)),
+            "Rotation" => Ok(self.rotation_entry_body(ctx)),
+            "SmallSort" => Ok(self.small_sort_entry_body(ctx)),
+            "Partition" => Ok(self.partition_entry_body(ctx)),
+            "Merge" => Ok(self.merge_entry_body(ctx)),
             other => Err(format!(
                 "spec_emit: no driver for category `{other}` yet — wired kinds are \
-                 `Sort` and `QuickSelect`; Partition/Merge/Rotation/SmallSort (whose \
-                 live contracts differ) come next, each as a `CorrectnessSuite` impl"
+                 `Sort`, `QuickSelect`, `Rotation`, `SmallSort`, `Partition`, `Merge`"
             )),
         }
     }
@@ -273,6 +276,278 @@ impl ArrayBackend {
             adaptive = ctx.adaptive,
         )
     }
+
+    /// The `Category::Merge` registration body. Merges have no role trait in the
+    /// traits crate — `RotationMerge` lives in the `merge_sort_lib` family — so,
+    /// like sorts, this inlines `merge_battery` directly (no `CorrectnessSuite`,
+    /// which would force `array_vis_bench_core` to depend on a family crate). The
+    /// shared `run_rotation_merge` one-shot allocates/frees the merge's scratch.
+    /// Entries nest under the `"merges"` picker root, faceted by the rotation.
+    fn merge_entry_body(&self, ctx: &EntryCtx) -> String {
+        let AbiPaths { core, traits, nav, logger, suites: _ } = &self.paths;
+        let max_input = match ctx.max_input {
+            Some(n) => format!("Some({n})"),
+            None => "None".to_string(),
+        };
+        let cap_static = match ctx.max_input {
+            Some(n) => format!(
+"    #[linkme::distributed_slice({core}::SORT_TEST_CAPS)]
+    #[allow(non_upper_case_globals)]
+    static TEST_CAP: (&'static str, usize) = (NAME, {n});
+"
+            ),
+            None => String::new(),
+        };
+        let mut menu_lit = String::from("\"merges\"");
+        for seg in ctx.menu {
+            menu_lit.push_str(&format!(", {seg:?}"));
+        }
+        let axes_lit: String = ctx
+            .axes
+            .iter()
+            .map(|a| format!("({:?}, {:?}, {:?}), ", a.role, a.value, a.path))
+            .collect();
+        let template_lit = format!("{:?}", ctx.label_template);
+        format!(
+"    const NAME: &str = {label:?};
+    fn merge_dyn(arr: &mut [usize], mid: usize, logger: &mut dyn {logger}::SortLogger<usize>) {{
+        merge_sort_lib::rotation_merge::run_rotation_merge::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, mid, logger);
+    }}
+    fn merge_noop(arr: &mut [usize], mid: usize, logger: &mut {logger}::NoOpLogger) {{
+        merge_sort_lib::rotation_merge::run_rotation_merge::<Ty, usize, {logger}::NoOpLogger>(arr, mid, logger);
+    }}
+    fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
+        {core}::run_merge_with_input(input_name, config, merge_dyn, logger);
+    }}
+    fn run_correct() {{
+        {core}::correctness::merge_battery(merge_noop, NAME);
+    }}
+{cap_static}    #[linkme::distributed_slice({core}::ALGORITHMS)]
+    #[allow(non_upper_case_globals)]
+    static ENTRY: {core}::AlgorithmEntry = {core}::AlgorithmEntry {{
+        name: NAME,
+        category: {core}::Category::Merge,
+        worst: <Ty as {traits}::composable::HasTimeBounds>::WORST,
+        best: <Ty as {traits}::composable::HasTimeBounds>::BEST,
+        average: <Ty as {traits}::composable::HasTimeBounds>::AVERAGE,
+        space: <Ty as {traits}::composable::HasSpace>::SPACE,
+        stable: <Ty as {traits}::composable::HasStability>::STABLE,
+        adaptive: {adaptive},
+        max_input_size: {max_input},
+        run_with_input: run_default,
+        run_correctness: run_correct,
+    }};
+    #[ctor::ctor]
+    #[allow(non_snake_case)]
+    fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
+",
+            label = ctx.label,
+            adaptive = ctx.adaptive,
+        )
+    }
+
+    /// The `Category::SmallSort` registration body. ABI is the [`SmallSort`]
+    /// role trait: `sort_dyn(arr, logger)` calls `<Ty as SmallSort>::sort`
+    /// (the mutation bool is discarded), the vis path uses
+    /// `run_small_sort_with_input`, and correctness goes through `SmallSortSuite`
+    /// (which feeds the leaf's `THRESHOLD` to the battery). A small sort is only
+    /// correct up to its threshold, so `max_input` (set per leaf to the
+    /// threshold) caps BOTH the interactive picker and the battery. Entries nest
+    /// under the `"small sorts"` picker root.
+    fn small_sort_entry_body(&self, ctx: &EntryCtx) -> String {
+        let AbiPaths { core, traits, nav, logger, suites } = &self.paths;
+        let max_input = match ctx.max_input {
+            Some(n) => format!("Some({n})"),
+            None => "None".to_string(),
+        };
+        let cap_static = match ctx.max_input {
+            Some(n) => format!(
+"    #[linkme::distributed_slice({core}::SORT_TEST_CAPS)]
+    #[allow(non_upper_case_globals)]
+    static TEST_CAP: (&'static str, usize) = (NAME, {n});
+"
+            ),
+            None => String::new(),
+        };
+        let mut menu_lit = String::from("\"small sorts\"");
+        for seg in ctx.menu {
+            menu_lit.push_str(&format!(", {seg:?}"));
+        }
+        let axes_lit: String = ctx
+            .axes
+            .iter()
+            .map(|a| format!("({:?}, {:?}, {:?}), ", a.role, a.value, a.path))
+            .collect();
+        let template_lit = format!("{:?}", ctx.label_template);
+        format!(
+"    const NAME: &str = {label:?};
+    fn sort_dyn(arr: &mut [usize], logger: &mut dyn {logger}::SortLogger<usize>) {{
+        let _ = <Ty as {traits}::SmallSort>::sort(arr, logger);
+    }}
+    fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
+        {core}::run_small_sort_with_input(input_name, config, sort_dyn, logger);
+    }}
+    fn run_correct() {{
+        <{suites}::SmallSortSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
+    }}
+{cap_static}    #[linkme::distributed_slice({core}::ALGORITHMS)]
+    #[allow(non_upper_case_globals)]
+    static ENTRY: {core}::AlgorithmEntry = {core}::AlgorithmEntry {{
+        name: NAME,
+        category: {core}::Category::SmallSort,
+        // A small sort runs only on inputs bounded by a compile-time THRESHOLD,
+        // so its work is constant — O(1), not the leaf's intrinsic in-N scaling
+        // (e.g. insertion's N²). This is the same reasoning QuickSort uses to
+        // treat its small-sort slot as CONST; the standalone entry matches it.
+        worst: {traits}::Complexity::CONST,
+        best: {traits}::Complexity::CONST,
+        average: {traits}::Complexity::CONST,
+        space: <Ty as {traits}::composable::HasSpace>::SPACE,
+        stable: <Ty as {traits}::composable::HasStability>::STABLE,
+        adaptive: {adaptive},
+        max_input_size: {max_input},
+        run_with_input: run_default,
+        run_correctness: run_correct,
+    }};
+    #[ctor::ctor]
+    #[allow(non_snake_case)]
+    fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
+",
+            label = ctx.label,
+            adaptive = ctx.adaptive,
+        )
+    }
+
+    /// The `Category::Partition` registration body. A standalone partition is a
+    /// self-pivoting `Pivoted<Scheme, Sel>` (a `PartitionScheme`); one step runs
+    /// via the shared `run_partition_bounds` (vis path drops the bounds; the
+    /// `PartitionSuite` battery uses them). Entries nest under the `"partitions"`
+    /// picker root, faceted by the `scheme`/`pivot` slots.
+    fn partition_entry_body(&self, ctx: &EntryCtx) -> String {
+        let AbiPaths { core, traits, nav, logger, suites } = &self.paths;
+        let max_input = match ctx.max_input {
+            Some(n) => format!("Some({n})"),
+            None => "None".to_string(),
+        };
+        let cap_static = match ctx.max_input {
+            Some(n) => format!(
+"    #[linkme::distributed_slice({core}::SORT_TEST_CAPS)]
+    #[allow(non_upper_case_globals)]
+    static TEST_CAP: (&'static str, usize) = (NAME, {n});
+"
+            ),
+            None => String::new(),
+        };
+        let mut menu_lit = String::from("\"partitions\"");
+        for seg in ctx.menu {
+            menu_lit.push_str(&format!(", {seg:?}"));
+        }
+        let axes_lit: String = ctx
+            .axes
+            .iter()
+            .map(|a| format!("({:?}, {:?}, {:?}), ", a.role, a.value, a.path))
+            .collect();
+        let template_lit = format!("{:?}", ctx.label_template);
+        format!(
+"    const NAME: &str = {label:?};
+    fn partition_dyn(arr: &mut [usize], logger: &mut dyn {logger}::SortLogger<usize>) {{
+        let _ = {traits}::role::partition::run_partition_bounds::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, logger);
+    }}
+    fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
+        {core}::run_partition_with_input(input_name, config, partition_dyn, logger);
+    }}
+    fn run_correct() {{
+        <{suites}::PartitionSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
+    }}
+{cap_static}    #[linkme::distributed_slice({core}::ALGORITHMS)]
+    #[allow(non_upper_case_globals)]
+    static ENTRY: {core}::AlgorithmEntry = {core}::AlgorithmEntry {{
+        name: NAME,
+        category: {core}::Category::Partition,
+        worst: <Ty as {traits}::composable::HasTimeBounds>::WORST,
+        best: <Ty as {traits}::composable::HasTimeBounds>::BEST,
+        average: <Ty as {traits}::composable::HasTimeBounds>::AVERAGE,
+        space: <Ty as {traits}::composable::HasSpace>::SPACE,
+        stable: <Ty as {traits}::composable::HasStability>::STABLE,
+        adaptive: {adaptive},
+        max_input_size: {max_input},
+        run_with_input: run_default,
+        run_correctness: run_correct,
+    }};
+    #[ctor::ctor]
+    #[allow(non_snake_case)]
+    fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
+",
+            label = ctx.label,
+            adaptive = ctx.adaptive,
+        )
+    }
+
+    /// The `Category::Rotation` registration body. ABI is the [`Rotation`]
+    /// role trait: the adapter is `(arr, split, logger)` calling the shared
+    /// `run_rotation` one-shot (which allocates/frees the rotation's scratch),
+    /// the vis path uses `run_rotation_with_input`, and correctness goes
+    /// through `RotationSuite` via [`CorrectnessSuite`]. Entries nest under the
+    /// `"rotations"` picker root.
+    fn rotation_entry_body(&self, ctx: &EntryCtx) -> String {
+        let AbiPaths { core, traits, nav, logger, suites } = &self.paths;
+        let max_input = match ctx.max_input {
+            Some(n) => format!("Some({n})"),
+            None => "None".to_string(),
+        };
+        let cap_static = match ctx.max_input {
+            Some(n) => format!(
+"    #[linkme::distributed_slice({core}::SORT_TEST_CAPS)]
+    #[allow(non_upper_case_globals)]
+    static TEST_CAP: (&'static str, usize) = (NAME, {n});
+"
+            ),
+            None => String::new(),
+        };
+        let mut menu_lit = String::from("\"rotations\"");
+        for seg in ctx.menu {
+            menu_lit.push_str(&format!(", {seg:?}"));
+        }
+        let axes_lit: String = ctx
+            .axes
+            .iter()
+            .map(|a| format!("({:?}, {:?}, {:?}), ", a.role, a.value, a.path))
+            .collect();
+        let template_lit = format!("{:?}", ctx.label_template);
+        format!(
+"    const NAME: &str = {label:?};
+    fn rotate_dyn(arr: &mut [usize], split: usize, logger: &mut dyn {logger}::SortLogger<usize>) {{
+        {traits}::role::rotation::run_rotation::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, split, logger);
+    }}
+    fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
+        {core}::run_rotation_with_input(input_name, config, rotate_dyn, logger);
+    }}
+    fn run_correct() {{
+        <{suites}::RotationSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
+    }}
+{cap_static}    #[linkme::distributed_slice({core}::ALGORITHMS)]
+    #[allow(non_upper_case_globals)]
+    static ENTRY: {core}::AlgorithmEntry = {core}::AlgorithmEntry {{
+        name: NAME,
+        category: {core}::Category::Rotation,
+        worst: <Ty as {traits}::composable::HasTimeBounds>::WORST,
+        best: <Ty as {traits}::composable::HasTimeBounds>::BEST,
+        average: <Ty as {traits}::composable::HasTimeBounds>::AVERAGE,
+        space: <Ty as {traits}::composable::HasSpace>::SPACE,
+        stable: <Ty as {traits}::composable::HasStability>::STABLE,
+        adaptive: {adaptive},
+        max_input_size: {max_input},
+        run_with_input: run_default,
+        run_correctness: run_correct,
+    }};
+    #[ctor::ctor]
+    #[allow(non_snake_case)]
+    fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
+",
+            label = ctx.label,
+            adaptive = ctx.adaptive,
+        )
+    }
 }
 
 #[cfg(test)]
@@ -410,15 +685,31 @@ mod tests {
     }
 
     #[test]
-    fn non_sort_categories_are_not_wired_yet() {
-        // QuickSelect is now wired (see `quick_select_*` tests); the remaining
-        // kinds still error loudly until each gets a body + `CorrectnessSuite`.
-        for cat in ["Partition", "Merge", "Rotation", "SmallSort"] {
-            let err = ArrayBackend::default()
-                .entry_body(&EntryCtx { label: "x", category: Some(cat), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
-                .unwrap_err();
-            assert!(err.contains(&format!("category `{cat}`")));
+    fn all_first_class_kinds_are_wired() {
+        // Every kind now has a body; only an UNKNOWN category errors loudly.
+        for cat in ["Sort", "QuickSelect", "Rotation", "SmallSort", "Partition", "Merge"] {
+            assert!(
+                ArrayBackend::default()
+                    .entry_body(&EntryCtx { label: "x", category: Some(cat), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
+                    .is_ok(),
+                "category `{cat}` should be wired"
+            );
         }
+        let err = ArrayBackend::default()
+            .entry_body(&EntryCtx { label: "x", category: Some("Nonsense"), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
+            .unwrap_err();
+        assert!(err.contains("category `Nonsense`"));
+    }
+
+    #[test]
+    fn rotation_body_uses_the_rotation_abi_and_suite() {
+        let b = ArrayBackend::default()
+            .entry_body(&EntryCtx { label: "reversal", category: Some("Rotation"), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "reversal" })
+            .unwrap();
+        assert!(b.contains("run_rotation::<Ty"));
+        assert!(b.contains("run_rotation_with_input(input_name, config, rotate_dyn, logger);"));
+        assert!(b.contains("RotationSuite<Ty>"));
+        assert!(b.contains("category: array_vis_bench_core::bench_registry::Category::Rotation,"));
     }
 
     fn quick_select_body(label: &str) -> String {

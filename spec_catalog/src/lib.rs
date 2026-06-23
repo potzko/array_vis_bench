@@ -75,11 +75,14 @@ mod tests {
             COUNT_FUN_SORTS, 195,
             "fun sorts (4 zero-axis + 16 cyclent + 2 stooge + 5 random + 56 surrender + 112 optimised)"
         );
+        // COUNT_KINDS = all first-class building-stone kinds in kinds.avbs
+        // (rotations + small sorts + partitions + merges); per-kind counts are
+        // asserted in each kind's test module via a category filter.
         assert_eq!(
             COUNT_TOTAL,
             COUNT_SHELL + COUNT_INSERTION + COUNT_QUICK + COUNT_CYCLE + COUNT_BUBBLE + COUNT_COMB
                 + COUNT_ROD + COUNT_CIRCLE + COUNT_MERGE + COUNT_HEAP + COUNT_WEAK + COUNT_BEAP
-                + COUNT_QUICK_HEAP + COUNT_QUICK_SELECT + COUNT_FUN_SORTS,
+                + COUNT_QUICK_HEAP + COUNT_QUICK_SELECT + COUNT_FUN_SORTS + COUNT_KINDS,
             "total drifted from the per-family sum"
         );
     }
@@ -95,6 +98,64 @@ mod tests {
         }
         let dups: Vec<_> = seen.iter().filter(|(_, &n)| n > 1).collect();
         assert!(dups.is_empty(), "duplicate registrations: {dups:?}");
+    }
+
+    /// Every first-class non-sort kind actually drives its VIS path (what the
+    /// visualiser calls) — not just its correctness battery. Each kind pulls
+    /// from a different input registry, so this catches a missing/empty registry
+    /// (which only panics at vis time, never during the battery).
+    #[test]
+    fn every_first_class_kind_runs_through_the_vis_path() {
+        let cfg = RunConfig { size: 64, seed: 1 };
+        for cat in [
+            Category::Rotation,
+            Category::Partition,
+            Category::Merge,
+            Category::SmallSort,
+            Category::QuickSelect,
+        ] {
+            let input = primary_input(cat);
+            let es: Vec<_> = ALGORITHMS.iter().filter(|e| e.category == cat).collect();
+            assert!(!es.is_empty(), "no entries for {cat:?}");
+            for e in es {
+                (e.run_with_input)(input, &cfg, &mut NoOpLogger);
+            }
+        }
+    }
+
+    /// Acceptance: every new first-class kind ticks cleanly through ALL THREE
+    /// consumer Mains (Correctness, Visualiser, Benchmark) — the same pipeline
+    /// the sorts run through. Each Main is kind-agnostic (keys off `e.category`
+    /// + `run_with_input`), so this proves the kinds are full citizens of the
+    /// consumer surface, not just registered entries.
+    #[test]
+    fn each_new_kind_ticks_through_all_three_mains() {
+        use array_vis_bench_core::mains::{Benchmark, Correctness, Main, Visualiser};
+        let mains: Vec<Box<dyn Main>> = vec![
+            Box::new(Correctness),
+            Box::new(Visualiser::default()),
+            Box::new(Benchmark::default()),
+        ];
+        for cat in [
+            Category::Rotation,
+            Category::Partition,
+            Category::Merge,
+            Category::SmallSort,
+        ] {
+            let es: Vec<&'static AlgorithmEntry> =
+                ALGORITHMS.iter().filter(|e| e.category == cat).collect();
+            assert!(!es.is_empty(), "no entries for {cat:?}");
+            for m in &mains {
+                let r = m.run(&es);
+                assert_eq!(r.ran, es.len(), "{cat:?}/{}: ran {} of {}", m.name(), r.ran, es.len());
+                assert!(
+                    r.failures.is_empty(),
+                    "{cat:?}/{}: failures {:?}",
+                    m.name(),
+                    r.failures
+                );
+            }
+        }
     }
 
     /// The catalog's AVBS CONSUMER program (`consumers.avbs`) drives the real
@@ -718,6 +779,178 @@ mod tests {
         }
     }
 
+    // ──────────────────────────── ROTATIONS ──────────────────────────────────
+    // The rotation KIND: 11 standalone rotation leaves emitted as their own
+    // first-class `Category::Rotation` entries (role-trait `Rotation` ABI via
+    // `run_rotation`, `RotationSuite` battery). Distinct role `RotationKind`
+    // keeps them from colliding with merge.spec's `Rotation`-role slot-fillers.
+    mod rotation {
+        use super::*;
+        fn entries() -> Vec<&'static AlgorithmEntry> {
+            ALGORITHMS.iter().filter(|e| e.category == Category::Rotation).collect()
+        }
+
+        #[test]
+        fn emits_the_eleven_rotations() {
+            assert_eq!(entries().len(), 11);
+            // The leaves are present by label (not as a sort).
+            for name in ["auxiliary", "reversal", "gries-mills", "grail", "juggling"] {
+                assert!(entries().iter().any(|e| e.name == name), "missing rotation `{name}`");
+            }
+        }
+
+        #[test]
+        fn every_entry_is_rotation_with_inherited_complexity() {
+            for e in entries() {
+                assert_eq!(e.category, Category::Rotation, "`{}` not Rotation", e.name);
+                assert_ne!(e.worst, Complexity::UNKNOWN, "`{}` UNKNOWN worst", e.name);
+                assert_ne!(e.space, Complexity::UNKNOWN, "`{}` UNKNOWN space", e.name);
+            }
+        }
+
+        /// Each rotation drives `rotation_battery` (via `RotationSuite::verify`
+        /// behind its `run_correctness` pointer) and passes end-to-end.
+        #[test]
+        fn all_eleven_pass_the_rotation_battery() {
+            let es = entries();
+            assert_eq!(es.len(), 11);
+            for e in &es {
+                (e.run_correctness)();
+            }
+        }
+    }
+
+    // ──────────────────────────── SMALL SORTS ────────────────────────────────
+    // The small-sort KIND: 7 curated leaves emitted as `Category::SmallSort`
+    // (role-trait `SmallSort` ABI, `SmallSortSuite` battery bounded by each
+    // leaf's THRESHOLD). Distinct role `SmallSortKind` (quick.spec owns `ss_*`
+    // at role `SmallSort`).
+    mod small_sort {
+        use super::*;
+        fn entries() -> Vec<&'static AlgorithmEntry> {
+            ALGORITHMS.iter().filter(|e| e.category == Category::SmallSort).collect()
+        }
+
+        #[test]
+        fn emits_the_seven_small_sorts() {
+            assert_eq!(entries().len(), 7);
+            for name in ["size: 1", "size: 2", "network: 16", "insertion: 32", "binary insertion: 16"]
+            {
+                assert!(entries().iter().any(|e| e.name == name), "missing small sort `{name}`");
+            }
+        }
+
+        #[test]
+        fn each_caps_input_at_its_threshold() {
+            // A small sort is only correct up to its threshold; the picker cap
+            // must be set (else feeding n > threshold panics).
+            for e in entries() {
+                assert!(e.max_input_size.is_some(), "`{}` has no input cap", e.name);
+            }
+        }
+
+        #[test]
+        fn bounded_input_means_constant_complexity() {
+            // Bounded by THRESHOLD ⇒ O(1), incl. insertion (not its in-N N²).
+            for e in entries() {
+                assert_eq!(e.worst, Complexity::CONST, "`{}` not O(1)", e.name);
+            }
+        }
+
+        /// Each drives `small_sort_battery` (via `SmallSortSuite::verify`) and
+        /// passes — the battery feeds only inputs within the leaf's THRESHOLD.
+        #[test]
+        fn all_seven_pass_the_small_sort_battery() {
+            let es = entries();
+            assert_eq!(es.len(), 7);
+            for e in &es {
+                (e.run_correctness)();
+            }
+        }
+    }
+
+    // ──────────────────────────── PARTITIONS ─────────────────────────────────
+    // The partition KIND: a standalone partition needs a pivot, so each entry is
+    // a self-pivoting `Pivoted<Scheme, Sel>` (the quick_sort_lib wrapper). 5
+    // single-pivot schemes x 6 single pivots = 30, emitted `Category::Partition`
+    // (correctness via `PartitionSuite` → `run_partition_bounds` → the
+    // `partition_battery` boundary check). Distinct roles `PartScheme`/`PartPivot`.
+    mod partition {
+        use super::*;
+        fn entries() -> Vec<&'static AlgorithmEntry> {
+            ALGORITHMS.iter().filter(|e| e.category == Category::Partition).collect()
+        }
+
+        #[test]
+        fn emits_thirty_scheme_by_pivot() {
+            assert_eq!(entries().len(), 30, "5 schemes x 6 single pivots");
+            for name in ["left-left<first>", "three-way<median of 3>", "block<ninther>", "moving pivot<last>"]
+            {
+                assert!(entries().iter().any(|e| e.name == name), "missing partition `{name}`");
+            }
+        }
+
+        #[test]
+        fn every_entry_is_partition_with_inherited_complexity() {
+            for e in entries() {
+                assert_eq!(e.category, Category::Partition, "`{}` not Partition", e.name);
+                assert_ne!(e.worst, Complexity::UNKNOWN, "`{}` UNKNOWN worst", e.name);
+                assert_ne!(e.space, Complexity::UNKNOWN, "`{}` UNKNOWN space", e.name);
+            }
+        }
+
+        /// Each of the 30 drives `partition_battery` (via `PartitionSuite::verify`
+        /// → `run_partition_bounds`) and passes the boundary check end-to-end.
+        #[test]
+        fn all_thirty_pass_the_partition_battery() {
+            let es = entries();
+            assert_eq!(es.len(), 30);
+            for e in &es {
+                (e.run_correctness)();
+            }
+        }
+    }
+
+    // ──────────────────────────── MERGES ─────────────────────────────────────
+    // The merge KIND: 2 RotationMerge families (naive, smaller-side) × 11
+    // rotations = 22, emitted `Category::Merge`. No role trait (RotationMerge is
+    // in merge_sort_lib) → emit inlines `merge_battery`; the rot slot REUSES the
+    // RotationKind leaves. NOTE these are distinct from merge.spec's 216 merge
+    // SORTS — these are standalone single-merge-step algorithms.
+    mod merge_kind {
+        use super::*;
+        fn entries() -> Vec<&'static AlgorithmEntry> {
+            ALGORITHMS
+                .iter()
+                .filter(|e| {
+                    e.category == Category::Merge
+                        && (e.name.starts_with("naive<") || e.name.starts_with("smaller-side<"))
+                })
+                .collect()
+        }
+
+        #[test]
+        fn emits_two_families_by_eleven_rotations() {
+            assert_eq!(entries().len(), 22, "2 RotationMerge families x 11 rotations");
+            let naive = entries().iter().filter(|e| e.name.starts_with("naive<")).count();
+            let smaller = entries().iter().filter(|e| e.name.starts_with("smaller-side<")).count();
+            assert_eq!(naive, 11, "naive family");
+            assert_eq!(smaller, 11, "smaller-side family");
+            assert!(entries().iter().any(|e| e.name == "naive<reversal>"));
+        }
+
+        /// Each of the 22 drives `merge_battery` (inlined in the merge emit body,
+        /// via `run_rotation_merge`) and passes end-to-end.
+        #[test]
+        fn all_twenty_two_pass_the_merge_battery() {
+            let es = entries();
+            assert_eq!(es.len(), 22);
+            for e in &es {
+                (e.run_correctness)();
+            }
+        }
+    }
+
     // ──────────────────────────── FUN SORTS ──────────────────────────────────
     // The chaos grab bag: super-quadratic classes (slow/potzko → O(2^N), cyclent
     // → O(N^3)), a nondeterministic sort (random shell), and quick-surrender —
@@ -926,6 +1159,53 @@ mod tests {
             assert_inherits!(
                 "deferred quick sort<part: dual, pivot: ninther, small: deferred insertion: 16>",
                 DeferredQuickSort<DualPivotPartition, NintherDualPivot, DeferredInsertion<LinearInsertion, 16>>
+            );
+        }
+
+        /// Step 2 (pivot-under-partition) equivalence: the V-carrying
+        /// `QuickSort<P, V, SS>` is now a thin shim over
+        /// `PivotlessQuickSort<Pivoted<P, V>, SS>`. The two forms must carry
+        /// identical composable annotations so the eventual catalog cutover to
+        /// the `Pivoted` shape (deferred with the structural-nav work) is a
+        /// pure rename, not a complexity change. Covers both a degenerating
+        /// single-pivot and the dual-pivot deferred branch.
+        #[test]
+        fn pivoted_form_matches_the_shim_complexity() {
+            use quick_sort_lib::{DeferredPivotlessQuickSort, PivotlessQuickSort, Pivoted};
+
+            macro_rules! assert_equiv {
+                ($shim:ty, $pivotless:ty) => {{
+                    assert_eq!(
+                        <$shim as HasTimeBounds>::WORST,
+                        <$pivotless as HasTimeBounds>::WORST,
+                        "worst"
+                    );
+                    assert_eq!(
+                        <$shim as HasTimeBounds>::BEST,
+                        <$pivotless as HasTimeBounds>::BEST,
+                        "best"
+                    );
+                    assert_eq!(
+                        <$shim as HasTimeBounds>::AVERAGE,
+                        <$pivotless as HasTimeBounds>::AVERAGE,
+                        "average"
+                    );
+                    assert_eq!(<$shim as HasSpace>::SPACE, <$pivotless as HasSpace>::SPACE, "space");
+                    assert_eq!(
+                        <$shim as HasStability>::STABLE,
+                        <$pivotless as HasStability>::STABLE,
+                        "stable"
+                    );
+                }};
+            }
+
+            assert_equiv!(
+                QuickSort<LeftLeftPartition, FirstElement, Size1SmallSort>,
+                PivotlessQuickSort<Pivoted<LeftLeftPartition, FirstElement>, Size1SmallSort>
+            );
+            assert_equiv!(
+                DeferredQuickSort<DualPivotPartition, NintherDualPivot, DeferredInsertion<LinearInsertion, 16>>,
+                DeferredPivotlessQuickSort<Pivoted<DualPivotPartition, NintherDualPivot>, DeferredInsertion<LinearInsertion, 16>>
             );
         }
 

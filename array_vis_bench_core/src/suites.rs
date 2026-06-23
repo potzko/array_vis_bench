@@ -30,7 +30,7 @@
 
 use std::marker::PhantomData;
 
-use array_vis_bench_traits::QuickSelect;
+use array_vis_bench_traits::{PartitionScheme, QuickSelect, Rotation, SmallSort};
 use sort_logger::NoOpLogger;
 
 use crate::bench_registry::correctness;
@@ -60,6 +60,53 @@ impl<Q: QuickSelect> CorrectnessSuite for SelectSuite<Q> {
             <Q as QuickSelect>::select(arr, logger, t);
         }
         correctness::quick_select_battery(noop::<Q>, name);
+    }
+}
+
+/// Rotation suite: drives [`correctness::rotation_battery`] through the
+/// concrete `R: Rotation`'s role trait via the shared `run_rotation`
+/// one-shot (which allocates/frees the rotation's scratch buffer).
+pub struct RotationSuite<R>(PhantomData<R>);
+
+impl<R: Rotation> CorrectnessSuite for RotationSuite<R> {
+    fn verify(name: &str) {
+        fn run<R: Rotation>(arr: &mut [usize], split: usize, logger: &mut NoOpLogger) {
+            array_vis_bench_traits::role::rotation::run_rotation::<R, usize, NoOpLogger>(
+                arr, split, logger,
+            );
+        }
+        correctness::rotation_battery(run::<R>, name);
+    }
+}
+
+/// Small-sort suite: drives [`correctness::small_sort_battery`] through the
+/// concrete `S: SmallSort`'s role-trait `sort`, passing the leaf's compile-time
+/// `THRESHOLD` so the battery only feeds inputs the contract covers.
+pub struct SmallSortSuite<S>(PhantomData<S>);
+
+impl<S: SmallSort> CorrectnessSuite for SmallSortSuite<S> {
+    fn verify(name: &str) {
+        fn run<S: SmallSort>(arr: &mut [usize], logger: &mut NoOpLogger) {
+            let _ = <S as SmallSort>::sort(arr, logger);
+        }
+        correctness::small_sort_battery(run::<S>, name, S::THRESHOLD);
+    }
+}
+
+/// Partition suite: drives [`correctness::partition_battery`] through a
+/// self-pivoting `P: PartitionScheme` (typically `Pivoted<Scheme, Sel>`) via the
+/// shared `run_partition_bounds`, which returns the `(left_end, right_start)`
+/// boundary the battery checks.
+pub struct PartitionSuite<P>(PhantomData<P>);
+
+impl<P: PartitionScheme> CorrectnessSuite for PartitionSuite<P> {
+    fn verify(name: &str) {
+        fn run<P: PartitionScheme>(arr: &mut [usize], logger: &mut NoOpLogger) -> (usize, usize) {
+            array_vis_bench_traits::role::partition::run_partition_bounds::<P, usize, NoOpLogger>(
+                arr, logger,
+            )
+        }
+        correctness::partition_battery(run::<P>, name);
     }
 }
 

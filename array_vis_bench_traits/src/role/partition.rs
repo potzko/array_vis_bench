@@ -54,6 +54,48 @@ pub trait PartitionVisitor {
     fn unsorted(&mut self, range: Range<usize>);
 }
 
+/// Run ONE partition step of a **self-pivoting** scheme `P` (one whose
+/// `N_PIVOTS == 0`, e.g. `Pivoted<Scheme, Sel>` or `HeapExtract`) on the whole
+/// slice, and return the `(left_end, right_start)` boundary of the placed run
+/// between the first and last unsorted regions. Used by the standalone
+/// `Category::Partition` entries: the vis path drops the bounds, the correctness
+/// battery uses them to check `max(arr[..left_end]) <= min(arr[right_start..])`.
+///
+/// Allocates/frees `P`'s scratch via [`with_partition_scratch`]. `P` is passed an
+/// empty `pivots` slice — a self-pivoting scheme picks its own.
+pub fn run_partition_bounds<P, T, U>(arr: &mut [T], logger: &mut U) -> (usize, usize)
+where
+    P: PartitionScheme,
+    T: Ord + Copy,
+    U: ?Sized + SortLogger<T>,
+{
+    struct BoundsVisitor {
+        left_end: usize,
+        right_start: usize,
+        n: u8,
+    }
+    impl PartitionVisitor for BoundsVisitor {
+        #[inline(always)]
+        fn unsorted(&mut self, r: Range<usize>) {
+            if self.n == 0 {
+                self.left_end = r.end;
+            } else if self.n == 1 {
+                self.right_start = r.start;
+            }
+            self.n += 1;
+        }
+    }
+    let len = arr.len();
+    if len < 2 {
+        return (0, len);
+    }
+    let mut v = BoundsVisitor { left_end: 0, right_start: len, n: 0 };
+    with_partition_scratch::<P, T, U, _>(logger, |logger, scratch| {
+        P::partition(arr, logger, &[], scratch, &mut v);
+    });
+    (v.left_end, v.right_start)
+}
+
 /// One partition step. Implementors take an array and a slice of
 /// pre-selected pivot indices, do the actual swapping work, and
 /// announce each unsorted region they leave behind through `visitor`.

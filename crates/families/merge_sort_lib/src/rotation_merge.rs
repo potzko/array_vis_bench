@@ -191,3 +191,24 @@ fn sym_merge_r<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     }
 }
 
+
+/// Run a single [`RotationMerge`] as a one-shot: allocate the merge's scratch
+/// buffer, merge `arr[..mid]` with `arr[mid..]`, then free the buffer. The
+/// standalone `Category::Merge` entries use this (the `merge_sort_lib` analogue
+/// of `array_vis_bench_traits::role::rotation::run_rotation`). A repeated caller
+/// (a merge sort) allocates the scratch once at its top level instead.
+pub fn run_rotation_merge<M, T, U>(arr: &mut [T], mid: usize, logger: &mut U)
+where
+    M: RotationMerge,
+    T: Ord + Copy,
+    U: ?Sized + SortLogger<T>,
+{
+    let scratch_size = M::scratch_size(arr.len());
+    if scratch_size == 0 {
+        M::merge(arr, mid, &mut [], logger);
+    } else {
+        let mut scratch = logger.create_aux_arr_t(scratch_size);
+        M::merge(arr, mid, &mut scratch, logger);
+        logger.free_aux_arr_t(&scratch);
+    }
+}
