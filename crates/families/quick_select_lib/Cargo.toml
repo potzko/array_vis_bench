@@ -17,13 +17,3 @@ sort_logger = { path = "../../../sort_logger" }
 [package.metadata.array_vis_bench]
 spec  = "quick_select.spec"
 query = "quick_select.avbs"
-
-[[package.metadata.array_vis_bench.components]]
-role  = "QuickSelect"
-type  = "RecursiveQuickSelect"
-label = "recursive"
-
-[[package.metadata.array_vis_bench.components]]
-role  = "QuickSelect"
-type  = "IterativeQuickSelect"
-label = "iterative"

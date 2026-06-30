@@ -11,5 +11,5 @@
 p:    Pivot = _
 part: Partition[pivot = p] = _
 
-QuickSorts:         SortingAlgorithm = SortingAlgorithm<QuickSort<partition = part, pivot = p, small_sort = _>>
-DeferredQuickSorts: SortingAlgorithm = SortingAlgorithm<DeferredQuickSort<partition = part, pivot = p, small_sort = _>>
+QuickSorts:         SortingAlgorithm = SortingAlgorithm<CanonicalQuickSort<partition = part, pivot = p, small_sort = _>>
+DeferredQuickSorts: SortingAlgorithm = SortingAlgorithm<DeferredCanonicalQuickSort<partition = part, pivot = p, small_sort = _>>

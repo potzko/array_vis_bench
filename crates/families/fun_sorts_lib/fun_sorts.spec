@@ -57,33 +57,6 @@ end
 # ═════════════════════ CYCLENT PARTITIONS (curated, no MovingPivot) ══════════
 # MovingPivot is deliberately excluded — it can leave the partition non-converged,
 # which infinite-loops cyclent. These 4 are the proven-safe set.
-component fs_part_left_left
-  type     LeftLeftPartition
-  label    left-left pointer
-  provides CyclentPart
-  uses     partition_lomuto::LeftLeftPartition
-end
-
-component fs_part_left_right
-  type     LeftRightPartition
-  label    left-right pointer
-  provides CyclentPart
-  uses     partition_hoare::LeftRightPartition
-end
-
-component fs_part_three_way
-  type     ThreeWay
-  label    three-way
-  provides CyclentPart
-  uses     partition_three_way::ThreeWay
-end
-
-component fs_part_block
-  type     Block
-  label    block
-  provides CyclentPart
-  uses     partition_block::Block
-end
 
 # ════════════════════════════ CYCLENT DRIVERS (×4 partitions) ════════════════
 component fs_cyclent_sort
@@ -129,19 +102,6 @@ end
 # ════════════════════════ NON-TRIVIAL SMALL SORTS (curated 2) ════════════════
 # Used by stooge (bound SmallSort) and quick-surrender-optimised (bound
 # NonTrivialSmallSort) — both types impl the needed trait.
-component fs_ss_insertion32
-  type     InsertionSmallSort<LinearInsertion, 32>
-  label    insertion: 32
-  provides FunSmallSort
-  uses     small_sort_insertion::InsertionSmallSort small_sort_insertion_strategy::LinearInsertion
-end
-
-component fs_ss_network16
-  type     Network16SmallSort
-  label    network: 16
-  provides FunSmallSort
-  uses     small_sort_network_16::Network16SmallSort
-end
 
 # ════════════════════════════ STOOGE (×2 small sorts) ════════════════════════
 component fs_stooge_sort

@@ -99,79 +99,21 @@ component mrm_smaller_side
 end
 
 # ── Rotation components (11; uses resolve to the rotation leaf crates) ───────────
-component mrot_reversal
-  type     ReversalRotation
-  label    reversal
-  provides Rotation
-  uses     rotation_reversal::ReversalRotation
+
+component mk_naive
+  type     NaiveRotationMerge<{rot}>
+  label    naive<{rot}>
+  provides MergeKind
+  category Merge
+  uses     merge_sort_lib::rotation_merge::NaiveRotationMerge
+  slot     rot RotationKind
 end
 
-component mrot_juggling
-  type     JugglingRotation
-  label    juggling
-  provides Rotation
-  uses     rotation_juggling::JugglingRotation
-end
-
-component mrot_gries_mills
-  type     GriesMillsRotation
-  label    gries-mills
-  provides Rotation
-  uses     rotation_gries_mills::GriesMillsRotation
-end
-
-component mrot_auxiliary
-  type     AuxiliaryRotation
-  label    auxiliary
-  provides Rotation
-  uses     rotation_auxiliary::AuxiliaryRotation
-end
-
-component mrot_grail
-  type     GrailRotation
-  label    grail
-  provides Rotation
-  uses     rotation_grail::GrailRotation
-end
-
-component mrot_bridge
-  type     BridgeRotation
-  label    bridge
-  provides Rotation
-  uses     rotation_bridge::BridgeRotation
-end
-
-component mrot_contrev
-  type     ContrevRotation
-  label    contrev
-  provides Rotation
-  uses     rotation_contrev::ContrevRotation
-end
-
-component mrot_drill
-  type     DrillRotation
-  label    drill
-  provides Rotation
-  uses     rotation_drill::DrillRotation
-end
-
-component mrot_helix
-  type     HelixRotation
-  label    helix
-  provides Rotation
-  uses     rotation_helix::HelixRotation
-end
-
-component mrot_piston
-  type     PistonRotation
-  label    piston
-  provides Rotation
-  uses     rotation_piston::PistonRotation
-end
-
-component mrot_trinity
-  type     TrinityRotation
-  label    trinity
-  provides Rotation
-  uses     rotation_trinity::TrinityRotation
+component mk_smaller
+  type     SmallerSideRotationMerge<{rot}>
+  label    smaller-side<{rot}>
+  provides MergeKind
+  category Merge
+  uses     merge_sort_lib::rotation_merge::SmallerSideRotationMerge
+  slot     rot RotationKind
 end

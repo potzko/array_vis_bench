@@ -35,16 +35,3 @@ fn sort_rec<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         sort_rec(arr, start, end, logger);
     }
 }
-
-#[cfg(feature = "self_register")]
-sort_registry_macro::sort_family! {
-    type Sort = BadHeapSort;
-    name        = "bad heap sort";
-    big_o       = "O(N^?)";
-    stable      = false;
-    direct_sort = true;
-    path        = ["fun sorts", "bad heap sort"];
-    // The asymmetric "heap" causes the recursion to fan out
-    // unpredictably; observed >5s wall-clock well before n=1000.
-    max_n_for_tests = 200;
-}

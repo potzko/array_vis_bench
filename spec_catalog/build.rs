@@ -77,20 +77,49 @@ fn main() {
         };
         // Only the `spec`/`query` keys concern us; crates that declare ONLY the
         // legacy combo `components`/`families` arrays carry no `spec` key here.
-        let spec_rel = avb.get("spec").and_then(|v| v.as_str());
-        let query_rel = avb.get("query").and_then(|v| v.as_str());
+        //
+        // FAIL-FAST: a misspelled key (`spc`, `querry`) would otherwise make this
+        // crate's whole family vanish silently. Reject any key outside the known
+        // set so a typo is a build error, not a quietly-missing family.
+        if let Some(table) = avb.as_object() {
+            const KNOWN: [&str; 4] = ["spec", "query", "components", "families"];
+            for key in table.keys() {
+                assert!(
+                    KNOWN.contains(&key.as_str()),
+                    "spec_catalog: crate `{}` has unknown key `{key}` in \
+                     [package.metadata.array_vis_bench] — expected one of {KNOWN:?} \
+                     (did you misspell `spec`/`query`?)",
+                    pkg.name
+                );
+            }
+        }
+        // …and a present-but-non-string `spec`/`query` is just as silent — catch it.
+        let as_str_field = |key: &str| -> Option<&str> {
+            avb.get(key).map(|v| {
+                v.as_str().unwrap_or_else(|| {
+                    panic!(
+                        "spec_catalog: crate `{}`: [package.metadata.array_vis_bench] \
+                         `{key}` must be a string path, got {v}",
+                        pkg.name
+                    )
+                })
+            })
+        };
+        let spec_rel = as_str_field("spec");
+        let query_rel = as_str_field("query");
         if spec_rel.is_none() && query_rel.is_none() {
             continue;
         }
-        if !in_graph.contains(&pkg.id) {
-            println!(
-                "cargo:warning=spec_catalog: crate `{}` declares a spec fragment but \
-                 spec_catalog does not depend on it — add it as a dependency to include \
-                 its family",
-                pkg.name
-            );
-            continue;
-        }
+        // FAIL-FAST: a crate that declares a fragment but isn't in our dependency
+        // closure used to warn-and-skip — i.e. its family silently disappeared from
+        // the catalog. Make it a hard error: add the dep or drop the metadata.
+        assert!(
+            in_graph.contains(&pkg.id),
+            "spec_catalog: crate `{}` declares a spec/query fragment but spec_catalog \
+             does not depend on it — its family would be silently dropped. Add it as a \
+             dependency in spec_catalog/Cargo.toml (or remove the metadata).",
+            pkg.name
+        );
         let dir = pkg.manifest_path.parent().expect("manifest has a parent dir");
         let read = |rel: &str| -> (PathBuf, String) {
             let p: PathBuf = dir.join(rel).into();
@@ -159,6 +188,16 @@ fn main() {
             all_sorts.extend(out.sorts);
         }
         let n = all_sorts.len() - before;
+        // FAIL-FAST: a query that resolves to nothing is almost always a broken
+        // query or a fragment that didn't merge — not an intentionally-empty
+        // family. Drop it on the floor and the loss is invisible; fail instead.
+        assert!(
+            n > 0,
+            "spec_catalog: query `{}` ({}) solved to ZERO AlgorithmEntry rows — \
+             a family emitting nothing indicates a broken query or an unmerged \
+             fragment; failing rather than silently dropping it.",
+            stem, f.krate
+        );
         total += n;
         // Informational tally (per-family row count). Plain stdout, not
         // `cargo::warning=` — captured to the build script's `output` file and
@@ -175,6 +214,10 @@ fn main() {
     }
 
     println!("spec_catalog: emitting {total} AlgorithmEntry rows total");
+    // FAIL-FAST: an empty catalog means the gather/merge/solve pipeline produced
+    // nothing — a misconfiguration that must not compile to a working-but-empty app.
+    assert!(total > 0, "spec_catalog: emitted ZERO AlgorithmEntry rows total — the \
+        catalog is empty; the fragment gather/merge/solve pipeline is misconfigured.");
 
     let code = spec_core::emit_entries(&reg, &all_sorts, &spec_emit::ArrayBackend::default())
         .expect("emit_entries");

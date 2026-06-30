@@ -26,22 +26,7 @@ ctor = "0.2"
 const_format = "0.2"
 
 # Spec-system catalog fragment + query, OWNED by this crate and gathered by
-# `spec_catalog`'s build via the dependency-graph walk. (The `[[…families]]` array
-# below is the LEGACY combo_codegen declaration — inert in the default spec build.)
+# `spec_catalog`'s build via the dependency-graph walk.
 [package.metadata.array_vis_bench]
 spec  = "comb.spec"
 query = "comb.avbs"
-
-[[package.metadata.array_vis_bench.families]]
-module = "comb_sorts"
-type   = "{R}"
-uses   = [
-]
-axes = [
-    { var = "R", role = "CombRatio" },
-]
-name        = "comb sort"
-big_o       = "O(N^2)"
-stable      = false
-direct_sort = false
-path        = ["comb sorts", "{R}"]

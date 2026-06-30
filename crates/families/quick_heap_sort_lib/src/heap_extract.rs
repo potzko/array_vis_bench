@@ -9,7 +9,7 @@
 //!
 //! Pivotless ([`N_PIVOTS = 0`](PartitionScheme::N_PIVOTS)) — splits at the
 //! midpoint without consulting pivot values. Drives the pivot-free
-//! `PivotlessQuickSort<HeapExtract<P, DH>, SS>` (no pivot parameter; the
+//! `CanonicalQuickSort<HeapExtract<P, DH>, SS>` (no pivot parameter; the
 //! driver routes through `NoPivot` internally).
 //!
 //! `P` selects which heap kind backs the build: [`crate::AryPair<A>`] for

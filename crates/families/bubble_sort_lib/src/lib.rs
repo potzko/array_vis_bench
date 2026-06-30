@@ -1,10 +1,8 @@
-//! Bubble sort family. Three base algorithms (`BubbleSort`,
-//! `ShakerSort`, `BubbleSortRecursive`) self-register via inline
-//! `sort_family!` calls — no axes, single ALGORITHMS entry each.
-//! `OddEvenBubbleSort<S: NonTrivialSmallSort>` is the one axis-bearing
-//! variant; its family declaration is the
-//! `[[package.metadata.array_vis_bench.families]]` block in this crate's
-//! `Cargo.toml`.
+//! Bubble sort family — `BubbleSort`, `ShakerSort`, `BubbleSortRecursive`
+//! (no axes) and `OddEvenBubbleSort<S: NonTrivialSmallSort>` (one axis). This
+//! crate provides the algorithm types only; all variants are emitted into
+//! `array_vis_bench_core::ALGORITHMS` by the spec catalog from this crate's
+//! `bubble.spec`/`bubble.avbs` fragment.
 
 pub mod bubble_sort;
 pub mod bubble_sort_recursive;

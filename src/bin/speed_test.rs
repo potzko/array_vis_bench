@@ -7,11 +7,10 @@
 //! `run_with_input` call as a sort is. Args: `[N] [runs]`.
 use std::time::Instant;
 
-use array_vis_bench_full::bench_registry::{
+use array_vis_bench_core::bench_registry::{
     primary_input, AlgorithmEntry, Category, RunConfig, ALGORITHMS,
 };
-use array_vis_bench_full::traits::log_traits::NoOpLogger;
-use sort_logger::SortLogger;
+use sort_logger::{NoOpLogger, SortLogger};
 
 // ponytail: the old `buf.shuffle` was dead — `run_with_input` regenerates its
 // input from the category's registry each call, so the external buffer + `rand`

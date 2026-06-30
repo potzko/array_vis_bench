@@ -47,17 +47,14 @@ use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 
-use array_vis_bench_full::sorts::heap_sort::arity::Binary;
-use array_vis_bench_full::sorts::heap_sort::arity_heap::ArityHeap;
-use array_vis_bench_full::sorts::heap_sort::deep_heapify::Iterative;
-use array_vis_bench_full::sorts::heap_sort::direction::MaxForward;
-use array_vis_bench_full::sorts::heap_sort::heap_sort::NaryHeapSort;
-use array_vis_bench_full::sorts::merge_sorts::top_down::TopDownMergeSort;
-use array_vis_bench_full::sorts::quick_sorts::partitions::LeftLeftPartition;
-use array_vis_bench_full::sorts::quick_sorts::pivot_selectors::FirstElement;
-use array_vis_bench_full::sorts::quick_sorts::quick_sort::QuickSort;
-use array_vis_bench_full::traits::log_traits::NoOpLogger;
-use array_vis_bench_full::utils::small_sort::{InsertionSmallSort, LinearInsertion};
+use heap_sort_lib::{ArityHeap, Binary, Iterative, MaxForward, NaryHeapSort};
+use merge_sort_lib::top_down::TopDownMergeSort;
+use partition_lomuto::LeftLeftPartition;
+use pivot_first::FirstElement;
+use quick_sort_lib::{CanonicalQuickSort, Pivoted};
+use small_sort_insertion::InsertionSmallSort;
+use small_sort_insertion_strategy::LinearInsertion;
+use sort_logger::NoOpLogger;
 
 const SMALL_SORT_THRESHOLD: usize = 32;
 
@@ -210,7 +207,8 @@ fn sift_down(arr: &mut [u64], heap_size: usize, mut i: usize) {
 
 // ── System counterparts ──────────────────────────────────────────────────────
 
-type SystemQS = QuickSort<LeftLeftPartition, FirstElement, InsertionSmallSort<LinearInsertion, 32>>;
+type SystemQS =
+    CanonicalQuickSort<Pivoted<LeftLeftPartition, FirstElement>, InsertionSmallSort<LinearInsertion, 32>>;
 type SystemMS = TopDownMergeSort<InsertionSmallSort<LinearInsertion, 32>, false, false>;
 type SystemHS = NaryHeapSort<ArityHeap<Binary, MaxForward>, Iterative>;
 

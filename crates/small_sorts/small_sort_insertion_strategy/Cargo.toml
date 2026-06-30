@@ -12,12 +12,5 @@ path = "src/lib.rs"
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 sort_logger = { path = "../../../sort_logger" }
 
-[[package.metadata.array_vis_bench.components]]
-role  = "InsertionStrategy"
-type  = "LinearInsertion"
-label = "linear"
-
-[[package.metadata.array_vis_bench.components]]
-role  = "InsertionStrategy"
-type  = "BinaryInsertion"
-label = "binary"
+[package.metadata.array_vis_bench]
+spec = "small_sort_insertion_strategy.spec"

@@ -30,14 +30,3 @@ where
     logger.cond_swap_gt(arr, mid - 1, len - 1);
     slow_sort_rec::<T, U>(&mut arr[..len - 1], logger);
 }
-
-#[cfg(feature = "self_register")]
-sort_registry_macro::sort_family! {
-    type Sort = SlowSort;
-    name        = "slow sort";
-    big_o       = "O(N^logN)";
-    stable      = false;
-    direct_sort = true;
-    path        = ["fun sorts", "slow sort"];
-    max_n_for_tests = 150;
-}

@@ -2,8 +2,8 @@
 //!
 //! This is the real counterpart to the prototype's `avb_emit`: it implements
 //! [`spec_core::EmitBackend`] and produces, for each solved sort, the exact
-//! `AlgorithmEntry` registration block that `sort_registry_macro::sort_family!`
-//! emits today — so a `spec_core`-generated leaf is link-time indistinguishable
+//! `AlgorithmEntry` registration block the (now-retired) `sort_family!` macro
+//! used to emit — so a `spec_core`-generated leaf is link-time indistinguishable
 //! from a hand-registered one.
 //!
 //! What the audit forced this backend to get right (vs. the prototype's stub):

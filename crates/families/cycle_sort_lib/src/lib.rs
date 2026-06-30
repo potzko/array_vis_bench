@@ -64,15 +64,3 @@ impl CycleSort {
         }
     }
 }
-
-// Legacy self-registration — gated OFF by default; the spec compiler
-// (`spec_catalog`) is the canonical registrar. See `[features]` in Cargo.toml.
-#[cfg(feature = "self_register")]
-sort_registry_macro::sort_family! {
-    type Sort = CycleSort;
-    name        = "cycle sort";
-    big_o       = "O(N^2)";
-    stable      = false;
-    direct_sort = true;
-    path        = ["cycle sorts", "cycle sort"];
-}

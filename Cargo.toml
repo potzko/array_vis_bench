@@ -4,11 +4,8 @@ members = [
     "sort_logger",
     "sort_vis",
     "sort_registry_core",
-    "sort_registry_macro",
-    "combo_codegen",
     "array_vis_bench_traits",
     "array_vis_bench_core",
-    "array_vis_bench_full",
     "array_vis_bench_min",
     "crates/families/beap_sort_lib",
     "crates/families/bubble_sort_lib",
@@ -58,9 +55,6 @@ members = [
     "crates/components/gap_distribution_lib",
     "crates/components/heap_internals_components",
     "crates/components/reverse_storage_lib",
-    "crates/registries/merge_standalone_registry",
-    "crates/registries/quick_partition_registry",
-    "crates/registries/quick_select_registry",
     "spec_core",
     "spec_emit",
     "spec_catalog",
@@ -69,15 +63,13 @@ members = [
 # Make `cargo test` / `cargo build` cover every workspace member by default.
 # Without this the hybrid root (workspace + binary package) would scope
 # every non-`--workspace` command to just the binary crate, hiding all the
-# leaf-crate tests like `heap_sort_lib::set_quick_select`,
-# `quick_heap_sort_lib::correctness`, and `combo_codegen::family::tests`.
+# leaf-crate tests like `heap_sort_lib::set_quick_select` and
+# `quick_heap_sort_lib::correctness`.
 default-members = [
     ".",
     "sort_logger",
     "sort_vis",
     "sort_registry_core",
-    "sort_registry_macro",
-    "combo_codegen",
     "array_vis_bench_traits",
     "array_vis_bench_core",
     "array_vis_bench_min",
@@ -129,9 +121,6 @@ default-members = [
     "crates/components/gap_distribution_lib",
     "crates/components/heap_internals_components",
     "crates/components/reverse_storage_lib",
-    "crates/registries/merge_standalone_registry",
-    "crates/registries/quick_partition_registry",
-    "crates/registries/quick_select_registry",
     "spec_core",
     "spec_emit",
     "spec_catalog",
@@ -139,32 +128,17 @@ default-members = [
 ]
 resolver = "2"
 
-# Binary-only crate: the library and codegen live in
-# `array_vis_bench_full`. This crate keeps the `array_vis_bench` name
-# stable for the CLI entry point (`cargo run` defaults to it) and the
-# auxiliary tools in `src/bin/`.
+# Binary crate: the default `array_vis_bench` binary is a spec-only link root —
+# its `ALGORITHMS` come entirely from `spec_catalog`. Keeps the `array_vis_bench`
+# name stable for the CLI entry point (`cargo run` defaults to it) and hosts the
+# auxiliary dev tools in `src/bin/` (auto-discovered: compare_sorts, speed_test,
+# measure_random_shell).
 
 [package]
 name = "array_vis_bench"
 version = "0.1.0"
 edition = "2021"
 default-run = "array_vis_bench"
-# Declare bins explicitly so the legacy combo aux tools can be gated behind the
-# `combo-tools` feature (below) — the default build is purely spec-oriented.
-autobins = false
-# Don't auto-discover `benches/sorts.rs`: it targets the legacy `BENCH_SORTS`
-# registry the combo→spec migration removed and won't compile (see the disabled
-# `[[bench]]` below). Disabling auto-discovery keeps the workspace green while we
-# focus on the spec-oriented version.
-autobenches = false
-
-[features]
-# OFF by default: the default `array_vis_bench` binary is purely spec-oriented.
-# Enabling `combo-tools` pulls in the legacy combo registry (`array_vis_bench_full`)
-# + `fun_sorts_lib` and builds the aux dev tools in `src/bin/`. Keeping the combo
-# crate OUT of the default build graph is also what lets `shell_sort_lib` drop its
-# self-registration (otherwise Cargo feature-unification would re-enable it).
-combo-tools = ["dep:array_vis_bench_full", "dep:fun_sorts_lib"]
 
 [profile.dev]
 opt-level = 1
@@ -185,50 +159,34 @@ lto = "thin"
 # `array_vis_bench` binary is a SPEC-ONLY link root: it anchors only the spec
 # crates below and calls array_vis_bench_cli::run().
 array_vis_bench_cli = { path = "array_vis_bench_cli" }
-# Legacy combo_codegen registry — OPTIONAL, behind `combo-tools`. Out of the
-# default build graph entirely (so the app is spec-only AND shell_sort_lib's
-# self-registration stays off). Pulled in only for the aux tools in `src/bin/`.
-array_vis_bench_full = { path = "array_vis_bench_full", optional = true }
 array_vis_bench_traits = { path = "array_vis_bench_traits" }
+# Registry/harness ABI — the `speed_test` aux tool iterates its `ALGORITHMS`.
+array_vis_bench_core = { path = "array_vis_bench_core" }
 # Bin-only direct deps for the CLI / harness layer and the aux tools.
 rand = "0.8"
 sort_logger = { path = "sort_logger" }
 sort_vis = { path = "sort_vis" }
 sort_registry_core = { path = "sort_registry_core" }
-# Combo-only leaf used by the `measure_random_shell` aux tool — OPTIONAL.
-fun_sorts_lib = { path = "crates/families/fun_sorts_lib", optional = true }
 # The unified spec catalog the default binary anchors: ONE crate whose build.rs
 # lowers every `.avbs` query over one `catalog.spec` and emits AlgorithmEntry rows
-# (spec → emit → register → visualise) for all families — shell, insertion, quick.
+# (spec → emit → register → visualise) for all families.
 spec_catalog = { path = "spec_catalog" }
 
-# ── Binaries ──────────────────────────────────────────────────────────────────
-# The default spec-only visualiser.
-[[bin]]
-name = "array_vis_bench"
-path = "src/main.rs"
+# ── Aux-dev-tool deps (src/bin/) ──────────────────────────────────────────────
+# Feature selection MATCHES spec_catalog's so the shared build graph and the
+# self-registration state are unchanged by listing these directly.
+# `compare_sorts` benchmarks hand-rolled sorts against these concrete library
+# types (driven by NoOpLogger so trait/inlining overhead is all that's measured).
+heap_sort_lib = { path = "crates/families/heap_sort_lib" }
+merge_sort_lib = { path = "crates/families/merge_sort_lib" }
+quick_sort_lib = { path = "crates/families/quick_sort_lib" }
+partition_lomuto = { path = "crates/partitions/partition_lomuto" }
+pivot_first = { path = "crates/pivots/pivot_first" }
+small_sort_insertion = { path = "crates/small_sorts/small_sort_insertion" }
+small_sort_insertion_strategy = { path = "crates/small_sorts/small_sort_insertion_strategy" }
+# `measure_random_shell` drives this family's RandomShellSort types directly.
+fun_sorts_lib = { path = "crates/families/fun_sorts_lib" }
 
-# Legacy combo dev tools — built only with `--features combo-tools`.
-[[bin]]
-name = "compare_sorts"
-path = "src/bin/compare_sorts.rs"
-required-features = ["combo-tools"]
-
-[[bin]]
-name = "speed_test"
-path = "src/bin/speed_test.rs"
-required-features = ["combo-tools"]
-
-[[bin]]
-name = "measure_random_shell"
-path = "src/bin/measure_random_shell.rs"
-required-features = ["combo-tools"]
-
-# The `sorts` bench targets the LEGACY registry (`BENCH_SORTS` / `SortBenchEntry`),
-# which the combo→spec migration removed, and it needs a `serde` dep that was
-# never wired — so it no longer compiles. Disabled while we focus on the
-# spec-oriented version; re-enable (and port it to the live `bench_registry` ABI
-# + add the `serde` dev-dep) if the benchmark is revived.
-# [[bench]]
-# name = "sorts"
-# harness = false
+# Binaries are auto-discovered: src/main.rs → `array_vis_bench` (the default
+# spec-only visualiser); src/bin/*.rs → the aux dev tools (compare_sorts,
+# speed_test, measure_random_shell).

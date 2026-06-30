@@ -46,23 +46,3 @@ end
 
 # NonTrivialSmallSort components (same types quick uses as SmallSort, declared
 # here under the NonTrivialSmallSort role for odd-even's cutoff slot).
-component nt_insertion32
-  type     InsertionSmallSort<LinearInsertion, 32>
-  label    insertion: 32
-  provides NonTrivialSmallSort
-  uses     small_sort_insertion::InsertionSmallSort small_sort_insertion_strategy::LinearInsertion
-end
-
-component nt_network16
-  type     Network16SmallSort
-  label    network: 16
-  provides NonTrivialSmallSort
-  uses     small_sort_network_16::Network16SmallSort
-end
-
-component nt_size2
-  type     Size2SmallSort
-  label    size: 2
-  provides NonTrivialSmallSort
-  uses     small_sort_basic::Size2SmallSort
-end

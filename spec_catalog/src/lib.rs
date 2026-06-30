@@ -28,6 +28,27 @@ include!(concat!(env!("OUT_DIR"), "/catalog_entries.rs"));
 // the language's consumer surface as the app's main, over the real catalog.
 include!(concat!(env!("OUT_DIR"), "/declared_consumers.rs"));
 
+/// Run the named consumer Mains (e.g. `["correctness", "benchmark"]`) over the
+/// ENTIRE emitted catalog — every linked `AlgorithmEntry`, all kinds. This is the
+/// faithful "all" set: the emitted catalog itself, not a query re-derivation
+/// (a wildcard like `SortingAlgorithm<_>` would re-enumerate role `Sort` WITHOUT
+/// each family's arity coupling/curation and produce labels that don't match what
+/// was emitted). One [`array_vis_bench_core::mains::MainReport`] per Main.
+pub fn run_over_catalog(
+    main_names: &[&str],
+) -> Result<Vec<array_vis_bench_core::mains::MainReport>, String> {
+    use array_vis_bench_core::bench_registry::{AlgorithmEntry, ALGORITHMS};
+    use array_vis_bench_core::mains::{main_by_name, run_all, Main};
+
+    let consumers: Vec<Box<dyn Main>> = main_names
+        .iter()
+        .map(|n| main_by_name(n).ok_or_else(|| format!("unknown consumer `{n}`")))
+        .collect::<Result<_, _>>()?;
+    let all: Vec<&'static AlgorithmEntry> = ALGORITHMS.iter().collect();
+    let refs: Vec<&dyn Main> = consumers.iter().map(|b| b.as_ref()).collect();
+    Ok(run_all(&refs, &all))
+}
+
 #[cfg(test)]
 mod tests {
     // Per-family emitted counts (one `COUNT_<STEM>` per `.avbs`) + `COUNT_TOTAL`,
@@ -1036,7 +1057,9 @@ mod tests {
         use super::*;
         use partition_lomuto::LeftLeftPartition;
         use pivot_first::FirstElement;
-        use quick_sort_lib::{DeferredQuickSort, DualPivotPartition, NintherDualPivot, QuickSort};
+        use quick_sort_lib::{
+            CanonicalQuickSort, DeferredCanonicalQuickSort, DualPivotPartition, NintherDualPivot, Pivoted,
+        };
         use small_sort_basic::Size1SmallSort;
         use small_sort_deferred_insertion::DeferredInsertion;
         use small_sort_insertion_strategy::LinearInsertion;
@@ -1154,58 +1177,11 @@ mod tests {
             }
             assert_inherits!(
                 "quick sort<part: left-left, pivot: first, small: size: 1>",
-                QuickSort<LeftLeftPartition, FirstElement, Size1SmallSort>
+                CanonicalQuickSort<Pivoted<LeftLeftPartition, FirstElement>, Size1SmallSort>
             );
             assert_inherits!(
                 "deferred quick sort<part: dual, pivot: ninther, small: deferred insertion: 16>",
-                DeferredQuickSort<DualPivotPartition, NintherDualPivot, DeferredInsertion<LinearInsertion, 16>>
-            );
-        }
-
-        /// Step 2 (pivot-under-partition) equivalence: the V-carrying
-        /// `QuickSort<P, V, SS>` is now a thin shim over
-        /// `PivotlessQuickSort<Pivoted<P, V>, SS>`. The two forms must carry
-        /// identical composable annotations so the eventual catalog cutover to
-        /// the `Pivoted` shape (deferred with the structural-nav work) is a
-        /// pure rename, not a complexity change. Covers both a degenerating
-        /// single-pivot and the dual-pivot deferred branch.
-        #[test]
-        fn pivoted_form_matches_the_shim_complexity() {
-            use quick_sort_lib::{DeferredPivotlessQuickSort, PivotlessQuickSort, Pivoted};
-
-            macro_rules! assert_equiv {
-                ($shim:ty, $pivotless:ty) => {{
-                    assert_eq!(
-                        <$shim as HasTimeBounds>::WORST,
-                        <$pivotless as HasTimeBounds>::WORST,
-                        "worst"
-                    );
-                    assert_eq!(
-                        <$shim as HasTimeBounds>::BEST,
-                        <$pivotless as HasTimeBounds>::BEST,
-                        "best"
-                    );
-                    assert_eq!(
-                        <$shim as HasTimeBounds>::AVERAGE,
-                        <$pivotless as HasTimeBounds>::AVERAGE,
-                        "average"
-                    );
-                    assert_eq!(<$shim as HasSpace>::SPACE, <$pivotless as HasSpace>::SPACE, "space");
-                    assert_eq!(
-                        <$shim as HasStability>::STABLE,
-                        <$pivotless as HasStability>::STABLE,
-                        "stable"
-                    );
-                }};
-            }
-
-            assert_equiv!(
-                QuickSort<LeftLeftPartition, FirstElement, Size1SmallSort>,
-                PivotlessQuickSort<Pivoted<LeftLeftPartition, FirstElement>, Size1SmallSort>
-            );
-            assert_equiv!(
-                DeferredQuickSort<DualPivotPartition, NintherDualPivot, DeferredInsertion<LinearInsertion, 16>>,
-                DeferredPivotlessQuickSort<Pivoted<DualPivotPartition, NintherDualPivot>, DeferredInsertion<LinearInsertion, 16>>
+                DeferredCanonicalQuickSort<Pivoted<DualPivotPartition, NintherDualPivot>, DeferredInsertion<LinearInsertion, 16>>
             );
         }
 

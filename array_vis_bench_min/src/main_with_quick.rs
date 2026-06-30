@@ -12,7 +12,7 @@ use rand::SeedableRng;
 
 use partition_lomuto::LeftLeftPartition;
 use pivot_first::FirstElement;
-use quick_sort_lib::quick_sort::QuickSort;
+use quick_sort_lib::{CanonicalQuickSort, Pivoted};
 use small_sort_basic::NoSmallSort;
 use sort_logger::NoOpLogger;
 
@@ -29,7 +29,7 @@ fn main() {
     let n = 100_000;
     let mut a = shuffled(n, 0xC0FFEE);
     let t = Instant::now();
-    QuickSort::<LeftLeftPartition, FirstElement, NoSmallSort>::sort(&mut a, &mut NoOpLogger);
-    println!("  QuickSort<LeftLeftPartition, First, NoSmall>  N={n}  {:>8.2?}", t.elapsed());
+    CanonicalQuickSort::<Pivoted<LeftLeftPartition, FirstElement>, NoSmallSort>::sort(&mut a, &mut NoOpLogger);
+    println!("  CanonicalQuickSort<Pivoted<LeftLeftPartition, First>, NoSmall>  N={n}  {:>8.2?}", t.elapsed());
     assert!(a.is_sorted());
 }

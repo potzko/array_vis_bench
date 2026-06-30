@@ -2,7 +2,7 @@
 name = "insertion_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "InsertionSort<S> generic over an InsertionStrategy (linear / binary). Single-axis family — registered into array_vis_bench_core::ALGORITHMS via the `[[package.metadata.array_vis_bench.families]]` block below."
+description = "InsertionSort<S> generic over an InsertionStrategy (linear / binary). Single-axis family — emitted into array_vis_bench_core::ALGORITHMS by the spec catalog from this crate's `insertion.spec`/`insertion.avbs` fragment."
 
 [lib]
 name = "insertion_sort_lib"
@@ -14,25 +14,7 @@ small_sort_insertion_strategy = { path = "../../small_sorts/small_sort_insertion
 sort_logger = { path = "../../../sort_logger" }
 
 # Spec-system catalog fragment + query, OWNED by this crate and gathered by
-# `spec_catalog`'s build via the dependency-graph walk. (The `[[…families]]`
-# array below is the LEGACY combo_codegen declaration — inert in the default spec
-# build; combo and spec are never link-combined, so they don't duplicate.)
+# `spec_catalog`'s build via the dependency-graph walk.
 [package.metadata.array_vis_bench]
 spec  = "insertion.spec"
 query = "insertion.avbs"
-
-[[package.metadata.array_vis_bench.families]]
-module = "insertion_sorts"
-type   = "InsertionSort<{S}>"
-uses   = [
-    "insertion_sort_lib::InsertionSort",
-]
-axes = [
-    { var = "S", role = "InsertionStrategy" },
-]
-name        = "insertion sort"
-big_o       = "O(N^2)"
-stable      = true
-adaptive    = true
-direct_sort = true
-path        = ["insertion sorts", "{S}"]

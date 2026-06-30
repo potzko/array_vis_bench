@@ -27,15 +27,3 @@ impl HasSpace for BubbleSort {
 impl HasStability for BubbleSort {
     const STABLE: bool = true;
 }
-
-// Legacy self-registration — gated OFF by default; the spec compiler is the
-// canonical registrar. See `[features]` in Cargo.toml.
-#[cfg(feature = "self_register")]
-sort_registry_macro::sort_family! {
-    type Sort = BubbleSort;
-    name        = "bubble sort";
-    big_o       = "O(N^2)";
-    stable      = true;
-    direct_sort = true;
-    path        = ["bubble sorts", "bubble sort"];
-}

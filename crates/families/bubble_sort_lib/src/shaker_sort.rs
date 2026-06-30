@@ -37,14 +37,3 @@ impl ShakerSort {
         }
     }
 }
-
-// Legacy self-registration — gated OFF by default (spec is the registrar).
-#[cfg(feature = "self_register")]
-sort_registry_macro::sort_family! {
-    type Sort = ShakerSort;
-    name        = "shaker sort";
-    big_o       = "O(N^2)";
-    stable      = true;
-    direct_sort = true;
-    path        = ["bubble sorts", "shaker sort"];
-}

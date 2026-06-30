@@ -1,0 +1,8 @@
+# Test-runner config. cargo-nextest is a cargo SUBCOMMAND (a binary tool), not a
+# library crate, so it can't go in Cargo.toml [dependencies]/[dev-dependencies].
+# This file is the in-repo declaration: it pins the required tool version (nextest
+# refuses to run if too old) and is where any profiles/config live.
+#
+# Install (the "through cargo" way, builds from crates.io):
+#   cargo install cargo-nextest --locked
+nextest-version = "0.9.100"

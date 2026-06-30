@@ -14,13 +14,10 @@
 > work.
 > - [enumeration_strategies.md](implementation_plans/enumeration_strategies.md) — `finite`/`affine`/`sample`/`spread`
 >   to bound recursive variant enumeration (the quick-heap cycle) + the `_`/`.` rest-fill sugar.
-> - [pivot_under_partition.md](implementation_plans/pivot_under_partition.md) — move pivot off the
->   base quicksort into a self-pivoting partition (heap-extract stops faking a pivot). **Steps 1+2
->   (Rust) DONE** (`PivotlessQuickSort` + `Pivoted` wrapper; `QuickSort<P,V,SS>` is now a shim); only
->   the catalog naming cutover remains, deferred to the structural-nav work.
-> - [spec_enums_strategy_axes.md](implementation_plans/spec_enums_strategy_axes.md) — collapse the
->   inplace/deferred driver duplication into a strategy enum; add language `enum` support
->   (type-enum vs runtime value-enum). Aims (with pivot-under-partition) at ONE quicksort driver.
+> - [sentinel_quicksort.md](implementation_plans/sentinel_quicksort.md) — a second, opt-in
+>   `SentinelQuickSort` driver that threads recursion-tree bound context to elide partition inner-loop
+>   guards (sentinel-based bounds-check elimination, Hoare first). `CanonicalQuickSort` stays the
+>   default. Perf lever for hand-rolled parity; gated on a `compare_sorts` benchmark. NOT STARTED.
 
 ## North star
 

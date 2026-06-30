@@ -170,8 +170,13 @@ impl Main for Benchmark {
         for e in sorts {
             r.ran += 1;
             let input = primary_input(e.category);
+            // Respect each algorithm's contract cap: a super-polynomial sort
+            // (e.g. slow sort) declares a small `max_input` precisely so it is
+            // never run at a size that won't return. Clamp to it.
+            let size = e.max_input_size.map_or(self.config.size, |c| self.config.size.min(c));
+            let cfg = RunConfig { size, seed: self.config.seed };
             let res = catch_unwind(AssertUnwindSafe(|| {
-                (e.run_with_input)(input, &self.config, &mut NoOpLogger);
+                (e.run_with_input)(input, &cfg, &mut NoOpLogger);
             }));
             match res {
                 Ok(()) => r.ok += 1,

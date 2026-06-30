@@ -19,11 +19,10 @@ version = "0.0.0"
 edition = "2021"
 publish = false
 
-# Cross-leaf KIND fragments with no single home crate live here next to the
-# catalog. Gathered by build.rs exactly like any building-stone crate's
-# `spec`/`query` (spec_catalog is in its own dependency closure).
+# The cross-leaf KIND *queries* (rotations/small-sorts/partitions/merges) — the
+# components themselves are now self-described in their owning leaf crates, so the
+# catalog contributes only the aggregate queries, no component fragment.
 [package.metadata.array_vis_bench]
-spec = "kinds.spec"
 query = "kinds.avbs"
 
 [dependencies]

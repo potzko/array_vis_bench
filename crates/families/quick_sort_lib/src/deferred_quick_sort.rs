@@ -5,29 +5,7 @@ use array_vis_bench_traits::composable::PivotQuality;
 use array_vis_bench_traits::DeferredSmallSort;
 use sort_logger::SortLogger;
 
-use array_vis_bench_traits::{
-    with_partition_scratch, PartitionScheme, PartitionVisitor, PivotInput,
-};
-
-use crate::pivoted::Pivoted;
-
-/// `DeferredQuickSort` is to `DeferredSmallSort` what `QuickSort` is to
-/// `SmallSort`: each recursion skips slices of length `<= DSS::THRESHOLD`
-/// and lets the final `DSS::final_pass` clean them up in one pass at
-/// the end. Same `PartitionScheme` + `PivotInput` unification as
-/// `QuickSort` — works for both single- and dual-pivot.
-pub struct DeferredQuickSort<P: PartitionScheme, V: PivotInput, DSS: DeferredSmallSort>(
-    PhantomData<(P, V, DSS)>,
-);
-
-impl<P: PartitionScheme, V: PivotInput, DSS: DeferredSmallSort> DeferredQuickSort<P, V, DSS> {
-    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        // Thin shim over the single pivot-free deferred driver: pivot
-        // ownership moves into the partition via `Pivoted<P, V>`. The
-        // catalog still emits this `DeferredQuickSort<P, V, DSS>` name.
-        DeferredPivotlessQuickSort::<Pivoted<P, V>, DSS>::sort(arr, logger)
-    }
-}
+use array_vis_bench_traits::{with_partition_scratch, PartitionScheme, PartitionVisitor};
 
 struct DeferredVisitor {
     ranges: [Range<usize>; 4],
@@ -70,16 +48,15 @@ fn deferred_recursive<
     }
 }
 
-/// Pivotless counterpart of [`DeferredQuickSort`], mirroring
-/// [`PivotlessQuickSort`](crate::quick_sort::PivotlessQuickSort): the
-/// partition self-splits, the sort carries no pivot parameter, and the
-/// `DSS::final_pass` cleans up the deferred leaves at the end. Routes
-/// through the shared deferred driver with the zero-pivot input.
-pub struct DeferredPivotlessQuickSort<P: PartitionScheme, DSS: DeferredSmallSort>(
+/// The **canonical** deferred quicksort driver — the deferred counterpart of
+/// [`CanonicalQuickSort`](crate::quick_sort::CanonicalQuickSort): the partition
+/// self-splits, the sort carries no pivot parameter, and `DSS::final_pass`
+/// cleans up the deferred leaves at the end.
+pub struct DeferredCanonicalQuickSort<P: PartitionScheme, DSS: DeferredSmallSort>(
     PhantomData<(P, DSS)>,
 );
 
-impl<P: PartitionScheme, DSS: DeferredSmallSort> DeferredPivotlessQuickSort<P, DSS> {
+impl<P: PartitionScheme, DSS: DeferredSmallSort> DeferredCanonicalQuickSort<P, DSS> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         // The single deferred quicksort recursion.
         with_partition_scratch::<P, T, U, _>(logger, |logger, scratch| {
@@ -89,60 +66,11 @@ impl<P: PartitionScheme, DSS: DeferredSmallSort> DeferredPivotlessQuickSort<P, D
     }
 }
 
-// Same composition profile as QuickSort: worst depends on pivot quality,
-// best/average is O(N log N). DeferredSmallSort runs on bounded leaves
-// during a single final pass, so its contribution is O(1) at composition
-// time (bounded by DSS::THRESHOLD).
-impl<P, V, DSS> array_vis_bench_traits::composable::HasTimeBounds for DeferredQuickSort<P, V, DSS>
-where
-    P: array_vis_bench_traits::PartitionScheme + array_vis_bench_traits::composable::HasTimeBounds,
-    V: array_vis_bench_traits::PivotInput
-        + array_vis_bench_traits::composable::HasTimeBounds
-        + array_vis_bench_traits::composable::PivotQuality,
-    DSS: array_vis_bench_traits::DeferredSmallSort,
-{
-    const WORST: array_vis_bench_traits::Complexity = array_vis_bench_traits::Complexity::product(
-        if V::DEGENERATES {
-            array_vis_bench_traits::Complexity::N1
-        } else {
-            array_vis_bench_traits::Complexity::LOG_N
-        },
-        array_vis_bench_traits::Complexity::sum(P::WORST, V::WORST),
-    );
-    const BEST: array_vis_bench_traits::Complexity = array_vis_bench_traits::Complexity::product(
-        array_vis_bench_traits::Complexity::LOG_N,
-        array_vis_bench_traits::Complexity::sum(P::BEST, V::BEST),
-    );
-    const AVERAGE: array_vis_bench_traits::Complexity = array_vis_bench_traits::Complexity::product(
-        array_vis_bench_traits::Complexity::LOG_N,
-        array_vis_bench_traits::Complexity::sum(P::AVERAGE, V::AVERAGE),
-    );
-}
-impl<P, V, DSS> array_vis_bench_traits::composable::HasSpace for DeferredQuickSort<P, V, DSS>
-where
-    P: array_vis_bench_traits::PartitionScheme + array_vis_bench_traits::composable::HasSpace,
-    V: array_vis_bench_traits::PivotInput + array_vis_bench_traits::composable::HasSpace,
-    DSS: array_vis_bench_traits::DeferredSmallSort,
-{
-    const SPACE: array_vis_bench_traits::Complexity = array_vis_bench_traits::Complexity::sum(
-        array_vis_bench_traits::Complexity::LOG_N,
-        array_vis_bench_traits::Complexity::sum(P::SPACE, V::SPACE),
-    );
-}
-impl<P, V, DSS> array_vis_bench_traits::composable::HasStability for DeferredQuickSort<P, V, DSS>
-where
-    P: array_vis_bench_traits::PartitionScheme + array_vis_bench_traits::composable::HasStability,
-    V: array_vis_bench_traits::PivotInput + array_vis_bench_traits::composable::HasStability,
-    DSS: array_vis_bench_traits::DeferredSmallSort,
-{
-    const STABLE: bool = P::STABLE && V::STABLE;
-}
-
 // ── Composable annotations for the deferred pivotless driver ──────────
 // Depth is O(N) if the partition can degenerate, else O(log N) — read off
 // the partition `P` (pivot-agnostic, like the in-place pivotless driver).
 impl<P, DSS> array_vis_bench_traits::composable::HasTimeBounds
-    for DeferredPivotlessQuickSort<P, DSS>
+    for DeferredCanonicalQuickSort<P, DSS>
 where
     P: array_vis_bench_traits::PartitionScheme
         + array_vis_bench_traits::composable::HasTimeBounds
@@ -168,7 +96,7 @@ where
             P::AVERAGE,
         );
 }
-impl<P, DSS> array_vis_bench_traits::composable::HasSpace for DeferredPivotlessQuickSort<P, DSS>
+impl<P, DSS> array_vis_bench_traits::composable::HasSpace for DeferredCanonicalQuickSort<P, DSS>
 where
     P: array_vis_bench_traits::PartitionScheme + array_vis_bench_traits::composable::HasSpace,
     DSS: array_vis_bench_traits::DeferredSmallSort,
@@ -179,7 +107,7 @@ where
     );
 }
 impl<P, DSS> array_vis_bench_traits::composable::HasStability
-    for DeferredPivotlessQuickSort<P, DSS>
+    for DeferredCanonicalQuickSort<P, DSS>
 where
     P: array_vis_bench_traits::PartitionScheme + array_vis_bench_traits::composable::HasStability,
     DSS: array_vis_bench_traits::DeferredSmallSort,

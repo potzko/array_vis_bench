@@ -16,40 +16,6 @@
 # pairing is never built. Emits the SAME 448 concrete types as the baked port.
 
 # ════════════════════════════ PIVOT SELECTORS ════════════════════════════
-component p_first
-  type     FirstElement
-  label    first
-  provides Pivot PivotSingle
-  uses     pivot_first::FirstElement
-end
-
-component p_middle
-  type     MiddleElement
-  label    middle
-  provides Pivot PivotSingle
-  uses     pivot_middle::MiddleElement
-end
-
-component p_median3
-  type     MedianOfThree
-  label    median of 3
-  provides Pivot PivotSingle
-  uses     pivot_median3::MedianOfThree
-end
-
-component p_median_of_medians
-  type     MedianOfMedians
-  label    median of medians
-  provides Pivot PivotSingle
-  uses     pivot_median_of_medians::MedianOfMedians
-end
-
-component p_ninther
-  type     Ninther
-  label    ninther
-  provides Pivot PivotSingle
-  uses     pivot_ninther::Ninther
-end
 
 # The dual "combined" pair: two single selectors composed → 5 × 5 = 25 pairs.
 component combined
@@ -70,53 +36,6 @@ component ninther_dual
 end
 
 # ════════════════════════════ PARTITIONS ════════════════════════════
-component part_left_left
-  type     LeftLeftPartition
-  label    left-left
-  provides Partition
-  project  pivot PivotSingle
-  uses     partition_lomuto::LeftLeftPartition
-end
-
-component part_left_right
-  type     LeftRightPartition
-  label    left-right
-  provides Partition
-  project  pivot PivotSingle
-  uses     partition_hoare::LeftRightPartition
-end
-
-component part_moving_pivot
-  type     MovingPivot
-  label    moving pivot
-  provides Partition
-  project  pivot PivotSingle
-  uses     partition_moving_pivot::MovingPivot
-end
-
-component part_moving_pivot_v3
-  type     MovingPivotV3<ReversalRotation>
-  label    moving pivot v3
-  provides Partition
-  project  pivot PivotSingle
-  uses     partition_moving_pivot_v3::MovingPivotV3 rotation_reversal::ReversalRotation
-end
-
-component part_three_way
-  type     ThreeWay
-  label    three-way
-  provides Partition
-  project  pivot PivotSingle
-  uses     partition_three_way::ThreeWay
-end
-
-component part_block
-  type     Block
-  label    block
-  provides Partition
-  project  pivot PivotSingle
-  uses     partition_block::Block
-end
 
 component part_dual
   type     DualPivotPartition
@@ -127,84 +46,96 @@ component part_dual
 end
 
 # ════════════════════════ STANDARD SMALL SORTS ═══════════════════════════
-component ss_size1
-  type     Size1SmallSort
-  label    size: 1
-  provides SmallSort
-  uses     small_sort_basic::Size1SmallSort
-end
-
-component ss_size2
-  type     Size2SmallSort
-  label    size: 2
-  provides SmallSort
-  uses     small_sort_basic::Size2SmallSort
-end
-
-component ss_insertion32
-  type     InsertionSmallSort<LinearInsertion, 32>
-  label    insertion: 32
-  provides SmallSort
-  uses     small_sort_insertion::InsertionSmallSort small_sort_insertion_strategy::LinearInsertion
-end
-
-component ss_network16
-  type     Network16SmallSort
-  label    network: 16
-  provides SmallSort
-  uses     small_sort_network_16::Network16SmallSort
-end
 
 # ════════════════════════ DEFERRED SMALL SORTS ═══════════════════════════
-component dss_lin16
-  type     DeferredInsertion<LinearInsertion, 16>
-  label    deferred insertion: 16
-  provides DeferredSmallSort
-  uses     small_sort_deferred_insertion::DeferredInsertion small_sort_insertion_strategy::LinearInsertion
-end
-
-component dss_lin32
-  type     DeferredInsertion<LinearInsertion, 32>
-  label    deferred insertion: 32
-  provides DeferredSmallSort
-  uses     small_sort_deferred_insertion::DeferredInsertion small_sort_insertion_strategy::LinearInsertion
-end
-
-component dss_bin16
-  type     DeferredInsertion<BinaryInsertion, 16>
-  label    deferred binary insertion: 16
-  provides DeferredSmallSort
-  uses     small_sort_deferred_insertion::DeferredInsertion small_sort_insertion_strategy::BinaryInsertion
-end
-
-component dss_bin32
-  type     DeferredInsertion<BinaryInsertion, 32>
-  label    deferred binary insertion: 32
-  provides DeferredSmallSort
-  uses     small_sort_deferred_insertion::DeferredInsertion small_sort_insertion_strategy::BinaryInsertion
-end
 
 # ════════════════════════ SLOTTED DRIVERS ════════════════════════════════
 component quick_sort
-  type     QuickSort<{partition}, {pivot}, {small_sort}>
+  type     CanonicalQuickSort<Pivoted<{partition}, {pivot}>, {small_sort}>
   label    quick sort<part: {partition}, pivot: {pivot}, small: {small_sort}>
   provides Sort
   category Sort
   menu     quick sorts
-  uses     quick_sort_lib::QuickSort
+  uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::Pivoted
   slot     partition Partition
   slot     pivot Pivot
   slot     small_sort SmallSort
 end
 
 component deferred_quick_sort
-  type     DeferredQuickSort<{partition}, {pivot}, {small_sort}>
+  type     DeferredCanonicalQuickSort<Pivoted<{partition}, {pivot}>, {small_sort}>
   label    deferred quick sort<part: {partition}, pivot: {pivot}, small: {small_sort}>
   provides Sort
   category Sort
   menu     deferred quick sorts
-  uses     quick_sort_lib::DeferredQuickSort
+  uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::Pivoted
   slot     partition Partition
   slot     pivot Pivot
   slot     small_sort DeferredSmallSort
+end
+component beap_dps_first
+  type     CombinedSelector<FirstElement, FirstElement>
+  label    first
+  provides BeapDualPivot
+  uses     quick_sort_lib::CombinedSelector pivot_first::FirstElement
+end
+
+component beap_dps_middle
+  type     CombinedSelector<MiddleElement, MiddleElement>
+  label    middle
+  provides BeapDualPivot
+  uses     quick_sort_lib::CombinedSelector pivot_middle::MiddleElement
+end
+
+component beap_dps_ninther
+  type     NintherDualPivot
+  label    ninther 1/3 + 2/3
+  provides BeapDualPivot
+  uses     quick_sort_lib::NintherDualPivot
+end
+
+component qs_dp_first_first
+  type     CombinedSelector<FirstElement, FirstElement>
+  label    first / first
+  provides QSPivot QSPivotDual
+  uses     quick_sort_lib::CombinedSelector pivot_first::FirstElement
+end
+
+component qs_dp_mid_mid
+  type     CombinedSelector<MiddleElement, MiddleElement>
+  label    middle / middle
+  provides QSPivot QSPivotDual
+  uses     quick_sort_lib::CombinedSelector pivot_middle::MiddleElement
+end
+
+component qs_dp_first_last
+  type     CombinedSelector<FirstElement, LastElement>
+  label    first / last
+  provides QSPivot QSPivotDual
+  uses     quick_sort_lib::CombinedSelector pivot_first::FirstElement pivot_last::LastElement
+end
+
+component qs_dp_ninther
+  type     NintherDualPivot
+  label    ninther 1/3 + 2/3
+  provides QSPivot QSPivotDual
+  uses     quick_sort_lib::NintherDualPivot
+end
+
+component qs_part_dual
+  type     DualPivotPartition
+  label    dual pivot
+  provides QSPartition
+  project  pivot QSPivotDual
+  uses     quick_sort_lib::DualPivotPartition
+end
+
+component pk_pivoted
+  type     Pivoted<{scheme}, {pivot}>
+  label    {scheme}<{pivot}>
+  provides PartitionKind
+  category Partition
+  uses     quick_sort_lib::Pivoted
+  slot     scheme PartScheme
+  slot     pivot  PartPivot
 end

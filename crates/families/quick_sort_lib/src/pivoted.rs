@@ -6,11 +6,11 @@
 //! **picks its own pivots** and therefore needs none supplied from
 //! outside. It itself impls [`PartitionScheme`] with `N_PIVOTS = 0`, so
 //! it drops straight into the pivot-free quicksort driver
-//! ([`PivotlessQuickSort`](crate::quick_sort::PivotlessQuickSort)).
+//! ([`CanonicalQuickSort`](crate::quick_sort::CanonicalQuickSort)).
 //!
 //! This is what moves pivot ownership *off* the sort and *into* the
 //! partition: instead of `QuickSort<Scheme, Sel, SS>` (sort declares the
-//! pivot), the composition is `PivotlessQuickSort<Pivoted<Scheme, Sel>,
+//! pivot), the composition is `CanonicalQuickSort<Pivoted<Scheme, Sel>,
 //! SS>` (partition declares the pivot). The arity coupling
 //! `Sel::N == Scheme::N_PIVOTS` is internal to this wrapper.
 

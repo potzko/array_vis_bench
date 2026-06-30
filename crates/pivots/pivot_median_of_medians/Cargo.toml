@@ -12,7 +12,5 @@ path = "src/lib.rs"
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 sort_logger = { path = "../../../sort_logger" }
 
-[[package.metadata.array_vis_bench.components]]
-role  = "PivotSelector"
-type  = "MedianOfMedians"
-label = "median of medians"
+[package.metadata.array_vis_bench]
+spec = "pivot_median_of_medians.spec"

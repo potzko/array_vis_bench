@@ -1,15 +1,10 @@
 //! Fun sorts — a grab bag of pedagogical and adversarial algorithms.
-//! Family decls for the cross-product variants live in this crate's
-//! `Cargo.toml`; the single-variant ones (`bad_heap_sort`,
-//! `bad_heap_sort_alt`, `slow_sort`, `slow_sort_potzko`) self-register
-//! via inline `sort_registry_macro::sort_family!` calls in their source
-//! files — gated behind the default-off `self_register` feature so the spec
-//! catalog can link this crate types-only and emit the entries itself (without
-//! the runtime self-registration that would duplicate them).
+//! This crate provides the algorithm types only; all variants are emitted into
+//! `array_vis_bench_core::ALGORITHMS` by the spec catalog from this crate's
+//! `fun_sorts.spec`/`fun_sorts.avbs` fragment.
 
 /// Compositional complexity annotations (`HasTimeBounds`/`HasSpace`/
-/// `HasStability`) for every fun-sort type — what the spec emit reads. Always
-/// compiled (additive to the legacy `sort_family!` string `big_o`).
+/// `HasStability`) for every fun-sort type — what the spec emit reads.
 pub mod composable;
 
 pub mod bad_heap_sort;

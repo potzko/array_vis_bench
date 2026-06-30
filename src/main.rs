@@ -2,9 +2,9 @@
 //!
 //! It anchors only the constraint-compiler crates, so the registry the shared
 //! CLI folds over contains *only* spec-emitted entries — `cargo run` is purely
-//! spec-oriented. The legacy combo_codegen registry (`array_vis_bench_full`) is
-//! an optional dep behind the `combo-tools` feature (off by default), so it is
-//! not even compiled here; the aux tools in `src/bin/` build with that feature.
+//! spec-oriented. The legacy `combo_codegen` cross-product generator and its
+//! wiring crate have been retired; the spec catalog is now the sole source of
+//! `ALGORITHMS`. The aux dev tools in `src/bin/` build by default.
 //!
 //! Purely spec: `shell_sort_lib` is pulled in (via `spec_catalog`) with its
 //! self-registration disabled (`default-features = false`), so there is no combo
@@ -22,17 +22,36 @@ fn main() {
     // language's consumer surface as the app's entry point. Default = the
     // interactive picker.
     if std::env::args().any(|a| a == "--consumers") {
-        match spec_catalog::run_declared_consumers() {
+        // Run the correctness (tests) and benchmark consumers over the SAME set:
+        // the entire emitted catalog. The set is the emitted catalog itself, not
+        // a query — see `spec_catalog::run_over_catalog`.
+        match spec_catalog::run_over_catalog(&["correctness", "benchmark"]) {
             Ok(reports) => {
-                let mut failed = false;
+                println!("=== consumers over the full catalog ===");
+                let mut issues = 0usize;
+                let mut set = 0usize;
                 for r in &reports {
-                    println!("consumer `{}`: {}/{} ok", r.consumer, r.ok, r.ran);
+                    let n = r.failures.len();
+                    issues += n;
+                    set = set.max(r.ran); // each consumer runs over the same full set
+                    println!(
+                        "consumer `{}`: {}/{} ok ({} issue{})",
+                        r.consumer, r.ok, r.ran, n, if n == 1 { "" } else { "s" }
+                    );
                     for f in &r.failures {
-                        failed = true;
-                        println!("  FAILED: {f}");
+                        println!("    FAILED: {f}");
                     }
                 }
-                std::process::exit(if failed { 1 } else { 0 });
+
+                // Final report: total issues across every consumer over the set.
+                println!("\n--- total ---");
+                println!(
+                    "{} consumer{} over {set} algorithms — {issues} total issue{}",
+                    reports.len(),
+                    if reports.len() == 1 { "" } else { "s" },
+                    if issues == 1 { "" } else { "s" }
+                );
+                std::process::exit(if issues > 0 { 1 } else { 0 });
             }
             Err(e) => {
                 eprintln!("consumer error: {e}");

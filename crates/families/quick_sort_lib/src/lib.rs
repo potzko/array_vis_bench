@@ -17,8 +17,8 @@ pub mod pivoted;
 pub mod quick_sort;
 pub mod yaroslavskiy;
 
-pub use deferred_quick_sort::{DeferredPivotlessQuickSort, DeferredQuickSort};
+pub use deferred_quick_sort::DeferredCanonicalQuickSort;
 pub use pivot_selectors::{CombinedSelector, NintherDualPivot};
 pub use pivoted::Pivoted;
-pub use quick_sort::{PivotlessQuickSort, QuickSort};
+pub use quick_sort::CanonicalQuickSort;
 pub use yaroslavskiy::DualPivotPartition;

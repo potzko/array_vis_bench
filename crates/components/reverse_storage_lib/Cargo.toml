@@ -11,12 +11,5 @@ path = "src/lib.rs"
 [dependencies]
 sort_logger = { path = "../../../sort_logger" }
 
-[[package.metadata.array_vis_bench.components]]
-role  = "ReverseStorage"
-type  = "ByteStorage"
-label = "byte storage"
-
-[[package.metadata.array_vis_bench.components]]
-role  = "ReverseStorage"
-type  = "BitStorage"
-label = "bit storage"
+[package.metadata.array_vis_bench]
+spec = "reverse_storage_lib.spec"

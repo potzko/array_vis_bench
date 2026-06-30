@@ -720,9 +720,14 @@ pub mod correctness {
         arr: &mut Vec<usize>,
         label: &str,
     ) {
-        use std::io::Write;
-        let _ = writeln!(std::io::stderr(), "RUNNING: '{}' (n={})", label, arr.len());
-        let _ = std::io::stderr().flush();
+        // ponytail: silent by default so `cargo test` isn't flooded with one
+        // line per (algorithm × input). Set AVB_TRACE to re-enable the in-flight
+        // trace when a hanging test gets killed and you need the last input.
+        if std::env::var_os("AVB_TRACE").is_some() {
+            use std::io::Write;
+            let _ = writeln!(std::io::stderr(), "RUNNING: {} | '{}' (n={})", name, label, arr.len());
+            let _ = std::io::stderr().flush();
+        }
         let mut expected = arr.clone();
         expected.sort();
         let mut logger = NoOpLogger;

@@ -16,28 +16,3 @@ rand = "0.8"
 # query; `fun_sorts`'s `RandomShellSort` query fans over them.
 [package.metadata.array_vis_bench]
 spec = "gap_distribution.spec"
-
-[[package.metadata.array_vis_bench.components]]
-role  = "GapDistribution"
-type  = "UniformDist"
-label = "uniform"
-
-[[package.metadata.array_vis_bench.components]]
-role  = "GapDistribution"
-type  = "ParabolicDist"
-label = "parabolic"
-
-[[package.metadata.array_vis_bench.components]]
-role  = "GapDistribution"
-type  = "CubicDist"
-label = "cubic"
-
-[[package.metadata.array_vis_bench.components]]
-role  = "GapDistribution"
-type  = "LogUniformDist"
-label = "log uniform"
-
-[[package.metadata.array_vis_bench.components]]
-role  = "GapDistribution"
-type  = "Distinct<ParabolicDist>"
-label = "distinct parabolic"

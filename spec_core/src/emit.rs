@@ -61,7 +61,7 @@ pub fn generate_table(reg: &Registry, specs: &[SpecNode], module: &str) -> Resul
 /// The REAL emit target: each solved sort → a self-contained module that exposes
 /// the resolved type as the alias `Ty`, then defers to `backend` for the
 /// registration body that turns `Ty` into a runtime registry entry — the same
-/// shape `sort_registry_macro::sort_family!` produces today.
+/// shape the (now-retired) `sort_family!` macro used to produce.
 ///
 /// This function is **domain-agnostic**: it emits only the structural scaffold
 /// (the import-scoped module, its `use`s, the `pub type Ty`) and never names the

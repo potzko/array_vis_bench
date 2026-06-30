@@ -2,47 +2,19 @@
 name = "bubble_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Bubble sort family — BubbleSort, ShakerSort, BubbleSortRecursive (all base algorithms with no axes), plus the OddEvenBubbleSort<S: NonTrivialSmallSort> cross product (declared as a TOML family below)."
+description = "Bubble sort family — BubbleSort, ShakerSort, BubbleSortRecursive (base algorithms, no axes) plus the OddEvenBubbleSort<S: NonTrivialSmallSort> cross product. Types only; the spec catalog emits the entries."
 
 [lib]
 name = "bubble_sort_lib"
 path = "src/lib.rs"
 
-[features]
-# Legacy in-crate self-registration via `sort_family!` (the 3 base algorithms).
-# OFF by default and enabled nowhere: the spec compiler emits the canonical
-# entries, so enabling this would duplicate them via feature unification.
-default = []
-self_register = []
-
 [dependencies]
-array_vis_bench_core = { path = "../../../array_vis_bench_core" }
+# Types only — the spec catalog emits the entries (bubble.spec/bubble.avbs).
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 sort_logger = { path = "../../../sort_logger" }
-sort_registry_core = { path = "../../../sort_registry_core" }
-sort_registry_macro = { path = "../../../sort_registry_macro" }
-linkme = "0.3"
-ctor = "0.2"
 
 # Spec-system catalog fragment + query, OWNED by this crate and gathered by
-# `spec_catalog`'s build via the dependency-graph walk. (The `[[…families]]`
-# array below is the LEGACY combo_codegen declaration of OddEvenBubbleSort — inert
-# in the default spec build; combo and spec are never link-combined.)
+# `spec_catalog`'s build via the dependency-graph walk.
 [package.metadata.array_vis_bench]
 spec  = "bubble.spec"
 query = "bubble.avbs"
-
-[[package.metadata.array_vis_bench.families]]
-module = "bubble_sorts"
-type   = "OddEvenBubbleSort<{S}>"
-uses   = [
-    "bubble_sort_lib::OddEvenBubbleSort",
-]
-axes = [
-    { var = "S", role = "NonTrivialSmallSort" },
-]
-name        = "odd-even bubble sort"
-big_o       = "O(N^2)"
-stable      = true
-direct_sort = true
-path        = ["bubble sorts", "odd-even bubble sort", "{S}"]

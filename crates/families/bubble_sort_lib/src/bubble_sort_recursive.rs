@@ -30,14 +30,3 @@ impl BubbleSortRecursive {
         Self::sort(&mut arr[..len - 1], logger);
     }
 }
-
-// Legacy self-registration — gated OFF by default (spec is the registrar).
-#[cfg(feature = "self_register")]
-sort_registry_macro::sort_family! {
-    type Sort = BubbleSortRecursive;
-    name        = "bubble sort recursive";
-    big_o       = "O(N^2)";
-    stable      = true;
-    direct_sort = true;
-    path        = ["bubble sorts", "bubble sort recursive"];
-}
