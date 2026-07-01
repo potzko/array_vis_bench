@@ -9,7 +9,7 @@
 //! per solved variant via `spec_emit::ArrayBackend` — registering an
 //! `AlgorithmEntry` into the real `array_vis_bench_core::bench_registry::ALGORITHMS`
 //! and a picker variant into `sort_registry_core`. Today's families: shell (18),
-//! insertion (2), quick (448 — the slotted port). These are the CANONICAL
+//! insertion (2), quick (408 — the slotted port). These are the CANONICAL
 //! registrations (no `spec::` marker); leaf crates are linked for their types.
 //!
 //! This is the user's two-layer model, "B" stage: building stones are
@@ -77,7 +77,7 @@ mod tests {
     fn catalog_total_is_the_sum_of_the_families() {
         assert_eq!(COUNT_SHELL, 18, "shell family");
         assert_eq!(COUNT_INSERTION, 2, "insertion family");
-        assert_eq!(COUNT_QUICK, 448, "quick family");
+        assert_eq!(COUNT_QUICK, 408, "quick family (2 × [5×5 single + 26 dual] partitions × 4 small)");
         assert_eq!(COUNT_CYCLE, 1, "cycle family");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
@@ -891,11 +891,13 @@ mod tests {
     }
 
     // ──────────────────────────── PARTITIONS ─────────────────────────────────
-    // The partition KIND: a standalone partition needs a pivot, so each entry is
-    // a self-pivoting `Pivoted<Scheme, Sel>` (the quick_sort_lib wrapper). 5
-    // single-pivot schemes x 6 single pivots = 30, emitted `Category::Partition`
-    // (correctness via `PartitionSuite` → `run_partition_bounds` → the
-    // `partition_battery` boundary check). Distinct roles `PartScheme`/`PartPivot`.
+    // The partition KIND: a standalone partition is a self-pivoting
+    // `Pivoted<Scheme, Sel>` (the quick_sort_lib wrapper). 5 single-pivot schemes
+    // x 5 single pivots (25) + the dual scheme x 26 dual selectors (25 combined +
+    // 1 ninther) = 51, emitted `Category::Partition` (correctness via
+    // `PartitionSuite` → `run_partition_bounds` → the `partition_battery` boundary
+    // check). This is the UNIFIED partition role-system the quick family also
+    // consumes (`PartScheme`/`PartPivot` + their dual siblings).
     mod partition {
         use super::*;
         fn entries() -> Vec<&'static AlgorithmEntry> {
@@ -903,10 +905,15 @@ mod tests {
         }
 
         #[test]
-        fn emits_thirty_scheme_by_pivot() {
-            assert_eq!(entries().len(), 30, "5 schemes x 6 single pivots");
-            for name in ["left-left<first>", "three-way<median of 3>", "block<ninther>", "moving pivot<last>"]
-            {
+        fn emits_scheme_by_pivot() {
+            assert_eq!(entries().len(), 51, "5x5 single + 26 dual");
+            for name in [
+                "left-left<first>",
+                "three-way<median of 3>",
+                "block<ninther>",
+                "dual<combined<first, first>>",
+                "dual<ninther>",
+            ] {
                 assert!(entries().iter().any(|e| e.name == name), "missing partition `{name}`");
             }
         }
@@ -920,12 +927,12 @@ mod tests {
             }
         }
 
-        /// Each of the 30 drives `partition_battery` (via `PartitionSuite::verify`
+        /// Each of the 51 drives `partition_battery` (via `PartitionSuite::verify`
         /// → `run_partition_bounds`) and passes the boundary check end-to-end.
         #[test]
-        fn all_thirty_pass_the_partition_battery() {
+        fn all_pass_the_partition_battery() {
             let es = entries();
-            assert_eq!(es.len(), 30);
+            assert_eq!(es.len(), 51);
             for e in &es {
                 (e.run_correctness)();
             }
@@ -1064,9 +1071,10 @@ mod tests {
         use small_sort_deferred_insertion::DeferredInsertion;
         use small_sort_insertion_strategy::LinearInsertion;
 
-        /// 6 single-pivot partitions × 5 pivots × 4 small = 120, plus the dual
-        /// branch (25 combined pairs + 1 ninther) × 4 = 104 → 224 per family.
-        const PER_FAMILY: usize = 6 * 5 * 4 + (25 + 1) * 4;
+        /// 5 single-pivot schemes × 5 pivots × 4 small = 100, plus the dual
+        /// branch (25 combined pairs + 1 ninther) × 4 = 104 → 204 per family.
+        /// (The pivot now nests under the partition — `part: scheme<pivot>`.)
+        const PER_FAMILY: usize = 5 * 5 * 4 + (25 + 1) * 4;
 
         fn std_entries() -> Vec<&'static AlgorithmEntry> {
             ALGORITHMS.iter().filter(|e| e.name.starts_with("quick sort<")).collect()
@@ -1089,7 +1097,7 @@ mod tests {
 
         #[test]
         fn emitted_counts_reproduce_the_old_registry() {
-            assert_eq!(PER_FAMILY, 224, "per-family arithmetic drifted");
+            assert_eq!(PER_FAMILY, 204, "per-family arithmetic drifted");
             assert_eq!(std_entries().len(), PER_FAMILY, "standard family count");
             assert_eq!(def_entries().len(), PER_FAMILY, "deferred family count");
             assert_eq!(
@@ -1097,7 +1105,7 @@ mod tests {
                 COUNT_QUICK,
                 "registered count drifted from the solver output"
             );
-            assert_eq!(COUNT_QUICK, 2 * PER_FAMILY, "total = 448");
+            assert_eq!(COUNT_QUICK, 2 * PER_FAMILY, "total = 408");
         }
 
         #[test]
@@ -1112,39 +1120,52 @@ mod tests {
         const SINGLE_PIVOTS: &[&str] =
             &["first", "middle", "median of 3", "median of medians", "ninther"];
         const SINGLE_PARTS: &[&str] =
-            &["left-left", "left-right", "moving pivot", "moving pivot v3", "three-way", "block"];
+            &["left-left", "left-right", "moving pivot", "three-way", "block"];
 
-        fn field<'a>(name: &'a str, key: &str) -> &'a str {
-            let start = name.find(key).map(|i| i + key.len()).expect("field present");
+        /// The `part:` field value — everything between `part: ` and `, small:`.
+        /// The pivot now NESTS inside it: `left-left<first>` or
+        /// `dual<combined<first, first>>` / `dual<ninther>`.
+        fn part_field(name: &str) -> &str {
+            let start = name.find("part: ").map(|i| i + "part: ".len()).expect("part present");
             let rest = &name[start..];
-            rest.split([',', '>']).next().unwrap_or(rest).trim()
+            let end = rest.rfind(", small:").expect("small field present");
+            rest[..end].trim()
         }
 
         #[test]
         fn partition_pivot_arity_is_always_consistent() {
             for e in all_entries() {
-                let part = field(e.name, "part: ");
-                let is_single_part = SINGLE_PARTS.contains(&part);
-                let is_dual_part = part == "dual";
-                assert!(is_single_part ^ is_dual_part, "unknown partition `{part}` in `{}`", e.name);
+                let part = part_field(e.name);
+                let scheme = part.split('<').next().unwrap();
+                let is_single = SINGLE_PARTS.contains(&scheme);
+                let is_dual = scheme == "dual";
+                assert!(is_single ^ is_dual, "unknown partition scheme `{scheme}` in `{}`", e.name);
 
-                if is_single_part {
-                    let pivot = field(e.name, "pivot: ");
+                if is_single {
+                    // single scheme nests exactly one single pivot: `scheme<pivot>`
+                    let pivot = part
+                        .strip_prefix(scheme)
+                        .and_then(|s| s.strip_prefix('<'))
+                        .and_then(|s| s.strip_suffix('>'))
+                        .unwrap_or_else(|| panic!("single partition not `scheme<pivot>` in `{}`", e.name));
                     assert!(
                         SINGLE_PIVOTS.contains(&pivot),
-                        "single partition `{part}` carries non-single pivot `{pivot}` in `{}`",
+                        "single partition `{scheme}` carries non-single pivot `{pivot}` in `{}`",
                         e.name
                     );
                 } else {
+                    // dual scheme nests a dual selector
                     assert!(
-                        e.name.contains("pivot: combined<") || e.name.contains("pivot: ninther,"),
+                        part.starts_with("dual<combined<") || part == "dual<ninther>",
                         "dual partition carries non-dual pivot in `{}`",
                         e.name
                     );
                 }
             }
-            assert!(all_entries().iter().any(|e| SINGLE_PARTS.contains(&field(e.name, "part: "))));
-            assert!(all_entries().iter().any(|e| field(e.name, "part: ") == "dual"));
+            assert!(all_entries()
+                .iter()
+                .any(|e| SINGLE_PARTS.contains(&part_field(e.name).split('<').next().unwrap())));
+            assert!(all_entries().iter().any(|e| part_field(e.name).starts_with("dual<")));
         }
 
         #[test]
@@ -1176,11 +1197,11 @@ mod tests {
                 }};
             }
             assert_inherits!(
-                "quick sort<part: left-left, pivot: first, small: size: 1>",
+                "quick sort<part: left-left<first>, small: size: 1>",
                 CanonicalQuickSort<Pivoted<LeftLeftPartition, FirstElement>, Size1SmallSort>
             );
             assert_inherits!(
-                "deferred quick sort<part: dual, pivot: ninther, small: deferred insertion: 16>",
+                "deferred quick sort<part: dual<ninther>, small: deferred insertion: 16>",
                 DeferredCanonicalQuickSort<Pivoted<DualPivotPartition, NintherDualPivot>, DeferredInsertion<LinearInsertion, 16>>
             );
         }
@@ -1213,7 +1234,7 @@ mod tests {
             for algo in &program.algos {
                 let out = solve(&algo.query, &slotted_reg).unwrap();
                 let n = types(&out, &slotted_reg).len();
-                assert_eq!(n, 224, "family `{}` should solve to 224 variants", algo.name);
+                assert_eq!(n, 204, "family `{}` should solve to 204 variants", algo.name);
                 slotted.extend(types(&out, &slotted_reg));
             }
 
@@ -1221,7 +1242,6 @@ mod tests {
                 "let s: Sort = qs_std_left_left(pivot = ., small_sort = .);",
                 "let s: Sort = qs_std_left_right(pivot = ., small_sort = .);",
                 "let s: Sort = qs_std_moving_pivot(pivot = ., small_sort = .);",
-                "let s: Sort = qs_std_moving_pivot_v3(pivot = ., small_sort = .);",
                 "let s: Sort = qs_std_three_way(pivot = ., small_sort = .);",
                 "let s: Sort = qs_std_block(pivot = ., small_sort = .);",
                 "let s: Sort = qs_std_dual_combined(pivot = ., small_sort = .);",
@@ -1229,7 +1249,6 @@ mod tests {
                 "let s: Sort = qs_def_left_left(pivot = ., small_sort = .);",
                 "let s: Sort = qs_def_left_right(pivot = ., small_sort = .);",
                 "let s: Sort = qs_def_moving_pivot(pivot = ., small_sort = .);",
-                "let s: Sort = qs_def_moving_pivot_v3(pivot = ., small_sort = .);",
                 "let s: Sort = qs_def_three_way(pivot = ., small_sort = .);",
                 "let s: Sort = qs_def_block(pivot = ., small_sort = .);",
                 "let s: Sort = qs_def_dual_combined(pivot = ., small_sort = .);",
@@ -1241,7 +1260,7 @@ mod tests {
                 baked.extend(types(&out, &baked_reg));
             }
 
-            assert_eq!(slotted.len(), 448, "two families × 224, all distinct");
+            assert_eq!(slotted.len(), 408, "two families × 204, all distinct");
             assert_eq!(slotted, baked, "slotted must emit exactly the baked type set");
         }
 
@@ -1250,34 +1269,39 @@ mod tests {
             let variants = sort_registry_core::all_variants();
             let v = variants
                 .iter()
-                .find(|v| v.name == "quick sort<part: left-left, pivot: first, small: size: 1>")
+                .find(|v| v.name == "quick sort<part: left-left<first>, small: size: 1>")
                 .expect("the variant is registered in the picker tree");
             assert_eq!(v.category, vec!["sorts", "quick sorts"], "got {:?}", v.category);
-            let axes: Vec<(&str, &str)> =
-                v.axes.iter().map(|a| (a.role.as_str(), a.value.as_str())).collect();
-            assert!(axes.contains(&("Partition", "left-left")), "axes: {axes:?}");
-            assert!(axes.contains(&("Pivot", "first")), "axes: {axes:?}");
-            assert!(axes.contains(&("SmallSort", "size: 1")), "axes: {axes:?}");
+            // The pivot now NESTS under the partition: scheme + pivot are sub-axes
+            // of the single `part` slot (`part/scheme`, `part/pivot`), not flat
+            // top-level facets.
+            let by_path: Vec<(&str, &str)> =
+                v.axes.iter().map(|a| (a.path.as_str(), a.value.as_str())).collect();
+            assert!(by_path.contains(&("part/scheme", "left-left")), "axes: {by_path:?}");
+            assert!(by_path.contains(&("part/pivot", "first")), "axes: {by_path:?}");
+            assert!(by_path.contains(&("small_sort", "size: 1")), "axes: {by_path:?}");
+            // a single pivot does not sub-nest further
+            assert!(
+                !v.axes.iter().any(|a| a.path.starts_with("part/pivot/")),
+                "single pivot should not sub-nest: {by_path:?}"
+            );
             assert_eq!(
                 v.label_template.as_deref(),
-                Some("quick sort<part: {Partition}, pivot: {Pivot}, small: {SmallSort}>"),
+                Some("quick sort<part: {PartitionKind}, small: {SmallSort}>"),
             );
 
-            // STRUCTURAL axes: the composite `combined<a, b>` pivot is its own node
-            // plus the sub-slots `pivot/a` / `pivot/b`.
+            // STRUCTURAL axes: a dual `combined<a, b>` selector nests its sub-slots
+            // under the pivot, two levels deep: part/pivot → part/pivot/a, part/pivot/b.
             let d = variants
                 .iter()
-                .find(|v| v.name.starts_with("deferred quick sort<part: dual, pivot: combined<"))
+                .find(|v| v.name.starts_with("deferred quick sort<part: dual<combined<"))
                 .expect("a deferred dual combined variant is registered");
             assert_eq!(d.category, vec!["sorts", "deferred quick sorts"], "got {:?}", d.category);
-            let pa: Vec<(&str, &str, &str)> =
-                d.axes.iter().map(|a| (a.role.as_str(), a.value.as_str(), a.path.as_str())).collect();
-            assert!(pa.contains(&("Pivot", "combined", "pivot")), "axes: {pa:?}");
-            assert!(pa.iter().any(|(_, _, p)| *p == "pivot/a"), "axes: {pa:?}");
-            assert!(pa.iter().any(|(_, _, p)| *p == "pivot/b"), "axes: {pa:?}");
-            let pivot_paths: Vec<&str> =
-                v.axes.iter().filter(|a| a.path.starts_with("pivot")).map(|a| a.path.as_str()).collect();
-            assert_eq!(pivot_paths, vec!["pivot"], "single pivot should not nest");
+            let dp: Vec<&str> = d.axes.iter().map(|a| a.path.as_str()).collect();
+            assert!(dp.contains(&"part/scheme"), "paths: {dp:?}");
+            assert!(dp.contains(&"part/pivot"), "paths: {dp:?}");
+            assert!(dp.contains(&"part/pivot/a"), "paths: {dp:?}");
+            assert!(dp.contains(&"part/pivot/b"), "paths: {dp:?}");
         }
     }
 }

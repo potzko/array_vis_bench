@@ -7,13 +7,6 @@ component beap_v_middle
   uses     pivot_middle::MiddleElement
 end
 
-component p_middle
-  type     MiddleElement
-  label    middle
-  provides Pivot PivotSingle
-  uses     pivot_middle::MiddleElement
-end
-
 component heap_piv_middle
   type     MiddleElement
   label    middle

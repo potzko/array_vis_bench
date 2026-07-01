@@ -12,9 +12,10 @@ Rotations: RotationAlg = RotationAlg<_>
 // ── Small sorts: every SmallSortKind leaf (7), no slots ──
 SmallSorts: SmallSortAlg = SmallSortAlg<_>
 
-// ── Partitions: enumerate PartitionKind (the pk_pivoted driver), filling its
-//    scheme × pivot slots = 5 × 6 = 30. Role enumeration (not a head reference)
-//    so it can't collide with another family's same-named type-head. ──
+// ── Partitions: enumerate PartitionKind (the pk_single + pk_dual composites) =
+//    5×5 single (25) + dual × 26 selectors (26) = 51. Role enumeration (not a head
+//    reference) so it can't collide with another family's same-named type-head.
+//    The quick family slots this SAME PartitionKind — one partition role-system. ──
 Partitions: PartitionAlg = PartitionAlg<_>
 
 // ── Merges: enumerate MergeKind (mk_naive + mk_smaller), filling the rot slot

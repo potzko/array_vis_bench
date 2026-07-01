@@ -51,7 +51,6 @@ partition_lomuto = { path = "../crates/partitions/partition_lomuto" }
 partition_hoare = { path = "../crates/partitions/partition_hoare" }
 partition_block = { path = "../crates/partitions/partition_block" }
 partition_moving_pivot = { path = "../crates/partitions/partition_moving_pivot" }
-partition_moving_pivot_v3 = { path = "../crates/partitions/partition_moving_pivot_v3" }
 partition_three_way = { path = "../crates/partitions/partition_three_way" }
 rotation_reversal = { path = "../crates/rotations/rotation_reversal" }
 pivot_first = { path = "../crates/pivots/pivot_first" }
@@ -71,7 +70,7 @@ rod_sort_lib = { path = "../crates/families/rod_sort_lib", default-features = fa
 circle_sort_lib = { path = "../crates/families/circle_sort_lib", default-features = false }
 
 # ── Building stones: merge family + its 11 rotation leaves (none self-register) ─
-# (rotation_reversal already linked above for quick's MovingPivotV3.)
+# (rotation_reversal already linked above.)
 merge_sort_lib = { path = "../crates/families/merge_sort_lib" }
 rotation_juggling = { path = "../crates/rotations/rotation_juggling" }
 rotation_gries_mills = { path = "../crates/rotations/rotation_gries_mills" }

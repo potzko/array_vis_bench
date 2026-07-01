@@ -1,12 +1,5 @@
 # Component fragments OWNED by this crate (self-describing).
 
-component p_ninther
-  type     Ninther
-  label    ninther
-  provides Pivot PivotSingle
-  uses     pivot_ninther::Ninther
-end
-
 component heap_piv_ninther
   type     Ninther
   label    ninther

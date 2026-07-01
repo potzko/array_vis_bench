@@ -1,15 +1,12 @@
 // QUICK families — query OWNED by this crate.
 //
-// `p` and `part` are HELPER bindings (scoped to THIS file — `spec_catalog` lowers
-// each gathered query independently): `p` ranges over every pivot, `part` over
-// every partition refined arity-compatible with `p` (`Partition[pivot = p]`).
-// Both prepend to each family's query, so the shared `p` couples partition↔pivot.
-// `small_sort = _` fans out over the family's small-sort role.
+// The quick driver slots ONE self-pivoting partition (`part: PartitionKind`); the
+// composite `Pivoted<scheme, pivot>` carries the pivot internally with its arity
+// baked in. So the query just fans `part` over every PartitionKind (5×5 single +
+// 26 dual = 51) and `small_sort` over the family's small-sort role — the old
+// `Partition[pivot = p]` pivot↔partition coupling is gone.
 //
-// Each family reproduces the baked port's 224 variants (6×5×4 single + 26×4 dual).
+// Each family: 51 partitions × 4 small sorts = 204 variants (408 total).
 
-p:    Pivot = _
-part: Partition[pivot = p] = _
-
-QuickSorts:         SortingAlgorithm = SortingAlgorithm<CanonicalQuickSort<partition = part, pivot = p, small_sort = _>>
-DeferredQuickSorts: SortingAlgorithm = SortingAlgorithm<DeferredCanonicalQuickSort<partition = part, pivot = p, small_sort = _>>
+QuickSorts:         SortingAlgorithm = SortingAlgorithm<CanonicalQuickSort<part = _, small_sort = _>>
+DeferredQuickSorts: SortingAlgorithm = SortingAlgorithm<DeferredCanonicalQuickSort<part = _, small_sort = _>>

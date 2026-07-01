@@ -7,10 +7,3 @@ component qs_p_last
   uses     pivot_last::LastElement
 end
 
-component pkp_last
-  type     LastElement
-  label    last
-  provides PartPivot
-  uses     pivot_last::LastElement
-end
-

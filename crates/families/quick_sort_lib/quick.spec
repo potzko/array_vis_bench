@@ -1,78 +1,104 @@
 # Quick-sort family catalog fragment — OWNED by this crate.
 #
 # Gathered by `spec_catalog` via `[package.metadata.array_vis_bench] spec =
-# "quick.spec"`. This is the SLOTTED decomposition: one `quick_sort<partition,
-# pivot, small_sort>` driver (+ a deferred sibling) whose slots the query fills.
+# "quick.spec"`. The quick driver slots ONE self-pivoting partition — the
+# `PartitionKind` composite `Pivoted<scheme, pivot>` — so the pivot nests UNDER
+# the partition (one `part` axis), there is no separate top-level pivot slot, and
+# no query-level pivot↔partition coupling.
 #
-# The pivot / partition / small-sort COMPONENTS this family composes are declared
-# here as the quick family's contract, even though several of their TYPES live in
-# sibling leaf crates (`partition_lomuto::LeftLeftPartition`, …). The `uses` paths
-# are plain text resolved in the consumer (`spec_catalog`), so this fragment adds
-# NO compile-time dependency from `quick_sort_lib` onto those leaves.
+# ONE partition role-system: quick reuses the SAME `PartitionKind` partitions the
+# first-class Partition kind emits (`kinds.avbs`). The old quick-only `Partition`
+# / `Pivot` roles are gone; `PartScheme` / `PartPivot` (+ their dual siblings) are
+# the single source.
 #
-# ARITY COUPLING (structural): single-pivot partitions `project pivot
-# PivotSingle`, the dual partition `project pivot PivotDual`; the query threads a
-# shared pivot var `p` + `Partition[pivot = p]` refinement, so an arity-illegal
-# pairing is never built. Emits the SAME 448 concrete types as the baked port.
+# ARITY COUPLING (structural, baked into the composite, no query refinement): the
+# single composite `pk_single` pairs a single scheme (`PartScheme`) with a single
+# pivot (`PartPivot`); the dual composite `pk_dual` pairs the dual scheme
+# (`PartSchemeDual`) with a dual selector (`PartPivotDual`). No component mixes
+# arities, so an arity-illegal pairing is unrepresentable.
 
-# ════════════════════════════ PIVOT SELECTORS ════════════════════════════
-
-# The dual "combined" pair: two single selectors composed → 5 × 5 = 25 pairs.
+# ════════════════════════════ DUAL PIVOT SELECTORS ═══════════════════════
+# The dual selectors of the unified partition system (role `PartPivotDual`).
+# `combined` composes two single `PartPivot`s → 5 × 5 = 25 pairs.
 component combined
   type     CombinedSelector<{a}, {b}>
   label    combined<{a}, {b}>
-  provides Pivot PivotDual
+  provides PartPivotDual
   uses     quick_sort_lib::CombinedSelector
-  slot     a PivotSingle p_first
-  slot     b PivotSingle p_middle
+  slot     a PartPivot pkp_first
+  slot     b PartPivot pkp_middle
 end
 
 # The baked "ninther thirds" dual selector (1 variant).
 component ninther_dual
   type     NintherDualPivot
   label    ninther
-  provides Pivot PivotDual
+  provides PartPivotDual
   uses     quick_sort_lib::NintherDualPivot
 end
 
-# ════════════════════════════ PARTITIONS ════════════════════════════
-
-component part_dual
+# ════════════════════════════ DUAL PARTITION SCHEME ══════════════════════
+component pks_dual
   type     DualPivotPartition
   label    dual
-  provides Partition
-  project  pivot PivotDual
+  provides PartSchemeDual
   uses     quick_sort_lib::DualPivotPartition
 end
 
-# ════════════════════════ STANDARD SMALL SORTS ═══════════════════════════
+# ════════════════════ FIRST-CLASS PARTITION COMPOSITES ════════════════════
+# `Pivoted<scheme, pivot>` is a self-pivoting partition (`N_PIVOTS = 0`). These
+# are emitted BOTH as first-class Partition KIND entries (via `kinds.avbs`) AND
+# slotted as the quick driver's `part`. The single/dual split bakes arity into the
+# type. Together: 5×5 single (25) + 1×26 dual (26) = 51 PartitionKind variants.
+component pk_single
+  type     Pivoted<{scheme}, {pivot}>
+  label    {scheme}<{pivot}>
+  provides PartitionKind
+  category Partition
+  uses     quick_sort_lib::Pivoted
+  slot     scheme PartScheme
+  slot     pivot  PartPivot
+end
 
-# ════════════════════════ DEFERRED SMALL SORTS ═══════════════════════════
+component pk_dual
+  type     Pivoted<{scheme}, {pivot}>
+  label    {scheme}<{pivot}>
+  provides PartitionKind
+  category Partition
+  uses     quick_sort_lib::Pivoted
+  slot     scheme PartSchemeDual
+  slot     pivot  PartPivotDual
+end
 
 # ════════════════════════ SLOTTED DRIVERS ════════════════════════════════
+# One `part` slot (the `PartitionKind` composite) + small sort. The pivot lives
+# inside `part`, so the label/picker nest it under the partition.
 component quick_sort
-  type     CanonicalQuickSort<Pivoted<{partition}, {pivot}>, {small_sort}>
-  label    quick sort<part: {partition}, pivot: {pivot}, small: {small_sort}>
+  type     CanonicalQuickSort<{part}, {small_sort}>
+  label    quick sort<part: {part}, small: {small_sort}>
   provides Sort
   category Sort
   menu     quick sorts
-  uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::Pivoted
-  slot     partition Partition
-  slot     pivot Pivot
+  uses     quick_sort_lib::CanonicalQuickSort
+  slot     part PartitionKind
   slot     small_sort SmallSort
 end
 
 component deferred_quick_sort
-  type     DeferredCanonicalQuickSort<Pivoted<{partition}, {pivot}>, {small_sort}>
-  label    deferred quick sort<part: {partition}, pivot: {pivot}, small: {small_sort}>
+  type     DeferredCanonicalQuickSort<{part}, {small_sort}>
+  label    deferred quick sort<part: {part}, small: {small_sort}>
   provides Sort
   category Sort
   menu     deferred quick sorts
-  uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::Pivoted
-  slot     partition Partition
-  slot     pivot Pivot
+  uses     quick_sort_lib::DeferredCanonicalQuickSort
+  slot     part PartitionKind
   slot     small_sort DeferredSmallSort
 end
+
+# ═══════════ OTHER FAMILIES' DUAL-PIVOT SELECTORS (independent roles) ═══════
+# beap-sort + quick-select reuse the CombinedSelector / NintherDualPivot TYPES
+# with their OWN roles (BeapDualPivot / QSPivotDual), so they are unaffected by
+# the quick partition unification above.
 component beap_dps_first
   type     CombinedSelector<FirstElement, FirstElement>
   label    first
@@ -128,14 +154,4 @@ component qs_part_dual
   provides QSPartition
   project  pivot QSPivotDual
   uses     quick_sort_lib::DualPivotPartition
-end
-
-component pk_pivoted
-  type     Pivoted<{scheme}, {pivot}>
-  label    {scheme}<{pivot}>
-  provides PartitionKind
-  category Partition
-  uses     quick_sort_lib::Pivoted
-  slot     scheme PartScheme
-  slot     pivot  PartPivot
 end

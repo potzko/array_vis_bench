@@ -7,14 +7,6 @@ component fs_part_left_left
   uses     partition_lomuto::LeftLeftPartition
 end
 
-component part_left_left
-  type     LeftLeftPartition
-  label    left-left
-  provides Partition
-  project  pivot PivotSingle
-  uses     partition_lomuto::LeftLeftPartition
-end
-
 component qs_part_left_left
   type     LeftLeftPartition
   label    left-left pointer

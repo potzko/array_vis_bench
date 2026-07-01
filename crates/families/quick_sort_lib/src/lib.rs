@@ -1,13 +1,13 @@
-//! Quick sort family. The unified [`QuickSort<P, V, SS>`] handles both
-//! single-pivot (`P::N_PIVOTS = 1`, e.g. `LeftLeftPartition` + a [`PivotSelector`])
-//! and dual-pivot (`P::N_PIVOTS = 2`, e.g. [`yaroslavskiy::DualPivotPartition`]
-//! + a `DualPivotSelector` like [`CombinedSelector`] or
-//! [`NintherDualPivot`]) variants — the old standalone
-//! `DualPivotQuickSort` is gone, replaced by `QuickSort<DualPivotPartition,
-//! <DPS>, <SS>>`. Family declarations live in this crate's `Cargo.toml`.
-//! The 30 standalone `(P × V)` partition registrations live in the
-//! sibling `quick_partition_registry` crate so this leaf doesn't drag
-//! every partition + pivot leaf into every consumer.
+//! Quick sort family. [`CanonicalQuickSort<P, SS>`] is the single pivot-free
+//! driver: `P` is a self-splitting `PartitionScheme` (`N_PIVOTS = 0`) and the
+//! sort carries no pivot of its own. Pivot-based quicksorts wrap a scheme +
+//! selector as [`Pivoted<Scheme, Sel>`] — single-pivot (`LeftLeftPartition` + a
+//! [`PivotSelector`]) or dual-pivot ([`yaroslavskiy::DualPivotPartition`] + a
+//! `DualPivotSelector` like [`CombinedSelector`] / [`NintherDualPivot`]). The
+//! catalog emits `CanonicalQuickSort<Pivoted<…>, SS>` directly, and the same
+//! `Pivoted<…>` partitions are the workspace's first-class Partition kind — one
+//! partition role-system, not two. Family declarations live in this crate's
+//! `Cargo.toml`.
 //!
 //! [`PivotSelector`]: array_vis_bench_traits::PivotSelector
 

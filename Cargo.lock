@@ -382,15 +382,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "partition_moving_pivot_v3"
-version = "0.1.0"
-dependencies = [
- "array_vis_bench_traits",
- "rotation_reversal",
- "sort_logger",
-]
-
-[[package]]
 name = "partition_three_way"
 version = "0.1.0"
 dependencies = [
@@ -856,7 +847,6 @@ dependencies = [
  "partition_hoare",
  "partition_lomuto",
  "partition_moving_pivot",
- "partition_moving_pivot_v3",
  "partition_three_way",
  "pivot_first",
  "pivot_last",

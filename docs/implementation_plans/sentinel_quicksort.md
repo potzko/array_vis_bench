@@ -2,10 +2,12 @@
 
 Status: **DESIGNED, NOT STARTED (2026-06-30).** Keep as a parked perf lever; do not implement until
 a benchmark justifies it (see "When to build" below). The pivot-under-partition re-model it builds on
-is DONE: the catalog emits every pivot-based quicksort as `CanonicalQuickSort<Pivoted<Scheme, Sel>, SS>`
-directly (no pivot-carrying `QuickSort` shim). The only remaining tail is the picker/name reshape
-(nesting pivot under partition + dropping the top-level `project pivot` arity coupling), which is the
-deferred structural-nav work referenced below.
+is fully DONE (2026-07-01): the catalog emits every pivot-based quicksort as
+`CanonicalQuickSort<Pivoted<Scheme, Sel>, SS>` directly, the pivot NESTS under the partition in names
+(`quick sort<part: left-left<first>, small: …>`), the top-level `project pivot` coupling is gone
+(arity baked into single/dual `Pivoted` composites), and quick shares ONE partition role-system with
+the first-class Partition kind. So the only tail left for THIS plan is surfacing sentinel-capable
+schemes (a `sentinel` tag) — see phase 5.
 
 ## The optimisation
 

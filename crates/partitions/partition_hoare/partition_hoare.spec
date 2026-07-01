@@ -7,14 +7,6 @@ component fs_part_left_right
   uses     partition_hoare::LeftRightPartition
 end
 
-component part_left_right
-  type     LeftRightPartition
-  label    left-right
-  provides Partition
-  project  pivot PivotSingle
-  uses     partition_hoare::LeftRightPartition
-end
-
 component qs_part_left_right
   type     LeftRightPartition
   label    left-right pointer

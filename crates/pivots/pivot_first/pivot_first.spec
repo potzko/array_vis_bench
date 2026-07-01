@@ -7,13 +7,6 @@ component beap_v_first
   uses     pivot_first::FirstElement
 end
 
-component p_first
-  type     FirstElement
-  label    first
-  provides Pivot PivotSingle
-  uses     pivot_first::FirstElement
-end
-
 component heap_piv_first
   type     FirstElement
   label    first

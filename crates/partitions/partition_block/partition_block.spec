@@ -7,14 +7,6 @@ component fs_part_block
   uses     partition_block::Block
 end
 
-component part_block
-  type     Block
-  label    block
-  provides Partition
-  project  pivot PivotSingle
-  uses     partition_block::Block
-end
-
 component qs_part_block
   type     Block
   label    block

@@ -164,17 +164,6 @@ component qs_std_moving_pivot
   slot     small_sort SmallSort
 end
 
-component qs_std_moving_pivot_v3
-  type     CanonicalQuickSort<Pivoted<MovingPivotV3<ReversalRotation>, {pivot}>, {small_sort}>
-  label    quick sort<part: moving pivot v3, pivot: {pivot}, small: {small_sort}>
-  provides Sort
-  category Sort
-  menu     quick sorts / moving pivot v3
-  uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::Pivoted partition_moving_pivot_v3::MovingPivotV3 rotation_reversal::ReversalRotation
-  slot     pivot PivotSingle
-  slot     small_sort SmallSort
-end
-
 component qs_std_three_way
   type     CanonicalQuickSort<Pivoted<ThreeWay, {pivot}>, {small_sort}>
   label    quick sort<part: three-way, pivot: {pivot}, small: {small_sort}>
@@ -251,17 +240,6 @@ component qs_def_moving_pivot
   category Sort
   menu     deferred quick sorts / moving pivot
   uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::Pivoted partition_moving_pivot::MovingPivot
-  slot     pivot PivotSingle
-  slot     small_sort DeferredSmallSort
-end
-
-component qs_def_moving_pivot_v3
-  type     DeferredCanonicalQuickSort<Pivoted<MovingPivotV3<ReversalRotation>, {pivot}>, {small_sort}>
-  label    deferred quick sort<part: moving pivot v3, pivot: {pivot}, small: {small_sort}>
-  provides Sort
-  category Sort
-  menu     deferred quick sorts / moving pivot v3
-  uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::Pivoted partition_moving_pivot_v3::MovingPivotV3 rotation_reversal::ReversalRotation
   slot     pivot PivotSingle
   slot     small_sort DeferredSmallSort
 end
