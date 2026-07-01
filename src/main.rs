@@ -59,5 +59,17 @@ fn main() {
             }
         }
     }
+    // `array_vis_bench --timing N K` times every registered sort on a random
+    // array of size N, K times each (median), and prints the 10 fastest + 10
+    // slowest. Sorts whose contract cap is below N are skipped. Defaults: N=10000,
+    // K=5.
+    let argv: Vec<String> = std::env::args().collect();
+    if let Some(pos) = argv.iter().position(|a| a == "--timing") {
+        let n: usize = argv.get(pos + 1).and_then(|s| s.parse().ok()).unwrap_or(10_000);
+        let k: usize = argv.get(pos + 2).and_then(|s| s.parse().ok()).unwrap_or(5);
+        let report = spec_catalog::run_timing(n, k);
+        std::process::exit(if report.all_ok() { 0 } else { 1 });
+    }
+
     array_vis_bench_cli::run();
 }

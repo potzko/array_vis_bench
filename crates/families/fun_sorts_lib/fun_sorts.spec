@@ -67,6 +67,7 @@ component fs_cyclent_sort
   menu     fun sorts / cyclent sort
   uses     fun_sorts_lib::cyclent_sort::CyclentSort
   slot     part CyclentPart
+  max_input 5000
 end
 
 component fs_cyclent_sort_opt
@@ -77,6 +78,7 @@ component fs_cyclent_sort_opt
   menu     fun sorts / cyclent sort opt
   uses     fun_sorts_lib::cyclent_sort_opt::CyclentSortOpt
   slot     part CyclentPart
+  max_input 5000
 end
 
 component fs_cyclent_sort_stack
@@ -87,6 +89,7 @@ component fs_cyclent_sort_stack
   menu     fun sorts / cyclent sort stack
   uses     fun_sorts_lib::cyclent_sort_stack::CyclentSortStack
   slot     part CyclentPart
+  max_input 5000
 end
 
 component fs_cyclent_sort_stack_optimized
@@ -97,6 +100,7 @@ component fs_cyclent_sort_stack_optimized
   menu     fun sorts / cyclent sort stack optimized
   uses     fun_sorts_lib::cyclent_sort_stack_optimized::CyclentSortStackOptimized
   slot     part CyclentPart
+  max_input 5000
 end
 
 # ════════════════════════ NON-TRIVIAL SMALL SORTS (curated 2) ════════════════

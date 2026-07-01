@@ -12,6 +12,7 @@
 use crate::bench_registry::{primary_input, AlgorithmEntry, RunConfig, ALGORITHMS};
 use sort_logger::{NoOpLogger, SortLogger, VisualizerLogger};
 use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::time::{Duration, Instant};
 
 /// The outcome of running one consumer over a set of algorithms.
 #[derive(Debug, Default)]
@@ -182,6 +183,79 @@ impl Main for Benchmark {
                 Ok(()) => r.ok += 1,
                 Err(_) => r.failures.push(e.name.to_string()),
             }
+        }
+        r
+    }
+}
+
+/// Timing consumer: times each algorithm on a random array of size `n`, `k`
+/// times (fresh seed per run, [`NoOpLogger`] so only the algorithm's work is
+/// measured), then prints the 10 fastest + 10 slowest by median run time.
+///
+/// An algorithm whose contract cap (`max_input_size`) is below `n` cannot run
+/// at that size, so it is skipped (counted, not a failure — same reasoning as
+/// [`Benchmark`]'s clamp, but here we exclude rather than clamp so every timed
+/// entry ran at the *same* `n` and the ranking is fair).
+pub struct Timing {
+    pub n: usize,
+    pub k: usize,
+}
+
+impl Main for Timing {
+    fn name(&self) -> &'static str {
+        "timing"
+    }
+    fn run(&self, sorts: &[&'static AlgorithmEntry]) -> MainReport {
+        let mut r = MainReport { consumer: self.name(), ..Default::default() };
+        let k = self.k.max(1);
+        let mut timed: Vec<(&str, Duration)> = Vec::new();
+        let mut skipped = 0usize;
+        for e in sorts {
+            if e.max_input_size.map_or(false, |cap| cap < self.n) {
+                skipped += 1;
+                continue;
+            }
+            r.ran += 1;
+            let input = primary_input(e.category);
+            let mut durs: Vec<Duration> = Vec::with_capacity(k);
+            let mut failed = false;
+            for trial in 0..k {
+                let cfg = RunConfig { size: self.n, seed: trial as u64 };
+                let start = Instant::now();
+                let res = catch_unwind(AssertUnwindSafe(|| {
+                    (e.run_with_input)(input, &cfg, &mut NoOpLogger);
+                }));
+                if res.is_err() {
+                    failed = true;
+                    break;
+                }
+                durs.push(start.elapsed());
+            }
+            if failed {
+                r.failures.push(e.name.to_string());
+                continue;
+            }
+            durs.sort_unstable();
+            timed.push((e.name, durs[k / 2])); // median
+            r.ok += 1;
+        }
+
+        timed.sort_by_key(|(_, d)| *d);
+        println!(
+            "=== timing: n={}, k={} — {} timed, {} skipped (cap < n) ===",
+            self.n, self.k, timed.len(), skipped
+        );
+        let show = |label: &str, rows: &[(&str, Duration)]| {
+            println!("{label}:");
+            for (name, d) in rows {
+                println!("  {:>12}  {}", format!("{d:.3?}"), name);
+            }
+        };
+        let ten = 10.min(timed.len());
+        show("10 fastest", &timed[..ten]);
+        show("10 slowest", &timed[timed.len() - ten..]);
+        if !r.failures.is_empty() {
+            println!("{} panicked: {}", r.failures.len(), r.failures.join(", "));
         }
         r
     }

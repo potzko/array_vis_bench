@@ -49,6 +49,19 @@ pub fn run_over_catalog(
     Ok(run_all(&refs, &all))
 }
 
+/// Time every registered SORT on a random array of size `n`, `k` times each,
+/// and print the 10 fastest + 10 slowest by median run time (see
+/// [`array_vis_bench_core::mains::Timing`]). Runs over the `Category::Sort`
+/// slice of the emitted catalog — the "sorts we're looking at" — so the ranking
+/// compares like with like (a merge/rotation step isn't a full sort).
+pub fn run_timing(n: usize, k: usize) -> array_vis_bench_core::mains::MainReport {
+    use array_vis_bench_core::bench_registry::{Category, AlgorithmEntry, ALGORITHMS};
+    use array_vis_bench_core::mains::{Main, Timing};
+    let sorts: Vec<&'static AlgorithmEntry> =
+        ALGORITHMS.iter().filter(|e| e.category == Category::Sort).collect();
+    Timing { n, k }.run(&sorts)
+}
+
 #[cfg(test)]
 mod tests {
     // Per-family emitted counts (one `COUNT_<STEM>` per `.avbs`) + `COUNT_TOTAL`,
@@ -265,6 +278,15 @@ mod tests {
                 assert!(rep.all_ok(), "{} had failures: {:?}", rep.consumer, rep.failures);
                 assert_eq!(rep.ok, 18, "{} ok {} of 18", rep.consumer, rep.ok);
             }
+        }
+
+        /// The timing consumer runs over the Sort category, times each survivor,
+        /// and produces a clean ranking. Small n/k so it's a smoke test, not a bench.
+        #[test]
+        fn timing_consumer_ranks_sorts() {
+            let report = crate::run_timing(64, 1);
+            assert!(report.ran > 0, "timed no sorts");
+            assert!(report.all_ok(), "timing had failures: {:?}", report.failures);
         }
 
         /// THE CLOSED LOOP from the AVBS *language* surface: a `consumers:` program

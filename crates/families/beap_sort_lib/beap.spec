@@ -28,6 +28,7 @@ component beap_sort_classic
   uses     beap_sort_lib::spec_drivers::BeapSortClassicOf
   slot     d  HeapDir                heap_dir_min_reverse
   slot     dh BeapDeepHeapifyClassic beap_dh_iterative
+  max_input 10000
 end
 component beap_sort_quick_build
   type     BeapSortQuickOf<{d}, {dh}>
@@ -38,6 +39,7 @@ component beap_sort_quick_build
   uses     beap_sort_lib::spec_drivers::BeapSortQuickOf
   slot     d  HeapDir              heap_dir_min_reverse
   slot     dh BeapDeepHeapifyQuick beap_qdh_sequential
+  max_input 10000
 end
 component beap_sort_dual_build
   type     BeapSortDualOf<{d}, {dh}>
@@ -48,4 +50,5 @@ component beap_sort_dual_build
   uses     beap_sort_lib::spec_drivers::BeapSortDualOf
   slot     d  HeapDir             heap_dir_min_reverse
   slot     dh BeapDeepHeapifyDual beap_dpqdh_stack_dual
+  max_input 10000
 end
