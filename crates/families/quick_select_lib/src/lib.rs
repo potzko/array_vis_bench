@@ -5,12 +5,12 @@
 //! guaranteed to be in order; elements before / after the target form
 //! unsorted partitions.
 //!
-//! Concrete impls are parametrised over a [`PartitionScheme`] (LeftLeftPartition,
-//! LeftRightPartition, ThreeWay, Block, DualPivotPartition, …) and a [`PivotInput`] (a
-//! single [`PivotSelector`] for `N_PIVOTS = 1`, or a dual-pivot selector
-//! like `CombinedSelector` / `NintherDualPivot` for `N_PIVOTS = 2`). The
-//! two arities must agree: `P::N_PIVOTS == V::N`. Two strategies are
-//! provided:
+//! Concrete impls are parametrised over ONE self-pivoting [`PartitionScheme`]
+//! (`N_PIVOTS = 0`) — a `Pivoted<Scheme, Sel>` (a pivot-consuming scheme fused
+//! with its selector) or `HeapExtract` (genuinely pivotless). The partition owns
+//! pivot selection; the driver supplies none. This is the SAME single-partition
+//! contract `CanonicalQuickSort` uses, so quick + quick-select share one partition
+//! role-system. Two strategies are provided:
 //!
 //! - [`RecursiveQuickSelect`] — straightforward recursion into whichever
 //!   region contains `target`.
@@ -18,19 +18,18 @@
 //!   recursion is unrolled into a loop. Useful when call-stack depth
 //!   matters.
 //!
-//! This is the one-sided cousin of `QuickSort<P, V, SS>`: where quicksort
+//! This is the one-sided cousin of `CanonicalQuickSort<P, SS>`: where quicksort
 //! recurses into *every* unsorted region the partition emits, quickselect
-//! recurses into the *single* region containing `target` and drops the
-//! rest. Dual-pivot quickselect is just `QuickSelect<DualPivotPartition, DPS>`
-//! — the old standalone `RecursiveDualPivotQuickSelect` /
-//! `IterativeDualPivotQuickSelect` types are gone.
+//! recurses into the *single* region containing `target` and drops the rest.
+//! Dual-pivot quickselect is just `RecursiveQuickSelect<Pivoted<DualPivotPartition,
+//! DPS>>`.
 
 use std::marker::PhantomData;
 use std::ops::Range;
 
 use array_vis_bench_traits::{
     with_partition_scratch, Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme,
-    PartitionVisitor, PivotInput, PivotQuality, QuickSelect,
+    PartitionVisitor, PivotQuality, QuickSelect,
 };
 use sort_logger::SortLogger;
 
@@ -82,45 +81,44 @@ fn region_for(v: &RegionVisitor, target: usize) -> Option<Range<usize>> {
 
 // ── RecursiveQuickSelect ─────────────────────────────────────────────────────
 
-pub struct RecursiveQuickSelect<P: PartitionScheme, V: PivotInput>(PhantomData<(P, V)>);
+pub struct RecursiveQuickSelect<P: PartitionScheme>(PhantomData<P>);
 
-impl<P: PartitionScheme, V: PivotInput> QuickSelect for RecursiveQuickSelect<P, V> {
+impl<P: PartitionScheme> QuickSelect for RecursiveQuickSelect<P> {
     fn select<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         logger: &mut U,
         target: usize,
     ) {
         with_partition_scratch::<P, T, U, _>(logger, |logger, scratch| {
-            recursive::<T, U, P, V>(arr, scratch, logger, target);
+            recursive::<T, U, P>(arr, scratch, logger, target);
         });
     }
 }
 
-fn recursive<T, U, P, V>(arr: &mut [T], scratch: &mut [usize], logger: &mut U, target: usize)
+fn recursive<T, U, P>(arr: &mut [T], scratch: &mut [usize], logger: &mut U, target: usize)
 where
     T: Ord + Copy,
     U: ?Sized + SortLogger<T>,
     P: PartitionScheme,
-    V: PivotInput,
 {
     if arr.len() < 2 {
         return;
     }
-    let mut pivots = [0usize; 2];
-    V::pick(arr, logger, &mut pivots);
     let mut v = RegionVisitor::new();
-    P::partition::<T, U, _>(arr, logger, &pivots[..V::N], scratch, &mut v);
+    // Self-pivoting partition (`N_PIVOTS == 0`): it picks its own pivots
+    // internally, so the driver supplies none.
+    P::partition::<T, U, _>(arr, logger, &[], scratch, &mut v);
     if let Some(r) = region_for(&v, target) {
         let (start, end) = (r.start, r.end);
-        recursive::<T, U, P, V>(&mut arr[start..end], scratch, logger, target - start);
+        recursive::<T, U, P>(&mut arr[start..end], scratch, logger, target - start);
     }
 }
 
 // ── IterativeQuickSelect ─────────────────────────────────────────────────────
 
-pub struct IterativeQuickSelect<P: PartitionScheme, V: PivotInput>(PhantomData<(P, V)>);
+pub struct IterativeQuickSelect<P: PartitionScheme>(PhantomData<P>);
 
-impl<P: PartitionScheme, V: PivotInput> QuickSelect for IterativeQuickSelect<P, V> {
+impl<P: PartitionScheme> QuickSelect for IterativeQuickSelect<P> {
     fn select<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         logger: &mut U,
@@ -132,10 +130,8 @@ impl<P: PartitionScheme, V: PivotInput> QuickSelect for IterativeQuickSelect<P, 
             let mut target = target;
             while hi - lo >= 2 {
                 let slice = &mut arr[lo..hi];
-                let mut pivots = [0usize; 2];
-                V::pick(slice, logger, &mut pivots);
                 let mut v = RegionVisitor::new();
-                P::partition::<T, U, _>(slice, logger, &pivots[..V::N], scratch, &mut v);
+                P::partition::<T, U, _>(slice, logger, &[], scratch, &mut v);
                 match region_for(&v, target) {
                     Some(r) => {
                         // Narrow the window to the chosen region and rebase
@@ -153,42 +149,35 @@ impl<P: PartitionScheme, V: PivotInput> QuickSelect for IterativeQuickSelect<P, 
 
 // ── Composable annotations ──────────────────────────────────────────
 //
-// QuickSelect is the one-sided cousin of QuickSort: each level does
-// partition + pivot work, then recurses into a single region. Expected
-// depth is O(1) levels with good pivots (each cuts the input by a
-// constant factor), or O(N) if the pivot can degenerate (e.g.
-// first-element on sorted input). The bounds mirror
-// `QuickSort<P, V, SS>` minus the small-sort slot, with O(1) expected
-// depth instead of O(log N) because only one side is followed.
+// QuickSelect is the one-sided cousin of QuickSort: each level does the
+// partition's work (pivot pick + split, both now INSIDE the self-pivoting
+// partition `P`), then recurses into a single region. Expected depth is O(1)
+// levels with good pivots, or O(N) if the partition's pivot can degenerate
+// (`P::DEGENERATES`). The bounds read off `P` alone — a `Pivoted<Scheme, Sel>`
+// or `HeapExtract` already fuses scheme + selector one level down.
 
 macro_rules! impl_qs_annotations {
     ($ty:ident, $space:expr) => {
-        impl<P, V> HasTimeBounds for $ty<P, V>
+        impl<P> HasTimeBounds for $ty<P>
         where
-            P: PartitionScheme + HasTimeBounds,
-            V: PivotInput + HasTimeBounds + PivotQuality,
+            P: PartitionScheme + HasTimeBounds + PivotQuality,
         {
             const WORST: Complexity = Complexity::product(
-                if V::DEGENERATES { Complexity::N1 } else { Complexity::CONST },
-                Complexity::sum(P::WORST, V::WORST),
+                if P::DEGENERATES { Complexity::N1 } else { Complexity::CONST },
+                P::WORST,
             );
-            const BEST: Complexity = Complexity::sum(P::BEST, V::BEST);
-            const AVERAGE: Complexity = Complexity::sum(P::AVERAGE, V::AVERAGE);
+            const BEST: Complexity = P::BEST;
+            const AVERAGE: Complexity = P::AVERAGE;
         }
-        impl<P, V> HasSpace for $ty<P, V>
+        impl<P> HasSpace for $ty<P>
         where
             P: PartitionScheme + HasSpace,
-            V: PivotInput + HasSpace,
         {
-            const SPACE: Complexity = Complexity::sum(
-                $space,
-                Complexity::sum(P::SPACE, V::SPACE),
-            );
+            const SPACE: Complexity = Complexity::sum($space, P::SPACE);
         }
-        impl<P, V> HasStability for $ty<P, V>
+        impl<P> HasStability for $ty<P>
         where
             P: PartitionScheme,
-            V: PivotInput,
         {
             /// Quickselect leaves regions unsorted, so the surrounding
             /// stability question is moot — the algorithm offers no

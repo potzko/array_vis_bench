@@ -5,22 +5,20 @@
 # `run_quick_select_with_input`, `CorrectnessSuite`/`SelectSuite` battery) and the
 # `Selection<X>` AVBS wrapper marks `X` emittable at role `QuickSelect`.
 #
-# CURATED axes (NOT quick-sort's full set): the 56 PROVEN combinations from the
-# standalone `quick_select_registry`, no more. Quick-select recurses into only the
-# region holding `target`, so it reuses quicksort's partition/pivot TYPES but a
-# DIFFERENT, smaller axis set — `last` is in (quicksort drops it), `median of
-# medians` / `MovingPivot` / the 25-pair `combined` fan-out are out (MovingPivot
-# in particular risks the partition non-convergence class). Distinct `QS*` roles
-# keep this axis set isolated from the quick-sort query in the shared registry.
+# ONE partition role-system (shared with quick): each driver slots a single
+# self-pivoting `part` — a `Pivoted<scheme, pivot>` composite (`PartitionKind`) or a
+# pivotless `HeapExtract` (`HeapExtractPart`). The old quick-only `QS*` roles are
+# gone; quick-select CURATES the shared population in its query (quick_select.avbs)
+# instead of via private role-membership.
 #
-# ARITY COUPLING (structural, same mechanism as quick.spec): single partitions
-# `project pivot QSPivotSingle`, the dual `project QSPivotDual`, the pivotless
-# heap-extract partitions `project QSPivotNone`; the query threads a shared pivot
-# var `p` + `QSPartition[pivot = p]`, so `P::N_PIVOTS == V::N` always holds and an
-# arity-illegal `QuickSelect<P, V>` is never built.
+# CURATED axis set (NOT quick-sort's full set): quick-select keeps `last` (quicksort
+# drops it) and drops `median of medians` pivot / `MovingPivot` scheme / the 25-pair
+# `combined` dual fan-out (MovingPivot in particular risks partition non-convergence).
+# The curation now lives in the query as set-diff + a small dual union.
 #
-# COUNT per strategy: 4 single-part × 5 single-piv + 1 dual-part × 4 dual-piv
-# + 4 heap-extract-part × 1 no-piv = 20 + 4 + 4 = 28. × 2 strategies = 56.
+# COUNT per strategy: 4 single-scheme × 5 single-pivot (PartScheme−{moving pivot} ×
+# PartPivot−{median of medians}) + 4 curated dual + 4 heap-extract = 20 + 4 + 4 = 28.
+# × 2 strategies = 56.
 
 # ════════════════════════════ SINGLE PIVOTS ════════════════════════════
 
@@ -36,23 +34,21 @@
 
 # ════════════════════════════ SLOTTED DRIVERS ═══════════════════════════
 component qs_recursive
-  type     RecursiveQuickSelect<{partition}, {pivot}>
-  label    quick select: recursive<{partition}, {pivot}>
+  type     RecursiveQuickSelect<{part}>
+  label    quick select: recursive<{part}>
   provides QuickSelect
   category QuickSelect
   menu     recursive
   uses     quick_select_lib::RecursiveQuickSelect
-  slot     partition QSPartition
-  slot     pivot QSPivot
+  slot     part SelectPartition
 end
 
 component qs_iterative
-  type     IterativeQuickSelect<{partition}, {pivot}>
-  label    quick select: iterative<{partition}, {pivot}>
+  type     IterativeQuickSelect<{part}>
+  label    quick select: iterative<{part}>
   provides QuickSelect
   category QuickSelect
   menu     iterative
   uses     quick_select_lib::IterativeQuickSelect
-  slot     partition QSPartition
-  slot     pivot QSPivot
+  slot     part SelectPartition
 end

@@ -188,23 +188,23 @@ end
 
 # Dual-pivot entry-points (the old "dual pivot" branch splits combined vs ninther).
 component qs_std_dual_combined
-  type     CanonicalQuickSort<Pivoted<DualPivotPartition, {pivot}>, {small_sort}>
+  type     CanonicalQuickSort<DualPivoted<{pivot}>, {small_sort}>
   label    quick sort<part: dual, pivot: {pivot}, small: {small_sort}>
   provides Sort
   category Sort
   menu     quick sorts / dual pivot / combined
-  uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::Pivoted quick_sort_lib::DualPivotPartition
+  uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::DualPivoted
   slot     pivot PivotPair
   slot     small_sort SmallSort
 end
 
 component qs_std_dual_ninther
-  type     CanonicalQuickSort<Pivoted<DualPivotPartition, NintherDualPivot>, {small_sort}>
+  type     CanonicalQuickSort<DualPivoted<NintherDualPivot>, {small_sort}>
   label    quick sort<part: dual, pivot: ninther, small: {small_sort}>
   provides Sort
   category Sort
   menu     quick sorts / dual pivot / ninther thirds
-  uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::Pivoted quick_sort_lib::DualPivotPartition quick_sort_lib::NintherDualPivot
+  uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::DualPivoted quick_sort_lib::NintherDualPivot
   slot     small_sort SmallSort
 end
 
@@ -267,22 +267,22 @@ component qs_def_block
 end
 
 component qs_def_dual_combined
-  type     DeferredCanonicalQuickSort<Pivoted<DualPivotPartition, {pivot}>, {small_sort}>
+  type     DeferredCanonicalQuickSort<DualPivoted<{pivot}>, {small_sort}>
   label    deferred quick sort<part: dual, pivot: {pivot}, small: {small_sort}>
   provides Sort
   category Sort
   menu     deferred quick sorts / dual pivot / combined
-  uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::Pivoted quick_sort_lib::DualPivotPartition
+  uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::DualPivoted
   slot     pivot PivotPair
   slot     small_sort DeferredSmallSort
 end
 
 component qs_def_dual_ninther
-  type     DeferredCanonicalQuickSort<Pivoted<DualPivotPartition, NintherDualPivot>, {small_sort}>
+  type     DeferredCanonicalQuickSort<DualPivoted<NintherDualPivot>, {small_sort}>
   label    deferred quick sort<part: dual, pivot: ninther, small: {small_sort}>
   provides Sort
   category Sort
   menu     deferred quick sorts / dual pivot / ninther thirds
-  uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::Pivoted quick_sort_lib::DualPivotPartition quick_sort_lib::NintherDualPivot
+  uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::DualPivoted quick_sort_lib::NintherDualPivot
   slot     small_sort DeferredSmallSort
 end

@@ -2,11 +2,29 @@
 //
 // The quick driver slots ONE self-pivoting partition (`part: PartitionKind`); the
 // composite `Pivoted<scheme, pivot>` carries the pivot internally with its arity
-// baked in. So the query just fans `part` over every PartitionKind (5×5 single +
-// 26 dual = 51) and `small_sort` over the family's small-sort role — the old
-// `Partition[pivot = p]` pivot↔partition coupling is gone.
+// baked in. Under the UNIFIED partition role-system the shared `PartPivot` atom now
+// also carries `last` (quick-select needs it), so `PartitionKind` is 67 (5×6 single
+// + 37 dual). Quick deliberately dropped `last` in Part B, so it CURATES the shared
+// population back down: subtract every `last`-based single AND dual composite →
+// 5×5 single (25) + 26 dual = 51, exactly the pre-merge set. × 4 small × 2 = 408.
 //
-// Each family: 51 partitions × 4 small sorts = 204 variants (408 total).
+// (The set-diff subtrahends resolve by canonical `type_expr`: `Pivoted<_, LastElement>`
+// removes the 5 single-with-last; the two `CombinedSelector<LastElement,_>` /
+// `<_,LastElement>` patterns remove the 11 dual-with-last, dedup on last/last.)
 
-QuickSorts:         SortingAlgorithm = SortingAlgorithm<CanonicalQuickSort<part = _, small_sort = _>>
-DeferredQuickSorts: SortingAlgorithm = SortingAlgorithm<DeferredCanonicalQuickSort<part = _, small_sort = _>>
+QuickSorts: SortingAlgorithm = SortingAlgorithm<CanonicalQuickSort<
+    part = _ - {
+        Pivoted<_, LastElement>,
+        DualPivoted<CombinedSelector<LastElement, _>>,
+        DualPivoted<CombinedSelector<_, LastElement>>
+    },
+    small_sort = _
+>>
+DeferredQuickSorts: SortingAlgorithm = SortingAlgorithm<DeferredCanonicalQuickSort<
+    part = _ - {
+        Pivoted<_, LastElement>,
+        DualPivoted<CombinedSelector<LastElement, _>>,
+        DualPivoted<CombinedSelector<_, LastElement>>
+    },
+    small_sort = _
+>>

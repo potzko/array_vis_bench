@@ -6,7 +6,6 @@
 //!   - [`CanonicalQuickSort<HeapExtract<…>, …>`] — confirms the new
 //!     [`PartitionScheme`] sorts under the pivotless QuickSort driver.
 
-use array_vis_bench_traits::NoPivot;
 use heap_sort_lib::arity::{Binary, Ternary};
 use heap_sort_lib::deep_heapify::{Iterative, Recursive};
 use heap_sort_lib::set_quick_select::SequentialSet;
@@ -81,12 +80,12 @@ fn quick_sort_over_heap_extract_sorts() {
 
 /// Bespoke `QuickHeapSort` with a SetQuickSelect-driven build that recurses
 /// through `HeapExtract`. Replaces the old `PartitionDrivenDeepHeapify`
-/// test now that the cycle closes via `SequentialSet<RecursiveQuickSelect<HeapExtract<...>, NoPivot>>`.
+/// test now that the cycle closes via `SequentialSet<RecursiveQuickSelect<HeapExtract<...>>>`.
 /// The head-count rule still bounds the inner HeapExtract's DH to a leaf.
 #[test]
 fn quick_heap_sort_with_set_quick_select_build_sorts() {
     type InnerHE = HeapExtract<AryPair<Binary>, Iterative>;
-    type SQS = SequentialSet<RecursiveQuickSelect<InnerHE, NoPivot>>;
+    type SQS = SequentialSet<RecursiveQuickSelect<InnerHE>>;
     // Use `Size2SmallSort` (THRESHOLD=2) so the bespoke QHS small-sort
     // gate triggers on len ≤ 2; NoSmallSort is also fine, but Size2
     // exercises the SS branch too.
@@ -108,7 +107,7 @@ fn quick_heap_sort_with_set_quick_select_build_sorts() {
 }
 
 /// Cycle-bounded concrete type: `HeapExtract` whose heap build itself runs
-/// `SequentialSet<RecursiveQuickSelect<HeapExtract<...>, NoPivot>>` — the
+/// `SequentialSet<RecursiveQuickSelect<HeapExtract<...>>>` — the
 /// SetQuickSelect-driven cycle replacement for the old `PartitionDrivenDeepHeapify`.
 /// The head-count rule forces the *inner* HeapExtract's DH slot to a leaf
 /// (Iterative here). This test confirms the cycle-bounded type
@@ -118,7 +117,7 @@ fn quick_heap_sort_with_set_quick_select_build_sorts() {
 fn cycle_bounded_set_quick_select_heapextract_sorts() {
     type InnerHE = HeapExtract<AryPair<Binary>, Iterative>;
     type Cycle =
-        HeapExtract<AryPair<Binary>, SequentialSet<RecursiveQuickSelect<InnerHE, NoPivot>>>;
+        HeapExtract<AryPair<Binary>, SequentialSet<RecursiveQuickSelect<InnerHE>>>;
     type Sort = CanonicalQuickSort<Cycle, NoSmallSort>;
 
     for &n in &[0usize, 1, 2, 3, 7, 16, 50, 128] {

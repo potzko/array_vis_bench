@@ -1,9 +1,9 @@
 # Component fragments OWNED by this crate (self-describing).
 
-component qs_p_last
+component pkp_last
   type     LastElement
   label    last
-  provides QSPivot QSPivotSingle
+  provides PartPivot
   uses     pivot_last::LastElement
 end
 

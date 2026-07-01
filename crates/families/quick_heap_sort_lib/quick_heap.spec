@@ -35,34 +35,37 @@ component qhs_deferred
   slot     arity HeapArity         heap_arity_binary
   slot     dss   DeferredSmallSort dss_lin16
 end
+# ═══════════════════ HEAP-EXTRACT PARTITIONS (pivotless) ═══════════════════
+# Self-pivoting `PartitionScheme`s (N_PIVOTS = 0) — no pivot to select. Under the
+# unified partition role-system they provide `HeapExtractPart` (their isolation role,
+# so a `he: HeapExtractPart = _` hole enumerates exactly these 4) AND `SelectPartition`
+# (quick-select's `part` slot role, shared with the pivoted composites). They do NOT
+# provide `PartitionKind`, so quick and the standalone Partition kind never see them —
+# only quick-select unions them into its `part` set.
 component qs_part_he_bin_it
   type     HeapExtract<AryPair<Binary>, Iterative>
   label    heap extract: binary iterative
-  provides QSPartition
-  project  pivot QSPivotNone
+  provides HeapExtractPart SelectPartition
   uses     quick_heap_sort_lib::heap_extract::HeapExtract quick_heap_sort_lib::heap_pair::AryPair heap_sort_lib::Binary heap_sort_lib::Iterative
 end
 
 component qs_part_he_bin_re
   type     HeapExtract<AryPair<Binary>, Recursive>
   label    heap extract: binary recursive
-  provides QSPartition
-  project  pivot QSPivotNone
+  provides HeapExtractPart SelectPartition
   uses     quick_heap_sort_lib::heap_extract::HeapExtract quick_heap_sort_lib::heap_pair::AryPair heap_sort_lib::Binary heap_sort_lib::Recursive
 end
 
 component qs_part_he_ter_it
   type     HeapExtract<AryPair<Ternary>, Iterative>
   label    heap extract: ternary iterative
-  provides QSPartition
-  project  pivot QSPivotNone
+  provides HeapExtractPart SelectPartition
   uses     quick_heap_sort_lib::heap_extract::HeapExtract quick_heap_sort_lib::heap_pair::AryPair heap_sort_lib::Ternary heap_sort_lib::Iterative
 end
 
 component qs_part_he_ter_re
   type     HeapExtract<AryPair<Ternary>, Recursive>
   label    heap extract: ternary recursive
-  provides QSPartition
-  project  pivot QSPivotNone
+  provides HeapExtractPart SelectPartition
   uses     quick_heap_sort_lib::heap_extract::HeapExtract quick_heap_sort_lib::heap_pair::AryPair heap_sort_lib::Ternary heap_sort_lib::Recursive
 end

@@ -1,19 +1,32 @@
 // QUICK-SELECT families — query OWNED by quick_select_lib.
 //
-// `Selection<X>` wraps `X` as an emittable quick-select (role `QuickSelect`,
-// driver category `QuickSelect`) — the sort-track's `SortingAlgorithm<X>` analogue
-// for the first non-sort first-class kind.
+// `Selection<X>` wraps `X` as an emittable quick-select (role `QuickSelect`).
 //
-// `p` / `part` are HELPER bindings (scoped to THIS file; spec_catalog lowers each
-// gathered query independently): `p` ranges over every QS pivot, `part` over every
-// QS partition refined arity-compatible with `p` (`QSPartition[pivot = p]`). The
-// shared `p` couples partition↔pivot exactly as quick.spec couples them, so only
-// the 56 valid `QuickSelect<P, V>` combinations are built.
+// ONE partition role-system (shared with quick). Each strategy is TWO bindings:
+//   - a PIVOTED branch (24) — a curated slice of the shared `Pivoted<scheme,pivot>`
+//     composites: 20 single (PartScheme−{moving pivot} × PartPivot−{median of
+//     medians}) + 4 curated dual (first/first, middle/middle, first/last, ninther).
+//   - a HEAP-EXTRACT branch (4) — the pivotless `HeapExtractPart` population.
+// 24 + 4 = 28 per strategy × 2 = 56 (unchanged).
 //
-// recursive = iterative = 4×5 single + 1×4 dual + 4×1 heap-extract = 28; total 56.
+// The pivoted branches come FIRST so the `he` helper (which prepends to later
+// families) never fans them; `he` sits just above the heap-extract branches.
 
-p:    QSPivot = _
-part: QSPartition[pivot = p] = _
+RecursiveSelectPiv: Selection = Selection<RecursiveQuickSelect<part = _ where (
+    Pivoted<scheme = (_ - {MovingPivot}), pivot = (_ - {MedianOfMedians})>
+  | DualPivoted<CombinedSelector<FirstElement, FirstElement>>
+  | DualPivoted<CombinedSelector<MiddleElement, MiddleElement>>
+  | DualPivoted<CombinedSelector<FirstElement, LastElement>>
+  | DualPivoted<NintherDualPivot>
+)>>
+IterativeSelectPiv: Selection = Selection<IterativeQuickSelect<part = _ where (
+    Pivoted<scheme = (_ - {MovingPivot}), pivot = (_ - {MedianOfMedians})>
+  | DualPivoted<CombinedSelector<FirstElement, FirstElement>>
+  | DualPivoted<CombinedSelector<MiddleElement, MiddleElement>>
+  | DualPivoted<CombinedSelector<FirstElement, LastElement>>
+  | DualPivoted<NintherDualPivot>
+)>>
 
-RecursiveQuickSelects: Selection = Selection<RecursiveQuickSelect<partition = part, pivot = p>>
-IterativeQuickSelects: Selection = Selection<IterativeQuickSelect<partition = part, pivot = p>>
+he: HeapExtractPart = _
+RecursiveSelectHe: Selection = Selection<RecursiveQuickSelect<part = he>>
+IterativeSelectHe: Selection = Selection<IterativeQuickSelect<part = he>>

@@ -790,11 +790,14 @@ mod tests {
             assert_eq!(iterative, 28, "iterative strategy");
 
             // axis split (per strategy: 20 single + 4 dual + 4 heap-extract).
+            // Names now nest the pivot under the partition, shared with quick:
+            // single `left-left<first>`, dual `dual<combined<…>>` / `dual<ninther>`,
+            // heap-extract `heap extract: …`.
             let heap_extract = es.iter().filter(|e| e.name.contains("heap extract:")).count();
-            let dual = es.iter().filter(|e| e.name.contains("dual pivot")).count();
+            let dual = es.iter().filter(|e| e.name.contains("<dual<")).count();
             let single = es.len() - heap_extract - dual;
             assert_eq!(single, 40, "4 partitions x 5 single pivots x 2 strategies");
-            assert_eq!(dual, 8, "1 dual partition x 4 dual selectors x 2 strategies");
+            assert_eq!(dual, 8, "4 dual selectors x 2 strategies");
             assert_eq!(heap_extract, 8, "4 heap-extract partitions x 2 strategies");
         }
 
@@ -914,12 +917,14 @@ mod tests {
 
     // ──────────────────────────── PARTITIONS ─────────────────────────────────
     // The partition KIND: a standalone partition is a self-pivoting
-    // `Pivoted<Scheme, Sel>` (the quick_sort_lib wrapper). 5 single-pivot schemes
-    // x 5 single pivots (25) + the dual scheme x 26 dual selectors (25 combined +
-    // 1 ninther) = 51, emitted `Category::Partition` (correctness via
-    // `PartitionSuite` → `run_partition_bounds` → the `partition_battery` boundary
-    // check). This is the UNIFIED partition role-system the quick family also
-    // consumes (`PartScheme`/`PartPivot` + their dual siblings).
+    // `Pivoted<Scheme, Sel>` / `DualPivoted<Sel>` (the quick_sort_lib wrappers). Under
+    // the unified role-system the shared `PartPivot` atom carries `last`, so this is
+    // 5 single-pivot schemes x 6 single pivots (30) + the dual scheme x 37 dual
+    // selectors (36 combined + 1 ninther) = 67, emitted `Category::Partition`
+    // (correctness via `PartitionSuite` → `run_partition_bounds` → the
+    // `partition_battery` boundary check). Quick consumes this SAME role-system but
+    // curates `last` back out in its own query (quick stays 51-of-67). heap-extract
+    // partitions are NOT here — they live under `SelectPartition`, quick-select only.
     mod partition {
         use super::*;
         fn entries() -> Vec<&'static AlgorithmEntry> {
@@ -928,12 +933,14 @@ mod tests {
 
         #[test]
         fn emits_scheme_by_pivot() {
-            assert_eq!(entries().len(), 51, "5x5 single + 26 dual");
+            assert_eq!(entries().len(), 67, "5x6 single (30) + 37 dual");
             for name in [
                 "left-left<first>",
                 "three-way<median of 3>",
                 "block<ninther>",
+                "left-left<last>",
                 "dual<combined<first, first>>",
+                "dual<combined<first, last>>",
                 "dual<ninther>",
             ] {
                 assert!(entries().iter().any(|e| e.name == name), "missing partition `{name}`");
@@ -949,12 +956,12 @@ mod tests {
             }
         }
 
-        /// Each of the 51 drives `partition_battery` (via `PartitionSuite::verify`
+        /// Each of the 67 drives `partition_battery` (via `PartitionSuite::verify`
         /// → `run_partition_bounds`) and passes the boundary check end-to-end.
         #[test]
         fn all_pass_the_partition_battery() {
             let es = entries();
-            assert_eq!(es.len(), 51);
+            assert_eq!(es.len(), 67);
             for e in &es {
                 (e.run_correctness)();
             }
@@ -1312,15 +1319,18 @@ mod tests {
                 Some("quick sort<part: {PartitionKind}, small: {SmallSort}>"),
             );
 
-            // STRUCTURAL axes: a dual `combined<a, b>` selector nests its sub-slots
-            // under the pivot, two levels deep: part/pivot → part/pivot/a, part/pivot/b.
+            // STRUCTURAL axes: the dual composite is `DualPivoted<{pivot}>` — the
+            // scheme ("dual") is baked into the type head, so there is NO `part/scheme`
+            // axis (unlike single `Pivoted<{scheme},{pivot}>`). A `combined<a, b>`
+            // selector nests its sub-slots under the pivot: part/pivot → part/pivot/a,
+            // part/pivot/b.
             let d = variants
                 .iter()
                 .find(|v| v.name.starts_with("deferred quick sort<part: dual<combined<"))
                 .expect("a deferred dual combined variant is registered");
             assert_eq!(d.category, vec!["sorts", "deferred quick sorts"], "got {:?}", d.category);
             let dp: Vec<&str> = d.axes.iter().map(|a| a.path.as_str()).collect();
-            assert!(dp.contains(&"part/scheme"), "paths: {dp:?}");
+            assert!(!dp.contains(&"part/scheme"), "dual has no scheme axis: {dp:?}");
             assert!(dp.contains(&"part/pivot"), "paths: {dp:?}");
             assert!(dp.contains(&"part/pivot/a"), "paths: {dp:?}");
             assert!(dp.contains(&"part/pivot/b"), "paths: {dp:?}");

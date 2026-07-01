@@ -7,13 +7,6 @@ component heap_piv_ninther
   uses     pivot_ninther::Ninther
 end
 
-component qs_p_ninther
-  type     Ninther
-  label    ninther
-  provides QSPivot QSPivotSingle
-  uses     pivot_ninther::Ninther
-end
-
 component pkp_ninther
   type     Ninther
   label    ninther

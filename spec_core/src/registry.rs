@@ -84,9 +84,24 @@ impl Component {
 #[derive(Debug, Default)]
 pub struct Registry {
     components: HashMap<String, Component>,
+    /// Component names in PARSE (insertion) order. `iter()` follows this so
+    /// type-head indexing is deterministic and first-wins-on-collision resolves
+    /// to the component declared FIRST (e.g. the generic `combined` /
+    /// `CombinedSelector<{a},{b}>` before beap's concrete `CombinedSelector<…>`
+    /// instantiations; `pk_single` before `pk_dual`). A raw `HashMap` iteration
+    /// would make head resolution — and thus the emitted catalog — nondeterministic.
+    order: Vec<String>,
 }
 
 impl Registry {
+    /// Insert a component, recording its parse position for ordered iteration.
+    fn insert_component(&mut self, c: Component) {
+        if !self.components.contains_key(&c.name) {
+            self.order.push(c.name.clone());
+        }
+        self.components.insert(c.name.clone(), c);
+    }
+
     pub fn parse(text: &str) -> Result<Registry, String> {
         let mut reg = Registry::default();
         let mut cur: Option<Component> = None;
@@ -100,7 +115,7 @@ impl Registry {
             match kw {
                 "component" => {
                     if let Some(c) = cur.take() {
-                        reg.components.insert(c.name.clone(), c);
+                        reg.insert_component(c);
                     }
                     cur = Some(Component {
                         name: rest.trim().to_string(),
@@ -118,7 +133,7 @@ impl Registry {
                 }
                 "end" => {
                     let c = cur.take().ok_or_else(|| err("`end` outside a component"))?;
-                    reg.components.insert(c.name.clone(), c);
+                    reg.insert_component(c);
                 }
                 _ => {
                     let c = cur.as_mut().ok_or_else(|| err("field outside a component"))?;
@@ -198,7 +213,7 @@ impl Registry {
             }
         }
         if let Some(c) = cur.take() {
-            reg.components.insert(c.name.clone(), c);
+            reg.insert_component(c);
         }
         Ok(reg)
     }
@@ -207,10 +222,12 @@ impl Registry {
         self.components.get(name)
     }
 
-    /// Iterate every component. Used by the AVBS frontend to index type-heads
-    /// (the leading identifier of each `type` template) → component name.
+    /// Iterate every component in PARSE ORDER. Used by the AVBS frontend to index
+    /// type-heads (the leading identifier of each `type` template) → component
+    /// name; parse order makes that index deterministic and first-wins resolve to
+    /// the earliest-declared component on a head collision.
     pub fn iter(&self) -> impl Iterator<Item = &Component> {
-        self.components.values()
+        self.order.iter().filter_map(move |n| self.components.get(n))
     }
 
     /// All components that can satisfy `role`, name-sorted for deterministic

@@ -14,11 +14,20 @@
 ShellSorts:        SortingAlgorithm = SortingAlgorithm<ShellSort<_>>
 ShellSortsOrdered: SortingAlgorithm = SortingAlgorithm<ShellSortOrdered<_>>
 
-// arity-coupling helpers for the nested quick-select (declared before the family
-// that uses them — they prepend to LATER emittable families only).
-p:    QSPivot = _
-part: QSPartition[pivot = p] = _
-QuickSelects: Selection = Selection<RecursiveQuickSelect<partition = part, pivot = p>>
+// The nested quick-selects, built exactly like quick_select.avbs: a curated
+// pivoted branch (24) then the heap-extract branch (4) = 28 recursive selects.
+// Helpers prepend to LATER emittable families only — `qs_piv` above the pivoted
+// family, `he` above the heap-extract family.
+qs_piv: PartitionKind = _ where (
+    Pivoted<scheme = (_ - {MovingPivot}), pivot = (_ - {MedianOfMedians})>
+  | DualPivoted<CombinedSelector<FirstElement, FirstElement>>
+  | DualPivoted<CombinedSelector<MiddleElement, MiddleElement>>
+  | DualPivoted<CombinedSelector<FirstElement, LastElement>>
+  | DualPivoted<NintherDualPivot>
+)
+QuickSelectsPiv: Selection = Selection<RecursiveQuickSelect<part = qs_piv>>
+he: HeapExtractPart = _
+QuickSelectsHe: Selection = Selection<RecursiveQuickSelect<part = he>>
 
-SortsAndSelects: List<SortingAlgorithm> = [ShellSorts, ShellSortsOrdered, QuickSelects]
+SortsAndSelects: List<SortingAlgorithm> = [ShellSorts, ShellSortsOrdered, QuickSelectsPiv, QuickSelectsHe]
 checks:          List<Mains<SortsAndSelects>> = [correctness]

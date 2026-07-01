@@ -22,6 +22,7 @@ use partition_lomuto::LeftLeftPartition;
 use pivot_first::FirstElement;
 use pivot_median3::MedianOfThree;
 use quick_select_lib::{IterativeQuickSelect, RecursiveQuickSelect};
+use quick_sort_lib::Pivoted;
 use sort_logger::NoOpLogger;
 
 fn shuffled(n: usize, seed: u64) -> Vec<u64> {
@@ -57,7 +58,7 @@ fn check_sorts<F: Fn(&mut [u64], &mut NoOpLogger)>(label: &str, sort: F) {
 
 #[test]
 fn sequential_set_sorts_across_directions() {
-    type QS = RecursiveQuickSelect<LeftLeftPartition, FirstElement>;
+    type QS = RecursiveQuickSelect<Pivoted<LeftLeftPartition, FirstElement>>;
     type DH = SequentialSet<QS>;
 
     check_sorts("MaxForward + Binary", |a, l| {
@@ -78,7 +79,7 @@ fn sequential_set_sorts_across_directions() {
 
 #[test]
 fn recursive_set_sorts_across_directions() {
-    type QS = RecursiveQuickSelect<LeftLeftPartition, FirstElement>;
+    type QS = RecursiveQuickSelect<Pivoted<LeftLeftPartition, FirstElement>>;
     type DH = RecursiveSet<QS>;
 
     check_sorts("MaxForward + Binary", |a, l| {

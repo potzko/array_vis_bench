@@ -17,6 +17,7 @@ sort_logger = { path = "../../../sort_logger" }
 # `Recursive`, `Stack` wrappers.
 [dev-dependencies]
 quick_select_lib = { path = "../quick_select_lib" }
+quick_sort_lib = { path = "../quick_sort_lib" }
 partition_lomuto = { path = "../../partitions/partition_lomuto" }
 partition_hoare = { path = "../../partitions/partition_hoare" }
 pivot_first = { path = "../../pivots/pivot_first" }

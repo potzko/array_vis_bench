@@ -66,7 +66,7 @@ component fs_cyclent_sort
   category Sort
   menu     fun sorts / cyclent sort
   uses     fun_sorts_lib::cyclent_sort::CyclentSort
-  slot     part CyclentPart
+  slot     part PartScheme
   max_input 5000
 end
 
@@ -77,7 +77,7 @@ component fs_cyclent_sort_opt
   category Sort
   menu     fun sorts / cyclent sort opt
   uses     fun_sorts_lib::cyclent_sort_opt::CyclentSortOpt
-  slot     part CyclentPart
+  slot     part PartScheme
   max_input 5000
 end
 
@@ -88,7 +88,7 @@ component fs_cyclent_sort_stack
   category Sort
   menu     fun sorts / cyclent sort stack
   uses     fun_sorts_lib::cyclent_sort_stack::CyclentSortStack
-  slot     part CyclentPart
+  slot     part PartScheme
   max_input 5000
 end
 
@@ -99,7 +99,7 @@ component fs_cyclent_sort_stack_optimized
   category Sort
   menu     fun sorts / cyclent sort stack optimized
   uses     fun_sorts_lib::cyclent_sort_stack_optimized::CyclentSortStackOptimized
-  slot     part CyclentPart
+  slot     part PartScheme
   max_input 5000
 end
 

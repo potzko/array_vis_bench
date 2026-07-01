@@ -46,14 +46,19 @@ component pks_dual
 end
 
 # ════════════════════ FIRST-CLASS PARTITION COMPOSITES ════════════════════
-# `Pivoted<scheme, pivot>` is a self-pivoting partition (`N_PIVOTS = 0`). These
-# are emitted BOTH as first-class Partition KIND entries (via `kinds.avbs`) AND
-# slotted as the quick driver's `part`. The single/dual split bakes arity into the
-# type. Together: 5×5 single (25) + 1×26 dual (26) = 51 PartitionKind variants.
+# `Pivoted<scheme, pivot>` / `DualPivoted<pivot>` are self-pivoting partitions
+# (`N_PIVOTS = 0`). They are emitted BOTH as first-class Partition KIND entries (via
+# `kinds.avbs`) AND slotted as the quick driver's `part`. The single/dual split bakes
+# arity into the type; `pk_dual`'s DISTINCT `DualPivoted` head lets a query reference
+# the dual composite unambiguously (both would otherwise share the `Pivoted` head).
+# Together: 5×6 single (30, PartPivot now carries `last`) + 1×37 dual (37) = 67
+# PartitionKind variants. They ALSO provide `SelectPartition` (quick-select's broader
+# slot role, which additionally admits the pivotless heap-extract partitions). Quick
+# curates `last` back out in its query, staying at its historical 51-of-67.
 component pk_single
   type     Pivoted<{scheme}, {pivot}>
   label    {scheme}<{pivot}>
-  provides PartitionKind
+  provides PartitionKind SelectPartition
   category Partition
   uses     quick_sort_lib::Pivoted
   slot     scheme PartScheme
@@ -61,12 +66,11 @@ component pk_single
 end
 
 component pk_dual
-  type     Pivoted<{scheme}, {pivot}>
-  label    {scheme}<{pivot}>
-  provides PartitionKind
+  type     DualPivoted<{pivot}>
+  label    dual<{pivot}>
+  provides PartitionKind SelectPartition
   category Partition
-  uses     quick_sort_lib::Pivoted
-  slot     scheme PartSchemeDual
+  uses     quick_sort_lib::DualPivoted
   slot     pivot  PartPivotDual
 end
 
@@ -95,10 +99,11 @@ component deferred_quick_sort
   slot     small_sort DeferredSmallSort
 end
 
-# ═══════════ OTHER FAMILIES' DUAL-PIVOT SELECTORS (independent roles) ═══════
-# beap-sort + quick-select reuse the CombinedSelector / NintherDualPivot TYPES
-# with their OWN roles (BeapDualPivot / QSPivotDual), so they are unaffected by
-# the quick partition unification above.
+# ═══════════ BEAP-SORT'S DUAL-PIVOT SELECTORS (independent role) ═══════════
+# beap-sort reuses the CombinedSelector / NintherDualPivot TYPES with its OWN role
+# (BeapDualPivot), so it is unaffected by the unified partition system. (Quick-select
+# no longer needs separate dual-selector components — it draws its duals from the
+# shared PartPivotDual population in quick_select.avbs.)
 component beap_dps_first
   type     CombinedSelector<FirstElement, FirstElement>
   label    first
@@ -120,38 +125,7 @@ component beap_dps_ninther
   uses     quick_sort_lib::NintherDualPivot
 end
 
-component qs_dp_first_first
-  type     CombinedSelector<FirstElement, FirstElement>
-  label    first / first
-  provides QSPivot QSPivotDual
-  uses     quick_sort_lib::CombinedSelector pivot_first::FirstElement
-end
-
-component qs_dp_mid_mid
-  type     CombinedSelector<MiddleElement, MiddleElement>
-  label    middle / middle
-  provides QSPivot QSPivotDual
-  uses     quick_sort_lib::CombinedSelector pivot_middle::MiddleElement
-end
-
-component qs_dp_first_last
-  type     CombinedSelector<FirstElement, LastElement>
-  label    first / last
-  provides QSPivot QSPivotDual
-  uses     quick_sort_lib::CombinedSelector pivot_first::FirstElement pivot_last::LastElement
-end
-
-component qs_dp_ninther
-  type     NintherDualPivot
-  label    ninther 1/3 + 2/3
-  provides QSPivot QSPivotDual
-  uses     quick_sort_lib::NintherDualPivot
-end
-
-component qs_part_dual
-  type     DualPivotPartition
-  label    dual pivot
-  provides QSPartition
-  project  pivot QSPivotDual
-  uses     quick_sort_lib::DualPivotPartition
-end
+# quick-select's dual selectors are no longer their own components: under the
+# unified partition system quick-select builds its 4 curated dual composites
+# (first/first, middle/middle, first/last, ninther) directly from the shared
+# `CombinedSelector` / `NintherDualPivot` types in its own query (quick_select.avbs).
