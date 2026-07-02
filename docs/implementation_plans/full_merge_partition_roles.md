@@ -94,9 +94,25 @@ recompute; facet/name tests for quick-select + cyclent.
 4. Goldens.
 5. Build + iterate; adversarial verify; commit.
 
-## #2 finite + dogfood (after #1 committed)
-`finite(family)` = enumerate MINUS cyclic-expansion types (reuse
-`cardinality::recursive_roles` / occurs-check). Lower in avbs.rs; filter in
-solve.rs/enumerate. Dogfood: a genuinely-recursive query bounded by finite() —
-candidate TBD after #1 (heap-extract is flat/finite today, so a real cycle must be
-surfaced or a recursive role introduced).
+## #2 finite() — DONE (2026-07-01, commit e6edd80)
+`finite( _ )` = occurs-check enumeration (a tree is kept iff no component appears in
+its own subtree). `QValue::Finite`; `enumerate::enumerate_finite` threads the
+ancestor path and skips self-nesting; solve/cardinality give it an EXACT finite card
+so a cyclic role passes the budget guard. Composes as a slot filler. Test: a
+binary-recursive role that's refused under a bare hole is bounded to 2 by finite().
+
+## #2 dogfood — SURFACED, NOT WIRED (needs a curation decision)
+The genuine recursive cycle for the set-quick-select heap family:
+`RecDeepHeapify → QuickSelect → SelectPartition → HeapExtract(open dh slot) →
+RecDeepHeapify`. The Rust types compile (see quick_heap_sort_lib/tests/correctness.rs)
+and `finite(_)` on `dh` bounds the recursion (unfolds once, terminates in a leaf DH).
+Wiring needs: a `SetQuickHeapSort` alias (distinct head vs classic qhs), an OPEN
+`HeapExtract<AryPair<{arity}>, {dh}>` providing SelectPartition, `SequentialSet`/
+`RecursiveSet` deep-heapify components, a `RecDeepHeapify` role (Iterative/Recursive
+leaves + the two set arms), a driver family + a `finite(_)` query.
+
+**Blocker (product call):** the inner quick-select's `part` is `SelectPartition`
+(67 pivoted + 4 heap-extract + the open one), so `finite(dh)` fans over ALL of them
+→ hundreds of SLOW O(n²) recursive variants in the correctness battery. Needs
+curation to a sane size — a narrow inner-select partition set + baked arity/small +
+`max_input` cap. HOW MANY recursive variants to emit is the user's call.
