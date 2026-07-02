@@ -101,18 +101,25 @@ ancestor path and skips self-nesting; solve/cardinality give it an EXACT finite 
 so a cyclic role passes the budget guard. Composes as a slot filler. Test: a
 binary-recursive role that's refused under a bare hole is bounded to 2 by finite().
 
-## #2 dogfood — SURFACED, NOT WIRED (needs a curation decision)
-The genuine recursive cycle for the set-quick-select heap family:
-`RecDeepHeapify → QuickSelect → SelectPartition → HeapExtract(open dh slot) →
-RecDeepHeapify`. The Rust types compile (see quick_heap_sort_lib/tests/correctness.rs)
-and `finite(_)` on `dh` bounds the recursion (unfolds once, terminates in a leaf DH).
-Wiring needs: a `SetQuickHeapSort` alias (distinct head vs classic qhs), an OPEN
-`HeapExtract<AryPair<{arity}>, {dh}>` providing SelectPartition, `SequentialSet`/
-`RecursiveSet` deep-heapify components, a `RecDeepHeapify` role (Iterative/Recursive
-leaves + the two set arms), a driver family + a `finite(_)` query.
+## #2 dogfood — DONE (2026-07-02, commit 7140ba0; "minimal proof" scope)
+Wired the first genuinely-recursive role cycle into the catalog and bounded it with
+`finite()`: `SetDeepHeapify → (set arm) RecSelect → RecSelPart(open heap-extract) →
+RecDeepHeapify → …`. finite() unfolds the cycle EXACTLY ONCE → the 2 principled
+variants (`set quick heap sort<set<select<heap extract: binary<{iterative|recursive}>>>>`).
+- Rust: `SetQuickHeapSort<DH>` alias (`QuickHeapSort<Binary, DH, NoSmallSort>`) +
+  `SetSelect<P>` alias (`RecursiveQuickSelect<P>`) — distinct type-heads so the family
+  is referenceable without colliding with the classic-qhs / quick-select heads.
+- Roles: RecDeepHeapify (Iterative/Recursive leaves + `rdh_set`), SetDeepHeapify
+  (`rdh_set` only — so ONLY the recursive arm emits; the leaves are classic qhs),
+  RecSelect (`rsel`), RecSelPart (`hx_open`, the open `HeapExtract<AryPair<Binary>,{dh}>`).
+- **Curation decision (was the blocker): "minimal proof"** — the inner select's part
+  is a DEDICATED narrow role `RecSelPart` (just the open heap-extract), NOT the 71-member
+  SelectPartition, so finite emits 2, not hundreds. arity baked Binary, `max_input 128`.
+- `depth 12` on quick_heap.avbs makes finite() LOAD-BEARING (a bare hole grows with
+  depth; finite pins to 2 — tested). quick-heap 32→34, catalog total 1562.
 
-**Blocker (product call):** the inner quick-select's `part` is `SelectPartition`
-(67 pivoted + 4 heap-extract + the open one), so `finite(dh)` fans over ALL of them
-→ hundreds of SLOW O(n²) recursive variants in the correctness battery. Needs
-curation to a sane size — a narrow inner-select partition set + baked arity/small +
-`max_input` cap. HOW MANY recursive variants to emit is the user's call.
+## Follow-ups (not done)
+- The other 3 enumeration strategies (`affine`/`sample`/`spread`) remain unimplemented
+  (only `finite` was built). See [[project_enumeration_strategies]].
+- The set-quick-select family could expand (more arities / the RecursiveSet arm /
+  wider inner-select partitions) — deferred; "minimal proof" was the chosen scope.
