@@ -627,6 +627,33 @@ fn lower_application(
     let head = it.next().ok_or("application needs a head")?.as_str().to_string();
     let gen = it.next();
 
+    // `finite( <value> )` — an enumeration-strategy BUILTIN (not a role wrapper nor
+    // a component): wraps its single argument in `QValue::Finite` (occurs-check
+    // enumeration, so a recursive role's population stays finite).
+    if head == "finite" {
+        let gen = gen.ok_or("`finite( … )` needs one argument")?;
+        let mut inner: Option<QValue> = None;
+        if let Some(arg_list) = gen.into_inner().next() {
+            for a in arg_list.into_inner() {
+                match a.as_rule() {
+                    Rule::value => {
+                        if inner.is_some() {
+                            return Err("`finite( … )` takes exactly one argument".into());
+                        }
+                        inner = Some(lower_value(a, reg, idx)?);
+                    }
+                    other => {
+                        return Err(format!(
+                            "`finite( … )` takes a positional value, found {other:?}"
+                        ))
+                    }
+                }
+            }
+        }
+        let inner = inner.ok_or("`finite( … )` needs one argument")?;
+        return Ok(QValue::Finite(Box::new(inner)));
+    }
+
     let is_wrap = is_wrapper_name(&head);
 
     // Resolve the head to a catalog component (by type-head), unless it's a
@@ -1174,6 +1201,49 @@ end
 
     fn xcat() -> Registry {
         Registry::parse(XCAT).expect("probe catalog parses")
+    }
+
+    // A binary-RECURSIVE role: `node` provides `R` and has TWO slots of role `R`,
+    // so `R` nests itself unboundedly and its population blows up super-exponentially
+    // (T(d) = 1 + T(d-1)²). `finite(_)` must bound it via the occurs check.
+    const RCAT: &str = "\
+component leaf
+  type Leaf
+  provides R
+end
+component node
+  type Node<{a}, {b}>
+  provides R
+  slot a R
+  slot b R
+end
+";
+
+    /// `finite(_)` makes a recursive role that OTHERWISE BLOWS UP compile: the bare
+    /// hole at high depth is rejected by the size guard, while `finite(_)` occurs-
+    /// checks it down to the acyclic set {Leaf, Node<Leaf, Leaf>} — Node may not
+    /// contain Node. This is the enumeration-strategy `finite` unblocking a cycle.
+    #[test]
+    fn finite_bounds_a_recursive_role_that_would_blow_up() {
+        let reg = Registry::parse(RCAT).unwrap();
+
+        // Bare hole at a high depth: super-exponential → rejected by the guard.
+        let bare = lower_program("depth 8\nX: R = _", &reg).unwrap();
+        assert!(
+            solve(&bare[0], &reg).is_err(),
+            "a bare recursive hole should be refused as too large"
+        );
+
+        // `finite(_)`: occurs check bounds it to the two acyclic trees, at ANY depth.
+        for d in [4usize, 8, 20] {
+            let q = lower_program(&format!("depth {d}\nX: R = finite(_)"), &reg).unwrap();
+            let exprs = type_exprs(&solve(&q[0], &reg).unwrap(), &reg);
+            assert_eq!(
+                exprs,
+                vec!["Leaf".to_string(), "Node<Leaf, Leaf>".to_string()],
+                "finite() should be depth-independent (depth {d})"
+            );
+        }
     }
 
     /// WORKS TODAY: a variable captured inside two different union branches and

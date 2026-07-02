@@ -18,7 +18,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::enumerate::enumerate;
+use crate::enumerate::{enumerate, enumerate_finite};
 use crate::registry::{ParamKind, Registry};
 use crate::resolve::resolve;
 use crate::spec::{Arg, Binding, QArg, QValue, Quant, Query, Refinement, SpecNode};
@@ -179,6 +179,7 @@ fn collect_caps_value(v: &QValue, out: &mut HashSet<String>) {
             subtrahends.iter().for_each(|s| collect_caps_value(s, out));
         }
         QValue::Set(members) => members.iter().for_each(|m| collect_caps_value(m, out)),
+        QValue::Finite(inner) => collect_caps_value(inner, out),
         QValue::Hole(_) | QValue::Ident(_) | QValue::Const(_) => {}
     }
 }
@@ -259,6 +260,7 @@ fn check_order_value(
             }
             Ok(())
         }
+        QValue::Finite(inner) => check_order_value(inner, cvars, available),
     }
 }
 
@@ -428,6 +430,25 @@ fn eval_type(
                 }
             }
         }
+        QValue::Finite(inner) => {
+            // finite(_) at role R: enumerate R with the OCCURS CHECK, so a recursive
+            // role yields a FINITE population (only infinite self-nesting dropped).
+            // Wraps a bare hole — the case that unblocks a cyclic role graph.
+            match inner.as_ref() {
+                QValue::Hole(quant) => {
+                    let mut pop: Vec<SpecNode> = enumerate_finite(reg, role, depth)
+                        .into_iter()
+                        .filter(|node| local_refine_ok(node, refinements, reg))
+                        .collect();
+                    pop = dedup_canonical(pop, reg)?;
+                    Ok(apply_quant(pop, *quant, role, reg, warnings)?
+                        .into_iter()
+                        .map(|n| (n, Caps::new()))
+                        .collect())
+                }
+                _ => Err("finite( … ) currently wraps a bare hole `_` only".into()),
+            }
+        }
         QValue::Const(c) => {
             Err(format!("const literal `{c}` cannot be used where a type ({role}) is expected"))
         }
@@ -559,6 +580,9 @@ fn eval_const(
         }
         QValue::Diff { .. } | QValue::Set { .. } => {
             Err("set difference / set literals are only valid in type position, not for a const".into())
+        }
+        QValue::Finite { .. } => {
+            Err("finite( … ) is only valid in type position, not for a const".into())
         }
     }
 }

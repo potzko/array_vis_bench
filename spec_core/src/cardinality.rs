@@ -328,6 +328,19 @@ fn est_value(value: &QValue, role: &str, reg: &Registry, depth: usize, memo: &mu
         // declared value set (or 1 for a literal). Captures make some args
         // resolve to 1, so a coupled cross-product is counted tightly.
         QValue::App { name, args } => est_app(name, args, reg, depth, memo),
+        // `finite(_)` is bounded by the occurs check, so its size is FINITE even
+        // for a recursive role (where `card_role` would be `Huge`). Enumerate it
+        // directly for an exact, guaranteed-finite count — this is precisely what
+        // lets a cyclic role graph pass the budget guard under `finite()`.
+        QValue::Finite(inner) => match inner.as_ref() {
+            QValue::Hole(q) => {
+                let pop = Card::Finite(
+                    crate::enumerate::enumerate_finite(reg, role, depth).len() as u128,
+                );
+                Est { out: cap_quant(pop, *q), peak: pop }
+            }
+            _ => est_value(inner, role, reg, depth, memo),
+        },
     }
 }
 

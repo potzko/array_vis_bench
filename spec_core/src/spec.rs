@@ -218,6 +218,13 @@ pub enum QValue {
     /// `{ A, B, C }` — a set literal: the union of its members' expansions. Only
     /// meaningful as a subtrahend of [`QValue::Diff`]. AVBS pest frontend only.
     Set(Vec<QValue>),
+    /// `finite( <hole> )` — enumerate the hole's role with an OCCURS CHECK: a
+    /// candidate tree is kept only if no component appears inside its own subtree.
+    /// This makes a RECURSIVE role's population finite (only infinite self-nesting
+    /// is dropped, bounded use of a recursive component is kept), so a family over a
+    /// cyclic role graph compiles instead of tripping the cardinality guard. AVBS
+    /// pest frontend only. See the enumeration-strategies plan.
+    Finite(Box<QValue>),
 }
 
 /// One argument to a component application.
