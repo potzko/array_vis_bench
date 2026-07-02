@@ -15,6 +15,10 @@ heap_sort_lib = { path = "../heap_sort_lib" }
 # build (d-ary via `AryPair<A>` or bi-parental via `BeapPair`). The dep is
 # only for the `BeapHeap` type — pure type-level wiring, no algorithm code.
 beap_sort_lib = { path = "../beap_sort_lib" }
+# The `set quick heap sort` dogfood family aliases QuickHeapSort with a NoSmallSort
+# cutoff (a distinct type-head, so the recursive-deep-heapify family is referenceable
+# without colliding with the classic QuickHeapSort head).
+small_sort_basic = { path = "../../small_sorts/small_sort_basic" }
 sort_logger = { path = "../../../sort_logger" }
 
 # Tests exercise the SetQuickSelect-driven cycle replacement for the old

@@ -189,3 +189,10 @@ macro_rules! impl_qs_annotations {
 
 impl_qs_annotations!(RecursiveQuickSelect, Complexity::LOG_N);
 impl_qs_annotations!(IterativeQuickSelect, Complexity::CONST);
+
+/// A distinct type-head alias for [`RecursiveQuickSelect`], used ONLY as the inner
+/// select of the recursive set-deep-heapify family. It exists so that family can
+/// reference its select without competing for the `RecursiveQuickSelect` type-head
+/// (owned by the quick-select family). As an alias it is the SAME type, so it sorts
+/// identically and inherits every impl.
+pub type SetSelect<P> = RecursiveQuickSelect<P>;

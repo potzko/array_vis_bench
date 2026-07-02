@@ -100,7 +100,10 @@ mod tests {
         assert_eq!(COUNT_HEAP, 400, "heap family (16 classic + 360 quick + 24 dual)");
         assert_eq!(COUNT_WEAK, 4, "weak-heap family (2 dir x 2 storage)");
         assert_eq!(COUNT_BEAP, 80, "beap family (2 classic + 72 quick + 6 dual)");
-        assert_eq!(COUNT_QUICK_HEAP, 32, "quick-heap subset (16 classic + 16 deferred)");
+        assert_eq!(
+            COUNT_QUICK_HEAP, 34,
+            "quick-heap subset (16 classic + 16 deferred + 2 finite() set-quick-select)"
+        );
         assert_eq!(
             COUNT_QUICK_SELECT, 56,
             "quick-select family (2 strategies x [4x5 single + 1x4 dual + 4x1 heap-extract])"
@@ -748,21 +751,61 @@ mod tests {
     mod quick_heap {
         use super::*;
         fn entries() -> Vec<&'static AlgorithmEntry> {
-            ALGORITHMS.iter().filter(|e| e.name.starts_with("quick heap sort")).collect()
+            ALGORITHMS.iter().filter(|e| e.name.contains("quick heap sort")).collect()
         }
         #[test]
-        fn emits_32_that_run() {
+        fn emits_34_that_run() {
             let es = entries();
             assert_eq!(es.len(), COUNT_QUICK_HEAP, "count drifted");
-            assert_eq!(COUNT_QUICK_HEAP, 32);
+            assert_eq!(COUNT_QUICK_HEAP, 34);
             let classic = es.iter().filter(|e| e.name.starts_with("quick heap sort<")).count();
             let deferred = es.iter().filter(|e| e.name.starts_with("quick heap sort deferred<")).count();
+            // The finite() dogfood: 2 recursive set-quick-select variants.
+            let set = es.iter().filter(|e| e.name.starts_with("set quick heap sort<")).count();
             assert_eq!(classic, 16, "4 arity x 4 small");
             assert_eq!(deferred, 16, "4 arity x 4 deferred small");
+            assert_eq!(set, 2, "finite(SetDeepHeapify) = the 2 once-unfolded recursive variants");
             for e in &es {
                 assert_eq!(e.category, Category::Sort);
                 (e.run_correctness)();
             }
+        }
+
+        /// finite() is LOAD-BEARING here: `SetDeepHeapify` is a recursive role. A BARE
+        /// hole unfolds the cycle as far as `depth` allows, so its count GROWS with
+        /// depth (deeper set-in-set sorts); `finite( _ )` occurs-checks it to the cycle
+        /// unfolded EXACTLY ONCE — 2 variants, at ANY depth. Proven against the merged
+        /// catalog (the same registry the emitted family solves over).
+        #[test]
+        fn finite_is_load_bearing_for_the_set_family() {
+            use spec_core::{avbs, solve, Registry};
+            let reg =
+                Registry::parse(include_str!(concat!(env!("OUT_DIR"), "/merged_catalog.spec")))
+                    .unwrap();
+            let count = |src: &str| {
+                let p = avbs::lower(src, &reg).unwrap();
+                solve(&p.algos[0].query, &reg).unwrap().sorts.len()
+            };
+            // finite(_) is DEPTH-INDEPENDENT: the cycle unfolds once → 2, at any depth.
+            for d in [6usize, 12, 30] {
+                assert_eq!(
+                    count(&format!(
+                        "depth {d}\nF: SortingAlgorithm = SortingAlgorithm<SetQuickHeapSort<dh = finite(_)>>"
+                    )),
+                    2,
+                    "finite() must be depth-independent (depth {d})"
+                );
+            }
+            // A BARE hole over the same recursive role grows with depth — so finite()'s
+            // occurs check is doing real work (pinning the family to the once-unfolded 2).
+            let shallow =
+                count("depth 6\nF: SortingAlgorithm = SortingAlgorithm<SetQuickHeapSort<dh = _>>");
+            let deep =
+                count("depth 30\nF: SortingAlgorithm = SortingAlgorithm<SetQuickHeapSort<dh = _>>");
+            assert!(
+                deep > shallow && deep > 2,
+                "a bare recursive hole should grow with depth ({shallow} → {deep}); finite() pins it to 2"
+            );
         }
     }
 

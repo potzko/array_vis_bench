@@ -69,3 +69,58 @@ component qs_part_he_ter_re
   provides HeapExtractPart SelectPartition
   uses     quick_heap_sort_lib::heap_extract::HeapExtract quick_heap_sort_lib::heap_pair::AryPair heap_sort_lib::Ternary heap_sort_lib::Recursive
 end
+
+# ═══════════ RECURSIVE SET-QUICK-SELECT DEEP-HEAPIFY (finite() dogfood) ═══════════
+# A GENUINELY RECURSIVE role graph — the deep-heapify of a heap is itself driven by a
+# quick-select whose partition is an open heap-extract whose OWN deep-heapify recurses:
+#     SetDeepHeapify → RecDeepHeapify(set arm) → RecSelect → RecSelPart(hx_open)
+#                    → RecDeepHeapify → …
+# `RecDeepHeapify` reaches itself, so a bare `_` blows up (budget-refused). The driver
+# query bounds it with `finite( _ )`: the occurs check forbids `rdh_set` / `hx_open`
+# from nesting in themselves, so the cycle unfolds EXACTLY ONCE and terminates at a
+# leaf deep-heapify. The driver's `dh` slot is the SET-ONLY `SetDeepHeapify` (so only
+# the recursive arm is emitted — the Iterative/Recursive leaves are the classic family,
+# not re-emitted here). finite() emits the 2 bounded variants; without it, nothing.
+component rdh_iter
+  type     Iterative
+  label    iterative
+  provides RecDeepHeapify
+  uses     heap_sort_lib::deep_heapify::Iterative
+end
+component rdh_rec
+  type     Recursive
+  label    recursive
+  provides RecDeepHeapify
+  uses     heap_sort_lib::deep_heapify::Recursive
+end
+component rdh_set
+  type     SequentialSet<{qs}>
+  label    set<{qs}>
+  provides RecDeepHeapify SetDeepHeapify
+  uses     heap_sort_lib::set_quick_select::SequentialSet
+  slot     qs RecSelect
+end
+component rsel
+  type     SetSelect<{part}>
+  label    select<{part}>
+  provides RecSelect
+  uses     quick_select_lib::SetSelect
+  slot     part RecSelPart
+end
+component hx_open
+  type     HeapExtract<AryPair<Binary>, {dh}>
+  label    heap extract: binary<{dh}>
+  provides RecSelPart
+  uses     quick_heap_sort_lib::heap_extract::HeapExtract quick_heap_sort_lib::heap_pair::AryPair heap_sort_lib::Binary
+  slot     dh RecDeepHeapify
+end
+component set_quick_heap_sort
+  type     SetQuickHeapSort<{dh}>
+  label    set quick heap sort<{dh}>
+  provides Sort
+  category Sort
+  menu     quick heap sorts / set
+  uses     quick_heap_sort_lib::SetQuickHeapSort
+  slot     dh SetDeepHeapify
+  max_input 128
+end

@@ -1,7 +1,20 @@
 // QUICK-HEAP families (portable subset) — query OWNED by quick_heap_sort_lib.
 // classic  = HeapArity(4) x SmallSort(4)         = 16
 // deferred = HeapArity(4) x DeferredSmallSort(4) = 16
-// total = 32.
+// set      = finite( SetDeepHeapify )            = 2   (the finite() dogfood)
+// total = 34.
+//
+// `depth 12` is a leading directive (applies to every binding). It is harmless for
+// the non-recursive classic/deferred families, and is what makes finite() LOAD-BEARING
+// for the set family: at this depth a bare hole over the recursive `SetDeepHeapify`
+// would unfold the cycle repeatedly (set-in-set-in-set sorts, valid but absurd,
+// O(n^k)); `finite( _ )` occurs-checks it to the cycle unfolded EXACTLY ONCE — the 2
+// principled variants, independent of depth:
+//   set quick heap sort<set<select<heap extract: binary<iterative>>>>
+//   set quick heap sort<set<select<heap extract: binary<recursive>>>>
+depth 12
 
 QuickHeapSortsClassic:  SortingAlgorithm = SortingAlgorithm<QuickHeapSort<arity = _, small = _>>
 QuickHeapSortsDeferred: SortingAlgorithm = SortingAlgorithm<DeferredQuickHeapSort<arity = _, dss = _>>
+
+SetQuickHeapSorts: SortingAlgorithm = SortingAlgorithm<SetQuickHeapSort<dh = finite(_)>>
