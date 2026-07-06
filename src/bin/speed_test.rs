@@ -16,13 +16,14 @@ use sort_logger::{NoOpLogger, SortLogger};
 // input from the category's registry each call, so the external buffer + `rand`
 // were never timed. Dropped.
 
-const CATEGORIES: [Category; 6] = [
+const CATEGORIES: [Category; 7] = [
     Category::Sort,
     Category::QuickSelect,
     Category::Merge,
     Category::Partition,
     Category::SmallSort,
     Category::Rotation,
+    Category::Scratchspace,
 ];
 
 fn median_ns(times: &mut [u64]) -> u64 {

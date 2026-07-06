@@ -1,0 +1,9 @@
+// Scratchspace-backed sorts — query OWNED by scratchspace_lib (gathered via
+// `[package.metadata.array_vis_bench] query = "scratchspace.avbs"`).
+//
+// The nightmare sort fans over its `backing` slot (3 Scratchspace backings). The
+// scratchspace WORKFLOW kinds don't need a query here — spec_catalog's
+// `Scratchspaces: ScratchspaceAlg<_>` in kinds.avbs already enumerates every
+// ScratchspaceKind (the workflows) × their backing slot.
+
+Nightmares: SortingAlgorithm = SortingAlgorithm<ScratchspaceMergeSort<backing = _>>

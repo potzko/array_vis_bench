@@ -52,6 +52,7 @@ fn is_wrapper_name(name: &str) -> bool {
             | "SmallSortAlg"
             | "PartitionAlg"
             | "MergeAlg"
+            | "ScratchspaceAlg"
             | "List"
             | "Mains"
     )
@@ -69,6 +70,7 @@ fn wrapper_role(name: &str) -> Result<String, String> {
         "SmallSortAlg" => Ok("SmallSortKind".to_string()),
         "PartitionAlg" => Ok("PartitionKind".to_string()),
         "MergeAlg" => Ok("MergeKind".to_string()),
+        "ScratchspaceAlg" => Ok("ScratchspaceKind".to_string()),
         other => Err(format!("`{other}<…>` is not lowerable yet (lists/consumers)")),
     }
 }

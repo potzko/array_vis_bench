@@ -83,6 +83,9 @@ rotation_helix = { path = "../crates/rotations/rotation_helix" }
 rotation_piston = { path = "../crates/rotations/rotation_piston" }
 rotation_trinity = { path = "../crates/rotations/rotation_trinity" }
 
+# ── Building stone: Auxiliary (scratchspace) merge kinds ──
+scratchspace_lib = { path = "../crates/components/scratchspace_lib" }
+
 # ── Building stones: heap cluster (heap owns shared HeapDir+HeapPart; none self-register)
 heap_sort_lib = { path = "../crates/families/heap_sort_lib" }
 weak_heap_sort_lib = { path = "../crates/families/weak_heap_sort_lib" }

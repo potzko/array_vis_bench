@@ -48,6 +48,10 @@ pub enum Category {
     /// Postcondition: the element that would land at `target` after a
     /// full sort is at `arr[target]`.
     QuickSelect,
+    /// An in-place block-roll over a scratchspace region. Input:
+    /// `Vec<usize>`. Rolls the buffer block through the array and back — a
+    /// lifecycle round-trip, so postcondition: the array is unchanged.
+    Scratchspace,
 }
 
 impl Category {
@@ -61,6 +65,7 @@ impl Category {
             Category::Merge => "merge",
             Category::SmallSort => "small-sort",
             Category::QuickSelect => "quick-select",
+            Category::Scratchspace => "scratchspace",
         }
     }
 }
@@ -179,7 +184,9 @@ pub struct QuickSelectInputEntry {
 /// it. No need for a parallel partition-input registry.
 pub fn list_inputs(category: Category) -> Vec<&'static str> {
     match category {
-        Category::Sort | Category::Partition => SORT_INPUTS.iter().map(|e| e.name).collect(),
+        Category::Sort | Category::Partition | Category::Scratchspace => {
+            SORT_INPUTS.iter().map(|e| e.name).collect()
+        }
         Category::Rotation => ROTATION_INPUTS.iter().map(|e| e.name).collect(),
         Category::Merge => MERGE_INPUTS.iter().map(|e| e.name).collect(),
         Category::SmallSort => SMALL_SORT_INPUTS.iter().map(|e| e.name).collect(),
@@ -193,7 +200,7 @@ pub fn list_inputs(category: Category) -> Vec<&'static str> {
 /// [`validate_registries`].
 pub fn primary_input(category: Category) -> &'static str {
     match category {
-        Category::Sort | Category::Partition => {
+        Category::Sort | Category::Partition | Category::Scratchspace => {
             SORT_INPUTS.iter().find(|e| e.primary).map(|e| e.name)
         }
         Category::Rotation => ROTATION_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
@@ -314,8 +321,10 @@ pub fn validate_registries() -> Result<(), String> {
     // separate registry. The "sort inputs exist when sort or partition
     // algorithms exist" check rolls partition count into the sort
     // category's expected-non-empty assertion.
-    let sort_or_partition_count =
-        ALGORITHMS.iter().filter(|e| matches!(e.category, Category::Sort | Category::Partition)).count();
+    let sort_or_partition_count = ALGORITHMS
+        .iter()
+        .filter(|e| matches!(e.category, Category::Sort | Category::Partition | Category::Scratchspace))
+        .count();
     let count = |cat: Category| ALGORITHMS.iter().filter(|e| e.category == cat).count();
     let sort_inputs: &[SortInputEntry] = &SORT_INPUTS;
     let rotation_inputs: &[RotationInputEntry] = &ROTATION_INPUTS;
@@ -464,6 +473,23 @@ pub fn run_small_sort_with_input(
     let mut arr = (input.generate)(config);
     emit_init_events(&arr, logger);
     sort_fn(&mut arr, logger);
+}
+
+/// Run an in-place scratchspace block-roll against a named input. Shares the
+/// `Sort` input registry — the op takes a single `Vec<usize>`, like a partition.
+pub fn run_scratchspace_with_input(
+    input_name: &str,
+    config: &RunConfig,
+    scratchspace_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
+    logger: &mut dyn sort_logger::SortLogger<usize>,
+) {
+    let input = SORT_INPUTS
+        .iter()
+        .find(|e| e.name == input_name)
+        .unwrap_or_else(|| panic!("sort input '{input_name}' not registered"));
+    let mut arr = (input.generate)(config);
+    emit_init_events(&arr, logger);
+    scratchspace_fn(&mut arr, logger);
 }
 
 /// Emit the visualiser's "this array exists with these initial values"
@@ -710,6 +736,8 @@ pub mod correctness {
     pub type MergeFnPtr = fn(&mut [usize], usize, &mut NoOpLogger);
     pub type SmallSortFnPtr = fn(&mut [usize], &mut NoOpLogger);
     pub type QuickSelectFnPtr = fn(&mut [usize], usize, &mut NoOpLogger);
+    /// In-place scratchspace op (block-roll): takes just the array, like a sort.
+    pub type ScratchspaceFnPtr = fn(&mut [usize], &mut NoOpLogger);
 
     /// Run `sort_fn` on `arr` and verify it produces a sorted permutation.
     /// Emits a `RUNNING: …` stderr line so subprocess TLE diagnostics can
@@ -1001,6 +1029,31 @@ pub mod correctness {
 
         for hook in MERGE_PROP_HOOKS {
             hook(merge_fn, name);
+        }
+    }
+
+    /// Verify an in-place scratchspace block-roll is a faithful round-trip: it
+    /// reserves a buffer, rolls it through the array and back, so the net effect
+    /// must be identity. Checks several sizes × shapes; any corruption or
+    /// dropped/duplicated element shows as a mismatch. (No prop hooks — the op
+    /// is deterministic and its own inverse.)
+    pub fn scratchspace_battery(roll_fn: ScratchspaceFnPtr, name: &str) {
+        let sizes = [0usize, 1, 2, 5, 8, 17, 64, 100, 257];
+        for &n in &sizes {
+            for shape in 0..3 {
+                let original: Vec<usize> = match shape {
+                    0 => (0..n).collect(),
+                    1 => (0..n).rev().collect(),
+                    _ => vec![7; n],
+                };
+                let mut arr = original.clone();
+                let mut logger = NoOpLogger;
+                roll_fn(&mut arr, &mut logger);
+                assert_eq!(
+                    arr, original,
+                    "{name}: block-roll not a faithful round-trip (n={n}, shape={shape})"
+                );
+            }
         }
     }
 

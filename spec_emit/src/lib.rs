@@ -85,9 +85,10 @@ impl EmitBackend for ArrayBackend {
             "SmallSort" => Ok(self.small_sort_entry_body(ctx)),
             "Partition" => Ok(self.partition_entry_body(ctx)),
             "Merge" => Ok(self.merge_entry_body(ctx)),
+            "Scratchspace" => Ok(self.scratchspace_entry_body(ctx)),
             other => Err(format!(
                 "spec_emit: no driver for category `{other}` yet — wired kinds are \
-                 `Sort`, `QuickSelect`, `Rotation`, `SmallSort`, `Partition`, `Merge`"
+                 `Sort`, `QuickSelect`, `Rotation`, `SmallSort`, `Partition`, `Merge`, `Scratchspace`"
             )),
         }
     }
@@ -265,6 +266,58 @@ impl ArrayBackend {
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
         max_input_size: {max_input},
+        run_with_input: run_default,
+        run_correctness: run_correct,
+    }};
+    #[ctor::ctor]
+    #[allow(non_snake_case)]
+    fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
+",
+            label = ctx.label,
+            adaptive = ctx.adaptive,
+        )
+    }
+
+    /// The `Category::Scratchspace` registration body. The in-place block-roll
+    /// has uniform `O(n)` time / `O(1)` space across backings (they differ only in
+    /// block width), so complexity is fixed here rather than inherited from a
+    /// trait. Correctness goes through `ScratchspaceSuite` (round-trip identity).
+    /// Entries nest under the `"scratchspaces"` picker root, faceted by backing.
+    fn scratchspace_entry_body(&self, ctx: &EntryCtx) -> String {
+        let AbiPaths { core, traits, nav, logger, suites } = &self.paths;
+        let mut menu_lit = String::from("\"scratchspaces\"");
+        for seg in ctx.menu {
+            menu_lit.push_str(&format!(", {seg:?}"));
+        }
+        let axes_lit: String = ctx
+            .axes
+            .iter()
+            .map(|a| format!("({:?}, {:?}, {:?}), ", a.role, a.value, a.path))
+            .collect();
+        let template_lit = format!("{:?}", ctx.label_template);
+        format!(
+"    const NAME: &str = {label:?};
+    fn run_dyn(arr: &mut [usize], logger: &mut dyn {logger}::SortLogger<usize>) {{
+        <Ty as {traits}::role::ScratchspaceRun>::run::<usize, dyn {logger}::SortLogger<usize>>(arr, logger);
+    }}
+    fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
+        {core}::run_scratchspace_with_input(input_name, config, run_dyn, logger);
+    }}
+    fn run_correct() {{
+        <{suites}::ScratchspaceSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
+    }}
+    #[linkme::distributed_slice({core}::ALGORITHMS)]
+    #[allow(non_upper_case_globals)]
+    static ENTRY: {core}::AlgorithmEntry = {core}::AlgorithmEntry {{
+        name: NAME,
+        category: {core}::Category::Scratchspace,
+        worst: {traits}::Complexity::N1,
+        best: {traits}::Complexity::N1,
+        average: {traits}::Complexity::N1,
+        space: {traits}::Complexity::N1,
+        stable: true,
+        adaptive: {adaptive},
+        max_input_size: None,
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
@@ -687,7 +740,7 @@ mod tests {
     #[test]
     fn all_first_class_kinds_are_wired() {
         // Every kind now has a body; only an UNKNOWN category errors loudly.
-        for cat in ["Sort", "QuickSelect", "Rotation", "SmallSort", "Partition", "Merge"] {
+        for cat in ["Sort", "QuickSelect", "Rotation", "SmallSort", "Partition", "Merge", "Scratchspace"] {
             assert!(
                 ArrayBackend::default()
                     .entry_body(&EntryCtx { label: "x", category: Some(cat), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })

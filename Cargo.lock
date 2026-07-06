@@ -285,6 +285,7 @@ dependencies = [
  "pivot_first",
  "pivot_median3",
  "quick_select_lib",
+ "quick_sort_lib",
  "sort_logger",
 ]
 
@@ -679,6 +680,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f98d2aa92eebf49b69786be48e4477826b256916e84a57ff2a4f21923b48eb4c"
 
 [[package]]
+name = "scratchspace_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "merge_sort_lib",
+ "sort_logger",
+]
+
+[[package]]
 name = "semver"
 version = "1.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -870,6 +880,7 @@ dependencies = [
  "rotation_piston",
  "rotation_reversal",
  "rotation_trinity",
+ "scratchspace_lib",
  "shell_sort_lib",
  "small_sort_basic",
  "small_sort_deferred_insertion",

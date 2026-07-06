@@ -5,13 +5,17 @@
 //! `rotation_reversal`, …) or, until they're carved out, in their
 //! original module in `array_vis_bench`.
 
+pub mod auxiliary;
 pub mod partition;
 pub mod pivot;
 pub mod quick_select;
 pub mod rotation;
+pub mod scratchspace;
 pub mod small_sort;
 
+pub use auxiliary::Auxiliary;
 pub use partition::{with_partition_scratch, PartitionScheme, PartitionVisitor};
+pub use scratchspace::{Scratchspace, ScratchspaceRun};
 pub use pivot::{DualPivotSelector, NoPivot, PivotInput, PivotSelector};
 pub use quick_select::QuickSelect;
 pub use rotation::Rotation;

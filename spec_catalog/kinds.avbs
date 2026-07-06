@@ -27,3 +27,6 @@ Partitions: PartitionAlg = PartitionAlg<_>
 //    `NaiveRotationMerge`/`SmallerSideRotationMerge` ALSO exist as merge.spec
 //    slot-fillers, so referencing them by head would be ambiguous. ──
 Merges: MergeAlg = MergeAlg<_>
+
+// ── Scratchspaces: every ScratchspaceKind leaf (3 block-roll widths), no slots ──
+Scratchspaces: ScratchspaceAlg = ScratchspaceAlg<_>

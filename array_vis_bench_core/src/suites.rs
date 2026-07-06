@@ -30,7 +30,7 @@
 
 use std::marker::PhantomData;
 
-use array_vis_bench_traits::{PartitionScheme, QuickSelect, Rotation, SmallSort};
+use array_vis_bench_traits::{PartitionScheme, QuickSelect, Rotation, ScratchspaceRun, SmallSort};
 use sort_logger::NoOpLogger;
 
 use crate::bench_registry::correctness;
@@ -107,6 +107,21 @@ impl<P: PartitionScheme> CorrectnessSuite for PartitionSuite<P> {
             )
         }
         correctness::partition_battery(run::<P>, name);
+    }
+}
+
+/// Scratchspace suite: drives [`correctness::scratchspace_battery`] through the
+/// concrete workflow `K: ScratchspaceRun` (which allocates its own auxiliary and
+/// runs a scripted routine over the ops). Every workflow nets to identity, so the
+/// battery verifies the whole contract round-trips faithfully.
+pub struct ScratchspaceSuite<K>(PhantomData<K>);
+
+impl<K: ScratchspaceRun> CorrectnessSuite for ScratchspaceSuite<K> {
+    fn verify(name: &str) {
+        fn run<K: ScratchspaceRun>(arr: &mut [usize], logger: &mut NoOpLogger) {
+            K::run(arr, logger);
+        }
+        correctness::scratchspace_battery(run::<K>, name);
     }
 }
 

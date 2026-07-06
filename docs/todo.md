@@ -18,6 +18,10 @@
 >   `SentinelQuickSort` driver that threads recursion-tree bound context to elide partition inner-loop
 >   guards (sentinel-based bounds-check elimination, Hoare first). `CanonicalQuickSort` stays the
 >   default. Perf lever for hand-rolled parity; gated on a `compare_sorts` benchmark. NOT STARTED.
+> - [scratchspace_block_merge.md](implementation_plans/scratchspace_block_merge.md) — a `Scratchspace`
+>   component (in-array / external-fixed / external-dyn / none backings behind one trait) + block-merge
+>   sorts (WikiSort/GrailSort) that consume it. Backing is the composition axis. Phase 1 (trait + 2
+>   backings + buffered-merge + contract self-check) STARTED in a worktree off `master`.
 
 ## North star
 

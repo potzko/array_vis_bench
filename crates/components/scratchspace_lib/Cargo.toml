@@ -1,0 +1,18 @@
+[package]
+name = "scratchspace_lib"
+version = "0.1.0"
+edition = "2021"
+description = "Auxiliary (scratchspace) role impls + AuxiliaryMerge: a RotationMerge whose working buffer is chosen by an Auxiliary backing (full / half / none). The composition axis behind block-merge sorts (WikiSort/GrailSort). Every move goes through the logger."
+
+[lib]
+name = "scratchspace_lib"
+path = "src/lib.rs"
+
+[dependencies]
+sort_logger = { path = "../../../sort_logger" }
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+merge_sort_lib = { path = "../../families/merge_sort_lib" }
+
+[package.metadata.array_vis_bench]
+spec = "scratchspace.spec"
+query = "scratchspace.avbs"

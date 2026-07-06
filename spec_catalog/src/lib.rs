@@ -112,6 +112,10 @@ mod tests {
             COUNT_FUN_SORTS, 195,
             "fun sorts (4 zero-axis + 16 cyclent + 2 stooge + 5 random + 56 surrender + 112 optimised)"
         );
+        assert_eq!(
+            COUNT_SCRATCHSPACE, 3,
+            "scratchspace-backed nightmare sorts (3 backings)"
+        );
         // COUNT_KINDS = all first-class building-stone kinds in kinds.avbs
         // (rotations + small sorts + partitions + merges); per-kind counts are
         // asserted in each kind's test module via a category filter.
@@ -119,7 +123,8 @@ mod tests {
             COUNT_TOTAL,
             COUNT_SHELL + COUNT_INSERTION + COUNT_QUICK + COUNT_CYCLE + COUNT_BUBBLE + COUNT_COMB
                 + COUNT_ROD + COUNT_CIRCLE + COUNT_MERGE + COUNT_HEAP + COUNT_WEAK + COUNT_BEAP
-                + COUNT_QUICK_HEAP + COUNT_QUICK_SELECT + COUNT_FUN_SORTS + COUNT_KINDS,
+                + COUNT_QUICK_HEAP + COUNT_QUICK_SELECT + COUNT_FUN_SORTS + COUNT_SCRATCHSPACE
+                + COUNT_KINDS,
             "total drifted from the per-family sum"
         );
     }
@@ -150,6 +155,7 @@ mod tests {
             Category::Merge,
             Category::SmallSort,
             Category::QuickSelect,
+            Category::Scratchspace,
         ] {
             let input = primary_input(cat);
             let es: Vec<_> = ALGORITHMS.iter().filter(|e| e.category == cat).collect();
@@ -178,6 +184,7 @@ mod tests {
             Category::Partition,
             Category::Merge,
             Category::SmallSort,
+            Category::Scratchspace,
         ] {
             let es: Vec<&'static AlgorithmEntry> =
                 ALGORITHMS.iter().filter(|e| e.category == cat).collect();
