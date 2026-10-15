@@ -1,11 +1,11 @@
-# Writing components for array_vis_bench
+# Writing components for `array_vis_bench`
 
 A guide for adding sorting-algorithm machinery to this project.
 
 This is not a normal "add a function and call it" codebase. You write **small,
 single-purpose trait impls** (a pivot selector, a partition, a small sort), declare
 each one **once** in a `.spec` file, and a constraint compiler multiplies them into
-the full cross-product of concrete algorithms — hundreds of catalog entries — with no
+the full cross-product of concrete algorithms , hundreds of catalog entries , with no
 hand-written glue. Get the two halves right (the Rust impl *and* its `.spec`/`.avbs`
 declaration) and your one type shows up in every quicksort, quick-select, and
 quick-heap variant automatically.
@@ -30,20 +30,20 @@ quick-heap variant automatically.
 <a name="1-what-the-project-is"></a>
 ## 1. What the project is, and what the compiler buys you
 
-array_vis_bench visualises and benchmarks sorting algorithms. Sorts run on `[usize]`
+`array_vis_bench` visualises and benchmarks sorting algorithms. Sorts run on `[usize]`
 arrays; every observable operation (compare, swap, write, allocate) is recorded through
-a **logger**, and the recording is either thrown away (benchmark path) or rendered to a
-GIF (visualiser path).
+a **logger**, and the recording is either thrown away (benchmark path) or rendered to an
+MP4 (visualiser path).
 
-The interesting part is the *catalog*. There are ~1500 concrete algorithms, but almost
+The interesting part is the *catalog*. There are about 1600 concrete algorithms, but almost
 none of them are written out by hand. A quicksort is a cross-product:
 
 ```
-partition scheme  ×  pivot selector  ×  small-sort cutoff  ×  {in-place | deferred}
+partition scheme  x  pivot selector  x  small-sort cutoff  x  {in-place | deferred}
 ```
 
-Rather than write that product as code, you write each **factor** once — one
-`LeftLeftPartition`, one `FirstElement`, one `Size2SmallSort` — and a **spec-constraint
+Rather than write that product as code, you write each **factor** once , one
+`LeftLeftPartition`, one `FirstElement`, one `Size2SmallSort` , and a **spec-constraint
 compiler** enumerates the combinations at build time, type-checks each one, and emits a
 `catalog_entries.rs` full of `AlgorithmEntry` values registered into a global
 `ALGORITHMS` slice.
@@ -51,7 +51,7 @@ compiler** enumerates the combinations at build time, type-checks each one, and 
 What that buys you:
 
 - **Add a factor, get the whole row for free.** A new pivot selector instantly appears
-  in all 408 quicksorts, all 56 quick-selects, etc. — no edits to any driver.
+  in all 408 quicksorts, all 56 quick-selects, etc. , no edits to any driver.
 - **Illegal combinations are unrepresentable.** Arity coupling (a dual-pivot partition
   needs a two-pivot selector) is baked into types, so the compiler can't emit a
   nonsense pairing.
@@ -71,8 +71,8 @@ There are **three** layers, and they are not the same thing:
 
 | Layer | Lives in | What it is |
 |---|---|---|
-| **Trait** | Rust (`array_vis_bench_traits`) | The compile-time *contract* — `PartitionScheme`, `PivotSelector`, `SmallSort`. |
-| **Role** | `.spec` files (strings) | A *semantic bucket* grouping impls for enumeration — `PartScheme`, `PartPivot`, `PartitionKind`. |
+| **Trait** | Rust (`array_vis_bench_traits`) | The compile-time *contract* , `PartitionScheme`, `PivotSelector`, `SmallSort`. |
+| **Role** | `.spec` files (strings) | A *semantic bucket* grouping impls for enumeration , `PartScheme`, `PartPivot`, `PartitionKind`. |
 | **Component** | `.spec` files | A named binding of a Rust type to the role(s) it provides and the slots it needs. |
 
 ### A trait is the Rust contract
@@ -83,7 +83,7 @@ that anything bound `Sel: PivotSelector` really has a `select` method.
 ### A role is a spec-level tag, and roles are finer-grained than traits
 
 A **role** is just a string in a `.spec` file that groups components so a query can say
-"fill this slot with anything of role X." Crucially, **one Rust trait is sliced into
+"fill this slot with anything of role X". Crucially, **one Rust trait is sliced into
 several roles**, cut as finely as the queries need:
 
 - The trait `PivotSelector` / `PivotInput` backs the roles `PartPivot` (single pivots),
@@ -109,7 +109,7 @@ end
 ```
 
 So: **slots bind by *role*, not by trait.** When you add a component, you choose which
-role(s) it advertises; that — not its Rust trait alone — decides which slots it can
+role(s) it advertises; that , not its Rust trait alone , decides which slots it can
 fill and therefore which algorithms it appears in.
 
 ### The compiler ties them together
@@ -117,7 +117,7 @@ fill and therefore which algorithms it appears in.
 At build time the compiler reads every `.spec` (the components + their roles), reads
 every `.avbs` query (which slots to fill with which roles), enumerates the legal
 combinations, and emits one concrete Rust type per combination. rustc then compiles
-those types — so the role system is a *type-safe* enumerator: if a role lets a bad type
+those types , so the role system is a *type-safe* enumerator: if a role lets a bad type
 into a slot, the emitted code fails to compile.
 
 ---
@@ -128,7 +128,7 @@ into a slot, the emitted code fails to compile.
 Every component you add is up to three artifacts. Here is the whole pipeline on one
 page, using the real `LastElement` pivot.
 
-### (a) The Rust impl — implement a role trait
+### (a) The Rust impl , implement a role trait
 
 A leaf lives in its own tiny crate and implements one trait. `FirstElement`
 ([crates/pivots/pivot_first/src/lib.rs](../crates/pivots/pivot_first/src/lib.rs)):
@@ -147,7 +147,7 @@ impl PivotSelector for FirstElement {
 }
 ```
 
-Plus its **composable annotations** (see [§6](#6-the-trait-catalog)) — the four `const`
+Plus its **composable annotations** (see [section 6](#6-the-trait-catalog)) , the four `const`
 impls that let the outer sort compute its Big-O:
 
 ```rust
@@ -161,7 +161,7 @@ impl HasStability for FirstElement { const STABLE: bool = true; }
 impl PivotQuality for FirstElement { const DEGENERATES: bool = true; }
 ```
 
-### (b) The `.spec` declaration — bind the type to a role
+### (b) The `.spec` declaration , bind the type to a role
 
 A `.spec` fragment (owned by the same crate) names the component and says what role it
 provides. [crates/pivots/pivot_last/pivot_last.spec](../crates/pivots/pivot_last/pivot_last.spec)
@@ -182,21 +182,21 @@ That is the entire second half of the job for a leaf. Five lines.
 
 | Keyword | Meaning |
 |---|---|
-| `component <name>` … `end` | Declares one component. `<name>` is globally unique across the whole workspace (a duplicate is a build-time panic). |
+| `component <name>` ... `end` | Declares one component. `<name>` is globally unique across the whole workspace (a duplicate is a build-time panic). |
 | `type <expr>` | The Rust type, with `{hole}` placeholders for each slot. Leaves have no holes (`LastElement`); composites do (`Pivoted<{scheme}, {pivot}>`). |
 | `label <template>` | Human-readable name, same `{hole}` templating. Instantiated into the `AlgorithmEntry.name` / picker path. |
-| `provides <Role> [<Role>…]` | The role(s) this component advertises. This is what slots match against. |
-| `uses <rust::path> [<path>…]` | Module paths spliced into the emitted `use` block so `type` resolves. |
+| `provides <Role> [<Role>...]` | The role(s) this component advertises. This is what slots match against. |
+| `uses <rust::path> [<path>...]` | Module paths spliced into the emitted `use` block so `type` resolves. |
 | `slot <name> <Role> [<default>]` | A type parameter, filled by any component of `<Role>`. Optional `<default>` component if a query omits it. |
-| `project <name> <Role>` | A *structural-only* parameter that does **not** appear in `type` — exists only so a query can refine on it (`Partition[pivot = …]`). |
-| `category <Cat>` | If present, this component is emitted as a first-class catalog entry (`Sort`, `Partition`, `QuickSelect`, …). Omit for pure slot-fillers. |
+| `project <name> <Role>` | A *structural-only* parameter that does **not** appear in `type` , exists only so a query can refine on it (`Partition[pivot = ...]`). |
+| `category <Cat>` | If present, this component is emitted as a first-class catalog entry (`Sort`, `Partition`, `QuickSelect`, ...). Omit for pure slot-fillers. |
 | `menu <path>` | Picker sub-path beneath the category. |
 | `max_input <n>` | Contract cap: inputs larger than `n` are out of contract (small sorts, or expensive exotic sorts). Becomes `AlgorithmEntry.max_input_size`. |
 | `adaptive <bool>` | Per-family literal: faster on nearly-sorted input. |
 
-### (c) The `.avbs` query — enumerate the combinations
+### (c) The `.avbs` query , enumerate the combinations
 
-A leaf usually needs no query — it's consumed by *other* components' queries. The query
+A leaf usually needs no query , it's consumed by *other* components' queries. The query
 lives with the **driver**. [quick.avbs](../crates/families/quick_sort_lib/quick.avbs):
 
 ```text
@@ -218,10 +218,10 @@ every `PartitionKind` **except** the last-element ones; fill `small_sort` with e
 
 The grammar is `Name: Type = Value`.
 
-- **`Name`** — the binding; each becomes its own solved query.
-- **`Type`** — a role, or an emit **wrapper** like `SortingAlgorithm<…>` / `Selection<…>`.
+- **`Name`** , the binding; each becomes its own solved query.
+- **`Type`** , a role, or an emit **wrapper** like `SortingAlgorithm<...>` / `Selection<...>`.
   The wrapper marks the binding as emittable and sets the `AlgorithmEntry` category.
-- **`Value`** — the constraint expression:
+- **`Value`** , the constraint expression:
 
 | Form | Meaning |
 |---|---|
@@ -231,7 +231,7 @@ The grammar is `Name: Type = Value`.
 | `_ - { A, B }` | Set difference: exhaustive minus everything matching A or B. |
 | `_ where ( A | B | C )` | Union: only these curated alternatives. |
 | `SortingAlgorithm<X>` etc. | Emit wrapper. |
-| `depth N` | Bound recursion depth for self-referential families ([§9](#9-advanced)). |
+| `depth N` | Bound recursion depth for self-referential families ([section 9](#9-advanced)). |
 
 Set-difference and union subtract/select by the **resolved type string**, so
 `Pivoted<_, LastElement>` removes exactly the last-element single partitions regardless
@@ -258,7 +258,7 @@ mod __entry_N {
         max_input_size: None,
         run_with_input: /* fn ptr */,
         run_correctness: /* fn ptr */,
-        // …
+        // ...
     };
 }
 ```
@@ -288,7 +288,7 @@ pub struct AlgorithmEntry {
 ## 4. The logger contract and instrumentation discipline
 
 Every component takes a `logger: &mut U` where `U: ?Sized + SortLogger<T>`. This is not
-optional plumbing — it is how the algorithm is *observed*.
+optional plumbing , it is how the algorithm is *observed*.
 
 ### The iron rule
 
@@ -296,16 +296,16 @@ optional plumbing — it is how the algorithm is *observed*.
 > the logger. No raw `arr[i] < arr[j]`, no raw `arr.swap(i, j)`.**
 
 The visualiser only knows what the logger is told. A raw `arr.swap(i, j)` mutates the
-array but emits no event, so the GIF silently desyncs from reality and the benchmark's
+array but emits no event, so the video silently desyncs from reality and the benchmark's
 operation counts are wrong. Route everything through the trait:
 
 ```rust
-if logger.cmp_gt(arr, i, ii) { logger.swap(arr, i, ii); }   // ✅ observed
-if arr[i] > arr[ii] { arr.swap(i, ii); }                    // ❌ invisible
+if logger.cmp_gt(arr, i, ii) { logger.swap(arr, i, ii); }   // right: observed
+if arr[i] > arr[ii] { arr.swap(i, ii); }                    // wrong: invisible
 ```
 
-**Preferred API:** reach for the fused conditionals — `cond_swap_lt`, `cond_swap_gt`,
-`swap` — over hand-rolling `cmp_gt_data` + `write`. They read better and emit the right
+**Preferred API:** reach for the fused conditionals , `cond_swap_lt`, `cond_swap_gt`,
+`swap` , over hand-rolling `cmp_gt_data` + `write`. They read better and emit the right
 event pairing. `Size2SmallSort`'s entire body is one call:
 
 ```rust
@@ -319,7 +319,7 @@ fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U)
 This exact shape appears on every role method. Two deliberate choices:
 
 - **`U: ?Sized`** is what lets the *same* code run under both a monomorphic
-  `&mut NoOpLogger` (the benchmark path — zero-cost, methods inline to nothing) and a
+  `&mut NoOpLogger` (the benchmark path , zero-cost, methods inline to nothing) and a
   `&mut dyn SortLogger<T>` (the visualiser path). Drop `?Sized` and the `dyn` path stops
   compiling. Always include it.
 - **The trait's methods are non-generic** (parameterised only by the trait's own `T`,
@@ -341,12 +341,12 @@ the aux array:
 
 ```rust
 let mut buf = logger.create_aux_arr(len);   // announces the array
-// … use buf, moving elements via logger.write_accross / write_data_u …
+// ... use buf, moving elements via logger.write_accross / write_data_u ...
 logger.free_aux_arr(&buf);                   // announces its removal
 ```
 
 For partition scratch there's a helper that owns this once for a whole sort,
-[`with_partition_scratch`](../array_vis_bench_traits/src/role/partition.rs) — the driver
+[`with_partition_scratch`](../array_vis_bench_traits/src/role/partition.rs) , the driver
 allocates `P::SCRATCH_LEN` cells one time and threads the same slice into every
 `partition` call. Schemes with `SCRATCH_LEN == 0` get an empty slice and skip the aux
 events entirely.
@@ -356,7 +356,7 @@ events entirely.
 <a name="5-common-patterns"></a>
 ## 5. Common patterns
 
-### 5.1 A leaf — implements a father trait, generic over nothing
+### 5.1 A leaf , implements a father trait, generic over nothing
 
 The base case: a plain unit struct implementing one role trait.
 `FirstElement` (above) and `NoSmallSort`
@@ -396,12 +396,12 @@ impl<const N: usize, S: SmallSort> SetSizeSmallSort<N> for SmallSortAdapter<S> {
 ```
 
 The single type parameter `S` is threaded straight through to `S::sort`. The
-`const { assert!(…) }` shows a nice trick: a bound that would be awkward in the type
+`const { assert!(...) }` shows a nice trick: a bound that would be awkward in the type
 system (`N <= S::THRESHOLD`) enforced as a compile-time assertion.
 
 ### 5.3 Generic over multiple components
 
-The composer pattern — several axes fused into one type. `Pivoted<Scheme, Sel>`
+The composer pattern , several axes fused into one type. `Pivoted<Scheme, Sel>`
 ([crates/families/quick_sort_lib/src/pivoted.rs](../crates/families/quick_sort_lib/src/pivoted.rs))
 takes a partition scheme *and* a pivot selector:
 
@@ -417,13 +417,13 @@ impl<Scheme: PartitionScheme, Sel: PivotInput> PartitionScheme for Pivoted<Schem
                           scratch: &mut [usize], visitor: &mut V)
     where T: Ord + Copy, U: ?Sized + SortLogger<T>, V: PartitionVisitor {
         let mut pivots = [0usize; 2];
-        Sel::pick(arr, logger, &mut pivots);         // pick with the selector …
-        Scheme::partition::<T, U, V>(arr, logger, &pivots[..Sel::N], scratch, visitor); // … then delegate
+        Sel::pick(arr, logger, &mut pivots);         // pick with the selector ...
+        Scheme::partition::<T, U, V>(arr, logger, &pivots[..Sel::N], scratch, visitor); // ... then delegate
     }
 }
 ```
 
-Three-parameter composers are common too — e.g.
+Three-parameter composers are common too , e.g.
 `QuickHeapSort<A: Arity, DH: DeepHeapify, SS: SmallSort>`
 ([crates/families/quick_heap_sort_lib/src/quick_heap_sort.rs](../crates/families/quick_heap_sort_lib/src/quick_heap_sort.rs)),
 which threads all three parameters into its `recurse` helper.
@@ -435,9 +435,9 @@ type-families can both satisfy the *same* father trait, and a query can mix them
 in the same slot.
 
 Concretely, a dual-pivot partition can be either a hand-written monolith *or* a
-composition of two single-pivot selectors — and both are `PartitionScheme`.
+composition of two single-pivot selectors , and both are `PartitionScheme`.
 
-**Family A — the specialised monolith.** `DualPivotPartition`
+**Family A , the specialised monolith.** `DualPivotPartition`
 ([crates/families/quick_sort_lib/src/yaroslavskiy.rs](../crates/families/quick_sort_lib/src/yaroslavskiy.rs))
 implements Yaroslavskiy's two-pointer scan directly, taking two pivots:
 
@@ -452,7 +452,7 @@ impl PartitionScheme for DualPivotPartition {
 }
 ```
 
-**Family B — the composition.** Take a *single*-pivot partition, wrap it in
+**Family B , the composition.** Take a *single*-pivot partition, wrap it in
 `Pivoted`, and feed it a `CombinedSelector<V1, V2>` that fuses two single selectors into
 a dual `PivotInput` with `N = 2`
 ([crates/families/quick_sort_lib/src/pivot_selectors.rs](../crates/families/quick_sort_lib/src/pivot_selectors.rs)):
@@ -469,7 +469,7 @@ impl<V1: PivotSelector, V2: PivotSelector> DualPivotSelector for CombinedSelecto
 }
 impl<V1: PivotSelector, V2: PivotSelector> PivotInput for CombinedSelector<V1, V2> {
     const N: usize = 2;
-    fn pick<…>(arr, logger, out) { let (p1, p2) = Self::select(arr, logger); out[0] = p1; out[1] = p2; }
+    fn pick<...>(arr, logger, out) { let (p1, p2) = Self::select(arr, logger); out[0] = p1; out[1] = p2; }
 }
 ```
 
@@ -480,13 +480,13 @@ Now `DualPivotPartition` and `Pivoted<SomeScheme, CombinedSelector<First, Last>>
 |---|---|---|
 | `N_PIVOTS` | `2` (driver supplies pivots) | `0` (picks its own) |
 | Pivot logic | hard-coded inside `partition` | delegated to `V1`/`V2` selectors |
-| Reuse | none — bespoke to Yaroslavskiy | any scheme × any two selectors |
+| Reuse | none , bespoke to Yaroslavskiy | any scheme x any two selectors |
 | When to write it | the algorithm is genuinely different | you're recombining existing parts |
 
 The rule of thumb: **write a monolith only when the algorithm is genuinely
 different**; otherwise compose. In the `.spec`, the specialised form gets the
 `PartSchemeDual` role and the composed form is built by `pk_dual`'s
-`DualPivoted<{pivot}>` — both feed the same `PartitionKind` population.
+`DualPivoted<{pivot}>` , both feed the same `PartitionKind` population.
 
 ### 5.5 Report-don't-return: the visitor contract
 
@@ -522,19 +522,19 @@ everything through the logger; do not try to sort or return them.
 
 ### 5.6 Adapters, blanket impls, and const-threading
 
-The cross-product stays small because of *lifting* — blanket impls that make a narrow
+The cross-product stays small because of *lifting* , blanket impls that make a narrow
 trait satisfy a wider one for free. The key one is in
 [pivot.rs](../array_vis_bench_traits/src/role/pivot.rs): every single `PivotSelector`
-becomes a `PivotInput` with `N = 1` automatically —
+becomes a `PivotInput` with `N = 1` automatically ,
 
 ```rust
 impl<V: PivotSelector> PivotInput for V {
     const N: usize = 1;
-    fn pick<…>(arr, logger, out) { out[0] = V::select(arr, logger); }
+    fn pick<...>(arr, logger, out) { out[0] = V::select(arr, logger); }
 }
 ```
 
-— so a single selector and a `CombinedSelector` (`N = 2`) are interchangeable wherever a
+, so a single selector and a `CombinedSelector` (`N = 2`) are interchangeable wherever a
 `PivotInput` is wanted, without writing an adapter per selector. Associated `const`s ride
 along the composition: `Pivoted`'s `NAME` is just `Scheme::NAME`, and its Big-O consts
 are computed from its parts (next section).
@@ -548,7 +548,7 @@ The traits you'll touch fall into three groups. All live in the pure-trait crate
 `array_vis_bench_traits` (re-exported from its crate root; role traits under
 `array_vis_bench_traits::role`).
 
-### 6.1 Algorithmic role traits — the behaviour you implement
+### 6.1 Algorithmic role traits , the behaviour you implement
 
 Every method is generic over `<T: Ord + Copy, U: ?Sized + SortLogger<T>>`.
 
@@ -566,9 +566,9 @@ Every method is generic over `<T: Ord + Copy, U: ?Sized + SortLogger<T>>`.
 | `Rotation` | `const NAME`, `fn scratch_size(n) -> usize`, `fn rotate(arr, split_ind, scratch, logger)` | Rotate a slice; in-place or buffered. |
 | `QuickSelect` | `fn select(arr, logger, target)` | Place the `target`-th order statistic at index `target`. |
 | `Scratchspace` | `const NAME`, `fn aux_size(n)`, `acquire`/`release`/`park`/`place`/`block_swap`/`relocate`/`roll` | Bounded-buffer contract for block-merge sorts (WikiSort/GrailSort). |
-| `Auxiliary` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn scratch_size(n)` | How much scratch a merge is handed (→ in-place vs buffered). |
+| `Auxiliary` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn scratch_size(n)` | How much scratch a merge is handed (-> in-place vs buffered). |
 
-### 6.2 Annotation traits — the Big-O that composes itself
+### 6.2 Annotation traits , the Big-O that composes itself
 
 These carry no behaviour, only `const`s, and default to "unknown". The compiler reads
 them off the final concrete type to fill `AlgorithmEntry`'s complexity fields.
@@ -583,7 +583,7 @@ them off the final concrete type to fill `AlgorithmEntry`'s complexity fields.
 
 `Complexity` ([complexity.rs](../array_vis_bench_traits/src/complexity.rs)) is a
 const-evaluable Big-O class with pure `const fn` `product` (exponents add) and `sum`
-(max). A composer combines its parts' bounds at compile time — e.g. `Pivoted` sums the
+(max). A composer combines its parts' bounds at compile time , e.g. `Pivoted` sums the
 scheme's and selector's costs:
 
 ```rust
@@ -597,12 +597,12 @@ where Scheme: PartitionScheme + HasTimeBounds, Sel: PivotInput + HasTimeBounds {
 
 **When you write a leaf, add these four impls.** If you skip them the type falls back to
 `O(?)`/non-stable and pollutes every composition it enters (`UNKNOWN` dominates). Use the
-predefined constants (`Complexity::CONST`, `N_LOG_N`, `N_SQUARED`, …).
+predefined constants (`Complexity::CONST`, `N_LOG_N`, `N_SQUARED`, ...).
 
 ### 6.3 Dispatch wrappers and the legacy trait
 
-- **Emit wrappers** (`SortingAlgorithm<X>`, `Selection<X>`, `RotationAlg<X>`, …) are not
-  Rust traits you implement — they're `.avbs` markers that tag a solved type for emission
+- **Emit wrappers** (`SortingAlgorithm<X>`, `Selection<X>`, `RotationAlg<X>`, ...) are not
+  Rust traits you implement , they're `.avbs` markers that tag a solved type for emission
   and pick its `Category`.
 - `SortAlgo<T, U>` in [sort_traits.rs](../array_vis_bench_traits/src/sort_traits.rs) is a
   legacy object-style dispatch trait. New components prefer inherent `fn sort` methods and
@@ -611,8 +611,8 @@ predefined constants (`Complexity::CONST`, `N_LOG_N`, `N_SQUARED`, …).
 ### 6.4 The logger trait
 
 `SortLogger<T: Copy + Ord>` ([sort_logger/src/sort_logger.rs](../sort_logger/src/sort_logger.rs))
-is the instrumentation surface — ~50 methods, all with default bodies that emit a
-`SortLog<T>` event, all dyn-compatible (see [§4](#4-the-logger-contract)). The groups you
+is the instrumentation surface , ~50 methods, all with default bodies that emit a
+`SortLog<T>` event, all dyn-compatible (see [section 4](#4-the-logger-contract)). The groups you
 reach for:
 
 - **Compare:** `cmp_eq/neq/lt/le/gt/ge` (in-array), `*_data` (vs a value), `*_accross` (between arrays).
@@ -622,8 +622,8 @@ reach for:
 - **Markers:** `mark`, `mark_mssg`.
 
 Two impls back it: `NoOpLogger` (benchmark; every method a no-op) and
-`VisualizerLogger<T>` (records events for the GIF). Adding a new integer width for an
-aux array is one `int_aux_family!(…)` line — the macro generates the four non-generic
+`VisualizerLogger<T>` (records events for the renderer). Adding a new integer width for an
+aux array is one `int_aux_family!(...)` line , the macro generates the four non-generic
 methods so dyn-compatibility is preserved.
 
 ---
@@ -631,21 +631,21 @@ methods so dyn-compatibility is preserved.
 <a name="7-getting-it-into-the-catalog"></a>
 ## 7. Getting it into the catalog: crates, discovery, build, tests
 
-### Crate topology — where your file goes
+### Crate topology , where your file goes
 
-- **`array_vis_bench_traits`** — the shared root: all role traits, `Complexity`, the
+- **`array_vis_bench_traits`** , the shared root: all role traits, `Complexity`, the
   annotation traits. Depends on nothing but `sort_logger`.
-- **Leaf crates** — `crates/pivots/*`, `crates/partitions/*`, `crates/small_sorts/*`,
-  `crates/rotations/*`, … Each is tiny and depends on **only** `array_vis_bench_traits`
+- **Leaf crates** , `crates/pivots/*`, `crates/partitions/*`, `crates/small_sorts/*`,
+  `crates/rotations/*`, ... Each is tiny and depends on **only** `array_vis_bench_traits`
   + `sort_logger`. This is deliberate: a leaf must not drag the whole tree in.
-- **Family crates** — `crates/families/*` — hold the composers and drivers (`Pivoted`,
+- **Family crates** , `crates/families/*` , hold the composers and drivers (`Pivoted`,
   `CanonicalQuickSort`, `QuickHeapSort`, `CombinedSelector`). They depend on the leaves
   they combine.
 
 Put a new single-purpose thing in its own leaf crate; put a composer with the family
 whose driver consumes it.
 
-### Discovery — the Cargo.toml handshake
+### Discovery , the Cargo.toml handshake
 
 `spec_catalog`'s `build.rs` walks the dependency closure and picks up any crate that
 self-describes in its manifest. That's the only wiring step
@@ -659,13 +659,13 @@ spec  = "pivot_first.spec"      # relative to the crate root
 
 Then make sure `spec_catalog` (transitively) depends on your crate, or its `.spec`
 won't be in the closure. A misspelled key or a missing dependency is a **build-time
-panic**, not a silent no-op — the pipeline fails fast so a family can't quietly vanish.
+panic**, not a silent no-op , the pipeline fails fast so a family can't quietly vanish.
 
 ### The build pipeline, briefly
 
-`build.rs` → **gather** every `.spec`/`.avbs` in the closure → **merge** all `.spec`
-fragments into one global registry (duplicate component name ⇒ panic) → **solve** each
-`.avbs` binding against the registry (a query that solves to **zero rows** ⇒ panic) →
+`build.rs` -> **gather** every `.spec`/`.avbs` in the closure -> **merge** all `.spec`
+fragments into one global registry (duplicate component name => panic) -> **solve** each
+`.avbs` binding against the registry (a query that solves to **zero rows** => panic) ->
 **emit** `catalog_entries.rs`, one `#[distributed_slice(ALGORITHMS)]` entry per solved
 type. Nothing is hand-registered; the linkme slice is assembled at link time.
 
@@ -675,16 +675,16 @@ Each emitted entry carries a `run_correctness` fn pointer, exercised by the work
 test suite (`cargo test`). The battery runs category-appropriate inputs under
 `NoOpLogger` and verifies the result. Two things you must respect:
 
-- **`max_input`** — if your component is only correct/feasible up to some size, declare
+- **`max_input`** , if your component is only correct/feasible up to some size, declare
   it. The correctness harness and the picker both honour `max_input_size`; a global test
   `N` that ignores per-entry caps will OOM on an exotic sort.
-- **Slow or nondeterministic sorts** — very slow sorts register a cap via
+- **Slow or nondeterministic sorts** , very slow sorts register a cap via
   `SORT_TEST_CAPS`; sorts whose trace is intentionally nondeterministic opt out of the
-  determinism check. Defaults are "no cap" and "deterministic" — you only act if your
+  determinism check. Defaults are "no cap" and "deterministic" , you only act if your
   sort is unusual.
 
 A leaf's own crate should carry at least one unit test that its `sort`/`select`/`rotate`
-actually sorts/selects/rotates. Keep it minimal — one property-style check is plenty.
+actually sorts/selects/rotates. Keep it minimal , one property-style check is plenty.
 
 ---
 
@@ -756,7 +756,7 @@ mod tests {
 }
 ```
 
-(`&mut ()` works as a no-op logger in tests — `()` implements `SortLogger`.)
+(`&mut ()` works as a no-op logger in tests , `()` implements `SortLogger`.)
 
 **3. Declare the component** in `pivot_penultimate.spec`:
 
@@ -769,7 +769,7 @@ component pkp_penultimate
 end
 ```
 
-**4. Add the crate to the closure** — add `pivot_penultimate` as a dependency of
+**4. Add the crate to the closure** , add `pivot_penultimate` as a dependency of
 whatever crate pulls the pivot leaves into `spec_catalog` (the same place `pivot_first`,
 `pivot_last` are listed), and to the workspace members if needed.
 
@@ -777,13 +777,13 @@ whatever crate pulls the pivot leaves into `spec_catalog` (the same place `pivot
 provides `PartPivot`, it's now a legal filler for `pk_single`'s `pivot` slot and for
 `combined`'s `a`/`b` sub-slots. It flows automatically into:
 
-- every single-pivot `PartitionKind` (`Pivoted<scheme, penultimate>`) → all quicksorts,
-- every dual composite that pairs it (`combined<penultimate, …>`),
+- every single-pivot `PartitionKind` (`Pivoted<scheme, penultimate>`) -> all quicksorts,
+- every dual composite that pairs it (`combined<penultimate, ...>`),
 - quick-select and the standalone Partition-kind entries.
 
 You wrote one struct and five lines of spec; the compiler produced dozens of new
 catalog entries, each with correct inherited Big-O. If you *didn't* want it in some
-consumer, you'd subtract it there with `_ - { Pivoted<_, Penultimate> }` — in the query,
+consumer, you'd subtract it there with `_ - { Pivoted<_, Penultimate> }` , in the query,
 not the code.
 
 ---
@@ -793,7 +793,7 @@ not the code.
 
 ### Recursion bounding for self-referential families
 
-Some families are genuinely recursive — a partition that nests a quick-select that
+Some families are genuinely recursive , a partition that nests a quick-select that
 nests a partition. Left alone, the enumerator would unfold that cycle forever. Two tools:
 
 - **`depth N`** (an `.avbs` directive) caps how deep the solver unfolds a recursive role.
@@ -808,17 +808,17 @@ set-quick-select heap family for a worked-in-tree use of `finite` + `depth 12`.
 ### Curate in the query, not in the algorithm
 
 A recurring project principle: **when one variant of a generated cross-product
-misbehaves, remove it from the query — don't special-case the algorithm.** The set
+misbehaves, remove it from the query , don't special-case the algorithm.** The set
 operators exist for exactly this:
 
 ```text
 part = _ - { Pivoted<_, LastElement> }        # drop the bad axis value
-part = _ where ( … | … )                       # or hand-pick the good ones
+part = _ where ( ... | ... )                       # or hand-pick the good ones
 ```
 
 Patching a driver to paper over one degenerate combination adds a branch that every
 other combination pays for and that the next reader has to decode. Dropping the axis
-value keeps each component honest and the drivers clean. Reach for `_ - {…}` / `where`
+value keeps each component honest and the drivers clean. Reach for `_ - {...}` / `where`
 first.
 
 ---
