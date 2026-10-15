@@ -1,4 +1,4 @@
-# array_vis_bench
+# `array_vis_bench`
 
 A Rust framework for composing algorithms over ordered data, then visualising,
 checking and benchmarking every composition. Sorting is the first domain; the
@@ -163,6 +163,6 @@ and what is still open. Designed but unbuilt work lives in
 
 ## Note for LLM assistants
 
-Read [docs/llm/index.md](docs/llm/index.md) first. It says which files to
+Read [docs/llm/README.md](docs/llm/README.md) first. It says which files to
 load, the patterns to follow, and how to keep the documentation in step with
 the code.

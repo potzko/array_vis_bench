@@ -1,0 +1,6 @@
+# `src`
+
+Source of `scratchspace_lib`. The crate README one level up says what it is for.
+
+- `lib.rs`: Auxiliary (scratchspace) backings + the merge that consumes them.
+- `workflows.rs`: Scratchspace workflows (runnable routines over the ops) + a scratchspace -backed sort.

@@ -1,11 +1,7 @@
 # bin
 
-Additional binary targets beyond the default `array_vis_bench` visualiser.
+Auxiliary binaries beside the default visualiser.
 
-## `speed_test.rs`
-
-A lightweight speed comparison tool that bypasses Criterion overhead. Runs every sort registered in `BENCH_SORTS` against a shuffled array, measures raw wall-clock time (median of N runs), and prints results sorted fastest-first.
-
-Usage: `cargo run --bin speed_test [array_size] [num_runs]` (defaults: 100,000 elements, 7 runs).
-
-Useful for quick iteration when you want a rough performance ranking without waiting for Criterion's statistical analysis.
+- `compare_sorts.rs`: the performance gate. Hand rolled u64 quick, merge and heap sorts against the generic equivalents under `NoOpLogger`; each pair must stay within 1.05x. Arguments: size, runs, margin.
+- `speed_test.rs`: times every registered entry of every category and prints a fastest first table. Arguments: size, runs.
+- `measure_random_shell.rs`: complexity probe and correctness check for the random shell sort variants.
