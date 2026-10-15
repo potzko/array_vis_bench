@@ -1,103 +1,75 @@
-# Patterns and Conventions
+# Patterns and conventions
 
-Follow these when writing or modifying code in this project.
+Follow these when writing or modifying code here. The house style for code,
+comments and commit messages is defined once in
+`/home/omer/Documents/dev/skillz/STYLE.md`; this page covers what is
+specific to this project.
 
-## Sort implementation patterns
+## Algorithm bodies
 
-### All data access goes through the logger
-
-The single most important rule. Every comparison and write must call a `SortLogger` method:
-
-```rust
-// CORRECT:
-logger.cond_swap_gt(arr, i, j);
-logger.write_data(arr, i, value);
-logger.cmp_le_accross(arr_a, i, arr_b, j);
-
-// WRONG — works for benchmarks but produces no visualisation events:
-if arr[i] > arr[j] { arr.swap(i, j); }
-arr[i] = value;
-```
-
-Reading is fine without the logger — only writes and comparisons need to be observed:
+All data access goes through the logger.
 
 ```rust
-let tmp = arr[i];                       // OK
-logger.write_data(arr, i, arr[j]);      // log the write
+logger.cond_swap_gt(arr, i, ii);          // right
+logger.write_data(arr, i, value);         // right
+if arr[i] > arr[ii] { arr.swap(i, ii); }  // wrong: the visualiser never sees it
 ```
 
-### Auxiliary arrays go through the logger
+Reading into a temporary is fine. Auxiliary arrays are created and freed
+through the logger (`create_aux_arr_t`, `free_aux_arr_t`) so the renderer can
+draw them. Pass the same slice object consistently; the logger identifies an
+array by its base pointer.
 
-```rust
-let mut buf = logger.create_aux_arr_t(len);
-logger.write_accross(arr, i, &mut buf, j);
-logger.free_aux_arr_t(&buf);
-```
+The signature is always `<T: Ord + Copy, U: ?Sized + SortLogger<T>>`. Keep
+`?Sized` or the dyn path stops compiling. Never add a method level generic to
+`SortLogger`; that would break dyn compatibility.
 
-This lets the visualiser draw aux buffers next to the main array.
+Flags are const generic booleans. Each combination monomorphises to its own
+code path and the compiler removes the dead branches.
 
-### Generic over `<T: Ord + Copy, U: ?Sized + SortLogger<T>>`
+Partitions report unsorted ranges to a visitor; they never return them.
 
-```rust
-fn my_sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-```
+## Composition
 
-`U: ?Sized` lets the function take both `&mut NoOpLogger` (bench, fully inlined) and `&mut dyn SortLogger<T>` (visualiser). Only drop `?Sized` if you call the trait's `where Self: Sized` cross-`T` helpers.
+- One idea per leaf. A leaf is a unit struct implementing one role trait
+  plus the four annotation impls. Composers (`Pivoted<Scheme, Sel>`,
+  `CombinedSelector<A, B>`) thread their parts' consts through
+  `Complexity::sum` and `Complexity::product`.
+- Write a monolith only when the algorithm is genuinely different; otherwise
+  compose.
+- Roles are finer than traits. Choose the roles a component provides by
+  which queries should see it, not by which trait it implements.
+- Curate in the query. A degenerate combination is removed with
+  `_ - {...}` or `where (...)` in the `.avbs` file. Do not special case a
+  driver for one bad combination.
+- A role that can contain itself needs `finite(_)` or `depth N` in every
+  query that enumerates it.
 
-### Const-generic booleans for flags
+## Catalog hygiene
 
-```rust
-pub struct MySort<S: SmallSort, const EARLY_EXIT: bool> { ... }
-```
+- Component names are a global namespace. Prefix them by role: `pkp_` pivot,
+  `pks_` partition scheme, `pk_` partition composite, `mrot_` merge rotation,
+  `rot_` rotation kind, `ss_` small sort, `sk_` small sort kind, `nt_` non
+  trivial small sort, `dss_` deferred small sort.
+- Labels are lowercase, with the slot values in angle brackets:
+  `quick sort<part: left-left<first>, small: size: 2>`.
+- Never edit a list of algorithm names. Registration is derived.
+- When a change moves a golden count in `spec_catalog/src/lib.rs`, print the
+  new variant names, check they are the intended ones, then update the count
+  and its comment.
+- Keep the bench hot path monomorphic. No `dyn SortLogger` inside a loop.
 
-Each flag combination monomorphises to its own code path; the compiler eliminates dead branches.
+## Testing
 
-## Registration patterns
+- Write the failing test first. A leaf carries one unit test that it does
+  its job. A family's correctness comes from the emitted battery; a cap for a
+  slow sort is declared, not patched around.
+- `cargo test --release -p spec_catalog` is the fast check that the catalog
+  still solves and every emitted entry still passes. `cargo test --release`
+  covers the compiler and every crate.
 
-### Single-leaf or self-contained sort: `sort_registry_macro::sort_family!`
+## Git
 
-```rust
-sort_registry_macro::sort_family! {
-    type Sort = MySort;
-    name        = "my sort";
-    big_o       = "O(N^2)";
-    stable      = true;
-    direct_sort = true;
-    path        = ["my sorts", "my sort"];
-}
-```
-
-### Cross-product family: `combo_codegen::family!`
-
-Use this when slots draw from project-wide `component!`-annotated types (small-sort, rotation, pivot selector, etc.). See `src/sorts/quick_sorts/quick_sort.rs` and `src/sorts/merge_sorts/top_down.rs` for real examples.
-
-### Standalone component (rotation, partition, merge, quick-select, small-sort)
-
-Use the matching `register_*!` macro alongside the implementation. Each emits one `bench_registry::AlgorithmEntry` with the right `Category::*`.
-
-### Never edit a list of algorithm names
-
-Every registration mechanism lands in `bench_registry::ALGORITHMS` (a `linkme` distributed-slice) automatically. If you find yourself editing a list of algorithm names somewhere central, you're doing it wrong.
-
-## Naming conventions
-
-- Sort families: `snake_case` folder names (`merge_sorts/`, `shell_sorts/`).
-- Algorithm display names: lowercase with spaces (`"merge sort top-down pp ee"`).
-- Strategy types: `PascalCase` (`ReversalRotation`, `InsertionSmallSort`).
-- Strategy display labels (inside `component!` / `sort_family!`): lowercase with hyphens (`"reversal"`, `"ins-32"`).
-- Nested loop variables: `i, ii, iii, iv, ...` (not `i, j, k, m, ...`).
-
-## File organisation
-
-- Each sort family lives in its own folder under `src/sorts/`.
-- Each folder has a `mod.rs` for module declarations and (where used) `include!` of the generated combinations file.
-- Strategy traits live in `src/utils/` (rotation, gap sequences, branching, small_sort) or next to their primary consumer (`quick_sorts/partitions.rs`, `quick_sorts/pivot_selectors.rs`).
-- Every folder has a `README.md` — see the documentation maintenance guide.
-
-## What NOT to do
-
-- **Don't maintain a central list of algorithm names.** Registration is automatic.
-- **Don't use `arr.swap(i, j)` or direct assignment in sorts.** Always go through the logger.
-- **Don't put sort-specific code in `utils/`.** Utils are shared building blocks.
-- **Don't create `dyn SortLogger<T>` in the benchmark hot path.** Bench code uses monomorphic function pointers; a trait object would defeat inlining.
-- **Don't patch one bad combination in a cross-product.** Drop the problem axis instead (the project's coding-preferences rule: easier to maintain, faster to converge).
+- Work on a branch off the work branch, as small commits that each leave the
+  tree green, then fold back. Commit messages are one or two lines saying
+  the functional change, with no attribution line.

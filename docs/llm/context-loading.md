@@ -1,41 +1,45 @@
-# Context Loading Guide
+# Context loading
 
-How to efficiently load enough context to work on this codebase.
+How to load enough context to work on this codebase without reading all of
+it.
 
-## Always read these files first
+## Always read first
 
-These files define the abstractions that everything else depends on. Load them into context before doing any work:
-
-| File | Why |
+| file | why |
 |---|---|
-| `sort_logger/src/sort_logger.rs` | **The most important file.** Defines `SortLogger<T>` — every sort calls these methods. You cannot write or modify a sort without understanding `cond_swap_lt`, `write_data`, `cmp_le_accross`, `create_aux_arr_t`, etc. |
-| `sort_logger/src/sort_log.rs` | The `SortLog<T>` enum — all event types that sorts can emit. |
-| `src/bench_registry.rs` | The single source of truth: `AlgorithmEntry`, `Category`, `ALGORITHMS` distributed-slice, the per-category correctness batteries, and the subprocess test-dispatch ctor. Every algorithm — sort, rotation, partition, merge, quick-select, small-sort — ends up as one entry here. |
-| `src/traits/sort_traits.rs` | `SortAlgo<T, U>` — the legacy 4-method trait. Still used by hand-rolled callers but no longer the registration mechanism. |
-| `src/traits/mod.rs` | Thin re-export shim plus the `SortFn` alias (`fn(&mut [usize], &mut NoOpLogger)`). The legacy `SORT_REGISTRY` / `SORT_VIS_REGISTRY` / `create_sort!` are gone. |
+| `sort_logger/src/sort_logger.rs` | `SortLogger<T>`. Every algorithm body calls these methods and nothing else touches the array. |
+| `sort_logger/src/sort_log.rs` | `SortLog<T>`, the event enum the renderer replays. |
+| `array_vis_bench_traits/src/role/mod.rs` and the role files beside it | the role traits: `PartitionScheme` and its visitor, `PivotSelector`, `PivotInput`, `SmallSort`, `Rotation`, `QuickSelect`, `Auxiliary`, `Scratchspace`. |
+| `array_vis_bench_traits/src/composable.rs` and `complexity.rs` | the annotation traits and the `Complexity` algebra the emit reads off each type. |
+| `array_vis_bench_core/src/bench_registry.rs` | `AlgorithmEntry`, `Category`, `ALGORITHMS`, the per kind run drivers and batteries, the subprocess test dispatch. |
+| `docs/writing-components.md` | the full account of how a Rust type, a `.spec` component and an `.avbs` query fit together. |
 
-## Read these when working on specific areas
+## Read for a specific area
 
-| Area | Files to load |
+| area | files |
 |---|---|
-| **Adding/modifying a sort** | The sort's own file + its family's `mod.rs` + `combinations.rs` (if it has one) |
-| **Rotation algorithms** | `src/utils/rotation/mod.rs` (trait + helpers) + the specific rotation file |
-| **Shell sort gap sequences** | `src/utils/shell_sequences/mod.rs` |
-| **Branching strategies** | `src/utils/shell_branching/mod.rs` |
-| **Merge sort infrastructure** | `src/sorts/merge_sorts/small_sort.rs`, `rotation_merge.rs`, `rotation.rs`, `utils.rs` |
-| **Registration system** | `combo_codegen/src/lib.rs` (build-time scanner + cross-product `family!` / `component!` markers) + `sort_registry_core/src/lib.rs` (tree builder). The legacy `sort_registry_macro/src/lib.rs` houses the older single-leaf `sort_family!` proc-macro. |
-| **`combo_codegen::family!` examples** | `src/sorts/quick_sorts/quick_sort.rs`, `src/sorts/merge_sorts/top_down.rs`, `src/sorts/merge_sorts/rotation.rs` |
-| **Benchmarks** | `benches/sorts.rs` + `src/bench_registry.rs` |
-| **Visualisation** | `src/visualise/mod.rs` + `sort_vis/src/lib.rs` |
-| **Main CLI** | `src/main.rs` |
+| a family's algorithms | `crates/families/<family>/src/*.rs`, its `<family>.spec` and `<family>.avbs` |
+| a slot filler | `crates/<axis>/<name>/src/lib.rs` and `<name>.spec` |
+| the query language | `spec_core/src/avbs.pest` (grammar), `spec_core/src/avbs.rs` (lowering, wrappers) |
+| the solver | `spec_core/src/solve.rs`, `enumerate.rs` (exhaustive and occurs check), `cardinality.rs` (the budget guard), `resolve.rs` |
+| the catalog format | `spec_core/src/registry.rs` |
+| what gets emitted | `spec_core/src/emit.rs`, `backend.rs`, `spec_emit/src/lib.rs` |
+| the build | `spec_catalog/build.rs`, `spec_catalog/Cargo.toml`, `kinds.avbs`, `consumers.avbs` |
+| golden counts and catalog tests | `spec_catalog/src/lib.rs` |
+| consumers | `array_vis_bench_core/src/mains.rs`, `suites.rs`, `inputs.rs` |
+| the interactive picker | `array_vis_bench_cli/src/lib.rs`, `sort_registry_core/src/lib.rs` |
+| rendering | `sort_vis/src/mp4_bar_visualiser.rs` |
+| performance | `src/bin/compare_sorts.rs`, `dump_asm.sh`, `asmdiff.sh`, the release profile in `Cargo.toml` |
+| open work | `docs/todo.md`, `docs/implementation_plans/` |
 
-## Reading the folder READMEs
+Every folder has a README. Read it before reading the folder's sources.
 
-Every folder has a `README.md` explaining what it contains and why. When you're unfamiliar with a folder, read its README first — it will tell you the concept, the design decisions, and what each file does. This is faster than reading every source file.
+## Skip
 
-## What you can skip
-
-- `target/` — build artifacts, never read these.
-- `sort_logger/src/loggers.rs` — trivial implementations, only 30 lines.
-- Auto-generated combination files under `$OUT_DIR/*_combinations.rs` — produced by the `combo_codegen` build script. Read the `family!` invocation instead.
-- Individual sort files you're not modifying — the family README describes them.
+- `target/`, including the generated `catalog_entries.rs` (four megabytes).
+  Read the `.avbs` query and the `.spec` fragment instead.
+- `spec_core/registry.spec`: the compiler's own self test fixture, not the
+  live catalog.
+- `spec_catalog/quick_port.spec`: a retained baseline for one equivalence
+  test, not a live fragment.
+- `sort_logger/src/loggers.rs`: forty lines of trivial impls.

@@ -1,48 +1,49 @@
-# Documentation Maintenance
+# Documentation maintenance
 
-When you make changes to the codebase, you must keep the documentation in sync. This project has two documentation audiences — humans and LLMs — and both must be updated.
+The docs have two audiences, people and assistants, and both must stay in
+step with the code. Prose follows `/home/omer/Documents/dev/skillz/STYLE.md`:
+ASCII punctuation only, no em dash, no Unicode arrow, no emoji, no
+underscore in prose, a file top overview in every source file, a README in
+every folder, comments that describe the code as it is and never as a diff.
 
-## When to update docs
+Check added lines with:
 
-Update documentation whenever you:
-
-- **Add a new sort** — update the family's `README.md` to list it. If it's a new family, create a new folder README.
-- **Add a new strategy/trait implementation** — update the relevant `utils/` README (e.g. a new rotation goes in `utils/rotation/README.md`, a new gap sequence goes in `utils/shell_sequences/README.md`).
-- **Add a new folder** — create a `README.md` in it explaining what it contains and why.
-- **Change the registration system** — update `docs/registration.md` and `docs/llm/patterns.md`.
-- **Change a trait interface** — update `docs/trait-system.md` and `docs/llm/patterns.md`.
-- **Add or remove a crate** — update the root `README.md` (project structure + helper crates table) and `docs/architecture.md` (crate dependency graph).
-- **Change the binary interface** — update the root `README.md` (binaries section).
-- **Change key files that LLMs should index** — update `docs/llm/context-loading.md`.
+```
+python3 /home/omer/Documents/dev/skillz/scripts/check_style.py --added-only <paths>
+```
 
 ## What to update where
 
-| Change | Human docs to update | LLM docs to update |
-|---|---|---|
-| New sort in existing family | Family's `README.md` | Nothing (patterns unchanged) |
-| New sort family (new folder) | `src/sorts/README.md`, new folder `README.md`, root `README.md` structure | `docs/llm/context-loading.md` if it introduces new key files |
-| New rotation algorithm | `src/utils/rotation/README.md` | Nothing |
-| New gap sequence | `src/utils/shell_sequences/README.md` | Nothing |
-| New branching strategy | `src/utils/shell_branching/README.md` | Nothing |
-| New trait | `docs/trait-system.md` | `docs/llm/patterns.md`, `docs/llm/context-loading.md` |
-| Registration system change | `docs/registration.md`, `docs/adding-a-sort.md` | `docs/llm/patterns.md` |
-| New crate in workspace | Root `README.md`, `docs/architecture.md` | `docs/llm/context-loading.md` |
-| Changed logger API | `sort_logger/README.md`, `docs/trait-system.md`, `docs/adding-a-sort.md` | `docs/llm/patterns.md`, `docs/llm/context-loading.md` |
+| change | update |
+|---|---|
+| new slot filler | the axis folder README (`crates/pivots/README.md` and so on) and the new crate's README |
+| new family | `crates/families/README.md`, the crate README, the catalog table in the root `README.md`, the golden count |
+| new first class kind | `docs/registration.md` (the wrapper table and the kind recipe), `docs/architecture.md` (consumers), root `README.md` |
+| a role trait changed | `docs/trait-system.md`, `docs/writing-components.md` |
+| the logger API changed | `sort_logger/README.md`, `docs/trait-system.md`, `docs/writing-components.md` |
+| the query grammar or `.spec` keywords changed | `docs/registration.md`, `docs/writing-components.md` |
+| the build script changed | `docs/architecture.md`, `spec_catalog/README.md` |
+| a crate added or removed | root `README.md` layout, `docs/architecture.md` graph, the parent folder README |
+| a binary or flag changed | root `README.md` running table, `src/bin/README.md` |
+| a plan started, finished or abandoned | its file in `docs/implementation_plans/` and the status list in `docs/todo.md` |
+| key files for assistants moved | `docs/llm/context-loading.md` |
 
-## Style guidelines
+## Style of each document type
 
-- **Folder READMEs** explain the concept first (what is a rotation? what is a gap sequence?), then list implementations with one-line descriptions.
-- **`docs/` files** are for architecture and cross-cutting concerns. Don't duplicate folder-level details.
-- **`docs/llm/` files** are practical and imperative — tell the LLM what to do, not background theory.
-- Keep tables updated when adding rows (e.g. new rotation in the rotation README table).
-- Don't add version history or changelogs to READMEs — that's what git is for.
+- Folder READMEs say what the folder represents, then one line per subfolder
+  or file worth naming. Minimal, not a tour.
+- `docs/` files cover architecture and cross cutting concerns and do not
+  repeat folder level detail.
+- `docs/llm/` files are imperative. Tell the assistant what to do.
+- `docs/todo.md` is the one place for status. Vocabulary docs define
+  concepts without status words.
+- No changelogs in READMEs or comments. History lives in git.
 
 ## Checklist before finishing
 
-Before you consider your work done, check:
-
-- [ ] Did I add or modify a folder? Update/create its `README.md`.
-- [ ] Did I add a new sort? Is it listed in the family's `README.md`?
-- [ ] Did I change a trait or registration pattern? Update `docs/` and `docs/llm/`.
-- [ ] Does the root `README.md` project structure still match reality?
-- [ ] Would another LLM loading this project for the first time find accurate docs?
+- Did I add or move a folder or crate? Its README exists and the parent
+  README lists it.
+- Did I change a trait, a keyword or the grammar? The docs above reflect it.
+- Did the catalog change? The root README table and the golden counts agree.
+- Did I finish or start planned work? `docs/todo.md` says so.
+- Would an assistant loading the project cold find accurate instructions?
