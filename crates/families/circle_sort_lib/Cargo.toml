@@ -2,7 +2,7 @@
 name = "circle_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Circle sort family — recursive (parametrised over an ordering of the three sub-operations) and bottom-up (parametrised over a size-traversal direction), with optional near-sort finishing. Self-registers via the `CIRCLE_ENTRIES` distributed slice + ctor."
+description = "Circle sort family, recursive (parametrised over an ordering of the three sub-operations) and bottom-up (parametrised over a size-traversal direction), with optional near-sort finishing, declared in circle.spec and built by circle.avbs."
 
 [lib]
 name = "circle_sort_lib"

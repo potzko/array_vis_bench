@@ -2,7 +2,7 @@
 name = "comb_ratio_components"
 version = "0.1.0"
 edition = "2021"
-description = "Metadata-only leaf for CombRatio variants. `CombSortRatio<NUM, DEN>` is a single const-generic struct in `array_vis_bench`; each entry below is one registered specialisation (1.3, √2 ≈ 1.414, φ ≈ 1.618, 4/3, 11/8, 5/4)."
+description = "Empty crate left over from the retired cross-product generator; the comb ratios are declared in comb_sort_lib. Listed for deletion in docs/todo.md."
 
 [lib]
 name = "comb_ratio_components"

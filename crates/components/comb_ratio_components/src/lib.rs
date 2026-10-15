@@ -1,3 +1,3 @@
-//! Metadata-only leaf — see Cargo.toml. `CombSortRatio<NUM, DEN>` lives
-//! in `array_vis_bench`; this crate exists so the per-ratio entries
-//! aren't a giant block in the wiring crate's manifest.
+//! Empty crate left over from the retired cross-product generator. The comb
+//! ratios are declared in `comb_sort_lib`'s `comb.spec`. Listed for deletion
+//! in `docs/todo.md`.

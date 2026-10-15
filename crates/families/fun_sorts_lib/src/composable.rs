@@ -1,13 +1,11 @@
 //! Compositional complexity annotations for the fun-sorts types.
 //!
 //! The spec emit reads `<Ty as HasTimeBounds>::WORST` / `HasSpace::SPACE` /
-//! `HasStability::STABLE` from every emittable type. The legacy `sort_family!` /
-//! TOML registrations carried a single `big_o` STRING instead; these impls pin
-//! the same classes as trait consts so the spec catalog can emit fun sorts.
+//! `HasStability::STABLE` from every emittable type; these impls pin each
+//! type's classes as trait consts so the spec catalog can emit fun sorts.
 //!
 //! These are pedagogical / adversarial sorts, so the bounds are FIXED per type
-//! (not composed from the partition/pivot axis) — `WORST = BEST = AVERAGE` at the
-//! legacy `big_o` class, matching what `Complexity::from_str` produced. SPACE is
+//! (not composed from the partition/pivot axis): `WORST = BEST = AVERAGE`. SPACE is
 //! a conservative upper bound (recursion stack `LOG_N`; an aux buffer / partition
 //! scratch `N`); STABLE is `false` throughout (none preserves equal-key order).
 

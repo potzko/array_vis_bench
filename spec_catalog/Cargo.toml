@@ -1,18 +1,16 @@
-# The UNIFIED spec catalog: one registry (`catalog.spec`) that imports every
-# building-stone crate, and a set of AVBS query files (`*.avbs`) that build the
-# algorithm families over it. The constraint compiler (`spec_core`) + live-ABI
-# backend (`spec_emit`) solve and emit `AlgorithmEntry` rows for ALL families at
-# once — the default `array_vis_bench` binary anchors this single crate instead of
-# one pilot crate per family.
+# The UNIFIED spec catalog: every building-stone crate below owns a `.spec`
+# fragment (and, for a family, an `.avbs` query), and `build.rs` gathers them
+# through the dependency graph into one registry. The constraint compiler
+# (`spec_core`) + live-ABI backend (`spec_emit`) solve every query and emit
+# `AlgorithmEntry` rows for ALL families at once; the default `array_vis_bench`
+# binary anchors this single crate.
 #
-# Layer model (user's two-layer language):
-#   * Layer 1 — building stones: the leaf crates below (families + components),
-#     each self-contained Rust. Linked here TYPES-ONLY where they self-register
-#     (`shell_sort_lib` has `default-features = false`).
-#   * Layer 2 — query: `catalog.spec` declares every component; each `*.avbs`
-#     file is an AVBS program querying across them. `build.rs` lowers each query
-#     against the one shared registry. (Next step "B": push each `.spec` fragment
-#     back into its building-stone crate so the stones are fully self-describing.)
+# Layer model (the two-layer language):
+#   * Layer 1, building stones: the leaf crates below (families + components),
+#     each self-describing Rust. Linked here TYPES-ONLY where a crate still has
+#     a legacy self-registration feature (`default-features = false`).
+#   * Layer 2, query: each `*.avbs` file is an AVBS program over the merged
+#     registry; `kinds.avbs` here adds the cross-leaf first-class kinds.
 [package]
 name = "spec_catalog"
 version = "0.0.0"
@@ -95,9 +93,8 @@ beap_sort_lib = { path = "../crates/families/beap_sort_lib" }
 quick_heap_sort_lib = { path = "../crates/families/quick_heap_sort_lib" }
 
 # ── Building stone: quick-SELECT family (first non-sort first-class kind) ──────
-# Reuses quicksort's partition/pivot leaf TYPES + quick_heap's HeapExtract; the
-# `.spec` declares a curated QS-only axis set (distinct QS* roles). Types-only —
-# the standalone `quick_select_registry` self-registers; this crate does not.
+# Reuses quicksort's partition/pivot leaf TYPES + quick_heap's HeapExtract; its
+# query curates the shared partition population (quick_select.avbs).
 quick_select_lib = { path = "../crates/families/quick_select_lib" }
 
 # ── Building stones: fun-sorts family (TYPES ONLY — self_register off) ─────────

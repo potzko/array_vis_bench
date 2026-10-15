@@ -16,9 +16,9 @@
 //! implements its category's `*Input` trait to translate a
 //! [`RunConfig`] into the algorithm's natural-shape argument list.
 //!
-//! Library consumers usually only read `ALGORITHMS` (and friends);
-//! producers of new algorithms register through the `sort_family!` /
-//! `register_input!` macros and never touch the registry directly.
+//! Library consumers usually only read `ALGORITHMS` (and friends). New
+//! algorithms are emitted into it by the spec catalog, and new inputs
+//! register through `register_input!`; neither touches the registry directly.
 
 use linkme::distributed_slice;
 

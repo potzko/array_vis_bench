@@ -1,6 +1,7 @@
-//! Circle sort family — recursive + bottom-up, with finishing strategies
-//! and per-(variant) registrations into
-//! `array_vis_bench_core::ALGORITHMS` via [`sequences`].
+//! Circle sort family, recursive + bottom-up, with finishing strategies.
+//! The catalog emits the variants from `circle.spec` and `circle.avbs`;
+//! [`sequences`] keeps the older in-crate registration behind the
+//! `self_register` feature, off by default.
 
 pub mod circle_sort_bottom_up;
 pub mod circle_sort_recursive;

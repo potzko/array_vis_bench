@@ -2,7 +2,7 @@
 # it can be reused by any link-root that populates the registry — in particular
 # the default spec-only `array_vis_bench` binary whose `ALGORITHMS` comes purely
 # from the constraint compiler. Depends ONLY on the ABI crates (registry + picker tree +
-# renderer), never on a leaf/family/registry crate or combo_codegen: it folds
+# renderer), never on a leaf or family crate: it folds
 # over `ALGORITHMS` + `all_variants()` by fn-pointer/name, so it is agnostic to
 # WHERE the entries came from. The binaries are the link roots that decide that.
 [package]

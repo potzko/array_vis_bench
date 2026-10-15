@@ -2,7 +2,7 @@
 name = "heap_internals_components"
 version = "0.1.0"
 edition = "2021"
-description = "Metadata-only leaf for heap-internal component roles (Arity, HeapDirection, HeapPartition, DeepHeapify, QuickDeepHeapify, DualPivotQuickDeepHeapify). Code stays in `heap_sort_lib` — these roles are deeply coupled to Heap/Compare/HeapLayout traits and a per-leaf code split would balloon the trait surface unnecessarily. The components are still discoverable via the dep-graph scanner; this crate just hosts their metadata + the `use` paths into `heap_sort_lib`."
+description = "Empty crate left over from the retired cross-product generator; the heap roles are declared in heap_sort_lib. Listed for deletion in docs/todo.md."
 
 [lib]
 name = "heap_internals_components"

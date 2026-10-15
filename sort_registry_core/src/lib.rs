@@ -9,11 +9,11 @@
 //! time (faceted navigation).
 //!
 //! Two registration entry points:
-//!   * [`register_sort_variant`] — structured: category + axes. Emitted by
-//!     `sort_family!`-generated code.
-//!   * [`register_sort_path`] — legacy flat path (no axes). Used by the
-//!     hand-written rotation / partition / small-sort / circle macros. The
-//!     whole path becomes the category; the variant has no faceted axes.
+//!   * [`register_sort_variant`], structured: category + axes. Called by the
+//!     constructor the spec catalog emits for every entry.
+//!   * [`register_sort_path`], flat path (no axes), kept for hand-written
+//!     registrations. The whole path becomes the category; the variant has no
+//!     faceted axes.
 //!
 //! This crate is intentionally minimal — no algorithm code, no logger,
 //! no dep on the rest of the workspace except `lazy_static`.

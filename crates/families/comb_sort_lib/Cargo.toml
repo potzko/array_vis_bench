@@ -2,7 +2,7 @@
 name = "comb_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Comb sort family — `CombSort::sort_with_gaps` driver, `CombSortRatio<NUM, DEN>` const-generic algorithm with `SortAlgo` impl, six interactive-visualiser entries per shrink factor (1.3, √2 ≈ 1.414, φ ≈ 1.618, 4/3, 11/8, 5/4), plus the menu-tree ctor. The matching `CombRatio` components live in `comb_ratio_components`."
+description = "Comb sort family: the `CombSort::sort_with_gaps` driver and the `CombSortRatio<NUM, DEN>` const-generic algorithm, with six shrink ratios (1.3, sqrt 2, phi, 4/3, 11/8, 5/4) declared in comb.spec."
 
 [lib]
 name = "comb_sort_lib"

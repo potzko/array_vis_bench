@@ -1,16 +1,16 @@
-//! Indirect-dispatch sort trait — `direct_sort = false` in `sort_family!`
-//! routes through `<T as SortAlgo<...>>::sort(arr, logger)` instead of an
-//! inherent method. Only a handful of sorts still use this path; new
-//! algorithms should prefer an inherent `sort(arr, logger)` method.
+//! Indirect-dispatch sort trait: routes through
+//! `<T as SortAlgo<...>>::sort(arr, logger)` instead of an inherent method.
+//! Only a handful of sorts still use this path; new algorithms should expose
+//! an inherent `sort(arr, logger)` method, which is the shape the spec emit
+//! requires.
 
 use sort_logger::SortLogger;
 
 /// Trait-routed sort dispatch.
 ///
-/// New sorts should prefer an inherent `sort(arr, logger)` method
-/// (registered with `direct_sort = true` in `sort_family!`); this
-/// trait is kept for the small set of legacy variants registered with
-/// `direct_sort = false`.
+/// New sorts should prefer an inherent `sort(arr, logger)` method; this
+/// trait is kept for the small set of legacy variants that only implement
+/// it.
 pub trait SortAlgo<T: Ord + Copy, U: SortLogger<T>>
 where
     Self: Sized,

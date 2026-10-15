@@ -1,14 +1,12 @@
-//! The default `array_vis_bench` visualiser — now a SPEC-ONLY link root.
+//! The default `array_vis_bench` visualiser binary: a link root over the spec
+//! catalog.
 //!
-//! It anchors only the constraint-compiler crates, so the registry the shared
-//! CLI folds over contains *only* spec-emitted entries — `cargo run` is purely
-//! spec-oriented. The legacy `combo_codegen` cross-product generator and its
-//! wiring crate have been retired; the spec catalog is now the sole source of
-//! `ALGORITHMS`. The aux dev tools in `src/bin/` build by default.
+//! It anchors `spec_catalog`, so the registry the shared CLI folds over holds
+//! exactly the spec emitted entries, and calls `array_vis_bench_cli::run`. The
+//! aux dev tools in `src/bin/` build alongside it.
 //!
-//! Purely spec: `shell_sort_lib` is pulled in (via `spec_catalog`) with its
-//! self-registration disabled (`default-features = false`), so there is no combo
-//! "bleed" — the shell sorts are the spec compiler's own emitted entries.
+//! `shell_sort_lib` arrives through `spec_catalog` with its self registration
+//! feature off, so the shell sorts are the catalog's own emitted entries.
 
 // Anchor the unified spec catalog so the linker keeps it: its entries
 // self-register (linkme + #[ctor]) into ALGORITHMS and the picker tree. One

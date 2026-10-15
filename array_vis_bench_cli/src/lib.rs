@@ -2,7 +2,7 @@
 //! verbatim out of the `array_vis_bench` binary so multiple link roots can share
 //! it. It reads the registry purely by name / fn-pointer (`ALGORITHMS`,
 //! `all_variants()`), so it neither knows nor cares whether the entries were
-//! registered by combo_codegen, the spec compiler, or by hand. A binary is just
+//! registered by the spec compiler or by hand. A binary is just
 //! a link root that pulls in some registrations and calls [`run`].
 
 use array_vis_bench_core::bench_registry::{list_inputs, Category, RunConfig};

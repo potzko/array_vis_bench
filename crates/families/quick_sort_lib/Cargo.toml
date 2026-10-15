@@ -2,7 +2,7 @@
 name = "quick_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Quick sort family — `QuickSort<P, V, SS>`, `DualPivotQuickSort<DPS, SS>` (DualPivotPartition), and deferred variants for both. Hosts `CombinedSelector` and `NintherDualPivot` because the dual-pivot family is foreign-trait-on-local-type and can't live in a per-pivot leaf. Standalone `(P × V)` partition registrations now live in the sibling `quick_partition_registry` crate."
+description = "Quick sort family: the CanonicalQuickSort and DeferredCanonicalQuickSort drivers over one self-pivoting partition, the Pivoted and DualPivoted composites, the Yaroslavskiy DualPivotPartition, and the CombinedSelector and NintherDualPivot dual selectors. The composites are also the first-class partition kind."
 
 [lib]
 name = "quick_sort_lib"

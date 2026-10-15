@@ -1,8 +1,7 @@
 //! Minimal-build smoke test #2: also drag in QuickSort with one
-//! concrete (partition, pivot) pair. Demonstrates that after the
-//! `quick_partition_registry` extraction, picking QuickSort no longer
-//! forces every other partition/pivot leaf — the only ones compiled
-//! are `partition_lomuto` and `pivot_first`.
+//! concrete (partition, pivot) pair. Demonstrates that picking QuickSort
+//! does not force every other partition/pivot leaf, the only ones
+//! compiled are `partition_lomuto` and `pivot_first`.
 
 use std::time::Instant;
 

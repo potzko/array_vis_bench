@@ -1,10 +1,9 @@
 //! Shell sort family — `ShellSort` + `ShellSortOrdered` generic over a
 //! [`sequences::GapSequence`], with nine concrete sequences registered.
 //!
-//! Self-registers into `array_vis_bench_core::ALGORITHMS` via
-//! `#[linkme::distributed_slice]` entries in [`registration`], so any
-//! binary that depends on this crate (directly or transitively) has the
-//! full (algorithm × sequence) cross-product available at runtime.
+//! The catalog emits every (algorithm x sequence) pair from `shell.spec` and
+//! `shell.avbs`. The `self_register` feature, off by default and enabled
+//! nowhere, keeps the older in-crate registration in [`registration`].
 
 pub mod registration;
 pub mod sequences;

@@ -2,7 +2,7 @@
 name = "quick_heap_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Quick heap sort family — `QuickHeapSort<A, DH, SS>` and `DeferredQuickHeapSort<A, DSS>`. Hybrid that builds a max-forward heap on the left and a min-reverse heap on the right and converges by head-swapping. Three classic families + one deferred family declared as TOML metadata below."
+description = "Quick heap sort family, `QuickHeapSort<A, DH, SS>` and `DeferredQuickHeapSort<A, DSS>`. Hybrid that builds a max-forward heap on the left and a min-reverse heap on the right and converges by head-swapping. The classic and deferred families and the set quick-select family are declared in quick_heap.spec."
 
 [lib]
 name = "quick_heap_sort_lib"

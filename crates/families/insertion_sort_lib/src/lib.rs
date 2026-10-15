@@ -1,8 +1,6 @@
 //! `InsertionSort<S>` — full insertion sort routed through the chosen
-//! [`InsertionStrategy`] (linear or binary). Cross-product registration
-//! lives in this crate's `Cargo.toml`
-//! (`[[package.metadata.array_vis_bench.families]]`); the wiring crate's
-//! build script picks it up via the dep-graph walker.
+//! [`InsertionStrategy`] (linear or binary). The catalog emits one entry per
+//! strategy from this crate's `insertion.spec` and `insertion.avbs`.
 
 use std::marker::PhantomData;
 

@@ -1,12 +1,10 @@
 //! Left-left single-pointer partition (historically the *Lomuto* scheme,
 //! after Nico Lomuto).
 //!
-//! Phase 3 pilot leaf crate. The struct + `PartitionScheme` impl + the
-//! composable annotations (`HasTimeBounds` / `HasSpace` / `HasStability`)
-//! all live here so the wiring crate doesn't carry this partition's source
-//! at all — just a dep edge. Component discovery happens via the
-//! `[[package.metadata.array_vis_bench.components]]` block in this
-//! crate's `Cargo.toml`.
+//! The struct, the `PartitionScheme` impl and the composable annotations
+//! (`HasTimeBounds` / `HasSpace` / `HasStability`) all live here. The catalog
+//! discovers the scheme through the `partition_lomuto.spec` fragment named in
+//! this crate's `Cargo.toml`.
 
 use array_vis_bench_traits::{
     Complexity, HasSpace, HasStability, HasTimeBounds, PartitionScheme, PartitionVisitor,

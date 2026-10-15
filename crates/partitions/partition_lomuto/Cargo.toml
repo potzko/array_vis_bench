@@ -2,7 +2,7 @@
 name = "partition_lomuto"
 version = "0.1.0"
 edition = "2021"
-description = "LeftLeftPartition partition (left-left single-pointer scan) as a standalone leaf crate. Phase 3 pilot for the per-leaf split — proves the dep-graph component-discovery path end to end."
+description = "LeftLeftPartition partition (left-left single-pointer scan) leaf crate."
 
 [lib]
 name = "partition_lomuto"

@@ -1,8 +1,8 @@
 //! Rod sort family — `RodSort<S, M>` plus the `BranchingStrategy` trait
 //! and its six concrete strategies, and two `RodMerge` variants
-//! (insertion / aux). Self-registers every (strategy × merge) pair via
-//! the macro-generated `static ALGO_ENTRY` blocks in
-//! [`branching`].
+//! (insertion / aux). The catalog emits every (strategy x merge) pair from
+//! `rod.spec` and `rod.avbs`; the older in-crate registration in
+//! [`branching`] sits behind the `self_register` feature, off by default.
 
 pub mod branching;
 pub mod merge;

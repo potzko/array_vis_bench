@@ -145,8 +145,8 @@ opt-level = 1
 
 [profile.release]
 # Single codegen unit so LLVM's inliner sees every monomorphisation in
-# one module — the macro-expanded `sort_family!` blocks land in the
-# wiring crate but the default 16-way split was keeping leaf-trait
+# one module. The emitted catalog entries land in `spec_catalog`, and the
+# default 16-way split was keeping leaf-trait
 # methods (e.g. `ArityHeap::heapify`) out-of-line in the hot path.
 codegen-units = 1
 # ThinLTO on top: lets the linker import functions across the crate

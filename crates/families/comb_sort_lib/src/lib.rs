@@ -1,12 +1,8 @@
-//! Comb sort family. Two registration paths:
-//!
-//! - **Visualiser-only** (this crate's `registration.rs`): six per-ratio
-//!   closures registered into `COMB_SEQUENCES` + `sort_registry_core`'s
-//!   menu tree. These render the gap-shrink animation directly.
-//! - **Algorithm** (`[[package.metadata.array_vis_bench.families]]` in
-//!   this crate's `Cargo.toml`): the cross-product over `CombRatio`
-//!   components — each generating an `ALGORITHMS` entry for
-//!   `CombSortRatio<NUM, DEN>` via the `SortAlgo` trait route.
+//! Comb sort family: the `CombSort` driver and the const-generic
+//! `CombSortRatio<NUM, DEN>`, with six shrink ratios declared as components in
+//! `comb.spec` and emitted by the catalog through the `CombSortOf<{ratio}>`
+//! driver. `registration.rs` keeps the older visualiser-only menu
+//! registration behind the `self_register` feature, off by default.
 
 pub mod comb_sort;
 pub mod comb_sort_ratio;

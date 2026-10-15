@@ -8,10 +8,11 @@
 //! - [`composable`] — per-axis annotation traits (`HasTimeBounds`,
 //!   `HasSpace`, `HasStability`, `PivotQuality`).
 //!
-//! The role traits (`PartitionScheme`, `PivotSelector`, `Rotation`,
-//! `SmallSort`, `BranchingStrategy`, `GapSequence`) currently still live
-//! in their original modules in `array_vis_bench`; they'll migrate here
-//! incrementally in subsequent phases as each leaf is carved out.
+//! - [`role`], the role traits (`PartitionScheme`, `PivotSelector`,
+//!   `SmallSort`, `Rotation`, `QuickSelect`, `Auxiliary`, `Scratchspace`).
+//!
+//! Family-local traits such as `GapSequence` and `BranchingStrategy` stay in
+//! the crate of their only consumer.
 
 pub mod complexity;
 pub mod composable;

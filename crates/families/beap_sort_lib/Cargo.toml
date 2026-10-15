@@ -2,7 +2,7 @@
 name = "beap_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Beap sort family — `BeapHeap<D>` (bi-parental triangular-layout heap) plugged into `HeapSort<H, DH>` from `heap_sort_lib`. Classic + quickselect-build families (single-pivot + dual-pivot) declared as TOML metadata below."
+description = "Beap sort family, `BeapHeap<D>` (bi-parental triangular-layout heap) plugged into `HeapSort<H, DH>` from `heap_sort_lib`. Classic + quickselect-build families (single-pivot + dual-pivot) declared in beap.spec."
 
 [lib]
 name = "beap_sort_lib"

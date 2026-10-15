@@ -116,10 +116,6 @@ impl<HA: HeapAlgorithm + HasStability> HasStability for HeapSort<HA> {
     const STABLE: bool = HA::STABLE;
 }
 
-// Family declaration is now `[[package.metadata.array_vis_bench.families]]`
-// in `heap_sort_lib/Cargo.toml` — picked up by the build script's
-// dep-graph TOML scanner.
-
 // ── Composable annotations ──────────────────────────────────────────
 //
 // HeapSort = N extractions × per-extraction heapify cost. Each Heap

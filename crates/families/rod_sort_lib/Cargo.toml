@@ -27,9 +27,7 @@ ctor = "0.2"
 const_format = "0.2"
 
 # Spec-system catalog fragment + query, OWNED by this crate and gathered by
-# `spec_catalog`'s build via the dependency-graph walk. (Rod never used
-# combo_codegen — it self-registered via the in-crate `register_rod!` macro — so
-# there is no legacy `[[…families]]` array block here.)
+# `spec_catalog`'s build via the dependency-graph walk.
 [package.metadata.array_vis_bench]
 spec  = "rod.spec"
 query = "rod.avbs"

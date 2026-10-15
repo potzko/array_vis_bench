@@ -62,7 +62,7 @@ impl array_vis_bench_traits::HasSpace for HelixRotation {
 
 
 // Uniform across all rotations: O(N), not stable. Wired into the
-// standalone-algorithm registry by `register_rotation!` in array_vis_bench;
+// catalog as a first-class rotation through this crate's spec fragment;
 // kept here because the orphan rule requires the trait impl to live with
 // the type.
 impl array_vis_bench_traits::HasTimeBounds for HelixRotation {

@@ -1,8 +1,8 @@
 //! Heap sort family — `HeapSort<HA>` marker + the `NaryHeapSort<H, DH>`
 //! stateless-heap adapter + the supporting trait layers (`HeapLayout`,
 //! `Heap`, `HeapAlgorithm`, `Compare`, `Layout`, `Direction`, `Arity`,
-//! `DeepHeapify`, `HeapPartition`). Three sort families self-register via
-//! TOML declarations in this crate's `Cargo.toml`:
+//! `DeepHeapify`, `HeapPartition`). Three sort families are declared in
+//! `heap.spec` and built by `heap.avbs`:
 //!
 //! - `HeapSort<NaryHeapSort<ArityHeap<A, D>, DH>>` — classic heap sort
 //! - `HeapSort<NaryHeapSort<ArityHeap<A, D>, QDH<HP, V>>>` — quickselect-build

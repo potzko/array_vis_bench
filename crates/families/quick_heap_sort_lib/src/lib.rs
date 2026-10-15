@@ -1,7 +1,7 @@
 //! Quick heap sort family — hybrid quicksort/heapsort built on
-//! `heap_sort_lib`'s `ArityHeap` machinery. The classic, quickselect-build,
-//! and deferred variants are declared as TOML families in this crate's
-//! `Cargo.toml`.
+//! `heap_sort_lib`'s `ArityHeap` machinery. The classic and deferred drivers
+//! and the set quick-select family are declared in `quick_heap.spec` and
+//! built by `quick_heap.avbs`.
 
 pub mod deferred_quick_heap_sort;
 pub mod heap_extract;

@@ -2,7 +2,7 @@
 name = "heap_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Heap sort family — `HeapSort<H, DH>` generic over a `Heap` impl + `DeepHeapify` strategy, with `ArityHeap<A, D>` covering the (Arity × Direction) lattice, plus three quickselect-build strategies (Sequential/RecursivePartial/StackPartial) and a dual-pivot DualPivotPartition build. The matching component roles (Arity, HeapDirection, HeapPartition, DeepHeapify, QuickDeepHeapify, DualPivotQuickDeepHeapify) live in `heap_internals_components`."
+description = "Heap sort family, `HeapSort<H, DH>` generic over a `Heap` impl + `DeepHeapify` strategy, with `ArityHeap<A, D>` covering the (Arity x Direction) lattice, plus three quickselect-build strategies (Sequential/RecursivePartial/StackPartial) and a dual-pivot DualPivotPartition build. The arity, direction, partition and deep-heapify components are declared in heap.spec."
 
 [lib]
 name = "heap_sort_lib"

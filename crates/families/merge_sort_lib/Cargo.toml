@@ -2,7 +2,7 @@
 name = "merge_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Merge sort family — TopDown/BottomUp/Naive/Natural classic merge sorts plus rotation-based merge sorts (TopDownRotationMergeSort, BottomUpRotationMergeSort), each cross-producted over its axes. The 22 rotation-based + 2 auxiliary standalone-merge registrations now live in the sibling `merge_standalone_registry` crate."
+description = "Merge sort family: TopDown/BottomUp/Naive/Natural classic merge sorts, the rotation-based merge sorts (TopDownRotationMergeSort, BottomUpRotationMergeSort), the RotationMerge trait with its naive and smaller-side merges, and the first-class merge kinds, all declared in merge.spec."
 
 [lib]
 name = "merge_sort_lib"
