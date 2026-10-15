@@ -120,6 +120,6 @@ variants (`set quick heap sort<set<select<heap extract: binary<{iterative|recurs
 
 ## Follow-ups (not done)
 - The other 3 enumeration strategies (`affine`/`sample`/`spread`) remain unimplemented
-  (only `finite` was built). See [[project_enumeration_strategies]].
+  (only `finite` was built). See [enumeration_strategies.md](enumeration_strategies.md).
 - The set-quick-select family could expand (more arities / the RecursiveSet arm /
   wider inner-select partitions) — deferred; "minimal proof" was the chosen scope.

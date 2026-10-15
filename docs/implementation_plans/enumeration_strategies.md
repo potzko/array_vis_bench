@@ -1,7 +1,9 @@
 # Implementation plan: enumeration strategies (`finite` / `affine` / `sample` / `spread`)
 
-Status: **DESIGNED, NOT STARTED.** Names + semantics locked 2026-06-17. Park here; pick up
-when ready. This is a `spec_core` language extension, not a runtime feature.
+Status: PARTLY BUILT. Names and semantics locked 2026-06-17. `finite` shipped 2026-07-01
+(commit e6edd80, `enumerate_finite` in `spec_core/src/enumerate.rs`) and is load bearing in
+`quick_heap.avbs`. `affine`, `sample`, `spread`, the `.` rest fill sugar and the set operator
+polish are not started. This is a `spec_core` language extension, not a runtime feature.
 
 ## Problem
 
@@ -73,6 +75,9 @@ Build order: **0 → 1 → 2** unblock the recursive quick-heaps with zero runti
 then 4. Each phase: grammar (if any) → lowering → solve → tests.
 
 ### Phase 0 — cycle analysis (foundational, the hard part)
+Outcome: not built as a separate pass. `finite` runs the occurs check while enumerating (a
+child whose component is already on the ancestor path is skipped), which yields the same
+acyclic set without a graph module. Revisit only if `affine` needs shared infrastructure.
 - New `spec_core/src/cycles.rs`: build the role-dependency graph from the `Registry`
   (component → its slot roles → providers of each), run Tarjan SCC, expose
   `is_cyclic(component)` / `cyclic_providers(role)`.
@@ -80,27 +85,27 @@ then 4. Each phase: grammar (if any) → lowering → solve → tests.
   `finite` and the enumerator disagree. Unit-test on a hand-built recursive fragment
   (`A` has slot of role `R`; `B: R` has slot of role `A`'s role → cycle).
 
-### Phase 1 — `affine` (self-terminating; no Phase 0 needed)
+### Phase 1 — `affine` (self-terminating; no Phase 0 needed) NOT STARTED
 - `spec.rs`: add a strategy tag to `Query` (or a `QValue` wrapper).
 - `avbs.rs`: recognize `affine(<value>)` at lowering, set the tag.
 - `solve.rs` / `enumerate.rs`: thread a subtree-scoped `used: HashSet<canonical-component>`;
   prune already-used candidates; pop on backtrack.
 - **Risk: low.** Terminates because each component is used ≤ once.
 
-### Phase 2 — `finite`
+### Phase 2 — `finite` DONE 2026-07-01
 - Uses Phase 0: at a `finite` family, the candidate set at each hole = providers-of-T MINUS
   `cyclic_providers(T)` (exactly `!{T} - !{T : cyclic}`).
 - Keep the existing `depth N` directive as an optional backstop for deep-but-finite families.
 - **Risk: low once Phase 0 lands.**
 
-### Phase 3 — `sample` (optional seed) + `spread`
+### Phase 3 — `sample` (optional seed) + `spread` NOT STARTED
 - `sample`: reuse `Take` distinct+dedup; seed optional → when `random`, draw from the global
   build RNG; when omitted, deterministic default seed.
 - `spread`: stratified pick across the variant tree (round-robin over pre-order DFS).
 - **Risk: low.** Wrinkle: `seed = random` ⇒ nondeterministic codegen for that family (count
   stable, identities vary; only fires on actual recompiles).
 
-### Phase 4 — set-op polish (lowest priority, partly exists)
+### Phase 4 — set-op polish (lowest priority, partly exists) NOT STARTED
 - Bare `|` union in value position; splat `*TG`; xor / intersection. Small `.pest` additions +
   glyph-collision resolution. Defer until 0–3 are solid.
 
@@ -110,8 +115,7 @@ then 4. Each phase: grammar (if any) → lowering → solve → tests.
 3. `spread` stratification: round-robin over DFS (default) vs subtree-size-weighted?
 
 ## Pointers
-- Memory: `project_enumeration_strategies.md`, `project_avbs_query_language.md`,
-  `project_first_class_kinds.md`.
+- Status and decision record: [../todo.md](../todo.md).
 - Grammar: `spec_core/src/avbs.pest`; lowering `spec_core/src/avbs.rs`; solve
   `spec_core/src/solve.rs`; enumerate `spec_core/src/enumerate.rs`; types `spec_core/src/spec.rs`.
 - Terminology sources: Substructural type systems (Walker, ATTAPL ch.1); Occurs check (Wikipedia);

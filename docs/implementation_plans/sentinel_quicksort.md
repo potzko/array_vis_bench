@@ -110,7 +110,7 @@ fn partition_bounded<const L_SENTINEL: bool, const R_SENTINEL: bool, T, U, V>(
 - **Equal keys are the correctness trap.** A sentinel stops a `<= pivot` scan only if it is *strictly*
   `> pivot`; an *equal* neighbour lets the scan run past it (→ out-of-bounds / corruption). Real
   sentinel quicksorts dodge this via median-of-3 / strict placement. This is precisely what the
-  transitivity-safety correctness work ([memory `correctness-test-scaffolding`]) must cover before
+  transitivity-safety correctness work (the sort battery in `array_vis_bench_core/src/bench_registry.rs`) must cover before
   this ships — guard elision is where an order-relation bug stops being caught by "is it sorted?" and
   starts being UB.
 - **Cost vs win.** Adds a second driver + four partition bodies per opted-in scheme. Justified only by
@@ -127,5 +127,6 @@ baseline by more than the ~1.05× gate on the partition-bound path. Until then: 
   (`CanonicalQuickSort`), [deferred_quick_sort.rs](../../crates/families/quick_sort_lib/src/deferred_quick_sort.rs).
 - Partition contract + visitor: [array_vis_bench_traits/src/role/partition.rs](../../array_vis_bench_traits/src/role/partition.rs).
 - The poster-child scheme: [crates/partitions/partition_hoare/src/lib.rs](../../crates/partitions/partition_hoare/src/lib.rs).
-- Perf gate: `src/bin/compare_sorts.rs`. Correctness: memory `correctness-test-scaffolding`
-  (transitivity safety).
+- Perf gate: `src/bin/compare_sorts.rs`. Correctness: the sort battery in
+  `array_vis_bench_core/src/bench_registry.rs` (transitivity safety is open work, see
+  [../todo.md](../todo.md)).
