@@ -1,133 +1,121 @@
-# Trait System
+# Trait system
 
-The project uses traits extensively to parameterise sort algorithms over independent strategy axes. This document covers each trait, its role, and how traits compose.
+Three groups of traits make the composition work: role traits that leaves
+implement, annotation traits that carry complexity and stability as consts,
+and the logger every body writes to. Together they are the calling
+convention the compiler emits against.
 
-## The sort interface
+## The sort shape
 
-Every sort family exposes an inherent `sort` method:
+A sort exposes an inherent method, generic over the element and the logger:
 
 ```rust
-impl MySort<…> {
-    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) { … }
+impl<P: PartitionScheme, SS: SmallSort> CanonicalQuickSort<P, SS> {
+    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) { ... }
 }
 ```
 
-The two type parameters let the same code run in benchmark mode (`T = usize, U = NoOpLogger`) and visualisation mode (`U = VisualizerLogger<usize>` or `dyn SortLogger<usize>`). `U: ?Sized` is the default so the same body services both monomorphised callers and trait-object dispatch.
+`U: ?Sized` is what lets one body serve both the monomorphic benchmark path
+(`&mut NoOpLogger`) and the visualiser path (`&mut dyn SortLogger<T>`). Drop
+it and the dyn path stops compiling. The legacy `SortAlgo<T, U>` trait in
+`array_vis_bench_traits/src/sort_traits.rs` is kept for a few old callers;
+new code does not implement it.
 
-The legacy `SortAlgo<T, U>` trait (in `src/traits/sort_traits.rs`) is still used by a few hand-rolled callers but is no longer the registration mechanism — every algorithm lands in `bench_registry::ALGORITHMS` via `combo_codegen::family!` / `sort_registry_macro::sort_family!` / a category-specific `register_*!` macro.
+## Role traits
 
-**Design choice:** the inherent `sort` is generic over the logger rather than taking `&mut dyn SortLogger<T>`. Benchmark builds (`U = NoOpLogger`) monomorphise every logger call and the optimiser eliminates them entirely.
+All live in `array_vis_bench_traits/src/role/`. Every method takes the
+`<T: Ord + Copy, U: ?Sized + SortLogger<T>>` pair.
 
-## `SortLogger<T>` — operation instrumentation
+| trait | key members | what an impl is |
+|---|---|---|
+| `PartitionScheme` | `NAME`, `N_PIVOTS`, `SCRATCH_LEN`, `partition(arr, logger, pivots, scratch, visitor)` | one partition step; reports unsorted ranges to a `PartitionVisitor` |
+| `PartitionVisitor` | `unsorted(range)` | the driver side of the report, never return, contract |
+| `PivotSelector` | `NAME`, `select(arr, logger) -> usize` | choose one pivot index |
+| `DualPivotSelector` | `select(arr, logger) -> (usize, usize)` | choose two |
+| `PivotInput` | `N`, `pick(arr, logger, out)` | 0, 1 or 2 pivot source; every `PivotSelector` is lifted to `N = 1` by a blanket impl, `NoPivot` is `N = 0` |
+| `SmallSort` | `THRESHOLD`, `sort(arr, logger) -> bool` | sort any slice up to the threshold; `NoSmallSort` has threshold 0 |
+| `NonTrivialSmallSort` | marker | threshold above 1 |
+| `InsertionStrategy` | `insert_one(arr, i, logger) -> bool` | place one element of a sorted prefix |
+| `SetSizeSmallSort<N>` | `sort(arr: &mut [T; N], logger)` | fixed size sort; `SmallSortAdapter<S>` lifts a `SmallSort` |
+| `DeferredSmallSort` | `THRESHOLD`, `final_pass(arr, logger)` | one whole array cleanup after a deferred quicksort |
+| `Rotation` | `NAME`, `scratch_size(n)`, `rotate(arr, split, scratch, logger)` | rotate a slice, in place or with a declared scratch |
+| `QuickSelect` | `select(arr, logger, target)` | place the target order statistic |
+| `Auxiliary` | `NAME`, `MERGE_WORST`, `MERGE_SPACE`, `scratch_size(n)` | how much scratch a merge is handed |
+| `Scratchspace` | `NAME`, `aux_size(n)`, `acquire`, `release`, `park`, `place`, `block_swap`, `relocate`, `roll` | a bounded buffer contract whose operations all conserve the multiset |
+| `ScratchspaceRun` | `run(list, aux, logger)` | a scripted workflow over a `Scratchspace`, netting to identity |
+
+Family local traits stay with their only consumer: `GapSequence` in
+`shell_sort_lib`, `BranchingStrategy` and `RodMerge` in `rod_sort_lib`,
+`RotationMerge` in `merge_sort_lib`, `GapDistribution` in
+`gap_distribution_lib` (it needs `rand`), `ReverseStorage` in
+`reverse_storage_lib` (it writes through the logger), and the heap layers
+(`Heap`, `HeapLayout`, `Arity`, `Direction`, `DeepHeapify`, `HeapPartition`)
+in `heap_sort_lib`.
+
+### Report, do not return
+
+A partition never returns its sub ranges. It announces each unsorted region
+to the visitor and the caller decides what to do. Sorted regions are the
+gaps between announcements. The same partition therefore runs under a
+recursive driver, an iterative one, a quick select, and the standalone
+partition battery, which plugs in a visitor that only records boundaries.
+
+### Scratch through the logger
+
+A scheme that needs scratch declares `SCRATCH_LEN`; `with_partition_scratch`
+allocates it once per sort through the logger and threads the same slice into
+every call. Rotations do the same with `scratch_size`. The visualiser can then
+draw the buffer next to the array.
+
+## Annotation traits
+
+In `array_vis_bench_traits/src/composable.rs`. They carry consts only and
+default to unknown. The emit reads them off the final concrete type.
+
+| trait | consts | default |
+|---|---|---|
+| `HasTimeBounds` | `WORST`, `BEST`, `AVERAGE: Complexity` | unknown; best and average fall back to worst |
+| `HasSpace` | `SPACE: Complexity` | unknown |
+| `HasStability` | `STABLE: bool` | false |
+| `PivotQuality` | `DEGENERATES: bool` | true |
+
+`Complexity` (`complexity.rs`) is a const evaluable Big-O class with named
+constants (`CONST`, `LOG_N`, `SQRT_N`, `N_LOG_N`, `N_SQUARED`, `CUBIC`,
+`EXPONENTIAL`, `FACTORIAL`, `UNKNOWN`, among others) and two const functions:
+`product` adds exponents, `sum` takes the maximum. A composer combines its
+parts at compile time:
 
 ```rust
-pub trait SortLogger<T: Copy + Ord> {
-    fn log(&mut self, _: SortLog<T>) {}
-    // 30+ default-implemented methods built on top of log():
-    // cond_swap_lt, write_data, cmp_le_accross, create_aux_arr_t, ...
+impl<Scheme, Sel> HasTimeBounds for Pivoted<Scheme, Sel>
+where Scheme: PartitionScheme + HasTimeBounds, Sel: PivotInput + HasTimeBounds {
+    const WORST: Complexity = Complexity::sum(Scheme::WORST, Sel::WORST);
+    ...
 }
 ```
 
-The single required method is `log`. All comparison, swap, write, and auxiliary-memory methods are built on top of it. Sorts call the high-level methods (`cond_swap_lt`, `write_data`, etc.) rather than `log` directly.
+Unknown dominates, so a leaf that skips its four impls pollutes every
+composition it enters.
 
-**dyn-compatibility:** Methods that are generic over a second type `U` (e.g. `swap<U>`, `cmp_le<U>`) are gated with `where Self: Sized` and excluded from the vtable. All T-specific methods work on `&mut dyn SortLogger<T>`.
+## The logger
 
-### Implementations
+`SortLogger<T>` in `sort_logger/src/sort_logger.rs` has one required method,
+`log(SortLog<T>)`, and about fifty defaulted methods built on it: compares
+(`cmp_lt`, `cmp_le_accross`, and friends), moves (`write`, `write_data`,
+`swap`, `cond_swap_lt`, `write_accross`), compounds (`reverse`, `block_swap`,
+`shift_insert`, `copy_range`), auxiliary arrays (`create_aux_arr_t`,
+`free_aux_arr_t`, integer width variants) and markers. Every method is non
+generic in anything but the trait's `T`, which keeps the trait dyn compatible.
+The methods that need a second element type are gated `where Self: Sized`
+and stay out of the vtable.
 
-| Type | Behaviour |
-|---|---|
-| `NoOpLogger` | `log()` is a no-op. Every call compiles away entirely. |
-| `VisualizerLogger<T>` | Appends every `SortLog<T>` to a `Vec` for later GIF rendering. |
-| `()` | Blanket no-op, convenient in unit tests. |
+Two impls: `NoOpLogger`, whose methods compile away, and
+`VisualizerLogger<T>`, which appends every event to a vector. `()` is a
+convenient no-op logger in unit tests.
 
-## `Rotation` — array rotation strategy
+## Consumer side traits
 
-```rust
-pub trait Rotation {
-    const NAME: &'static str;
-    fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-        arr: &mut [T], split_ind: usize, logger: &mut U,
-    );
-}
-```
-
-A rotation moves `arr[split..]` to the front and `arr[..split]` to the back. 11 implementations trade off between auxiliary memory, number of data movements, and cache locality.
-
-**Used by:** `NaiveRotationMerge<R>` and `SmallerSideRotationMerge<R>` in the rotation merge sort family. The rotation algorithm is a type parameter, so different rotations produce different concrete sorts.
-
-## `RotationMerge` — in-place merge strategy
-
-```rust
-pub trait RotationMerge {
-    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-        arr: &mut [T], mid: usize, logger: &mut U,
-    );
-}
-```
-
-Merges `arr[..mid]` and `arr[mid..]` (both sorted) in-place using rotation.
-
-### Implementations
-
-| Type | Method |
-|---|---|
-| `NaiveRotationMerge<R>` | Linear scan from the left: binary-search for the insertion point, rotate, advance. O(N^2) comparisons worst case. |
-| `SmallerSideRotationMerge<R>` | symMerge: picks a pivot from the shorter half, binary-searches its position in the other half, rotates, recurses on two sub-problems. O(N log N) moves, O(N log^2 N) comparisons. |
-
-## `SmallSort` — base-case strategy for merge sorts
-
-```rust
-pub trait SmallSort {
-    const THRESHOLD: usize;
-    fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U);
-}
-```
-
-Controls when a merge sort stops recursing and switches to a simpler sort.
-
-| Type | Behaviour |
-|---|---|
-| `NoSmallSort` | `THRESHOLD = 0`. Recurse all the way to size 1. |
-| `InsertionSmallSort<N>` | Switch to insertion sort for subarrays of size <= N. Typical value: 32. |
-
-## `GapSequence` — shell sort gap strategy
-
-```rust
-pub trait GapSequence {
-    const NAME: &'static str;
-    const BIG_O: &'static str;
-    fn gaps(len: usize) -> Vec<usize>;
-}
-```
-
-Returns gap values in descending order for shell sort. 9 implementations from `Classic` (Shell 1959, O(N^2)) to `Pratt` (2^p * 3^q, O(N log^2 N)).
-
-## `BranchingStrategy` — shell-shell/rod sort decomposition
-
-```rust
-pub trait BranchingStrategy {
-    const NAME: &'static str;
-    const BIG_O: &'static str;
-    fn should_cut(virtual_len: usize) -> bool;
-    fn branch(virtual_len: usize) -> usize;
-    fn intermediate(virtual_len: usize) -> usize { 0 }
-}
-```
-
-Controls how many interleaved sub-arrays each recursion level of shell-shell sort / rod sort splits into. 6 implementations from fixed (Classic: always 2) to adaptive (RootParity: sqrt(len)).
-
-## How traits compose
-
-A concrete rotation merge sort is parameterised over three independent trait axes plus two const-generic flags:
-
-```rust
-TopDownRotationMergeSort<
-    InsertionSmallSort<32>,          // SmallSort
-    SmallerSideRotationMerge<        // RotationMerge
-        TrinityRotation              //   Rotation
-    >,
-    true                             // EARLY_EXIT
->
-```
-
-`combo_codegen::family!` enumerates all meaningful combinations of these parameters automatically. Each combination becomes a separate `bench_registry::AlgorithmEntry` with its own name, run-with-input function, correctness battery, and position in the navigation tree. (The older `sort_registry_macro::sort_family!` covers single-leaf or self-contained variant trees with the same end result.)
+`array_vis_bench_core::mains::Main` is a consumer over a set of entries
+(visualiser, correctness, benchmark, timing).
+`array_vis_bench_core::suites::CorrectnessSuite` is the per kind correctness
+battery, one impl per role trait backed kind, and is what the emit wires each
+entry's `run_correctness` pointer to.

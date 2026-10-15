@@ -1,149 +1,66 @@
-# Adding a New Sort
+# Adding an algorithm
 
-How to add a new sort to the project. Most paths are one file edit.
+The full guide, with a worked example, is [writing-components.md](writing-components.md).
+This page is the short recipe for the three common cases.
 
-## Option 1: Single-leaf sort
+## A new slot filler (pivot, partition, rotation, small sort)
 
-For a one-off sort with no parameterisation. Use `sort_registry_macro::sort_family!`.
+1. Make a crate under `crates/<axis>/<name>/` depending only on
+   `array_vis_bench_traits` and `sort_logger`.
+2. Implement the role trait, routing every comparison and write through the
+   logger, plus `HasTimeBounds`, `HasSpace`, `HasStability` and, for a pivot,
+   `PivotQuality`.
+3. Write `<name>.spec` with one component: `type`, `label`, `provides <Role>`,
+   `uses <path>`.
+4. Point the manifest at it with `[package.metadata.array_vis_bench] spec = "<name>.spec"`.
+5. Add the crate to the workspace members and to `spec_catalog/Cargo.toml`.
+6. `cargo build`, then `cargo test -p spec_catalog`. The golden counts will
+   move; update them to the new numbers once you have checked that the new
+   variants are the ones you expect.
 
-```rust
-// src/sorts/bubble_sorts/my_sort.rs
-use crate::traits::log_traits::SortLogger;
+A filler needs no query. Every driver whose slot has that role picks it up.
+If some consumer should not see it, subtract it in that consumer's query.
 
-pub struct MySort;
+## A new family with its own driver
 
-impl MySort {
-    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        // Algorithm body.
-        // Use logger methods for every comparison and write:
-        //   logger.cond_swap_gt(arr, i, j)
-        //   logger.write_data(arr, i, value)
-        //   logger.cmp_lt(arr, i, j)
-    }
-}
+1. Make a crate under `crates/families/<name>/` with the driver type, generic
+   over its slots, and an inherent `sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>`.
+2. Give it the four annotation impls, composed from its parts with
+   `Complexity::sum` and `Complexity::product`.
+3. In `<name>.spec` declare the driver component with `category Sort`, a
+   `slot` per type parameter, a `menu` path, and any family local fillers.
+4. In `<name>.avbs` write the query, usually
+   `Name: SortingAlgorithm = SortingAlgorithm<Driver<slot = _, other = _>>`.
+   Curate with `_ - {...}` or `where (...)` rather than branching in the
+   driver.
+5. Declare both files in the manifest, add the crate to the workspace and to
+   `spec_catalog/Cargo.toml`.
+6. Add a golden count assertion in `spec_catalog/src/lib.rs` beside the other
+   families.
 
-sort_registry_macro::sort_family! {
-    type Sort = MySort;
-    name        = "my sort";
-    big_o       = "O(N^2)";
-    stable      = true;
-    direct_sort = true;
-    path        = ["bubble sorts", "my sort"];
-}
-```
+If a slot role can be filled by something that contains the same role, wrap
+the hole in `finite(_)` or add a `depth N` directive, or the build will refuse
+the query as unbounded.
 
-Add the module in the family's `mod.rs`:
+## A new first class kind
 
-```rust
-pub mod my_sort;
-```
+A kind is a new `Category` with its own run driver, battery, suite, emit arm
+and wrapper. The seven places to touch are listed at the end of
+[registration.md](registration.md). The scratchspace kind on this branch is
+the reference implementation.
 
-Done. The macro produces a `bench_registry::AlgorithmEntry`, a `#[ctor]` that registers the menu path, and a `linkme` entry — no further wiring needed.
+## Rules every implementation follows
 
-## Option 2: Parameterised family
-
-When a sort has independent strategy axes (small-sort cutoff, gap sequence, rotation algorithm, …) prefer `combo_codegen::family!`.
-
-### 1. Define the strategy trait + annotate concrete impls
-
-```rust
-pub trait MyStrategy {
-    const NAME: &'static str;
-    fn do_thing<T, U: ?Sized + SortLogger<T>>(/* ... */);
-}
-
-pub struct StrategyA;
-combo_codegen::component!(MyStrategy, StrategyA, "a");
-
-pub struct StrategyB;
-combo_codegen::component!(MyStrategy, StrategyB, "b");
-```
-
-The `component!` annotations are zero-cost markers; the build script scans for them.
-
-### 2. Implement the sort generically
-
-```rust
-pub struct MySort<S: MyStrategy>(PhantomData<S>);
-
-impl<S: MyStrategy> MySort<S> {
-    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
-        // Use S::do_thing(...) for the parameterised step
-    }
-}
-```
-
-### 3. Declare the family
-
-```rust
-combo_codegen::family!(
-    type = MySort<{S}>,
-    uses = [
-        "crate::sorts::my_sorts::my_sort::MySort",
-        "crate::sorts::my_sorts::strategies::{StrategyA, StrategyB}",
-    ],
-    S: MyStrategy,
-    name        = "my sort",
-    big_o       = "O(N log N)",
-    stable      = false,
-    direct_sort = true,
-    path        = ["my sorts", "{S}"],
-);
-```
-
-Include the generated combinations in `mod.rs`:
-
-```rust
-pub mod combinations {
-    include!(concat!(env!("OUT_DIR"), "/my_sorts_combinations.rs"));
-}
-```
-
-That's it. One `AlgorithmEntry` will be emitted per concrete `MySort<StrategyA>`, `MySort<StrategyB>`, … and they all show up in `bench_registry::ALGORITHMS`.
-
-## Rules for sort implementations
-
-### Always route through the logger
-
-Every comparison and data movement must go through `SortLogger` methods. Direct array access (`arr[i] = arr[j]`, `arr.swap(i, j)`) silently works for benchmarks but produces no visualisation events. Reading a value to a temporary (`let tmp = arr[i]`) is fine — only writes and comparisons need logging.
-
-Preferred:
-
-```rust
-logger.cond_swap_lt(arr, i, j);          // swap if arr[i] < arr[j]
-logger.cond_swap_gt(arr, i, j);          // swap if arr[i] > arr[j]
-logger.write_data(arr, i, value);        // arr[i] = value, logged
-logger.write_accross(src, i, dst, j);    // dst[j] = src[i], logged
-logger.cmp_le_accross(a, i, b, j);       // compare across two arrays
-logger.create_aux_arr_t(len) / free_aux_arr_t(&buf)  // aux-memory tracking
-```
-
-### Generic over `<T: Ord + Copy, U: ?Sized + SortLogger<T>>`
-
-Use `U: ?Sized` so the same code works with the concrete `NoOpLogger` (bench path) and `dyn SortLogger<T>` (visualiser path). Only drop `?Sized` if you call the trait's `where Self: Sized` cross-`T` helpers.
-
-### Const-generic booleans for flags
-
-```rust
-pub struct MySort<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool> { ... }
-```
-
-Each `(flag, …)` combination monomorphises to its own code path; the compiler eliminates dead branches.
-
-### Cap slow random-input tests
-
-If a sort can't handle large random inputs in reasonable time (e.g. anything cubic or worse) declare a cap so the correctness battery skips oversized arrays:
-
-```rust
-array_vis_bench::register_test_cap!("my slow sort", 1000);
-```
-
-## Adding a new gap sequence / rotation / etc.
-
-These are not sorts — they're components consumed by sort families. Adding one:
-
-1. Implement the trait in the appropriate `utils/` folder.
-2. Annotate with `combo_codegen::component!(Role, MyType, "label")`.
-3. Add a `register_*!` entry next to similar ones if you want the component visible as a standalone algorithm.
-
-Every family that takes a matching slot will pick the new component up on the next build.
+- Every comparison and every write goes through the logger. Reading into a
+  temporary is fine. A raw `arr.swap` works in the benchmark and silently
+  desynchronises the visualiser.
+- Prefer the fused helpers (`cond_swap_lt`, `cond_swap_gt`, `swap`) over
+  hand rolled compare and write pairs.
+- Pass the same slice object consistently. The logger identifies an array by
+  its base pointer, so a reslice looks like a different array.
+- Auxiliary storage that grows with the input is allocated and freed through
+  the logger so the renderer can show it.
+- A sort that cannot handle large random inputs declares `max_input` in its
+  spec or registers a test cap. A sort whose trace is intentionally random
+  declares `nondeterministic true`.
+- Nested loop indices are `i`, `ii`, `iii`.
