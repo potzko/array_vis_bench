@@ -101,7 +101,6 @@ component pk_single
   type     Pivoted<{scheme}, {pivot}>
   label    {scheme}<{pivot}>
   provides PartitionKind SelectPartition     # <-- two roles
-  uses     quick_sort_lib::Pivoted
   slot     scheme PartScheme
   slot     pivot  PartPivot
 end
@@ -171,11 +170,12 @@ component piv_last
   type     LastElement
   label    last
   provides PartPivot
-  uses     pivot_last::LastElement
 end
 ```
 
-That is the entire second half of the job for a leaf. Five lines. A type that
+That is the entire second half of the job for a leaf. Four lines. There is no
+import line: the build imports `LastElement` from the crate that owns the
+fragment, so the type must be a `pub` item at that crate's root. A type that
 several families slot under different roles is still one component. Its
 `provides` line lists them all, as `pivot_first.spec` does with `PartPivot
 HeapPiv BeapPiv`.
@@ -188,7 +188,7 @@ HeapPiv BeapPiv`.
 | `type <expr>` | The Rust type, with `{hole}` placeholders for each slot. Leaves have no holes (`LastElement`); composites do (`Pivoted<{scheme}, {pivot}>`). |
 | `label <template>` | Human-readable name, same `{hole}` templating. Instantiated into the `AlgorithmEntry.name` / picker path. |
 | `provides <Role> [<Role>...]` | The role(s) this component advertises. This is what slots match against. |
-| `uses <rust::path> [<path>...]` | Module paths spliced into the emitted `use` block so `type` resolves. |
+| `uses <rust::path> [<path>...]` | Optional override of the imports the build derives from the owning crate. Only for a type the owning crate cannot reach, with the reason in a comment beside it. |
 | `slot <name> <Role>` | A type parameter, filled by any component of `<Role>`. A query must fill every slot. |
 | `const <name> [values <v>...]` | A const generic, matched by name or position. `values` is the finite set a quantified hole ranges over; without it the const takes only a literal. A query must pass every const. |
 | `menu <path>` | Picker sub-path beneath the category. |
@@ -771,7 +771,6 @@ component piv_penultimate
   type     Penultimate
   label    penultimate
   provides PartPivot
-  uses     pivot_penultimate::Penultimate
 end
 ```
 
@@ -838,7 +837,7 @@ first.
 - [ ] `impl <RoleTrait> for <YourType>` with the standard `<T: Ord + Copy, U: ?Sized + SortLogger<T>>` signature.
 - [ ] All array access routed through `logger` (prefer `cond_swap_*`).
 - [ ] The four annotation impls (`HasTimeBounds`, `HasSpace`, `HasStability`, and `PivotQuality` if it's a pivot).
-- [ ] A `<name>.spec` fragment: unique `component`, correct `provides <Role>`, `uses <rust::path>`.
+- [ ] A `<name>.spec` fragment: unique `component`, correct `provides <Role>`, its type a `pub` item at the crate root.
 - [ ] `[package.metadata.array_vis_bench] spec = "<name>.spec"` in `Cargo.toml`.
 - [ ] Crate is in `spec_catalog`'s dependency closure.
 - [ ] One unit test proving it does its job; `max_input` if it's size-limited.

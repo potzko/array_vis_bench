@@ -20,6 +20,8 @@
 # `uses` lines take multiple space-separated crate paths (e.g. the driver AND the
 # baked partition). These are the canonical quick-sort registrations now — the
 # combo registry is disconnected, so the labels carry no `spec::` marker.
+#
+# This fixture has no owning crate, so every component lists its imports.
 
 # ════════════════════════════ PIVOT SELECTORS ════════════════════════════
 # Single-pivot selectors (PivotInput::N = 1) — the 5 the old single families use.
