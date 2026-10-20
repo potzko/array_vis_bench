@@ -41,10 +41,6 @@ pub struct Component {
     /// `quick_sort_lib::quick_sort::QuickSort`. Mirrors the real `uses = [...]`
     /// family field. Unioned with nested children's `uses` during resolve.
     pub uses: Vec<String>,
-    /// Which `AlgorithmEntry` driver/battery this component emits as. `None`
-    /// for non-emittable components (slot fillers like pivots/partitions). The
-    /// `emit_entries` backend reads this on a query's ROOT component.
-    pub category: Option<String>,
     /// Per-family literal (NOT compositional — can't be inherited from the
     /// type): true if the algorithm runs faster on nearly-sorted input.
     pub adaptive: bool,
@@ -124,7 +120,6 @@ impl Registry {
                         provides: vec![],
                         params: vec![],
                         uses: vec![],
-                        category: None,
                         adaptive: false,
                         nondeterministic: false,
                         max_input: None,
@@ -146,7 +141,13 @@ impl Registry {
                         "uses" => {
                             c.uses.extend(rest.split_whitespace().map(str::to_string))
                         }
-                        "category" => c.category = Some(rest.trim().to_string()),
+                        "category" => {
+                            return Err(err(
+                                "`category` is set by the query wrapper (`SortingAlgorithm<X>`, \
+                                 `Selection<X>`, `RotationAlg<_>`, ...), not by the component; \
+                                 delete this line",
+                            ))
+                        }
                         "menu" => {
                             c.menu = rest
                                 .split('/')
@@ -247,5 +248,18 @@ fn split_first_word(line: &str) -> (&str, &str) {
     match line.find(char::is_whitespace) {
         Some(i) => (&line[..i], &line[i + 1..]),
         None => (line, ""),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_category_line_is_an_error_that_names_the_wrapper() {
+        let err = Registry::parse("component c\n  type C\n  category Sort\nend\n").unwrap_err();
+        assert!(err.contains("registry line 3"), "got: {err}");
+        assert!(err.contains("`category`"), "got: {err}");
+        assert!(err.contains("SortingAlgorithm"), "got: {err}");
     }
 }
