@@ -68,8 +68,6 @@ category drivers plus the per category input slices fill that role, and the
    - `crates/components/comb_ratio_components` and
      `crates/components/heap_internals_components`, metadata only crates
      for the retired generator with no consumer left;
-   - the `qs_nopivot` component in `array_vis_bench_traits.spec`, which
-     provides roles that no slot names any more;
    - the `SortAlgo` trait, once item 7 is settled;
    - `spec_catalog/quick_port.spec`, kept only as the baseline for the
      slotted versus baked equivalence test;
@@ -81,6 +79,32 @@ category drivers plus the per category input slices fill that role, and the
    domain agnostic solver front end, and the array domain backend that
    stays in the monorepo. Keep implementations, program and a
    consumer in one link unit so the inlining story holds.
+
+## Role collapse, what held and what did not
+
+A review of the specs found 205 components for 163 Rust types. The
+duplicates were one type declared once per consumer role, for example a
+pivot declared three times. Merging them leaves 169 components for 161
+types, with all 1580 entries, names and concrete types unchanged. The
+per entry identity is now pinned in `spec_catalog/catalog.golden`.
+
+Two parts of the original proposal were checked against the code and
+dropped:
+
+- Roles cannot become plain Rust trait bounds. They are named
+  populations: heap sorts try five pivots, beap sorts four and quick sort
+  six, all implementing one trait. Expressing that in queries needs the
+  same subtraction in every consuming query, and queries share no
+  bindings across files. A prelude of shared bindings is the missing
+  piece, and it should come first if the role tags are ever to go.
+- Attributes on the Rust types cannot replace the spec. Slot roles,
+  slot defaults, labels, menus and role tags are not derivable from
+  generics and bounds, so the attribute would restate the spec line for
+  line.
+
+Three pairs of components still share a type on purpose. The beap and
+heap quick deep heapify strategies differ in the role of their pivot
+slot, and the beap ninther dual selector has its own label.
 
 ## Decision record
 
@@ -100,6 +124,7 @@ category drivers plus the per category input slices fill that role, and the
   and the legacy self registration features stay off.
 - Curate in the query. When one composition misbehaves, subtract it; do not
   patch the driver.
+- A Rust type is one component. Its roles are the populations it joins.
 - Standard and deferred quicksort are two families differing only in driver
   and small sort role.
 - Enumeration strategy names are `finite` and `affine`; no seed means a

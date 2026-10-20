@@ -52,10 +52,13 @@ end
 | `adaptive <bool>` | per family literal, not inherited from the type |
 | `nondeterministic <bool>` | the trace varies between runs; opts out of the determinism check |
 
-Roles are strings, finer grained than Rust traits. One trait is usually
-sliced into several roles so queries can enumerate exactly the population they
-mean: `PartitionScheme` backs `PartScheme`, `PartSchemeDual`, `PartitionKind`,
-`SelectPartition` and `HeapExtractPart`. Slots bind by role, and rustc type
+Roles are strings, finer grained than Rust traits. A role names a population,
+so one trait is often sliced into several roles that queries can enumerate:
+`PartitionScheme` backs `PartScheme`, `PartitionKind`, `SelectPartition` and
+`HeapExtractPart`. A Rust type is declared once, and its `provides` line lists
+every role it fills: `FirstElement` is one component that provides `PartPivot`,
+`HeapPiv` and `BeapPiv`. Two components share a type only when the spec data
+differs, such as a label or the role of a slot. Slots bind by role, and rustc type
 checks the emitted composition, so a role that admits a wrong type is caught
 at compile time rather than at run time.
 
@@ -86,7 +89,7 @@ sets the category.
 |---|---|---|
 | `SortingAlgorithm<X>` | Sort | the driver's own slots |
 | `Selection<X>` | QuickSelect | the driver's own slots |
-| `RotationAlg<_>` | Rotation | `RotationKind` |
+| `RotationAlg<_>` | Rotation | `Rotation` |
 | `SmallSortAlg<_>` | SmallSort | `SmallSortKind` |
 | `PartitionAlg<_>` | Partition | `PartitionKind` |
 | `MergeAlg<_>` | Merge | `MergeKind` |

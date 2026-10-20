@@ -47,10 +47,12 @@ Partitions report unsorted ranges to a visitor; they never return them.
 
 ## Catalog hygiene
 
-- Component names are a global namespace. Prefix them by role: `pkp_` pivot,
-  `pks_` partition scheme, `pk_` partition composite, `mrot_` merge rotation,
-  `rot_` rotation kind, `ss_` small sort, `sk_` small sort kind, `nt_` non
-  trivial small sort, `dss_` deferred small sort.
+- Declare each Rust type once. List every role it fills on one `provides`
+  line, and add a `category` if it is also a first class entry.
+- Component names are a global namespace. Prefix them by what they are:
+  `piv_` pivot, `pks_` partition scheme, `pk_` partition composite, `rot_`
+  rotation, `mrm_` rotation merge, `ss_` small sort, `dss_` deferred small
+  sort.
 - Labels are lowercase, with the slot values in angle brackets:
   `quick sort<part: left-left<first>, small: size: 2>`.
 - Never edit a list of algorithm names. Registration is derived.

@@ -90,7 +90,7 @@ several roles**, cut as finely as the queries need:
   `PartPivotDual` (dual selectors like `CombinedSelector`), and family-specific ones
   like `BeapDualPivot`.
 - The trait `PartitionScheme` backs `PartScheme` (pivot-consuming single partitions),
-  `PartSchemeDual` (`DualPivotPartition`), `PartitionKind` (self-pivoting composites),
+  `PartitionKind` (self-pivoting composites),
   `SelectPartition` (composites + heap-extract), and `HeapExtractPart`.
 
 And **one component can provide several roles at once**. From
@@ -168,7 +168,7 @@ provides. [crates/pivots/pivot_last/pivot_last.spec](../crates/pivots/pivot_last
 in full:
 
 ```text
-component pkp_last
+component piv_last
   type     LastElement
   label    last
   provides PartPivot
@@ -176,7 +176,10 @@ component pkp_last
 end
 ```
 
-That is the entire second half of the job for a leaf. Five lines.
+That is the entire second half of the job for a leaf. Five lines. A type that
+several families slot under different roles is still one component. Its
+`provides` line lists them all, as `pivot_first.spec` does with `PartPivot
+HeapPiv BeapPiv`.
 
 #### `.spec` keyword reference
 
@@ -484,9 +487,9 @@ Now `DualPivotPartition` and `Pivoted<SomeScheme, CombinedSelector<First, Last>>
 | When to write it | the algorithm is genuinely different | you're recombining existing parts |
 
 The rule of thumb: **write a monolith only when the algorithm is genuinely
-different**; otherwise compose. In the `.spec`, the specialised form gets the
-`PartSchemeDual` role and the composed form is built by `pk_dual`'s
-`DualPivoted<{pivot}>` , both feed the same `PartitionKind` population.
+different**; otherwise compose. In the `.spec`, the specialised form is baked
+into the composite `pk_dual`, whose `DualPivoted<{pivot}>` feeds the same
+`PartitionKind` population as the composed `pk_single`.
 
 ### 5.5 Report-don't-return: the visitor contract
 
@@ -761,7 +764,7 @@ mod tests {
 **3. Declare the component** in `pivot_penultimate.spec`:
 
 ```text
-component pkp_penultimate
+component piv_penultimate
   type     Penultimate
   label    penultimate
   provides PartPivot
@@ -773,13 +776,16 @@ end
 whatever crate pulls the pivot leaves into `spec_catalog` (the same place `pivot_first`,
 `pivot_last` are listed), and to the workspace members if needed.
 
-**5. Build.** `cargo build` re-runs `spec_catalog/build.rs`. Because `pkp_penultimate`
+**5. Build.** `cargo build` re-runs `spec_catalog/build.rs`. Because `piv_penultimate`
 provides `PartPivot`, it's now a legal filler for `pk_single`'s `pivot` slot and for
 `combined`'s `a`/`b` sub-slots. It flows automatically into:
 
 - every single-pivot `PartitionKind` (`Pivoted<scheme, penultimate>`) -> all quicksorts,
 - every dual composite that pairs it (`combined<penultimate, ...>`),
 - quick-select and the standalone Partition-kind entries.
+
+To also offer it to the heap and beap quick builds, add `HeapPiv` and `BeapPiv`
+to the same `provides` line.
 
 You wrote one struct and five lines of spec; the compiler produced dozens of new
 catalog entries, each with correct inherited Big-O. If you *didn't* want it in some
