@@ -117,6 +117,8 @@ impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool>
     }
 }
 
+array_vis_bench_traits::direct_sort!(BottomUpMergeSort<S, PING_PONG, EARLY_EXIT>; S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool);
+
 // Iterative bottom-up merge: log N doubling passes, each touching all N
 // elements → N log N in every case (EARLY_EXIT skips merges but still scans
 // every pass boundary, so best stays N log N).

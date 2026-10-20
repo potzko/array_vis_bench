@@ -26,6 +26,9 @@ If some consumer should not see it, subtract it in that consumer's query.
 
 1. Make a crate under `crates/families/<name>/` with the driver type, generic
    over its slots, and an inherent `sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>`.
+   Join the `DirectSort` role with one line beside the impl,
+   `array_vis_bench_traits::direct_sort!(Driver<S>; S: Role);`, repeating the
+   impl's generics after the `;`.
 2. Give it the four annotation impls, composed from its parts with
    `Complexity::sum` and `Complexity::product`.
 3. In `<name>.spec` declare the driver component with a `slot` per type
@@ -45,10 +48,11 @@ the query as unbounded.
 
 ## A new first class kind
 
-A kind is a new `Category` with its own run driver, battery, suite, emit arm
-and wrapper. The seven places to touch are listed at the end of
-[registration.md](registration.md). The scratchspace kind on this branch is
-the reference implementation.
+A kind is a new `Category` with its own wrapper, role and suite. The four
+places to touch are listed at the end of [registration.md](registration.md):
+a `Category` variant, a row of `spec_emit`'s `KINDS` table, a `<Kind>Suite`
+impl and the input tags. The scratchspace kind is the reference
+implementation.
 
 ## Rules every implementation follows
 

@@ -9,10 +9,16 @@
 //!   `HasSpace`, `HasStability`, `PivotQuality`).
 //!
 //! - [`role`], the role traits (`PartitionScheme`, `PivotSelector`,
-//!   `SmallSort`, `Rotation`, `QuickSelect`, `Auxiliary`, `Scratchspace`).
+//!   `SmallSort`, `Rotation`, `RotationMerge`, `DirectSort`, `QuickSelect`, `Auxiliary`,
+//!   `Scratchspace`).
 //!
 //! Family-local traits such as `GapSequence` and `BranchingStrategy` stay in
 //! the crate of their only consumer.
+
+// The `direct_sort!` macro names the logger trait through this path, so a crate
+// that invokes it needs no import of its own.
+#[doc(hidden)]
+pub use sort_logger;
 
 pub mod complexity;
 pub mod composable;
@@ -22,9 +28,10 @@ pub mod sort_traits;
 pub use complexity::{Complexity, Special};
 pub use composable::{HasSpace, HasStability, HasTimeBounds, PivotQuality};
 pub use role::{
-    with_partition_scratch, DeferredSmallSort, DualPivotSelector, InsertionStrategy, NoPivot,
+    with_partition_scratch, DeferredSmallSort, DirectSort, DualPivotSelector, InsertionStrategy, NoPivot,
     NonTrivialSmallSort, PartitionScheme, PartitionVisitor, PivotInput, PivotSelector, QuickSelect,
-    Rotation, Scratchspace, ScratchspaceRun, SetSizeSmallSort, SmallSort, SmallSortAdapter,
+    Rotation, RotationMerge, Scratchspace, ScratchspaceRun, SetSizeSmallSort, SmallSort,
+    SmallSortAdapter,
 };
 pub use role::rotation::reverse;
 pub use role::small_sort::{insertion_sort_with, windowed_insertion_sort_with};

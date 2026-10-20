@@ -15,6 +15,8 @@ impl SlowSort {
     }
 }
 
+array_vis_bench_traits::direct_sort!(SlowSort);
+
 fn slow_sort_rec<T, U>(arr: &mut [T], logger: &mut U)
 where
     T: Ord + Copy,

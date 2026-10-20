@@ -60,8 +60,10 @@ if a type ever needs two placements.
 
 ## Outcome
 
-- The table is `WRAPPERS` in `spec_core/src/avbs.rs`, one row per wrapper with
-  its name, role and category. `is_wrapper_name` reads it too.
+- The table was `WRAPPERS` in `spec_core/src/avbs.rs`, one row per wrapper with
+  its name, role and category. `is_wrapper_name` reads it too. It has since
+  moved into the `KINDS` table of `spec_emit` and reaches the lowering as a
+  parameter (see `kind_trait.md`).
 - The tree held 73 `category` lines in the production fragments, not the 87 the
   design counted: 44 Sort, 11 Rotation, 7 SmallSort, 4 Scratchspace, 3 Merge, 2
   Partition and 2 QuickSelect. The fixtures lost 9 (`registry.spec`) and 14

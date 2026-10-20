@@ -64,6 +64,8 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
     }
 }
 
+array_vis_bench_traits::direct_sort!(TopDownRotationMergeSort<S, M, EARLY_EXIT>; S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool);
+
 // The per-merge rotation strategy dominates the whole-sort cost: M's declared
 // WORST/AVERAGE (N_SQUARED for naive, N_LOG_SQUARED for smaller-side) already
 // equals the legacy whole-sort big_o, so forward M's bounds directly. BEST is
@@ -151,6 +153,8 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
         }
     }
 }
+
+array_vis_bench_traits::direct_sort!(BottomUpRotationMergeSort<S, M, EARLY_EXIT>; S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool);
 
 // Same forwarding shape as the top-down rotation head: the per-merge rotation
 // strategy M dictates the whole-sort bounds, space, and stability.

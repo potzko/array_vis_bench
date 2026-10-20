@@ -19,6 +19,8 @@ impl CircleSortShakerRecursive {
     }
 }
 
+array_vis_bench_traits::direct_sort!(CircleSortShakerRecursive);
+
 /// Pre-order level: `circle_pass` first, then recurse sub-ranges post-order.
 fn sort_pre<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],

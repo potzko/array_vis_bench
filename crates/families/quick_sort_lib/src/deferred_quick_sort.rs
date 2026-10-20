@@ -66,6 +66,8 @@ impl<P: PartitionScheme, DSS: DeferredSmallSort> DeferredCanonicalQuickSort<P, D
     }
 }
 
+array_vis_bench_traits::direct_sort!(DeferredCanonicalQuickSort<P, DSS>; P: PartitionScheme, DSS: DeferredSmallSort);
+
 // ── Composable annotations for the deferred pivotless driver ──────────
 // Depth is O(N) if the partition can degenerate, else O(log N) — read off
 // the partition `P` (pivot-agnostic, like the in-place pivotless driver).

@@ -8,7 +8,7 @@
 //! merge runs fully in place. All element movement goes through the logger.
 //!
 //! A consumer (`scratchspace_lib::AuxiliaryMerge<A>`) turns an `Auxiliary` into a
-//! [`RotationMerge`](../../../merge_sort_lib/rotation_merge/trait.RotationMerge.html)
+//! [`RotationMerge`](crate::role::merge::RotationMerge)
 //! so it drops straight into the existing merge pipeline, bench, and visualiser.
 //!
 //! [`Rotation`]: crate::role::Rotation

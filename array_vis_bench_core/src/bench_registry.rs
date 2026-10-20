@@ -10,15 +10,15 @@
 //! - `run_with_input` — drives the algorithm with a dyn-logger.
 //! - `run_correctness` — drives the category's correctness battery.
 //!
-//! Input shapes are registered separately, per category, into a
-//! distributed slice (`SORT_INPUTS`, `ROTATION_INPUTS`, etc.). The
-//! algorithm picks its input by name at runtime; the input
-//! implements its category's `*Input` trait to translate a
-//! [`RunConfig`] into the algorithm's natural-shape argument list.
+//! Input shapes are registered separately into one distributed slice,
+//! `INPUTS`, each tagged with the categories it serves. The algorithm
+//! picks its input by name at runtime; the input's `generate` fn
+//! translates a [`RunConfig`] into the array and index the algorithm takes.
 //!
 //! Library consumers usually only read `ALGORITHMS` (and friends). New
 //! algorithms are emitted into it by the spec catalog, and new inputs
-//! register through `register_input!`; neither touches the registry directly.
+//! register through `#[distributed_slice(INPUTS)]`; neither touches the
+//! registry directly.
 
 use linkme::distributed_slice;
 
@@ -84,131 +84,98 @@ impl Default for RunConfig {
     }
 }
 
-// ── Per-category input traits ────────────────────────────────────────────────
+// ── Inputs ───────────────────────────────────────────────────────────────────
 //
-// Each category has one trait that registered input types implement. The
-// trait's only job is `generate` — translate a `RunConfig` into the
-// natural-shape input the algorithm wants. Concrete `*Input` types
-// register themselves into the matching distributed slice via the
-// `register_input!` macros below, so they're selectable by name at
-// runtime without giving up the typed `generate` signature.
+// An input is a first-class registered thing, on par with algorithms. Every
+// shape registers once, tagged with the categories it serves, and returns an
+// array plus one index: a rotation's split, a merge's midpoint, a quick
+// select's target, `0` for a kind that takes none. UI and harness code
+// filters the one slice by category to populate input pickers and to look an
+// input up by name.
 
-/// Generates the input array for a sort benchmark / visualisation.
-pub trait SortInput {
-    /// Build a `Vec<usize>` of length `config.size` following this
-    /// input's shape (random / sorted / reversed / sawtooth / …).
-    fn generate(config: &RunConfig) -> Vec<usize>;
-}
-
-/// Generates the input for a single rotation step.
-pub trait RotationInput {
-    /// Returns (array, split index).
-    fn generate(config: &RunConfig) -> (Vec<usize>, usize);
-}
-
-/// Generates the input for a single merge step — two adjacent runs.
-pub trait MergeInput {
-    /// Returns (array, mid). `arr[..mid]` and `arr[mid..]` are each sorted.
-    fn generate(config: &RunConfig) -> (Vec<usize>, usize);
-}
-
-/// Generates the input for a small-sort variant. Same shape as
-/// [`SortInput`] but typically sized below the algorithm's threshold.
-pub trait SmallSortInput {
-    /// Build a `Vec<usize>` shorter than the small-sort threshold.
-    fn generate(config: &RunConfig) -> Vec<usize>;
-}
-
-/// Generates the input for a quickselect step.
-pub trait QuickSelectInput {
-    /// Returns (array, target index). Quickselect reorders `arr` so
-    /// that the value which would land at `target` after a full sort
-    /// lands there. Different target positions stress different
-    /// recursion paths (mid = balanced, first = always recurse left,
-    /// last = always recurse right).
-    fn generate(config: &RunConfig) -> (Vec<usize>, usize);
-}
-
-// ── Per-category input registries ────────────────────────────────────────────
-//
-// Inputs are first-class registered things, on par with algorithms. Each
-// category gets a distributed slice keyed by the natural-shape signature
-// of its `generate` fn pointer. UI / harness code iterates the slice for
-// the algorithm's category to populate input pickers / lookups by name.
-
-pub struct SortInputEntry {
+pub struct InputEntry {
     pub name: &'static str,
-    pub generate: fn(&RunConfig) -> Vec<usize>,
+    /// Every category this shape is a meaningful input for. A partition or a
+    /// scratchspace operation takes the same array as a sort, so those three
+    /// share the sort shapes.
+    pub categories: &'static [Category],
+    pub generate: fn(&RunConfig) -> (Vec<usize>, usize),
     /// Exactly one entry per category is `primary = true`. Harness code
     /// that needs a sensible default without prompting the user picks
-    /// the primary. Multiple primaries → startup panic; zero primaries
-    /// → also a startup panic.
+    /// the primary. Multiple primaries -> startup panic; zero primaries
+    /// -> also a startup panic.
     pub primary: bool,
 }
 
-pub struct RotationInputEntry {
-    pub name: &'static str,
-    pub generate: fn(&RunConfig) -> (Vec<usize>, usize),
-    pub primary: bool,
-}
+#[distributed_slice] pub static INPUTS: [InputEntry] = [..];
 
-pub struct MergeInputEntry {
-    pub name: &'static str,
-    pub generate: fn(&RunConfig) -> (Vec<usize>, usize),
-    pub primary: bool,
+fn inputs_of(category: Category) -> impl Iterator<Item = &'static InputEntry> {
+    INPUTS.iter().filter(move |e| e.categories.contains(&category))
 }
-
-pub struct SmallSortInputEntry {
-    pub name: &'static str,
-    pub generate: fn(&RunConfig) -> Vec<usize>,
-    pub primary: bool,
-}
-
-pub struct QuickSelectInputEntry {
-    pub name: &'static str,
-    pub generate: fn(&RunConfig) -> (Vec<usize>, usize),
-    pub primary: bool,
-}
-
-#[distributed_slice] pub static SORT_INPUTS:         [SortInputEntry] = [..];
-#[distributed_slice] pub static ROTATION_INPUTS:     [RotationInputEntry] = [..];
-#[distributed_slice] pub static MERGE_INPUTS:        [MergeInputEntry] = [..];
-#[distributed_slice] pub static SMALL_SORT_INPUTS:   [SmallSortInputEntry] = [..];
-#[distributed_slice] pub static QUICK_SELECT_INPUTS: [QuickSelectInputEntry] = [..];
 
 /// All registered input names for `category`, in registry order.
-///
-/// `Partition` shares the `Sort` input registry: a partition algorithm
-/// (with internal pivot selection) takes the same shape of input as a
-/// sort — a single `Vec<usize>` — so any sort input is meaningful for
-/// it. No need for a parallel partition-input registry.
 pub fn list_inputs(category: Category) -> Vec<&'static str> {
-    match category {
-        Category::Sort | Category::Partition | Category::Scratchspace => {
-            SORT_INPUTS.iter().map(|e| e.name).collect()
-        }
-        Category::Rotation => ROTATION_INPUTS.iter().map(|e| e.name).collect(),
-        Category::Merge => MERGE_INPUTS.iter().map(|e| e.name).collect(),
-        Category::SmallSort => SMALL_SORT_INPUTS.iter().map(|e| e.name).collect(),
-        Category::QuickSelect => QUICK_SELECT_INPUTS.iter().map(|e| e.name).collect(),
-    }
+    inputs_of(category).map(|e| e.name).collect()
 }
 
-/// The primary input for `category` — the one harness code uses as a
+/// The primary input for `category`, the one harness code uses as a
 /// sensible default when there's no explicit user pick. Each category
 /// must have exactly one primary; uniqueness is enforced at startup by
 /// [`validate_registries`].
 pub fn primary_input(category: Category) -> &'static str {
-    match category {
-        Category::Sort | Category::Partition | Category::Scratchspace => {
-            SORT_INPUTS.iter().find(|e| e.primary).map(|e| e.name)
-        }
-        Category::Rotation => ROTATION_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
-        Category::Merge => MERGE_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
-        Category::SmallSort => SMALL_SORT_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
-        Category::QuickSelect => QUICK_SELECT_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
-    }
-    .unwrap_or_else(|| panic!("no primary input registered for category {:?}", category))
+    inputs_of(category)
+        .find(|e| e.primary)
+        .map(|e| e.name)
+        .unwrap_or_else(|| panic!("no primary input registered for category {:?}", category))
+}
+
+/// The input called `name` that serves `category`. Panics when there is none.
+pub fn find_input(category: Category, name: &str) -> &'static InputEntry {
+    inputs_of(category)
+        .find(|e| e.name == name)
+        .unwrap_or_else(|| panic!("{} input '{name}' not registered", category.as_str()))
+}
+
+// The problems with one category's inputs: a repeated name, no primary or two,
+// or no inputs at all while `algorithms` entries need one.
+fn category_input_errors(
+    category: Category,
+    inputs: &[&InputEntry],
+    algorithms: usize,
+) -> Vec<String> {
+    let mut seen = std::collections::HashSet::new();
+    let repeated = inputs
+        .iter()
+        .filter(|e| !seen.insert(e.name))
+        .map(|e| format!("duplicate input name '{}' in category {category:?}", e.name));
+    let primaries: Vec<&str> = inputs.iter().filter(|e| e.primary).map(|e| e.name).collect();
+    let primary = match (inputs.len(), primaries.len()) {
+        (0, _) if algorithms > 0 => Some(format!(
+            "no inputs registered for category {category:?} (but {algorithms} algorithm(s) need one)"
+        )),
+        (0, _) | (_, 1) => None,
+        (_, 0) => Some(format!(
+            "no primary input for category {category:?}; mark one entry with `primary: true`"
+        )),
+        _ => Some(format!("multiple primary inputs for category {category:?}: {primaries:?}")),
+    };
+    repeated.chain(primary).collect()
+}
+
+// The input problems of every category that has an input or an algorithm.
+fn input_errors(inputs: &[InputEntry], algorithms: &[Category]) -> Vec<String> {
+    let mut seen = std::collections::HashSet::new();
+    let categories = inputs.iter().flat_map(|e| e.categories).chain(algorithms);
+    let distinct: Vec<Category> = categories.filter(|&&c| seen.insert(c)).copied().collect();
+    distinct
+        .into_iter()
+        .flat_map(|category| {
+            let serving: Vec<&InputEntry> =
+                inputs.iter().filter(|e| e.categories.contains(&category)).collect();
+            let needing = algorithms.iter().filter(|&&c| c == category).count();
+            category_input_errors(category, &serving, needing)
+        })
+        .collect()
 }
 
 /// Validate the registries at startup. Runs once via [`#[ctor::ctor]`]
@@ -257,67 +224,8 @@ pub fn validate_registries() -> Result<(), String> {
     errors.extend(crate::navigation::repeated_name_errors(ALGORITHMS.iter()));
 
     // ── Per-category input checks ────────────────────────────────────
-    fn check_inputs<E, NF, PF>(
-        category: Category,
-        entries: &[E],
-        name_of: NF,
-        primary_of: PF,
-        algorithms_in_category: usize,
-        errors: &mut Vec<String>,
-    ) where
-        NF: Fn(&E) -> &'static str,
-        PF: Fn(&E) -> bool,
-    {
-        let mut seen: std::collections::HashSet<&'static str> = Default::default();
-        for e in entries {
-            if !seen.insert(name_of(e)) {
-                errors.push(format!(
-                    "duplicate input name '{}' in category {:?}",
-                    name_of(e), category
-                ));
-            }
-        }
-        let primaries: Vec<&'static str> =
-            entries.iter().filter(|e| primary_of(e)).map(&name_of).collect();
-        if entries.is_empty() && algorithms_in_category > 0 {
-            errors.push(format!(
-                "no inputs registered for category {:?} (but {} algorithm(s) need one)",
-                category, algorithms_in_category
-            ));
-        } else if !entries.is_empty() {
-            match primaries.len() {
-                0 => errors.push(format!(
-                    "no primary input for category {:?}; mark one entry with `primary: true`",
-                    category
-                )),
-                1 => {}
-                _ => errors.push(format!(
-                    "multiple primary inputs for category {:?}: {:?}",
-                    category, primaries
-                )),
-            }
-        }
-    }
-
-    // Partitions reuse SORT_INPUTS, so they're not validated as a
-    // separate registry. The "sort inputs exist when sort or partition
-    // algorithms exist" check rolls partition count into the sort
-    // category's expected-non-empty assertion.
-    let sort_or_partition_count = ALGORITHMS
-        .iter()
-        .filter(|e| matches!(e.category, Category::Sort | Category::Partition | Category::Scratchspace))
-        .count();
-    let count = |cat: Category| ALGORITHMS.iter().filter(|e| e.category == cat).count();
-    let sort_inputs: &[SortInputEntry] = &SORT_INPUTS;
-    let rotation_inputs: &[RotationInputEntry] = &ROTATION_INPUTS;
-    let merge_inputs: &[MergeInputEntry] = &MERGE_INPUTS;
-    let small_inputs: &[SmallSortInputEntry] = &SMALL_SORT_INPUTS;
-    let qsel_inputs: &[QuickSelectInputEntry] = &QUICK_SELECT_INPUTS;
-    check_inputs(Category::Sort,        sort_inputs,     |e| e.name, |e| e.primary, sort_or_partition_count,       &mut errors);
-    check_inputs(Category::Rotation,    rotation_inputs, |e| e.name, |e| e.primary, count(Category::Rotation),     &mut errors);
-    check_inputs(Category::Merge,       merge_inputs,    |e| e.name, |e| e.primary, count(Category::Merge),        &mut errors);
-    check_inputs(Category::SmallSort,   small_inputs,    |e| e.name, |e| e.primary, count(Category::SmallSort),    &mut errors);
-    check_inputs(Category::QuickSelect, qsel_inputs,     |e| e.name, |e| e.primary, count(Category::QuickSelect),  &mut errors);
+    let algorithms: Vec<Category> = ALGORITHMS.iter().map(|e| e.category).collect();
+    errors.extend(input_errors(&INPUTS, &algorithms));
 
     if errors.is_empty() { Ok(()) } else { Err(errors.join("\n")) }
 }
@@ -339,139 +247,37 @@ fn validate_at_startup() {
     }
 }
 
-// ── Shared per-category dispatchers ──────────────────────────────────────────
+// ── The run driver ───────────────────────────────────────────────────────────
 //
-// The macro-generated `run_with_input` in every algorithm entry is a
-// one-liner around the matching helper below. Putting the
-// init-event-emitting code in a single place keeps the generated code
-// small and centralises the visualiser contract ("CreateArr + N
+// Every kind runs on an array plus one index, so one driver serves them all.
+// The `run_with_input` in every algorithm entry is a one-liner around it.
+// Putting the init-event-emitting code in a single place keeps the generated
+// code small and centralises the visualiser contract ("CreateArr + N
 // WriteData fully describes the initial state").
 
-/// Run a sort against a named input. Looks the input up in
-/// [`SORT_INPUTS`], generates the array via the registered `generate`
-/// fn, emits the initial-state events on `logger`, then calls
-/// `sort_fn(arr, logger)`.
-pub fn run_sort_with_input(
-    input_name: &str,
-    config: &RunConfig,
-    sort_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
-    logger: &mut dyn sort_logger::SortLogger<usize>,
-) {
-    let input = SORT_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("sort input '{input_name}' not registered"));
-    let mut arr = (input.generate)(config);
-    emit_init_events(&arr, logger);
-    sort_fn(&mut arr, logger);
-}
+/// The one shape an entry's adapter has: the array, the input's index and a dyn
+/// logger. A sort ignores the index, a rotation takes its split, a merge its
+/// midpoint and a quick select its target.
+pub type RunFn = fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>);
 
-/// Run a rotation against a named input. Returns the (arr, split) tuple
-/// from the input registry; rotates with `rotate_fn(arr, split, logger)`.
-pub fn run_rotation_with_input(
-    input_name: &str,
-    config: &RunConfig,
-    rotate_fn: fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>),
-    logger: &mut dyn sort_logger::SortLogger<usize>,
-) {
-    let input = ROTATION_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("rotation input '{input_name}' not registered"));
-    let (mut arr, split) = (input.generate)(config);
-    emit_init_events(&arr, logger);
-    rotate_fn(&mut arr, split, logger);
-}
+/// [`RunFn`] with a concrete [`sort_logger::NoOpLogger`], the shape every
+/// correctness battery calls. A partition returns the `(left_end, right_start)`
+/// boundary its battery checks; every other kind returns `None`.
+pub type RunFnNoop = fn(&mut [usize], usize, &mut sort_logger::NoOpLogger) -> Option<(usize, usize)>;
 
-/// Run a partition against a named input. Partitions register with
-/// their pivot selector baked in, so the standalone partition fn
-/// signature matches a sort's — `(&mut [usize], &mut dyn SortLogger)`
-/// — and the input registry is just `SORT_INPUTS`. The (left_end,
-/// right_start) tuple a partition returns isn't useful to the
-/// visualiser; tests use the `PartitionFnPtr` variant that keeps the
-/// return value.
-pub fn run_partition_with_input(
+/// Run an algorithm of `category` against a named input. Looks the input up in
+/// [`INPUTS`], generates the array and index via the registered `generate` fn,
+/// emits the initial-state events on `logger`, then calls `f(arr, index, logger)`.
+pub fn run_with_input(
+    category: Category,
     input_name: &str,
     config: &RunConfig,
-    partition_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
+    f: RunFn,
     logger: &mut dyn sort_logger::SortLogger<usize>,
 ) {
-    let input = SORT_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("sort input '{input_name}' not registered"));
-    let mut arr = (input.generate)(config);
+    let (mut arr, index) = (find_input(category, input_name).generate)(config);
     emit_init_events(&arr, logger);
-    partition_fn(&mut arr, logger);
-}
-
-/// Run a merge against a named input. The registry guarantees both
-/// halves of `arr` are individually sorted before merge.
-pub fn run_merge_with_input(
-    input_name: &str,
-    config: &RunConfig,
-    merge_fn: fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>),
-    logger: &mut dyn sort_logger::SortLogger<usize>,
-) {
-    let input = MERGE_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("merge input '{input_name}' not registered"));
-    let (mut arr, mid) = (input.generate)(config);
-    emit_init_events(&arr, logger);
-    merge_fn(&mut arr, mid, logger);
-}
-
-/// Run a quick-select against a named input. The input supplies both
-/// the array and the target index; the algorithm reorders the array so
-/// `arr[target]` ends up as the value it would have after a full sort.
-pub fn run_quick_select_with_input(
-    input_name: &str,
-    config: &RunConfig,
-    quick_select_fn: fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>),
-    logger: &mut dyn sort_logger::SortLogger<usize>,
-) {
-    let input = QUICK_SELECT_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("quick-select input '{input_name}' not registered"));
-    let (mut arr, target) = (input.generate)(config);
-    emit_init_events(&arr, logger);
-    quick_select_fn(&mut arr, target, logger);
-}
-
-/// Run a small-sort against a named input. Mirrors `run_sort_with_input`
-/// but pulls from [`SMALL_SORT_INPUTS`].
-pub fn run_small_sort_with_input(
-    input_name: &str,
-    config: &RunConfig,
-    sort_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
-    logger: &mut dyn sort_logger::SortLogger<usize>,
-) {
-    let input = SMALL_SORT_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("small-sort input '{input_name}' not registered"));
-    let mut arr = (input.generate)(config);
-    emit_init_events(&arr, logger);
-    sort_fn(&mut arr, logger);
-}
-
-/// Run an in-place scratchspace block-roll against a named input. Shares the
-/// `Sort` input registry — the op takes a single `Vec<usize>`, like a partition.
-pub fn run_scratchspace_with_input(
-    input_name: &str,
-    config: &RunConfig,
-    scratchspace_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
-    logger: &mut dyn sort_logger::SortLogger<usize>,
-) {
-    let input = SORT_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("sort input '{input_name}' not registered"));
-    let mut arr = (input.generate)(config);
-    emit_init_events(&arr, logger);
-    scratchspace_fn(&mut arr, logger);
+    f(&mut arr, index, logger);
 }
 
 /// Emit the visualiser's "this array exists with these initial values"
@@ -597,76 +403,45 @@ fn subprocess_dispatch() {
 
 // ── Property-test integration hooks ──────────────────────────────────────────
 //
-// The fixed-pattern correctness batteries used to call into
-// `crate::property_tests::*::run` directly under `#[cfg(test)]`. With
-// the batteries living in this crate, that direct reference would only
-// fire when `cargo test -p array_vis_bench_core` is run — useless,
-// because the algorithm registry is populated by leaves linked into the
+// The batteries live in this crate, so a direct reference to a property test
+// would only fire under `cargo test -p array_vis_bench_core`, which is useless:
+// the algorithm registry is populated by leaves linked into the
 // `array_vis_bench` binary, not core's standalone test build.
 //
-// Instead, each category exposes a distributed slice of hook fn
-// pointers. The wiring crate's test target contributes a hook entry
-// (its `property_tests` module is the natural home); the batteries
-// iterate the slice and call every registered hook. With no hooks
-// registered (a non-test build), the slice is empty and the iteration
-// is a no-op — preserving the existing "property tests only run under
-// cargo test" contract.
+// Instead there is one distributed slice of hook fn pointers. The wiring
+// crate's test target contributes a hook entry (its `property_tests` module is
+// the natural home); each battery iterates the slice and calls every
+// registered hook with its own category, so a hook knows what the index of the
+// fn it was handed means. With no hooks registered (a non-test build), the
+// slice is empty and the iteration is a no-op, preserving the "property tests
+// only run under cargo test" contract.
 
-pub type SortPropHook = fn(correctness::SortFnPtr, &str);
-pub type RotationPropHook = fn(correctness::RotationFnPtr, &str);
-pub type PartitionPropHook = fn(correctness::PartitionFnPtr, &str);
-pub type MergePropHook = fn(correctness::MergeFnPtr, &str);
-pub type QuickSelectPropHook = fn(correctness::QuickSelectFnPtr, &str);
-pub type SmallSortPropHook = fn(correctness::SmallSortFnPtr, &str, usize);
+/// A property test over one battery's fn: the kind it is for, the adapter, the
+/// entry's name and its cap.
+pub type PropHook = fn(Category, RunFnNoop, &str, Option<usize>);
 
-#[distributed_slice] pub static SORT_PROP_HOOKS:         [SortPropHook] = [..];
-#[distributed_slice] pub static ROTATION_PROP_HOOKS:     [RotationPropHook] = [..];
-#[distributed_slice] pub static PARTITION_PROP_HOOKS:    [PartitionPropHook] = [..];
-#[distributed_slice] pub static MERGE_PROP_HOOKS:        [MergePropHook] = [..];
-#[distributed_slice] pub static QUICK_SELECT_PROP_HOOKS: [QuickSelectPropHook] = [..];
-#[distributed_slice] pub static SMALL_SORT_PROP_HOOKS:   [SmallSortPropHook] = [..];
+#[distributed_slice] pub static PROP_HOOKS: [PropHook] = [..];
 
 /// Correctness-test runner. Public so the subprocess dispatch above can
 /// call it; not `#[cfg(test)]` for the same reason.
 ///
 /// Each category exposes one generic *battery* function that takes the
-/// algorithm's natural-signature fn pointer and the algorithm's name.
-/// The per-leaf `run_correctness` emitted by every `*_family!` macro
-/// calls into the matching battery, so the test logic is written once
-/// per category rather than inlined per leaf.
+/// algorithm's adapter ([`RunFnNoop`]), the algorithm's name and its cap.
+/// The `CorrectnessSuite` of each kind calls the matching battery, so the
+/// test logic is written once per category rather than inlined per leaf.
 pub mod correctness {
-    use super::{
-        MERGE_PROP_HOOKS, PARTITION_PROP_HOOKS, QUICK_SELECT_PROP_HOOKS, ROTATION_PROP_HOOKS,
-        SMALL_SORT_PROP_HOOKS, SORT_PROP_HOOKS,
-    };
+    use super::{Category, RunFnNoop, PROP_HOOKS};
     use crate::array_gen::{get_arr, get_rand_arr, get_rand_arr_in_range, get_reversed_arr};
     use rand::seq::SliceRandom;
     use rand::thread_rng;
     use rand::Rng;
     use sort_logger::NoOpLogger;
 
-    /// Type alias for the natural-signature sort entry the macros emit
-    /// (`<Sort>::sort(arr, logger)` constrained to `usize` + `NoOpLogger`
-    /// for the test path).
-    pub type SortFnPtr = fn(&mut [usize], &mut NoOpLogger);
-
-    pub type RotationFnPtr = fn(&mut [usize], usize, &mut NoOpLogger);
-    /// Standalone-partition fn pointer for tests. The pivot selector
-    /// is baked into the registered partition, so callers don't pass
-    /// one — but the (left_end, right_start) tuple is still returned
-    /// so the battery can verify the partition contract.
-    pub type PartitionFnPtr = fn(&mut [usize], &mut NoOpLogger) -> (usize, usize);
-    pub type MergeFnPtr = fn(&mut [usize], usize, &mut NoOpLogger);
-    pub type SmallSortFnPtr = fn(&mut [usize], &mut NoOpLogger);
-    pub type QuickSelectFnPtr = fn(&mut [usize], usize, &mut NoOpLogger);
-    /// In-place scratchspace op (block-roll): takes just the array, like a sort.
-    pub type ScratchspaceFnPtr = fn(&mut [usize], &mut NoOpLogger);
-
     /// Run `sort_fn` on `arr` and verify it produces a sorted permutation.
     /// Emits a `RUNNING: …` stderr line so subprocess TLE diagnostics can
     /// recover the in-flight input.
     fn sort_run_and_verify(
-        sort_fn: SortFnPtr,
+        sort_fn: RunFnNoop,
         name: &str,
         arr: &mut Vec<usize>,
         label: &str,
@@ -682,7 +457,7 @@ pub mod correctness {
         let mut expected = arr.clone();
         expected.sort();
         let mut logger = NoOpLogger;
-        sort_fn(arr, &mut logger);
+        sort_fn(arr, 0, &mut logger);
         assert_eq!(
             arr, &expected,
             "{}: failed on '{}' (n={})",
@@ -693,14 +468,14 @@ pub mod correctness {
     /// Generic sort correctness battery. `cap` is the entry's
     /// `max_input_size`: patterns longer than it are skipped, `None` skips
     /// nothing.
-    pub fn sort_battery(sort_fn: SortFnPtr, name: &str, cap: Option<usize>) {
+    pub fn sort_battery(sort_fn: RunFnNoop, name: &str, cap: Option<usize>) {
         let mut rng = thread_rng();
-        let cap = cap.unwrap_or(usize::MAX);
+        let limit = cap.unwrap_or(usize::MAX);
 
         macro_rules! check {
             ($arr:expr, $label:expr) => {{
                 let arr_vec: Vec<usize> = $arr.into_iter().collect();
-                if arr_vec.len() <= cap {
+                if arr_vec.len() <= limit {
                     sort_run_and_verify(sort_fn, name, &mut { arr_vec }, $label)
                 }
             }};
@@ -782,8 +557,8 @@ pub mod correctness {
 
         check_rand!(5000, get_rand_arr(5000), "random 5000");
 
-        for hook in SORT_PROP_HOOKS {
-            hook(sort_fn, name);
+        for hook in PROP_HOOKS {
+            hook(Category::Sort, sort_fn, name, cap);
         }
     }
 
@@ -791,10 +566,12 @@ pub mod correctness {
     /// Encodes (value, original_index) pairs where comparison is by value
     /// only (value in high bits, index in low bits). After sorting,
     /// equal-valued elements must appear in ascending original-index order.
-    pub fn sort_stability_battery(sort_fn: SortFnPtr, name: &str, stable: bool) {
+    /// Patterns longer than `cap` are skipped, as in [`sort_battery`].
+    pub fn sort_stability_battery(sort_fn: RunFnNoop, name: &str, stable: bool, cap: Option<usize>) {
         if !stable {
             return;
         }
+        let limit = cap.unwrap_or(usize::MAX);
         let value_bits = 32;
         let encode = |value: usize, index: usize| -> usize { (value << value_bits) | index };
         let decode_value = |x: usize| -> usize { x >> value_bits };
@@ -807,14 +584,14 @@ pub mod correctness {
             ("10 values, n=500", get_rand_arr_in_range(500, 0, 10)),
         ];
 
-        for (label, values) in &test_cases {
+        for (label, values) in test_cases.iter().filter(|(_, values)| values.len() <= limit) {
             let mut arr: Vec<usize> = values
                 .iter()
                 .enumerate()
                 .map(|(i, &v)| encode(v, i))
                 .collect();
             let mut logger = NoOpLogger;
-            sort_fn(&mut arr, &mut logger);
+            sort_fn(&mut arr, 0, &mut logger);
 
             for i in 1..arr.len() {
                 assert!(
@@ -846,7 +623,8 @@ pub mod correctness {
     /// Verify a rotation produces `arr[split..] ++ arr[..split]` (left
     /// rotation by `split` positions, equivalently: split-point moves to
     /// front).
-    pub fn rotation_battery(rotate_fn: RotationFnPtr, name: &str) {
+    pub fn rotation_battery(rotate_fn: RunFnNoop, name: &str, cap: Option<usize>) {
+        let limit = cap.unwrap_or(usize::MAX);
         let cases: Vec<(usize, usize, &str)> = vec![
             (8, 0, "n=8 split=0"),
             (8, 1, "n=8 split=1"),
@@ -857,7 +635,7 @@ pub mod correctness {
             (100, 67, "n=100 split=67"),
             (1000, 500, "n=1000 split=mid"),
         ];
-        for (n, split, label) in cases {
+        for (n, split, label) in cases.into_iter().filter(|&(n, ..)| n <= limit) {
             let original: Vec<usize> = (0..n).collect();
             let mut arr = original.clone();
             let mut logger = NoOpLogger;
@@ -871,8 +649,8 @@ pub mod correctness {
             );
         }
 
-        for hook in ROTATION_PROP_HOOKS {
-            hook(rotate_fn, name);
+        for hook in PROP_HOOKS {
+            hook(Category::Rotation, rotate_fn, name, cap);
         }
     }
 
@@ -882,7 +660,8 @@ pub mod correctness {
     /// `max(arr[..left_end]) ≤ min(arr[right_start..])`. Also checks
     /// the result is a permutation of the input so no element was
     /// dropped or duplicated.
-    pub fn partition_battery(partition_fn: PartitionFnPtr, name: &str) {
+    pub fn partition_battery(partition_fn: RunFnNoop, name: &str, cap: Option<usize>) {
+        let limit = cap.unwrap_or(usize::MAX);
         // Variety of shapes the cross-product (P × V) has to handle:
         // reverse-sorted (stresses pivot landing), random, already
         // sorted, all-equal, and a small case. Sizes ≥ 16 so that
@@ -898,11 +677,12 @@ pub mod correctness {
             (0..200).map(|i| (i * 37 + 13) % 200).collect(),
             "n=200 random-ish",
         ));
-        for (mut arr, label) in cases {
+        for (mut arr, label) in cases.into_iter().filter(|(arr, _)| arr.len() <= limit) {
             let mut sorted_original = arr.clone();
             sorted_original.sort();
             let mut logger = NoOpLogger;
-            let (left_end, right_start) = partition_fn(&mut arr, &mut logger);
+            let (left_end, right_start) = partition_fn(&mut arr, 0, &mut logger)
+                .unwrap_or_else(|| panic!("{name}: the partition adapter returned no boundary"));
             assert!(
                 left_end <= right_start,
                 "{}: partition '{}' — left_end={} > right_start={}",
@@ -924,14 +704,15 @@ pub mod correctness {
             );
         }
 
-        for hook in PARTITION_PROP_HOOKS {
-            hook(partition_fn, name);
+        for hook in PROP_HOOKS {
+            hook(Category::Partition, partition_fn, name, cap);
         }
     }
 
     /// Verify a merge produces a sorted array from two pre-sorted halves
     /// (left = `arr[..mid]`, right = `arr[mid..]`).
-    pub fn merge_battery(merge_fn: MergeFnPtr, name: &str) {
+    pub fn merge_battery(merge_fn: RunFnNoop, name: &str, cap: Option<usize>) {
+        let limit = cap.unwrap_or(usize::MAX);
         let cases: Vec<(usize, usize, &str)> = vec![
             (8, 4, "n=8 mid=4"),
             (9, 4, "n=9 mid=4"),
@@ -939,7 +720,7 @@ pub mod correctness {
             (100, 50, "n=100 mid=50"),
             (500, 250, "n=500 mid=250"),
         ];
-        for (n, mid, label) in cases {
+        for (n, mid, label) in cases.into_iter().filter(|&(n, ..)| n <= limit) {
             let mut arr: Vec<usize> = Vec::with_capacity(n);
             arr.extend((0..mid).map(|i| 2 * i));
             arr.extend((0..n - mid).map(|i| 2 * i + 1));
@@ -950,8 +731,8 @@ pub mod correctness {
             assert_eq!(arr, expected, "{}: merge failed on '{}'", name, label);
         }
 
-        for hook in MERGE_PROP_HOOKS {
-            hook(merge_fn, name);
+        for hook in PROP_HOOKS {
+            hook(Category::Merge, merge_fn, name, cap);
         }
     }
 
@@ -960,9 +741,10 @@ pub mod correctness {
     /// must be identity. Checks several sizes × shapes; any corruption or
     /// dropped/duplicated element shows as a mismatch. (No prop hooks — the op
     /// is deterministic and its own inverse.)
-    pub fn scratchspace_battery(roll_fn: ScratchspaceFnPtr, name: &str) {
+    pub fn scratchspace_battery(roll_fn: RunFnNoop, name: &str, cap: Option<usize>) {
+        let limit = cap.unwrap_or(usize::MAX);
         let sizes = [0usize, 1, 2, 5, 8, 17, 64, 100, 257];
-        for &n in &sizes {
+        for &n in sizes.iter().filter(|&&n| n <= limit) {
             for shape in 0..3 {
                 let original: Vec<usize> = match shape {
                     0 => (0..n).collect(),
@@ -971,7 +753,7 @@ pub mod correctness {
                 };
                 let mut arr = original.clone();
                 let mut logger = NoOpLogger;
-                roll_fn(&mut arr, &mut logger);
+                roll_fn(&mut arr, 0, &mut logger);
                 assert_eq!(
                     arr, original,
                     "{name}: block-roll not a faithful round-trip (n={n}, shape={shape})"
@@ -985,7 +767,8 @@ pub mod correctness {
     /// "all-≤ on the left, all-≥ on the right" shape. Tests several
     /// shapes (reverse, random, all-equal, sorted) and a few target
     /// positions per shape.
-    pub fn quick_select_battery(quick_select_fn: QuickSelectFnPtr, name: &str) {
+    pub fn quick_select_battery(quick_select_fn: RunFnNoop, name: &str, cap: Option<usize>) {
+        let limit = cap.unwrap_or(usize::MAX);
         let shapes: Vec<(Vec<usize>, &str)> = vec![
             ((0..16).rev().collect(),                                     "n=16 reverse"),
             ((0..100).rev().collect(),                                    "n=100 reverse"),
@@ -994,7 +777,7 @@ pub mod correctness {
             (vec![42usize; 50],                                           "n=50 all-equal"),
             ((0..100).collect(),                                          "n=100 sorted"),
         ];
-        for (arr_seed, shape_label) in shapes {
+        for (arr_seed, shape_label) in shapes.into_iter().filter(|(arr, _)| arr.len() <= limit) {
             let n = arr_seed.len();
             if n == 0 {
                 continue;
@@ -1043,22 +826,24 @@ pub mod correctness {
             }
         }
 
-        for hook in QUICK_SELECT_PROP_HOOKS {
-            hook(quick_select_fn, name);
+        for hook in PROP_HOOKS {
+            hook(Category::QuickSelect, quick_select_fn, name, cap);
         }
     }
 
-    /// Small-sort battery — only tests sizes within the algorithm's
-    /// declared threshold. A small-sort's contract is "len ≤ THRESHOLD";
-    /// running it past that is out-of-contract, not a failure of the
-    /// algorithm.
-    pub fn small_sort_battery(sort_fn: SmallSortFnPtr, name: &str, threshold: usize) {
+    /// Small-sort battery. Only tests sizes up to `cap`, which for a small sort
+    /// is its threshold: its contract is "len <= threshold", and running it
+    /// past that is out-of-contract, not a failure of the algorithm.
+    pub fn small_sort_battery(sort_fn: RunFnNoop, name: &str, cap: Option<usize>) {
+        let threshold = cap.unwrap_or_else(|| {
+            panic!("{name}: a small sort declares its threshold as max_input, none is set")
+        });
         for n in 0..=threshold {
             let mut arr: Vec<usize> = (0..n).rev().collect();
             let mut expected = arr.clone();
             expected.sort();
             let mut logger = NoOpLogger;
-            sort_fn(&mut arr, &mut logger);
+            sort_fn(&mut arr, 0, &mut logger);
             assert_eq!(arr, expected, "{}: small-sort failed on n={}", name, n);
         }
         // A few random permutations at the upper end.
@@ -1070,13 +855,13 @@ pub mod correctness {
                 let mut expected = arr.clone();
                 expected.sort();
                 let mut logger = NoOpLogger;
-                sort_fn(&mut arr, &mut logger);
+                sort_fn(&mut arr, 0, &mut logger);
                 assert_eq!(arr, expected, "{}: small-sort random trial {}", name, trial);
             }
         }
 
-        for hook in SMALL_SORT_PROP_HOOKS {
-            hook(sort_fn, name, threshold);
+        for hook in PROP_HOOKS {
+            hook(Category::SmallSort, sort_fn, name, cap);
         }
     }
 
@@ -1109,9 +894,10 @@ pub mod correctness {
 
         // Panics on any input longer than 8, so a battery that feeds a pattern
         // past the cap it was given fails the test.
-        fn refuses_over_eight(arr: &mut [usize], _logger: &mut NoOpLogger) {
+        fn refuses_over_eight(arr: &mut [usize], _index: usize, _logger: &mut NoOpLogger) -> Option<(usize, usize)> {
             assert!(arr.len() <= 8, "fed {} elements past the cap", arr.len());
             arr.sort();
+            None
         }
 
         #[test]
@@ -1124,5 +910,160 @@ pub mod correctness {
         fn sort_battery_without_a_cap_feeds_long_patterns() {
             sort_battery(refuses_over_eight, "unbounded", None);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn input(name: &'static str, categories: &'static [Category], primary: bool) -> InputEntry {
+        InputEntry { name, categories, generate: |c| (vec![0; c.size], 0), primary }
+    }
+
+    #[test]
+    fn a_shared_input_counts_as_primary_in_every_category_it_serves() {
+        let both = &[Category::Sort, Category::Partition];
+        let inputs = [input("a", both, true), input("b", both, false)];
+        assert!(input_errors(&inputs, &[Category::Sort, Category::Partition]).is_empty());
+    }
+
+    #[test]
+    fn each_category_needs_exactly_one_primary() {
+        let inputs = [
+            input("a", &[Category::Sort], true),
+            input("b", &[Category::Sort], true),
+            input("c", &[Category::Merge], false),
+        ];
+        let errors = input_errors(&inputs, &[]);
+        assert_eq!(errors.len(), 2, "got {errors:?}");
+        assert!(errors.iter().any(|e| e.contains("multiple primary inputs for category Sort")));
+        assert!(errors.iter().any(|e| e.contains("no primary input for category Merge")));
+    }
+
+    #[test]
+    fn a_primary_tagged_for_one_category_does_not_cover_another() {
+        let inputs = [input("a", &[Category::Sort], true), input("b", &[Category::Rotation], false)];
+        let errors = input_errors(&inputs, &[]);
+        assert_eq!(errors.len(), 1, "got {errors:?}");
+        assert!(errors[0].contains("no primary input for category Rotation"));
+    }
+
+    #[test]
+    fn a_category_with_algorithms_and_no_inputs_is_reported() {
+        let errors = input_errors(&[], &[Category::Merge, Category::Merge]);
+        assert_eq!(errors.len(), 1, "got {errors:?}");
+        assert!(errors[0].contains("no inputs registered for category Merge (but 2 algorithm(s)"));
+    }
+
+    #[test]
+    fn a_repeated_name_within_a_category_is_reported() {
+        let inputs = [input("a", &[Category::Sort], true), input("a", &[Category::Sort], false)];
+        let errors = input_errors(&inputs, &[]);
+        assert_eq!(errors.len(), 1, "got {errors:?}");
+        assert!(errors[0].contains("duplicate input name 'a' in category Sort"));
+    }
+
+    #[test]
+    fn run_with_input_hands_the_adapter_the_inputs_array_and_index() {
+        fn expect_the_mid_split(arr: &mut [usize], split: usize, _logger: &mut dyn sort_logger::SortLogger<usize>) {
+            assert_eq!(split, 4);
+            assert_eq!(arr, &[0, 1, 2, 3, 4, 5, 6, 7]);
+        }
+        let mut logger = sort_logger::VisualizerLogger::<usize> {
+            type_ghost: std::marker::PhantomData,
+            log: Vec::new(),
+        };
+        let config = RunConfig { size: 8, seed: 0 };
+        run_with_input(Category::Rotation, "mid-split", &config, expect_the_mid_split, &mut logger);
+        assert!(!logger.log.is_empty(), "the initial array is logged before the run");
+    }
+
+    #[test]
+    #[should_panic(expected = "rotation input 'nope' not registered")]
+    fn run_with_input_names_the_category_of_a_missing_input() {
+        fn never(_: &mut [usize], _: usize, _: &mut dyn sort_logger::SortLogger<usize>) {}
+        run_with_input(Category::Rotation, "nope", &RunConfig::default(), never, &mut sort_logger::NoOpLogger);
+    }
+
+    // The test hook records each category whose battery ran it. Tests share the
+    // slice, so they check for membership and never for an exact log.
+    static HOOKED: std::sync::Mutex<Vec<Category>> = std::sync::Mutex::new(Vec::new());
+
+    #[distributed_slice(PROP_HOOKS)]
+    static RECORD: PropHook = |category, _f, _name, _cap| HOOKED.lock().unwrap().push(category);
+
+    const CAP: usize = 50;
+
+    // Panics on an array past `CAP`, so a battery that feeds a pattern past the
+    // cap it was given fails the test. Each fn below is otherwise a correct
+    // adapter for its kind.
+    fn within_cap(arr: &[usize]) {
+        assert!(arr.len() <= CAP, "fed {} elements past the cap", arr.len());
+    }
+    fn rotate(arr: &mut [usize], split: usize, _l: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)> {
+        within_cap(arr);
+        arr.rotate_left(split);
+        None
+    }
+    fn merge(arr: &mut [usize], _mid: usize, _l: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)> {
+        within_cap(arr);
+        arr.sort();
+        None
+    }
+    fn partition(arr: &mut [usize], _i: usize, _l: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)> {
+        within_cap(arr);
+        arr.sort();
+        Some((arr.len() / 2, arr.len() / 2))
+    }
+    fn roll(arr: &mut [usize], _i: usize, _l: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)> {
+        within_cap(arr);
+        None
+    }
+
+    #[test]
+    fn every_battery_skips_patterns_longer_than_the_cap() {
+        let cap = Some(CAP);
+        correctness::rotation_battery(rotate, "rotation", cap);
+        correctness::merge_battery(merge, "merge", cap);
+        correctness::quick_select_battery(|arr, _target, _l| { within_cap(arr); arr.sort(); None }, "select", cap);
+        correctness::partition_battery(partition, "partition", cap);
+        correctness::scratchspace_battery(roll, "scratchspace", cap);
+        correctness::sort_stability_battery(
+            |arr, _index, _l| { within_cap(arr); arr.sort(); None },
+            "stability",
+            true,
+            cap,
+        );
+    }
+
+    #[test]
+    fn the_small_sort_battery_takes_its_threshold_from_the_cap() {
+        fn within_four(arr: &mut [usize], _i: usize, _l: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)> {
+            assert!(arr.len() <= 4, "fed {} elements past the threshold", arr.len());
+            arr.sort();
+            None
+        }
+        correctness::small_sort_battery(within_four, "small", Some(4));
+    }
+
+    #[test]
+    #[should_panic(expected = "declares its threshold as max_input")]
+    fn the_small_sort_battery_needs_a_cap() {
+        correctness::small_sort_battery(roll, "small", None);
+    }
+
+    #[test]
+    fn one_hook_slice_serves_every_kind_and_names_the_kind() {
+        correctness::rotation_battery(rotate, "rotation", Some(CAP));
+        correctness::merge_battery(merge, "merge", Some(CAP));
+        assert!(HOOKED.lock().unwrap().contains(&Category::Rotation));
+        assert!(HOOKED.lock().unwrap().contains(&Category::Merge));
+    }
+
+    #[test]
+    fn the_same_name_may_serve_different_categories() {
+        let inputs = [input("a", &[Category::Sort], true), input("a", &[Category::SmallSort], true)];
+        assert!(input_errors(&inputs, &[]).is_empty());
     }
 }

@@ -54,4 +54,6 @@ impl<P: PartitionScheme> CyclentSortOpt<P> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(CyclentSortOpt<P>; P: PartitionScheme);
+
 // MovingPivot is excluded — see cyclent_sort.rs for rationale.

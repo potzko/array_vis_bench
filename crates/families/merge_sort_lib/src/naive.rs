@@ -68,6 +68,8 @@ impl<S: SmallSort> NaiveMergeSort<S> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(NaiveMergeSort<S>; S: SmallSort);
+
 // Same N log N comparison/movement profile as the buffer-reusing variants.
 impl<S: SmallSort> HasTimeBounds for NaiveMergeSort<S> {
     const WORST: Complexity = Complexity::N_LOG_N;

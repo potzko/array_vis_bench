@@ -16,6 +16,8 @@ impl BadHeapSort {
     }
 }
 
+array_vis_bench_traits::direct_sort!(BadHeapSort);
+
 fn sort_rec<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     start: usize,

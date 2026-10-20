@@ -570,6 +570,8 @@ Every method is generic over `<T: Ord + Copy, U: ?Sized + SortLogger<T>>`.
 | `DeferredSmallSort` | `const THRESHOLD`, `fn final_pass(arr, logger)` | One whole-array cleanup pass after a deferred quicksort. |
 | `Rotation` | `const NAME`, `fn scratch_size(n) -> usize`, `fn rotate(arr, split_ind, scratch, logger)` | Rotate a slice; in-place or buffered. |
 | `QuickSelect` | `fn select(arr, logger, target)` | Place the `target`-th order statistic at index `target`. |
+| `DirectSort` | `fn sort(arr, logger)` | Sort a whole array; every driver type joins it with one `direct_sort!` line forwarding to its inherent `sort`. |
+| `RotationMerge` | `fn scratch_size(n)`, `fn merge(arr, mid, scratch, logger)` | Merge two adjacent sorted runs in place using a rotation. |
 | `Scratchspace` | `const NAME`, `fn aux_size(n)`, `acquire`/`release`/`park`/`place`/`block_swap`/`relocate`/`roll` | Bounded-buffer contract for block-merge sorts (WikiSort/GrailSort). |
 | `Auxiliary` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn scratch_size(n)` | How much scratch a merge is handed (-> in-place vs buffered). |
 
@@ -608,10 +610,13 @@ predefined constants (`Complexity::CONST`, `N_LOG_N`, `N_SQUARED`, ...).
 
 - **Emit wrappers** (`SortingAlgorithm<X>`, `Selection<X>`, `RotationAlg<X>`, ...) are not
   Rust traits you implement , they're `.avbs` markers that tag a solved type for emission
-  and pick its `Category`.
+  and pick its `Category`. The table of them is the `KINDS` table in `spec_emit`.
 - `SortAlgo<T, U>` in [sort_traits.rs](../array_vis_bench_traits/src/sort_traits.rs) is a
   legacy object-style dispatch trait. New components prefer inherent `fn sort` methods and
   the spec pipeline; you generally won't implement `SortAlgo` for new work.
+- A new kind of algorithm is a `Category` variant, a row of `spec_emit`'s `KINDS` table, a
+  `<Kind>Suite` impl and the input tags, the four places listed in
+  [registration.md](registration.md#adding-a-first-class-kind).
 
 ### 6.4 The logger trait
 
@@ -682,7 +687,7 @@ test suite (`cargo test`). The battery runs category-appropriate inputs under
 
 - **`max_input`** , if your component is only correct/feasible up to some size, declare
   it. The cap is a contract for a type that refuses longer input and a time budget for a
-  slow sort, and `max_input_size` serves both: the picker, the sort battery and the
+  slow sort, and `max_input_size` serves both: the picker, every correctness battery and the
   benchmark all honour it. A global test `N` that ignores per-entry caps will OOM on an
   exotic sort.
 - **Nondeterministic sorts** , a sort whose trace is intentionally different between runs

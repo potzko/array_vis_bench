@@ -100,6 +100,8 @@ impl<HA: HeapAlgorithm> HeapSort<HA> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(HeapSort<HA>; HA: HeapAlgorithm);
+
 // Forward the composable annotations from the inner algorithm so the
 // marker carries the same complexity / stability facts.
 impl<HA: HeapAlgorithm + HasTimeBounds> HasTimeBounds for HeapSort<HA> {

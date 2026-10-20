@@ -9,6 +9,7 @@
 //! Gated behind the `pest-frontend` feature so the default engine build (the
 //! proc-macro and the codegen build scripts) stays dependency-free.
 
+use crate::backend::Wrapper;
 use crate::registry::{type_head, Registry};
 use crate::spec::{Binding, QArg, QValue, Quant, Query, DEFAULT_DEPTH};
 use pest::iterators::{Pair, Pairs};
@@ -34,40 +35,18 @@ pub fn parse(text: &str) -> Result<Pairs<'_, Rule>, Box<pest::error::Error<Rule>
 //  the current solver already supports is lowered here; new constructs (`as`
 //  capture, `where` unions, `_ - {X}` set-difference, lists) error cleanly until
 //  their solver phases land. Each emittable binding (one wrapped in a role
-//  builtin like `SortingAlgorithm<…>`) becomes its OWN `Query`; cross-binding
+//  wrapper from the backend's table) becomes its OWN `Query`; cross-binding
 //  shared variables and `List<…>` aggregation are a later step.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// One emit wrapper: the role `_` enumerates under it and the category of every
-/// entry the binding emits.
-struct Wrapper {
-    name: &'static str,
-    role: &'static str,
-    category: &'static str,
+// `List` and `Mains` are reserved for the aggregation and consumer track and are
+// not wrappers of an algorithm.
+fn is_wrapper_name(wrappers: &[Wrapper], name: &str) -> bool {
+    wrappers.iter().any(|w| w.name == name) || matches!(name, "List" | "Mains")
 }
 
-/// The single source of an entry's category. `SortingAlgorithm<X>` marks `X` as
-/// an emittable sort, `RotationAlg<_>` marks every `Rotation` leaf as an
-/// emittable rotation, and so on: kind is a property of where a type sits, so
-/// the component says nothing about it. A role string matches what the kind's
-/// driver or leaf components provide. `List` and `Mains` are reserved for the
-/// aggregation and consumer track and are not wrappers of an algorithm.
-const WRAPPERS: &[Wrapper] = &[
-    Wrapper { name: "SortingAlgorithm", role: "Sort", category: "Sort" },
-    Wrapper { name: "Selection", role: "QuickSelect", category: "QuickSelect" },
-    Wrapper { name: "RotationAlg", role: "Rotation", category: "Rotation" },
-    Wrapper { name: "SmallSortAlg", role: "SmallSortKind", category: "SmallSort" },
-    Wrapper { name: "PartitionAlg", role: "PartitionKind", category: "Partition" },
-    Wrapper { name: "MergeAlg", role: "MergeKind", category: "Merge" },
-    Wrapper { name: "ScratchspaceAlg", role: "ScratchspaceKind", category: "Scratchspace" },
-];
-
-fn is_wrapper_name(name: &str) -> bool {
-    WRAPPERS.iter().any(|w| w.name == name) || matches!(name, "List" | "Mains")
-}
-
-fn find_wrapper(name: &str) -> Result<&'static Wrapper, String> {
-    WRAPPERS
+fn find_wrapper<'a>(wrappers: &'a [Wrapper], name: &str) -> Result<&'a Wrapper, String> {
+    wrappers
         .iter()
         .find(|w| w.name == name)
         .ok_or_else(|| format!("`{name}<...>` is not lowerable yet (lists/consumers)"))
@@ -86,8 +65,9 @@ fn type_head_index(reg: &Registry) -> HashMap<String, String> {
     m
 }
 
-/// Lower a whole AVBS program to one `Query` per emittable binding.
-pub fn lower_program(text: &str, reg: &Registry) -> Result<Vec<Query>, String> {
+/// Lower a whole AVBS program to one `Query` per emittable binding. `wrappers` is
+/// the backend's table of emit wrappers: the single source of an entry's category.
+pub fn lower_program(text: &str, reg: &Registry, wrappers: &[Wrapper]) -> Result<Vec<Query>, String> {
     let mut pairs = parse(text).map_err(|e| e.to_string())?;
     let query = pairs.next().ok_or("empty parse")?; // Rule::query
     let idx = type_head_index(reg);
@@ -100,7 +80,7 @@ pub fn lower_program(text: &str, reg: &Registry) -> Result<Vec<Query>, String> {
             Rule::depth_dir => depth = int_pair(first_inner(p)?)?,
             Rule::take_dir => take = Some(lower_take(p)?),
             Rule::binding => {
-                let (binding, _category) = lower_binding(p, reg, &idx)?;
+                let (binding, _category) = lower_binding(p, reg, &idx, wrappers)?;
                 queries.push(Query { depth, take, bindings: vec![binding] });
             }
             Rule::EOI => {}
@@ -118,7 +98,7 @@ pub fn lower_program(text: &str, reg: &Registry) -> Result<Vec<Query>, String> {
 //
 //  `lower_program` (above) returns one `Query` per binding for the algorithm
 //  slices. `lower` returns the richer [`Program`]: algorithm families, named sets
-//  (`List<SortingAlgorithm> = [A, B]`), and consumer declarations
+//  (`List<Wrap> = [A, B]`), and consumer declarations
 //  (`consumers: List<Mains<Sorts>> = [visualiser, …]`). This is what connects the
 //  language's `consumers:` binding to the runtime `Main` impls (the last loop:
 //  query → solve → emit `AlgorithmEntry` → `Main` consumers run over them).
@@ -128,9 +108,9 @@ pub fn lower_program(text: &str, reg: &Registry) -> Result<Vec<Query>, String> {
 /// over them, and the consumer pipelines that run across them.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Program {
-    /// `Name: SortingAlgorithm = SortingAlgorithm<…>` — each an emittable family.
+    /// `Name: Wrap = Wrap<...>`, each an emittable family.
     pub algos: Vec<NamedAlgo>,
-    /// `Name: List<SortingAlgorithm> = [A, B]` — a union over algo / set names.
+    /// `Name: List<Wrap> = [A, B]`, a union over algo / set names.
     pub sets: Vec<NamedSet>,
     /// `name: List<Mains<Target>> = [visualiser, …]` — consumers over `Target`.
     pub consumers: Vec<ConsumerDecl>,
@@ -245,7 +225,7 @@ impl Program {
 /// Lower a whole AVBS program into a [`Program`]: algorithm families, named sets,
 /// and consumer declarations. Unlike [`lower_program`] (one `Query` per binding,
 /// rejecting lists/consumers), this lowers the full surface.
-pub fn lower(text: &str, reg: &Registry) -> Result<Program, String> {
+pub fn lower(text: &str, reg: &Registry, wrappers: &[Wrapper]) -> Result<Program, String> {
     let mut pairs = parse(text).map_err(|e| e.to_string())?;
     let query = pairs.next().ok_or("empty parse")?;
     let idx = type_head_index(reg);
@@ -265,7 +245,7 @@ pub fn lower(text: &str, reg: &Registry) -> Result<Program, String> {
             Rule::depth_dir => depth = int_pair(first_inner(p)?)?,
             Rule::take_dir => take = Some(lower_take(p)?),
             Rule::binding => {
-                classify_binding(p, depth, take, reg, &idx, &mut prog, &mut helpers, &mut declared)?
+                classify_binding(p, depth, take, reg, &idx, wrappers, &mut prog, &mut helpers, &mut declared)?
             }
             Rule::EOI => {}
             other => return Err(format!("unexpected {other:?} at program top level")),
@@ -278,7 +258,7 @@ pub fn lower(text: &str, reg: &Registry) -> Result<Program, String> {
 }
 
 /// Classify a binding by its type annotation and value: `List<Mains<…>>` → a
-/// consumer list, `List<…>` → a named set, a `SortingAlgorithm<…>` value → an
+/// consumer list, `List<...>` -> a named set, a wrapper value `Wrap<...>` -> an
 /// emittable family (with the accumulated helpers prepended), anything else → a
 /// helper binding that feeds later families.
 #[allow(clippy::too_many_arguments)]
@@ -288,6 +268,7 @@ fn classify_binding(
     take: Option<crate::spec::Take>,
     reg: &Registry,
     idx: &HashMap<String, String>,
+    wrappers: &[Wrapper],
     prog: &mut Program,
     helpers: &mut Vec<Binding>,
     declared: &mut std::collections::HashSet<String>,
@@ -325,7 +306,7 @@ fn classify_binding(
         return Ok(());
     }
 
-    let (binding, category) = lower_binding(bp, reg, idx)?;
+    let (binding, category) = lower_binding(bp, reg, idx, wrappers)?;
     match category {
         Some(category) => {
             // Prepend the helpers declared so far so the family's slots can share
@@ -422,13 +403,14 @@ fn lower_take(p: Pair<Rule>) -> Result<crate::spec::Take, String> {
 }
 
 /// Lower a binding to a [`Binding`] plus the category its wrapper assigns when it
-/// is emittable (its value is a wrapper such as `SortingAlgorithm<X>`, so it
+/// is emittable (its value is a wrapper such as `Wrap<X>`, so it
 /// becomes its own algorithm family). A non-wrapper binding (`p: Pivot = _`) is
 /// a helper that feeds later families and has no category.
 fn lower_binding(
     p: Pair<Rule>,
     reg: &Registry,
     idx: &HashMap<String, String>,
+    wrappers: &[Wrapper],
 ) -> Result<(Binding, Option<&'static str>), String> {
     // binding = ident ~ ":" ~ type_ann ~ refinements? ~ "=" ~ value
     let mut it = p.into_inner();
@@ -437,24 +419,24 @@ fn lower_binding(
     // The next pair is either the optional `refinements` or the value.
     let next = it.next().ok_or("binding needs a value")?;
     let (refinements, value_pair) = if next.as_rule() == Rule::refinements {
-        (lower_refinements(next, reg, idx)?, it.next().ok_or("binding needs a value")?)
+        (lower_refinements(next, reg, idx, wrappers)?, it.next().ok_or("binding needs a value")?)
     } else {
         (Vec::new(), next)
     };
 
-    let raw = lower_value(value_pair, reg, idx)?;
-    // Unwrap a top-level role wrapper (`SortingAlgorithm<X>`) → role + inner value
+    let raw = lower_value(value_pair, reg, idx, wrappers)?;
+    // Unwrap a top-level role wrapper (`Wrap<X>`) to role + inner value
     // (and mark the binding emittable); otherwise it's a helper binding.
     let (role, value, category) = match raw {
-        QValue::App { name: w, args } if is_wrapper_name(&w) => {
-            let wrapper = find_wrapper(&w)?;
+        QValue::App { name: w, args } if is_wrapper_name(wrappers, &w) => {
+            let wrapper = find_wrapper(wrappers, &w)?;
             let inner = match args.into_iter().next() {
                 Some(QArg::Pos(v)) | Some(QArg::Named { value: v, .. }) => v,
                 None => return Err(format!("`{w}<…>` takes one type argument")),
             };
             (wrapper.role.to_string(), inner, Some(wrapper.category))
         }
-        other => (role_from_type_ann(&type_ann)?, other, None),
+        other => (role_from_type_ann(&type_ann, wrappers)?, other, None),
     };
     Ok((Binding { name, role, refinements, value }, category))
 }
@@ -466,20 +448,21 @@ fn lower_refinements(
     p: Pair<Rule>,
     reg: &Registry,
     idx: &HashMap<String, String>,
+    wrappers: &[Wrapper],
 ) -> Result<Vec<crate::spec::Refinement>, String> {
     let mut out = Vec::new();
     for r in p.into_inner() {
         // refinement = ident ~ "=" ~ value
         let mut it = r.into_inner();
         let param = it.next().ok_or("refinement needs a param name")?.as_str().to_string();
-        let value = lower_value(it.next().ok_or("refinement needs a value")?, reg, idx)?;
+        let value = lower_value(it.next().ok_or("refinement needs a value")?, reg, idx, wrappers)?;
         out.push(crate::spec::Refinement { param, value });
     }
     Ok(out)
 }
 
 /// The binding role from its annotation (used only when the value isn't a wrapper).
-fn role_from_type_ann(p: &Pair<Rule>) -> Result<String, String> {
+fn role_from_type_ann(p: &Pair<Rule>, wrappers: &[Wrapper]) -> Result<String, String> {
     let first = p.clone().into_inner().next().ok_or("empty type annotation")?;
     match first.as_rule() {
         Rule::underscore => {
@@ -487,8 +470,8 @@ fn role_from_type_ann(p: &Pair<Rule>) -> Result<String, String> {
         }
         Rule::type_app => {
             let head = first.into_inner().next().unwrap().as_str().to_string();
-            if is_wrapper_name(&head) {
-                find_wrapper(&head).map(|w| w.role.to_string())
+            if is_wrapper_name(wrappers, &head) {
+                find_wrapper(wrappers, &head).map(|w| w.role.to_string())
             } else {
                 Ok(head) // a bare role name, e.g. `p: Pivot = …`
             }
@@ -497,13 +480,13 @@ fn role_from_type_ann(p: &Pair<Rule>) -> Result<String, String> {
     }
 }
 
-fn lower_value(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>) -> Result<QValue, String> {
+fn lower_value(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>, wrappers: &[Wrapper]) -> Result<QValue, String> {
     // value = unary ~ capture? ~ where_clause?
     // Collect the (optional) capture name and where-alternatives first, then
     // apply them in semantic order: the `where` rewrites the hole's population,
     // and the capture binds the final chosen value (so capture is OUTERMOST).
     let mut inner = p.into_inner();
-    let base = lower_unary(inner.next().ok_or("empty value")?, reg, idx)?;
+    let base = lower_unary(inner.next().ok_or("empty value")?, reg, idx, wrappers)?;
     let mut capture_name: Option<String> = None;
     let mut where_alts: Option<Vec<QValue>> = None;
     for extra in inner {
@@ -516,7 +499,7 @@ fn lower_value(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>) -> 
                 // where_clause = "where" ~ "(" ~ value ~ ("|" ~ value)* ~ ")"
                 let mut alts = Vec::new();
                 for v in extra.into_inner() {
-                    alts.push(lower_value(v, reg, idx)?);
+                    alts.push(lower_value(v, reg, idx, wrappers)?);
                 }
                 where_alts = Some(alts);
             }
@@ -544,13 +527,13 @@ fn lower_value(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>) -> 
     Ok(val)
 }
 
-fn lower_unary(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>) -> Result<QValue, String> {
+fn lower_unary(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>, wrappers: &[Wrapper]) -> Result<QValue, String> {
     // unary = term ~ ("-" ~ term)*  — left-assoc set difference.
     let mut terms = p.into_inner();
-    let base = lower_term(terms.next().ok_or("empty unary")?, reg, idx)?;
+    let base = lower_term(terms.next().ok_or("empty unary")?, reg, idx, wrappers)?;
     let mut subs = Vec::new();
     for t in terms {
-        subs.push(lower_subtrahend(t, reg, idx)?);
+        subs.push(lower_subtrahend(t, reg, idx, wrappers)?);
     }
     if subs.is_empty() {
         Ok(base)
@@ -562,27 +545,27 @@ fn lower_unary(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>) -> 
 /// A subtrahend of `-`: a `{…}` set literal (→ `QValue::Set`) or any other term
 /// (a hole / value). Set literals are ONLY valid here, never as a standalone
 /// value, so `lower_term` keeps rejecting them.
-fn lower_subtrahend(t: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>) -> Result<QValue, String> {
+fn lower_subtrahend(t: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>, wrappers: &[Wrapper]) -> Result<QValue, String> {
     match t.as_rule() {
         Rule::set_lit => {
             let mut members = Vec::new();
             for v in t.into_inner() {
-                members.push(lower_value(v, reg, idx)?);
+                members.push(lower_value(v, reg, idx, wrappers)?);
             }
             Ok(QValue::Set(members))
         }
-        _ => lower_term(t, reg, idx),
+        _ => lower_term(t, reg, idx, wrappers),
     }
 }
 
-fn lower_term(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>) -> Result<QValue, String> {
+fn lower_term(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>, wrappers: &[Wrapper]) -> Result<QValue, String> {
     match p.as_rule() {
         Rule::hole => Ok(QValue::Hole(lower_hole(p)?)),
         Rule::literal => Ok(QValue::Const(p.as_str().to_string())),
-        Rule::application => lower_application(p, reg, idx),
+        Rule::application => lower_application(p, reg, idx, wrappers),
         Rule::group => {
             let inner = first_inner(p)?; // group = "(" value ")"
-            lower_value(inner, reg, idx)
+            lower_value(inner, reg, idx, wrappers)
         }
         Rule::set_lit | Rule::list_lit => {
             Err("set/list literals not supported yet (set-diff / lists phases)".into())
@@ -619,6 +602,7 @@ fn lower_application(
     p: Pair<Rule>,
     reg: &Registry,
     idx: &HashMap<String, String>,
+    wrappers: &[Wrapper],
 ) -> Result<QValue, String> {
     // application = ident ~ generic_args?
     let mut it = p.into_inner();
@@ -638,7 +622,7 @@ fn lower_application(
                         if inner.is_some() {
                             return Err("`finite( … )` takes exactly one argument".into());
                         }
-                        inner = Some(lower_value(a, reg, idx)?);
+                        inner = Some(lower_value(a, reg, idx, wrappers)?);
                     }
                     other => {
                         return Err(format!(
@@ -652,7 +636,7 @@ fn lower_application(
         return Ok(QValue::Finite(Box::new(inner)));
     }
 
-    let is_wrap = is_wrapper_name(&head);
+    let is_wrap = is_wrapper_name(wrappers, &head);
 
     // Resolve the head to a catalog component (by type-head), unless it's a
     // wrapper (kept literal, unwrapped by the binding) or an unknown bare ident
@@ -687,7 +671,7 @@ fn lower_application(
         let mut args = Vec::new();
         for a in raw_args {
             match a.as_rule() {
-                Rule::value => args.push(QArg::Pos(lower_value(a, reg, idx)?)),
+                Rule::value => args.push(QArg::Pos(lower_value(a, reg, idx, wrappers)?)),
                 other => return Err(format!("`{head}<…>` takes a positional type arg, found {other:?}")),
             }
         }
@@ -707,7 +691,7 @@ fn lower_application(
             Rule::named_arg => {
                 let mut ai = a.into_inner();
                 let pname = ai.next().ok_or("named arg needs a name")?.as_str().to_string();
-                let pval = lower_value(ai.next().ok_or("named arg needs a value")?, reg, idx)?;
+                let pval = lower_value(ai.next().ok_or("named arg needs a value")?, reg, idx, wrappers)?;
                 named.push(pname.clone());
                 out.push(QArg::Named { name: pname, value: pval });
             }
@@ -720,7 +704,7 @@ fn lower_application(
         let param = free
             .next()
             .ok_or_else(|| format!("too many positional args for `{resolved}`"))?;
-        let pval = lower_value(a, reg, idx)?;
+        let pval = lower_value(a, reg, idx, wrappers)?;
         out.push(QArg::Named { name: param.name.clone(), value: pval });
     }
     Ok(QValue::App { name: resolved, args: out })
@@ -747,6 +731,24 @@ mod tests {
     // The engine self-test catalog (has `shell_sort` with a `seq` slot + the
     // classic/knuth/ciura sequences) — enough to prove the shell slice.
     const REG: &str = include_str!("../registry.spec");
+
+    // The wrappers the fixture queries use. A backend supplies the real table.
+    const WRAPPERS: &[Wrapper] = &[
+        Wrapper { name: "SortingAlgorithm", role: "Sort", category: "Sort" },
+        Wrapper { name: "Selection", role: "QuickSelect", category: "QuickSelect" },
+        Wrapper { name: "RotationAlg", role: "Rotation", category: "Rotation" },
+        Wrapper { name: "SmallSortAlg", role: "SmallSortKind", category: "SmallSort" },
+        Wrapper { name: "PartitionAlg", role: "PartitionKind", category: "Partition" },
+        Wrapper { name: "MergeAlg", role: "MergeKind", category: "Merge" },
+        Wrapper { name: "ScratchspaceAlg", role: "ScratchspaceKind", category: "Scratchspace" },
+    ];
+
+    fn lower(text: &str, reg: &Registry) -> Result<Program, String> {
+        super::lower(text, reg, WRAPPERS)
+    }
+    fn lower_program(text: &str, reg: &Registry) -> Result<Vec<Query>, String> {
+        super::lower_program(text, reg, WRAPPERS)
+    }
 
     fn fixture() -> Registry {
         Registry::parse(REG).expect("registry parses")
@@ -1007,6 +1009,20 @@ mod tests {
             }
             other => panic!("expected App, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn the_wrapper_table_is_a_parameter_not_a_built_in() {
+        let reg = fixture();
+        let table = [Wrapper { name: "Gizmo", role: "Sort", category: "Widget" }];
+        let prog = super::lower("Fam: Gizmo = Gizmo<ShellSort<_>>", &reg, &table).unwrap();
+        assert_eq!(prog.algos[0].category, "Widget");
+        assert_eq!(prog.algos[0].query.bindings.last().unwrap().role, "Sort");
+        // A wrapper the table does not list is an unknown component, however the
+        // fixture table spells it.
+        let err = super::lower("Fam: SortingAlgorithm = SortingAlgorithm<ShellSort<_>>", &reg, &table).unwrap_err();
+        assert!(err.contains("SortingAlgorithm"), "got: {err}");
+        assert!(super::lower_program("Fam: Gizmo = Gizmo<ShellSort<_>>", &reg, &[]).is_err());
     }
 
     #[test]

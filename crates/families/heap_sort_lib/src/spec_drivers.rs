@@ -38,6 +38,8 @@ impl<A: Arity, D: Direction, DH: DeepHeapify> HeapSortClassicOf<A, D, DH> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(HeapSortClassicOf<A, D, DH>; A: Arity, D: Direction, DH: DeepHeapify);
+
 impl<A: Arity, D: Direction, DH: DeepHeapify> HasTimeBounds for HeapSortClassicOf<A, D, DH> {
     const WORST: Complexity = Complexity::N_LOG_N;
     const BEST: Complexity = Complexity::N_LOG_N;
@@ -64,6 +66,8 @@ impl<A: Arity, D: Direction, DH: DeepHeapify> HeapSortQuickBuildOf<A, D, DH> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(HeapSortQuickBuildOf<A, D, DH>; A: Arity, D: Direction, DH: DeepHeapify);
+
 impl<A: Arity, D: Direction, DH: DeepHeapify> HasTimeBounds for HeapSortQuickBuildOf<A, D, DH> {
     const WORST: Complexity = Complexity::N_LOG_N;
     const BEST: Complexity = Complexity::N_LOG_N;
@@ -89,6 +93,8 @@ impl<A: Arity, D: Direction, DH: DeepHeapify> HeapSortDualBuildOf<A, D, DH> {
         HeapSort::<NaryHeapSort<ArityHeap<A, D>, DH>>::sort(arr, logger)
     }
 }
+
+array_vis_bench_traits::direct_sort!(HeapSortDualBuildOf<A, D, DH>; A: Arity, D: Direction, DH: DeepHeapify);
 
 impl<A: Arity, D: Direction, DH: DeepHeapify> HasTimeBounds for HeapSortDualBuildOf<A, D, DH> {
     const WORST: Complexity = Complexity::N_LOG_N;

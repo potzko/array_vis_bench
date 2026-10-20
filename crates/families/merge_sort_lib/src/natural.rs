@@ -60,6 +60,8 @@ impl<const PING_PONG: bool, const EARLY_EXIT: bool> NaturalMergeSort<PING_PONG, 
     }
 }
 
+array_vis_bench_traits::direct_sort!(NaturalMergeSort<PING_PONG, EARLY_EXIT>; const PING_PONG: bool, const EARLY_EXIT: bool);
+
 // Natural merge is genuinely adaptive: detect_runs returns a single run on
 // already-sorted input and sort() returns immediately → O(N) best case. The
 // worst/average over log N merge passes is N log N.

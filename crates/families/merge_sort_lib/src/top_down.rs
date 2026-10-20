@@ -96,6 +96,8 @@ impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool>
     }
 }
 
+array_vis_bench_traits::direct_sort!(TopDownMergeSort<S, PING_PONG, EARLY_EXIT>; S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool);
+
 // Classic top-down merge sort: a perfectly balanced 2-way merge recurrence
 // T(N) = 2T(N/2) + O(N) gives N log N in all cases. EARLY_EXIT only skips an
 // already-ordered merge but still performs the full recursion + boundary scan,

@@ -123,6 +123,10 @@ mod tests {
         fn entry_body(&self, ctx: &EntryCtx) -> Result<String, String> {
             Ok(format!("    // category={}\n", ctx.category))
         }
+
+        fn wrappers(&self) -> Vec<crate::backend::Wrapper> {
+            Vec::new()
+        }
     }
 
     fn node(text: &str) -> SpecNode {

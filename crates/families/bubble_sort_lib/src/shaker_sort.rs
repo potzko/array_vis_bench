@@ -37,3 +37,5 @@ impl ShakerSort {
         }
     }
 }
+
+array_vis_bench_traits::direct_sort!(ShakerSort);

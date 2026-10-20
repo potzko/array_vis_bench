@@ -53,6 +53,8 @@ impl<A: Arity, DH: DeepHeapify, SS: SmallSort> QuickHeapSort<A, DH, SS> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(QuickHeapSort<A, DH, SS>; A: Arity, DH: DeepHeapify, SS: SmallSort);
+
 fn recurse<T: Ord + Copy, U: ?Sized + SortLogger<T>, A: Arity, DH: DeepHeapify, SS: SmallSort>(
     arr: &mut [T],
     left_built: bool,

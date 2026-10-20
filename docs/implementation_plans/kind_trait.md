@@ -1,9 +1,32 @@
 # Implementation plan: one shape per kind
 
-Status: NOT STARTED. Designed 2026-10-20 from the concept review recorded in
-`../todo.md`. The largest of the cleanups; do it after the three entry plans
-and `one_timing_consumer.md`, which each remove a piece of the emit template
-this plan collapses. Closes todo item 6.
+Status: DONE (2026-10-20). Designed from the concept review recorded in
+`../todo.md`, the largest of the cleanups. Closes todo item 6. The catalog
+golden did not move, and every field of every one of the 1580 emitted entries
+is identical to the one before. Built as designed, with these choices the
+design left open:
+
+- `RunFnNoop` returns `Option<(usize, usize)>`. A partition's battery checks the
+  boundary it returns, so the one shape carries it, and every other kind
+  returns `None`.
+- `PropHook` is `fn(Category, RunFnNoop, &str, Option<usize>)`. One slice serves
+  every kind, so a hook is told the kind, which says what the index means, and
+  the cap, which carries the threshold the small sort hook used to get.
+- `sort_stability_battery` takes the cap as well. The emitter used to pass it
+  none, so a capped stable sort was checked at 500 elements.
+- Merge was the one kind besides sort with no suite, because `RotationMerge`
+  lived in `merge_sort_lib`. The trait and `run_rotation_merge` moved to the
+  traits crate, re-exported from `merge_sort_lib`, and `MergeSuite` joined.
+- A small sort's threshold is its cap. All seven emitted small sorts declare
+  `max_input` equal to their `THRESHOLD`, and the battery panics on a small
+  sort that declares none.
+- A `KINDS` row also carries the picker root and the complexity bounds a kind
+  fixes instead of inheriting (a small sort's time, a scratchspace's all
+  three). The row holds the bare category name, so `Category::` is spelled
+  only in the template.
+- `EmitBackend::wrappers` hands the table to `lower` and `lower_program` as a
+  slice parameter. The `category` parse error in `registry.rs` still names
+  wrappers as examples.
 
 ## Problem
 

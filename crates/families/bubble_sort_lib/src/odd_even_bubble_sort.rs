@@ -47,3 +47,5 @@ impl<S: NonTrivialSmallSort> OddEvenBubbleSort<S> {
         }
     }
 }
+
+array_vis_bench_traits::direct_sort!(OddEvenBubbleSort<S>; S: NonTrivialSmallSort);

@@ -30,3 +30,5 @@ impl BubbleSortRecursive {
         Self::sort(&mut arr[..len - 1], logger);
     }
 }
+
+array_vis_bench_traits::direct_sort!(BubbleSortRecursive);

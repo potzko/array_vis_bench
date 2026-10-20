@@ -76,6 +76,8 @@ impl<R: CombRatio> CombSortOf<R> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(CombSortOf<R>; R: CombRatio);
+
 // Composable annotations (spec compiler inherits these). Comb sort degrades to
 // Θ(N²) in the worst case; the gap-shrinking passes give ~O(N log N) best; the
 // ratio doesn't change the asymptotic class. In-place; not stable (long-range

@@ -5,6 +5,8 @@
 //! (`partition_lomuto`, `rotation_reversal`, ...).
 
 pub mod auxiliary;
+pub mod direct_sort;
+pub mod merge;
 pub mod partition;
 pub mod pivot;
 pub mod quick_select;
@@ -13,6 +15,8 @@ pub mod scratchspace;
 pub mod small_sort;
 
 pub use auxiliary::Auxiliary;
+pub use direct_sort::DirectSort;
+pub use merge::{run_rotation_merge, RotationMerge};
 pub use partition::{with_partition_scratch, PartitionScheme, PartitionVisitor};
 pub use scratchspace::{Scratchspace, ScratchspaceRun};
 pub use pivot::{DualPivotSelector, NoPivot, PivotInput, PivotSelector};

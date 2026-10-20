@@ -1,244 +1,217 @@
 //! Canonical inputs for every algorithm category.
 //!
-//! Each "shape" is its own registered type implementing the matching
-//! `*Input` trait from [`crate::bench_registry`]. The registries
-//! `SORT_INPUTS`, `ROTATION_INPUTS`, `PARTITION_INPUTS`, `MERGE_INPUTS`,
-//! and `SMALL_SORT_INPUTS` live there; this module is where the entries
-//! are populated. To add a new shape: define a struct, implement the
-//! trait, and register the entry with `#[distributed_slice]`.
+//! An input is a plain generator fn registered once into `INPUTS` with the
+//! categories it serves; `list_inputs` and `primary_input` filter the slice by
+//! those tags. Every generator returns an array and one index, the split of a
+//! rotation, the midpoint of a merge or the target of a quick select, and `0`
+//! for the kinds that take no index. To add a shape: write the generator and
+//! register an `InputEntry` with `#[distributed_slice(INPUTS)]`.
 
 use linkme::distributed_slice;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 
-use crate::bench_registry::{
-    MergeInput, MergeInputEntry, QuickSelectInput, QuickSelectInputEntry, RotationInput,
-    RotationInputEntry, RunConfig, SmallSortInput, SmallSortInputEntry, SortInput,
-    SortInputEntry, MERGE_INPUTS, QUICK_SELECT_INPUTS, ROTATION_INPUTS, SMALL_SORT_INPUTS,
-    SORT_INPUTS,
-};
+use crate::bench_registry::{Category, InputEntry, RunConfig, INPUTS};
 
-// ── Sort inputs ──────────────────────────────────────────────────────────────
+// Partition and scratchspace operations take the same single array as a sort, so
+// they share its inputs and its primary.
+const ARRAY_ONLY: &[Category] = &[Category::Sort, Category::Partition, Category::Scratchspace];
+
+// ── Array inputs: sort, partition and scratchspace ───────────────────────────
 
 /// Uniformly random values in `[0, size)`, deterministic per `seed`.
-pub struct Shuffled;
-impl SortInput for Shuffled {
-    fn generate(c: &RunConfig) -> Vec<usize> {
-        let mut rng = StdRng::seed_from_u64(c.seed);
-        let cap = c.size.max(1);
-        (0..c.size).map(|_| rng.gen_range(0..cap)).collect()
-    }
+fn shuffled(c: &RunConfig) -> Vec<usize> {
+    let mut rng = StdRng::seed_from_u64(c.seed);
+    let cap = c.size.max(1);
+    (0..c.size).map(|_| rng.gen_range(0..cap)).collect()
 }
-#[distributed_slice(SORT_INPUTS)]
-static SORT_SHUFFLED: SortInputEntry = SortInputEntry {
+#[distributed_slice(INPUTS)]
+static SORT_SHUFFLED: InputEntry = InputEntry {
     name: "shuffled",
-    generate: <Shuffled as SortInput>::generate,
+    categories: ARRAY_ONLY,
+    generate: |c| (shuffled(c), 0),
     primary: true,
 };
 
-/// `[0, 1, …, size-1]` — best case for many sorts.
-pub struct Ascending;
-impl SortInput for Ascending {
-    fn generate(c: &RunConfig) -> Vec<usize> {
-        (0..c.size).collect()
-    }
+/// `[0, 1, ..., size-1]`, best case for many sorts.
+fn ascending(c: &RunConfig) -> Vec<usize> {
+    (0..c.size).collect()
 }
-#[distributed_slice(SORT_INPUTS)]
-static SORT_ASCENDING: SortInputEntry = SortInputEntry {
+#[distributed_slice(INPUTS)]
+static SORT_ASCENDING: InputEntry = InputEntry {
     name: "ascending",
-    generate: <Ascending as SortInput>::generate,
+    categories: ARRAY_ONLY,
+    generate: |c| (ascending(c), 0),
     primary: false,
 };
 
-/// `[size-1, …, 1, 0]` — worst case for many sorts.
-pub struct Descending;
-impl SortInput for Descending {
-    fn generate(c: &RunConfig) -> Vec<usize> {
-        (0..c.size).rev().collect()
-    }
+/// `[size-1, ..., 1, 0]`, worst case for many sorts.
+fn descending(c: &RunConfig) -> Vec<usize> {
+    (0..c.size).rev().collect()
 }
-#[distributed_slice(SORT_INPUTS)]
-static SORT_DESCENDING: SortInputEntry = SortInputEntry {
+#[distributed_slice(INPUTS)]
+static SORT_DESCENDING: InputEntry = InputEntry {
     name: "descending",
-    generate: <Descending as SortInput>::generate,
+    categories: ARRAY_ONLY,
+    generate: |c| (descending(c), 0),
     primary: false,
 };
 
-/// Every element equal to a fixed value — stress-tests "= pivot" handling.
-pub struct AllSame;
-impl SortInput for AllSame {
-    fn generate(c: &RunConfig) -> Vec<usize> {
-        vec![42; c.size]
-    }
+/// Every element equal to a fixed value, stress-tests "= pivot" handling.
+fn all_same(c: &RunConfig) -> Vec<usize> {
+    vec![42; c.size]
 }
-#[distributed_slice(SORT_INPUTS)]
-static SORT_ALL_SAME: SortInputEntry = SortInputEntry {
+#[distributed_slice(INPUTS)]
+static SORT_ALL_SAME: InputEntry = InputEntry {
     name: "all same",
-    generate: <AllSame as SortInput>::generate,
+    categories: ARRAY_ONLY,
+    generate: |c| (all_same(c), 0),
     primary: false,
 };
 
 /// Ascending with `~sqrt(size)` random swaps. The "almost sorted" case
-/// that favours adaptive sorts (natural merge, Timsort, …).
-pub struct NearlySorted;
-impl SortInput for NearlySorted {
-    fn generate(c: &RunConfig) -> Vec<usize> {
-        let mut arr: Vec<usize> = (0..c.size).collect();
-        if c.size < 2 {
-            return arr;
-        }
-        let mut rng = StdRng::seed_from_u64(c.seed);
-        let swaps = ((c.size as f64).sqrt() as usize).max(1);
-        for _ in 0..swaps {
-            let a = rng.gen_range(0..c.size);
-            let b = rng.gen_range(0..c.size);
-            arr.swap(a, b);
-        }
-        arr
+/// that favours adaptive sorts (natural merge, Timsort, ...).
+fn nearly_sorted(c: &RunConfig) -> Vec<usize> {
+    let mut arr: Vec<usize> = (0..c.size).collect();
+    if c.size < 2 {
+        return arr;
     }
+    let mut rng = StdRng::seed_from_u64(c.seed);
+    let swaps = ((c.size as f64).sqrt() as usize).max(1);
+    for _ in 0..swaps {
+        let a = rng.gen_range(0..c.size);
+        let b = rng.gen_range(0..c.size);
+        arr.swap(a, b);
+    }
+    arr
 }
-#[distributed_slice(SORT_INPUTS)]
-static SORT_NEARLY_SORTED: SortInputEntry = SortInputEntry {
+#[distributed_slice(INPUTS)]
+static SORT_NEARLY_SORTED: InputEntry = InputEntry {
     name: "nearly sorted",
-    generate: <NearlySorted as SortInput>::generate,
+    categories: ARRAY_ONLY,
+    generate: |c| (nearly_sorted(c), 0),
     primary: false,
 };
 
-/// Random values drawn from a tiny universe `[0, sqrt(size))` — heavy
+/// Random values drawn from a tiny universe `[0, sqrt(size))`, heavy
 /// duplicates, exposes equality handling.
-pub struct FewUnique;
-impl SortInput for FewUnique {
-    fn generate(c: &RunConfig) -> Vec<usize> {
-        let mut rng = StdRng::seed_from_u64(c.seed);
-        let universe = ((c.size as f64).sqrt() as usize).max(1);
-        (0..c.size).map(|_| rng.gen_range(0..universe)).collect()
-    }
+fn few_unique(c: &RunConfig) -> Vec<usize> {
+    let mut rng = StdRng::seed_from_u64(c.seed);
+    let universe = ((c.size as f64).sqrt() as usize).max(1);
+    (0..c.size).map(|_| rng.gen_range(0..universe)).collect()
 }
-#[distributed_slice(SORT_INPUTS)]
-static SORT_FEW_UNIQUE: SortInputEntry = SortInputEntry {
+#[distributed_slice(INPUTS)]
+static SORT_FEW_UNIQUE: InputEntry = InputEntry {
     name: "few unique",
-    generate: <FewUnique as SortInput>::generate,
+    categories: ARRAY_ONLY,
+    generate: |c| (few_unique(c), 0),
     primary: false,
 };
 
 // ── Rotation inputs ──────────────────────────────────────────────────────────
 //
-// The "input" for a rotation is (array, split_index). Each registered
-// shape picks a different split position so the user can compare how
-// algorithms behave on balanced vs. unbalanced rotations.
+// The index is the split. Each registered shape picks a different split
+// position so the user can compare how algorithms behave on balanced vs.
+// unbalanced rotations.
 
-/// `[0, 1, …, size-1]` split at `size / 2`. Balanced rotation.
-pub struct MidSplit;
-impl RotationInput for MidSplit {
-    fn generate(c: &RunConfig) -> (Vec<usize>, usize) {
-        ((0..c.size).collect(), c.size / 2)
-    }
+/// `[0, 1, ..., size-1]` split at `size / 2`. Balanced rotation.
+fn mid_split(c: &RunConfig) -> (Vec<usize>, usize) {
+    ((0..c.size).collect(), c.size / 2)
 }
-#[distributed_slice(ROTATION_INPUTS)]
-static ROT_MID: RotationInputEntry = RotationInputEntry {
+#[distributed_slice(INPUTS)]
+static ROT_MID: InputEntry = InputEntry {
     name: "mid-split",
-    generate: <MidSplit as RotationInput>::generate,
+    categories: &[Category::Rotation],
+    generate: mid_split,
     primary: true,
 };
 
 /// Split at `size / 4`. Smaller left block; many rotation algorithms
 /// have asymmetric cost in this regime.
-pub struct QuarterSplit;
-impl RotationInput for QuarterSplit {
-    fn generate(c: &RunConfig) -> (Vec<usize>, usize) {
-        ((0..c.size).collect(), c.size / 4)
-    }
+fn quarter_split(c: &RunConfig) -> (Vec<usize>, usize) {
+    ((0..c.size).collect(), c.size / 4)
 }
-#[distributed_slice(ROTATION_INPUTS)]
-static ROT_QUARTER: RotationInputEntry = RotationInputEntry {
+#[distributed_slice(INPUTS)]
+static ROT_QUARTER: InputEntry = InputEntry {
     name: "quarter-split",
-    generate: <QuarterSplit as RotationInput>::generate,
+    categories: &[Category::Rotation],
+    generate: quarter_split,
     primary: false,
 };
 
 /// Split at `3 * size / 4`. Mirror of quarter-split.
-pub struct ThreeQuarterSplit;
-impl RotationInput for ThreeQuarterSplit {
-    fn generate(c: &RunConfig) -> (Vec<usize>, usize) {
-        ((0..c.size).collect(), (3 * c.size) / 4)
-    }
+fn three_quarter_split(c: &RunConfig) -> (Vec<usize>, usize) {
+    ((0..c.size).collect(), (3 * c.size) / 4)
 }
-#[distributed_slice(ROTATION_INPUTS)]
-static ROT_THREEQ: RotationInputEntry = RotationInputEntry {
+#[distributed_slice(INPUTS)]
+static ROT_THREEQ: InputEntry = InputEntry {
     name: "three-quarter-split",
-    generate: <ThreeQuarterSplit as RotationInput>::generate,
+    categories: &[Category::Rotation],
+    generate: three_quarter_split,
     primary: false,
 };
 
 /// Split at index 1. The smallest non-trivial rotation; some algorithms
 /// have catastrophic worst-case behaviour here.
-pub struct NearStartSplit;
-impl RotationInput for NearStartSplit {
-    fn generate(c: &RunConfig) -> (Vec<usize>, usize) {
-        ((0..c.size).collect(), 1.min(c.size))
-    }
+fn near_start_split(c: &RunConfig) -> (Vec<usize>, usize) {
+    ((0..c.size).collect(), 1.min(c.size))
 }
-#[distributed_slice(ROTATION_INPUTS)]
-static ROT_NEAR_START: RotationInputEntry = RotationInputEntry {
+#[distributed_slice(INPUTS)]
+static ROT_NEAR_START: InputEntry = InputEntry {
     name: "near-start-split",
-    generate: <NearStartSplit as RotationInput>::generate,
+    categories: &[Category::Rotation],
+    generate: near_start_split,
     primary: false,
 };
 
 // ── Merge inputs ─────────────────────────────────────────────────────────────
 //
-// (array, mid). Each half is independently sorted; the merge has to
-// interleave them.
+// The index is the midpoint. Each half is independently sorted; the merge has
+// to interleave them.
 
-/// Even values in left half, odd values in right half — every other
+/// Even values in left half, odd values in right half: every other
 /// element comes from the opposite half, so the merge is maximally
 /// interleaving.
-pub struct InterleavedMerge;
-impl MergeInput for InterleavedMerge {
-    fn generate(c: &RunConfig) -> (Vec<usize>, usize) {
-        let mid = c.size / 2;
-        let mut v: Vec<usize> = (0..mid).map(|i| 2 * i).collect();
-        v.extend((0..c.size - mid).map(|i| 2 * i + 1));
-        (v, mid)
-    }
+fn interleaved_merge(c: &RunConfig) -> (Vec<usize>, usize) {
+    let mid = c.size / 2;
+    let mut v: Vec<usize> = (0..mid).map(|i| 2 * i).collect();
+    v.extend((0..c.size - mid).map(|i| 2 * i + 1));
+    (v, mid)
 }
-#[distributed_slice(MERGE_INPUTS)]
-static MERGE_INTERLEAVED: MergeInputEntry = MergeInputEntry {
+#[distributed_slice(INPUTS)]
+static MERGE_INTERLEAVED: InputEntry = InputEntry {
     name: "interleaved",
-    generate: <InterleavedMerge as MergeInput>::generate,
+    categories: &[Category::Merge],
+    generate: interleaved_merge,
     primary: true,
 };
 
-/// Left half is `0..mid`, right half is `mid..size`. Already in order —
+/// Left half is `0..mid`, right half is `mid..size`. Already in order,
 /// the merge has no real work to do beyond comparing.
-pub struct ConcatMerge;
-impl MergeInput for ConcatMerge {
-    fn generate(c: &RunConfig) -> (Vec<usize>, usize) {
-        let mid = c.size / 2;
-        ((0..c.size).collect(), mid)
-    }
+fn concat_merge(c: &RunConfig) -> (Vec<usize>, usize) {
+    let mid = c.size / 2;
+    ((0..c.size).collect(), mid)
 }
-#[distributed_slice(MERGE_INPUTS)]
-static MERGE_CONCAT: MergeInputEntry = MergeInputEntry {
+#[distributed_slice(INPUTS)]
+static MERGE_CONCAT: InputEntry = InputEntry {
     name: "concat (already sorted)",
-    generate: <ConcatMerge as MergeInput>::generate,
+    categories: &[Category::Merge],
+    generate: concat_merge,
     primary: false,
 };
 
-/// Left half holds the upper values, right half the lower — worst case
+/// Left half holds the upper values, right half the lower: worst case
 /// for a merge that scans left-to-right.
-pub struct ReversedHalves;
-impl MergeInput for ReversedHalves {
-    fn generate(c: &RunConfig) -> (Vec<usize>, usize) {
-        let mid = c.size / 2;
-        let mut v: Vec<usize> = (mid..c.size).collect();
-        v.extend(0..mid);
-        (v, mid)
-    }
+fn reversed_halves(c: &RunConfig) -> (Vec<usize>, usize) {
+    let mid = c.size / 2;
+    let mut v: Vec<usize> = (mid..c.size).collect();
+    v.extend(0..mid);
+    (v, mid)
 }
-#[distributed_slice(MERGE_INPUTS)]
-static MERGE_REVERSED: MergeInputEntry = MergeInputEntry {
+#[distributed_slice(INPUTS)]
+static MERGE_REVERSED: InputEntry = InputEntry {
     name: "reversed-halves",
-    generate: <ReversedHalves as MergeInput>::generate,
+    categories: &[Category::Merge],
+    generate: reversed_halves,
     primary: false,
 };
 
@@ -251,95 +224,104 @@ fn clamp_size(c: &RunConfig) -> RunConfig {
     RunConfig { size: c.size.min(32), seed: c.seed }
 }
 
-pub struct SmallShuffled;
-impl SmallSortInput for SmallShuffled {
-    fn generate(c: &RunConfig) -> Vec<usize> {
-        <Shuffled as SortInput>::generate(&clamp_size(c))
-    }
-}
-#[distributed_slice(SMALL_SORT_INPUTS)]
-static SS_SHUFFLED: SmallSortInputEntry = SmallSortInputEntry {
+#[distributed_slice(INPUTS)]
+static SS_SHUFFLED: InputEntry = InputEntry {
     name: "shuffled",
-    generate: <SmallShuffled as SmallSortInput>::generate,
+    categories: &[Category::SmallSort],
+    generate: |c| (shuffled(&clamp_size(c)), 0),
     primary: true,
+};
+
+#[distributed_slice(INPUTS)]
+static SS_DESCENDING: InputEntry = InputEntry {
+    name: "descending",
+    categories: &[Category::SmallSort],
+    generate: |c| (descending(&clamp_size(c)), 0),
+    primary: false,
 };
 
 // ── Quick-select inputs ──────────────────────────────────────────────────────
 //
-// (array, target). Each shape picks a different target position so the
+// The index is the target. Each shape picks a different target position so the
 // visualiser can compare how a quickselect's recursion path changes when
 // the target lands in different regions of the array.
 
-fn quick_select_shuffled(c: &RunConfig) -> Vec<usize> {
-    <Shuffled as SortInput>::generate(c)
+/// `target = size / 2`, balanced split into both partitions on each step.
+fn target_mid(c: &RunConfig) -> (Vec<usize>, usize) {
+    (shuffled(c), c.size / 2)
 }
-
-/// `target = size / 2` — balanced split into both partitions on each step.
-pub struct QselMid;
-impl QuickSelectInput for QselMid {
-    fn generate(c: &RunConfig) -> (Vec<usize>, usize) {
-        (quick_select_shuffled(c), c.size / 2)
-    }
-}
-#[distributed_slice(QUICK_SELECT_INPUTS)]
-static QSEL_MID: QuickSelectInputEntry = QuickSelectInputEntry {
+#[distributed_slice(INPUTS)]
+static QSEL_MID: InputEntry = InputEntry {
     name: "target-mid",
-    generate: <QselMid as QuickSelectInput>::generate,
+    categories: &[Category::QuickSelect],
+    generate: target_mid,
     primary: true,
 };
 
-/// `target = 0` — always recurse left.
-pub struct QselFirst;
-impl QuickSelectInput for QselFirst {
-    fn generate(c: &RunConfig) -> (Vec<usize>, usize) {
-        (quick_select_shuffled(c), 0)
-    }
+/// `target = 0`, always recurse left.
+fn target_first(c: &RunConfig) -> (Vec<usize>, usize) {
+    (shuffled(c), 0)
 }
-#[distributed_slice(QUICK_SELECT_INPUTS)]
-static QSEL_FIRST: QuickSelectInputEntry = QuickSelectInputEntry {
+#[distributed_slice(INPUTS)]
+static QSEL_FIRST: InputEntry = InputEntry {
     name: "target-first",
-    generate: <QselFirst as QuickSelectInput>::generate,
+    categories: &[Category::QuickSelect],
+    generate: target_first,
     primary: false,
 };
 
-/// `target = size - 1` — always recurse right.
-pub struct QselLast;
-impl QuickSelectInput for QselLast {
-    fn generate(c: &RunConfig) -> (Vec<usize>, usize) {
-        let n = c.size.max(1);
-        (quick_select_shuffled(c), n - 1)
-    }
+/// `target = size - 1`, always recurse right.
+fn target_last(c: &RunConfig) -> (Vec<usize>, usize) {
+    (shuffled(c), c.size.max(1) - 1)
 }
-#[distributed_slice(QUICK_SELECT_INPUTS)]
-static QSEL_LAST: QuickSelectInputEntry = QuickSelectInputEntry {
+#[distributed_slice(INPUTS)]
+static QSEL_LAST: InputEntry = InputEntry {
     name: "target-last",
-    generate: <QselLast as QuickSelectInput>::generate,
+    categories: &[Category::QuickSelect],
+    generate: target_last,
     primary: false,
 };
 
-/// `target = size / 4` — left-leaning split.
-pub struct QselQuarter;
-impl QuickSelectInput for QselQuarter {
-    fn generate(c: &RunConfig) -> (Vec<usize>, usize) {
-        (quick_select_shuffled(c), c.size / 4)
-    }
+/// `target = size / 4`, left-leaning split.
+fn target_quarter(c: &RunConfig) -> (Vec<usize>, usize) {
+    (shuffled(c), c.size / 4)
 }
-#[distributed_slice(QUICK_SELECT_INPUTS)]
-static QSEL_QUARTER: QuickSelectInputEntry = QuickSelectInputEntry {
+#[distributed_slice(INPUTS)]
+static QSEL_QUARTER: InputEntry = InputEntry {
     name: "target-quarter",
-    generate: <QselQuarter as QuickSelectInput>::generate,
+    categories: &[Category::QuickSelect],
+    generate: target_quarter,
     primary: false,
 };
 
-pub struct SmallDescending;
-impl SmallSortInput for SmallDescending {
-    fn generate(c: &RunConfig) -> Vec<usize> {
-        <Descending as SortInput>::generate(&clamp_size(c))
+#[cfg(test)]
+mod tests {
+    use crate::bench_registry::{list_inputs, primary_input, Category};
+
+    const SORT_LIKE: [&str; 6] =
+        ["all same", "ascending", "descending", "few unique", "nearly sorted", "shuffled"];
+
+    // linkme leaves the order of a slice unspecified, so the lists are compared sorted.
+    fn listed(category: Category) -> Vec<&'static str> {
+        let mut names = list_inputs(category);
+        names.sort_unstable();
+        names
+    }
+
+    #[test]
+    fn every_category_lists_its_inputs_and_names_one_primary() {
+        let expected: [(Category, &[&str], &str); 7] = [
+            (Category::Sort, &SORT_LIKE, "shuffled"),
+            (Category::Partition, &SORT_LIKE, "shuffled"),
+            (Category::Scratchspace, &SORT_LIKE, "shuffled"),
+            (Category::Rotation, &["mid-split", "near-start-split", "quarter-split", "three-quarter-split"], "mid-split"),
+            (Category::Merge, &["concat (already sorted)", "interleaved", "reversed-halves"], "interleaved"),
+            (Category::SmallSort, &["descending", "shuffled"], "shuffled"),
+            (Category::QuickSelect, &["target-first", "target-last", "target-mid", "target-quarter"], "target-mid"),
+        ];
+        for (category, names, primary) in expected {
+            assert_eq!(listed(category), names, "inputs of {category:?}");
+            assert_eq!(primary_input(category), primary, "primary of {category:?}");
+        }
     }
 }
-#[distributed_slice(SMALL_SORT_INPUTS)]
-static SS_DESCENDING: SmallSortInputEntry = SmallSortInputEntry {
-    name: "descending",
-    generate: <SmallDescending as SmallSortInput>::generate,
-    primary: false,
-};

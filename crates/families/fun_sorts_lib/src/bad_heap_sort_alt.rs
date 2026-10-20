@@ -24,6 +24,8 @@ impl BadHeapSortAlt {
     }
 }
 
+array_vis_bench_traits::direct_sort!(BadHeapSortAlt);
+
 fn heapify<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     start: usize,

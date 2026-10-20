@@ -38,6 +38,8 @@ impl<Seq: GapSequence> ShellSortOrdered<Seq> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(ShellSortOrdered<Seq>; Seq: GapSequence);
+
 // Same complexity profile as ShellSort — same gap sequence drives both;
 // the only difference is iteration order, not the count.
 impl<Seq: GapSequence + HasTimeBounds> HasTimeBounds for ShellSortOrdered<Seq> {

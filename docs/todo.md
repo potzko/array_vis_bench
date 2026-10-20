@@ -32,8 +32,8 @@ link root. That is done:
   as of this update.
 
 What the plan called the `Visualisable` trait never appeared as a trait. The
-category drivers plus the per category input slices fill that role, and the
-`CorrectnessSuite` trait is its correctness half.
+one run driver plus the tagged `INPUTS` slice fill that role, and the
+`CorrectnessSuite` trait is its correctness half, one impl per kind.
 
 ## Open work, in rough priority
 
@@ -55,14 +55,13 @@ category drivers plus the per category input slices fill that role, and the
    benchmark and `compare_sorts` the gate. A persisted timing archive would
    give `plot_bench.py` a producer again and restore the N scaling chart;
    `MainReport::timings` holds the medians such an archive would write.
-6. Unify sorts under `CorrectnessSuite`. Full sorts bypass the suite
-   because they have no role trait, only an inherent `sort`. A `DirectSort`
-   role trait would close the asymmetry noted in
-   `array_vis_bench_core/src/suites.rs`.
-7. `spec_emit` only supports types with an inherent `sort`. A type that
-   implements only the legacy `SortAlgo` trait cannot be emitted. Either
-   port the remaining users or add a catalog facet that switches the
-   adapters.
+6. Done: sorts join `CorrectnessSuite` through the `DirectSort` role, one
+   `direct_sort!` line per driver type. See
+   [implementation_plans/kind_trait.md](implementation_plans/kind_trait.md).
+7. `spec_emit` only supports sorts with an inherent `sort` and a `DirectSort`
+   impl. A type that implements only the legacy `SortAlgo` trait cannot be
+   emitted. Either port the remaining users or add a catalog facet that
+   switches the adapters.
 8. Legacy residue to delete once nothing depends on it:
    - `crates/components/comb_ratio_components` and
      `crates/components/heap_internals_components`, metadata only crates
@@ -108,8 +107,12 @@ afternoon each and remove concepts rather than move them.
    type heads. Done: heads are unique, and three components keep a listed
    `uses` where the owning crate cannot reach the type.
    See [implementation_plans/derive_uses_from_the_owning_crate.md](implementation_plans/derive_uses_from_the_owning_crate.md).
-7. One shape per kind. One input entry, one run driver, one emit template
-   over a kinds table, sorts under `CorrectnessSuite`.
+7. One shape per kind. Done: one `InputEntry` slice tagged by category, one
+   `run_with_input` driver, one `RunFnNoop` and one hook slice for the
+   batteries, one emit template over the `KINDS` table, the wrapper table
+   supplied by the backend, and sorts under `CorrectnessSuite` through the
+   `DirectSort` role. A new kind is a `Category` variant, a `KINDS` row, a
+   `<Kind>Suite` impl and the input tags.
    See [implementation_plans/kind_trait.md](implementation_plans/kind_trait.md).
 
 ## Role collapse, what held and what did not
@@ -169,8 +172,8 @@ slot, and the beap ninther dual selector has its own label.
   `max_input_size` and `nondeterministic` on the entry. A global test size
   over the whole registry runs exotic sorts out of memory.
 - Inputs stay separate from algorithms. The compiler selects algorithms,
-  the per category input slices supply inputs, and exactly one input per
-  category is primary.
+  the one `INPUTS` slice supplies inputs tagged by category, and exactly one
+  input per category is primary.
 - Parallel work on families happens in separate worktrees with disjoint
   file slices. The shared points (the catalog manifest, the workspace
   members, the kinds query) are edited by the integrator only, and every

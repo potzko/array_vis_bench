@@ -10,7 +10,7 @@ priority order.
 - `entry_owned_navigation.md`: the picker data became entry fields and the second registry went, done, kept as the record.
 - `enumeration_strategies.md`: `finite` shipped; `affine`, `sample`, `spread` and the rest fill sugar are open.
 - `full_merge_partition_roles.md`: the unification of the partition roles, done, kept as the record.
-- `kind_trait.md`: one input shape, one driver and one emit template over a kinds table; not started.
+- `kind_trait.md`: one input shape, one driver and one emit template over a kinds table, done, kept as the record.
 - `one_timing_consumer.md`: the four timing surfaces became one benchmark consumer, done, kept as the record.
 - `scratchspace_block_merge.md`: the scratchspace contract, shipped, with the block merge phases open.
 - `sentinel_quicksort.md`: a guard eliding quicksort driver, parked behind a benchmark gate.
