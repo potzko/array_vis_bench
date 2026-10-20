@@ -4,24 +4,16 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub enum ParamKind {
-    /// Filled by a nested component that `provides` `role`. `default` is the
-    /// component name used when the slot is omitted; `None` = required.
-    Type { role: String, default: Option<String> },
-    /// Filled by a literal token (integer OR `true`/`false` — real const
+    /// Filled by a nested component that `provides` `role`. A query must fill it.
+    Type { role: String },
+    /// Filled by a literal token (integer OR `true`/`false`; real const
     /// generics include `const N: usize` and `const PING_PONG: bool`). Matched
     /// either by name (`ping_pong = true`) or positionally (`insertion<32>`).
-    /// `values` is the declared finite set of "neat values" a quantified const
-    /// hole (`threshold = *`/`?`) ranges over — membership only, never
-    /// arithmetic. Empty = the const is literal-only and a hole degenerates to
-    /// `default`.
-    Const { default: Option<String>, values: Vec<String> },
-    /// A REFERENCEABLE STRUCTURAL PARAM that never appears in the type template
-    /// and is never emitted. It exists only so a refinement (`Partition[pivot =
-    /// p]`) can name it and the solver can thread a role constraint through a
-    /// shared variable. A component that does NOT declare a `project pivot`
-    /// simply cannot satisfy `Partition[pivot = …]` — that exclusion *is* the
-    /// arity filter. rustc remains the redundant backstop on the emitted type.
-    Project { role: String },
+    /// A query must supply it. `values` is the declared finite set of "neat
+    /// values" a quantified const hole (`threshold = *`/`?`) ranges over,
+    /// membership only, never arithmetic. Empty = the const is literal only and
+    /// a hole over it is an error.
+    Const { values: Vec<String> },
 }
 
 #[derive(Debug, Clone)]
@@ -64,18 +56,18 @@ pub struct Component {
 }
 
 impl Component {
-    /// A referenceable param by name — any of Type/Const/Project. A refinement
-    /// `[name = …]` is only valid if this returns `Some`.
+    /// A referenceable param by name, a type slot or a const. A refinement
+    /// `[name = ...]` is only valid if this returns `Some`.
     pub fn param(&self, name: &str) -> Option<&Param> {
         self.params.iter().find(|p| p.name == name)
     }
 
     /// The role a referenceable param contributes to whatever is bound to it.
-    /// `Type`/`Project` carry a role; `Const` carries none (its constraint is
-    /// the value set, not a role).
+    /// `Type` carries a role; `Const` carries none (its constraint is the value
+    /// set, not a role).
     pub fn param_role(&self, name: &str) -> Option<&str> {
         match &self.param(name)?.kind {
-            ParamKind::Type { role, .. } | ParamKind::Project { role } => Some(role),
+            ParamKind::Type { role } => Some(role),
             ParamKind::Const { .. } => None,
         }
     }
@@ -178,7 +170,7 @@ impl Registry {
                             }
                             c.params.push(Param {
                                 name: name.to_string(),
-                                kind: ParamKind::Type { role: role.to_string(), default: None },
+                                kind: ParamKind::Type { role: role.to_string() },
                             });
                         }
                         "const" => {
@@ -196,7 +188,7 @@ impl Registry {
                             };
                             c.params.push(Param {
                                 name: name.to_string(),
-                                kind: ParamKind::Const { default: None, values },
+                                kind: ParamKind::Const { values },
                             });
                         }
                         other => return Err(err(&format!("unknown keyword `{other}`"))),
@@ -252,7 +244,7 @@ mod tests {
 
     fn const_values(reg: &Registry, name: &str) -> Vec<String> {
         match &reg.get("c").unwrap().param(name).unwrap().kind {
-            ParamKind::Const { values, .. } => values.clone(),
+            ParamKind::Const { values } => values.clone(),
             other => panic!("`{name}` should be a const, got {other:?}"),
         }
     }

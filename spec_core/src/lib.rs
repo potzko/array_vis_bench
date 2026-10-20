@@ -100,6 +100,13 @@ mod tests {
     }
 
     #[test]
+    fn a_hole_over_a_literal_only_const_is_an_error() {
+        let reg = Registry::parse("component c\n  type C<{n}>\n  provides S\n  const n\nend\n").unwrap();
+        let err = solve(&parse_query("let s: S = c(n = .);").unwrap(), &reg).unwrap_err();
+        assert!(err.contains("literal only"), "got: {err}");
+    }
+
+    #[test]
     fn solver_reports_a_query_that_omits_a_slot() {
         let err = solve(&parse_query("let s: Sort = quick_sort(partition = .);").unwrap(), &reg()).unwrap_err();
         assert!(err.contains("requires slot `small_sort` (role SmallSort)"), "got: {err}");

@@ -7,7 +7,8 @@ use crate::spec::{Arg, SpecNode};
 /// Produce every legal spec tree rooted at `root_role`, bounded by literal
 /// nesting `max_depth`. Termination is by depth — an honest, intuitive knob —
 /// and role filtering guarantees no illegal combo is ever produced (so no
-/// emitted code fails to compile). Const slots take their registry default.
+/// emitted code fails to compile). Const slots stay unfilled: a component that
+/// has one resolves only once a query supplies it.
 pub fn enumerate(reg: &Registry, root_role: &str, max_depth: usize) -> Vec<SpecNode> {
     let mut out = Vec::new();
     for comp in reg.providing(root_role) {
@@ -55,7 +56,7 @@ fn enumerate_component_occurs(
     path.push(comp.name.clone());
     let mut slot_opts: Vec<(String, Vec<SpecNode>)> = Vec::new();
     for p in &type_slots {
-        if let ParamKind::Type { role, .. } = &p.kind {
+        if let ParamKind::Type { role } = &p.kind {
             let mut opts = Vec::new();
             for child in reg.providing(role) {
                 // OCCURS CHECK: never nest a component inside itself.
@@ -105,7 +106,7 @@ fn enumerate_component(reg: &Registry, comp: &Component, depth: usize) -> Vec<Sp
         .collect();
 
     if type_slots.is_empty() {
-        // Leaf (or const-only): one variant, consts default at resolve time.
+        // Leaf (or const-only): one variant, its consts are left to the query.
         return vec![SpecNode { name: comp.name.clone(), args: vec![] }];
     }
     if depth == 0 {
@@ -115,7 +116,7 @@ fn enumerate_component(reg: &Registry, comp: &Component, depth: usize) -> Vec<Sp
     // Per-slot option lists, then cartesian product.
     let mut slot_opts: Vec<(String, Vec<SpecNode>)> = Vec::new();
     for p in &type_slots {
-        if let ParamKind::Type { role, .. } = &p.kind {
+        if let ParamKind::Type { role } = &p.kind {
             let mut opts = Vec::new();
             for child in reg.providing(role) {
                 opts.extend(enumerate_component(reg, child, depth - 1));

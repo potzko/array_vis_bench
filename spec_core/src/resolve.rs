@@ -1,6 +1,6 @@
-//! Stage 3 — resolve a [`SpecNode`] against the [`Registry`]: fill defaults,
-//! check slot roles/arity, collect imports, and produce a concrete Rust type
-//! expression + label.
+//! Stage 3, resolve a [`SpecNode`] against the [`Registry`]: check slot
+//! roles/arity, collect imports, and produce a concrete Rust type expression +
+//! label.
 
 use std::collections::HashMap;
 
@@ -92,19 +92,13 @@ pub fn resolve(node: &SpecNode, reg: &Registry) -> Result<Resolved, String> {
     for p in &comp.params {
         let hole = format!("{{{}}}", p.name);
         match &p.kind {
-            ParamKind::Type { role, default } => {
-                let child = match named_slots.get(&p.name) {
-                    Some(child) => (*child).clone(),
-                    None => match default {
-                        Some(d) => SpecNode { name: d.clone(), args: vec![] },
-                        None => {
-                            return Err(format!(
-                                "`{}` requires slot `{}` (role {role})",
-                                node.name, p.name
-                            ))
-                        }
-                    },
-                };
+            ParamKind::Type { role } => {
+                let child = named_slots
+                    .get(&p.name)
+                    .map(|child| (*child).clone())
+                    .ok_or_else(|| {
+                        format!("`{}` requires slot `{}` (role {role})", node.name, p.name)
+                    })?;
                 // ROLE CHECK. NOTE: this validates each slot's filler against
                 // that slot's role *independently*. It CANNOT express a
                 // cross-slot constraint (e.g. "partition arity must match pivot
@@ -147,12 +141,11 @@ pub fn resolve(node: &SpecNode, reg: &Registry) -> Result<Resolved, String> {
                     }
                 }
             }
-            ParamKind::Const { default, .. } => {
+            ParamKind::Const { .. } => {
                 let value = named_consts
                     .get(&p.name)
                     .cloned()
                     .or_else(|| pos_iter.next())
-                    .or_else(|| default.clone())
                     .ok_or_else(|| {
                         format!("`{}` needs a value for const `{}`", node.name, p.name)
                     })?;
@@ -160,9 +153,6 @@ pub fn resolve(node: &SpecNode, reg: &Registry) -> Result<Resolved, String> {
                 label = label.replace(&hole, &value);
                 label_template = label_template.replace(&hole, &value);
             }
-            // Structural-only: never appears in the type template, nothing to
-            // emit. Its role constraint is enforced by the solver, not here.
-            ParamKind::Project { .. } => {}
         }
     }
     Ok(Resolved { type_expr, label, uses, axes, label_template })

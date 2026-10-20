@@ -465,7 +465,7 @@ fn lower_binding(
 
 /// Lower `[param = value, …]` into the solver's [`Refinement`]s. Each value is a
 /// shared-variable reference (or nullary component) the solver role-checks
-/// against the chosen filler's projected param.
+/// against the chosen filler's refined param.
 fn lower_refinements(
     p: Pair<Rule>,
     reg: &Registry,
