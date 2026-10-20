@@ -11,28 +11,24 @@ component aux_full
   type     FullBuffer
   label    full
   provides Auxiliary
-  uses     scratchspace_lib::FullBuffer
 end
 
 component aux_half
   type     HalfBuffer
   label    half
   provides Auxiliary
-  uses     scratchspace_lib::HalfBuffer
 end
 
 component aux_none
   type     NoBuffer
   label    none
   provides Auxiliary
-  uses     scratchspace_lib::NoBuffer
 end
 
 component mk_aux
   type     AuxiliaryMerge<{aux}>
   label    auxiliary<{aux}>
   provides MergeKind
-  uses     scratchspace_lib::AuxiliaryMerge
   slot     aux Auxiliary
 end
 
@@ -43,21 +39,18 @@ component bk_full
   type     FullScratch
   label    full
   provides Scratchspace
-  uses     scratchspace_lib::FullScratch
 end
 
 component bk_sqrt
   type     SqrtScratch
   label    sqrt
   provides Scratchspace
-  uses     scratchspace_lib::SqrtScratch
 end
 
 component bk_none
   type     NoScratch
   label    none
   provides Scratchspace
-  uses     scratchspace_lib::NoScratch
 end
 
 # ── Workflows — each a top-level Category::Scratchspace kind that drives a
@@ -68,7 +61,6 @@ component wf_exercise
   type     Exercise<{backing}>
   label    exercise<{backing}>
   provides ScratchspaceKind
-  uses     scratchspace_lib::Exercise
   slot     backing Scratchspace
 end
 
@@ -76,7 +68,6 @@ component wf_park_sweep
   type     ParkSweep<{backing}>
   label    park-sweep<{backing}>
   provides ScratchspaceKind
-  uses     scratchspace_lib::ParkSweep
   slot     backing Scratchspace
 end
 
@@ -84,7 +75,6 @@ component wf_park_loop
   type     ParkLoop<{backing}>
   label    park-loop<{backing}>
   provides ScratchspaceKind
-  uses     scratchspace_lib::ParkLoop
   slot     backing Scratchspace
 end
 
@@ -92,7 +82,6 @@ component wf_relocate
   type     Relocations<{backing}>
   label    relocate<{backing}>
   provides ScratchspaceKind
-  uses     scratchspace_lib::Relocations
   slot     backing Scratchspace
 end
 
@@ -105,6 +94,5 @@ component ss_nightmare
   provides Sort
   adaptive true
   menu     fun / scratchspace-nightmare
-  uses     scratchspace_lib::ScratchspaceMergeSort
   slot     backing Scratchspace
 end

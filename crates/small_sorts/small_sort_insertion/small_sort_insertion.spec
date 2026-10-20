@@ -5,7 +5,6 @@ component ss_insertion32
   label    insertion: 32
   provides SmallSort NonTrivialSmallSort FunSmallSort SmallSortKind
   max_input 32
-  uses     small_sort_insertion::InsertionSmallSort small_sort_insertion_strategy::LinearInsertion
 end
 
 component ss_insertion16
@@ -13,7 +12,6 @@ component ss_insertion16
   label    insertion: 16
   provides SmallSortKind
   max_input 16
-  uses     small_sort_insertion::InsertionSmallSort small_sort_insertion_strategy::LinearInsertion
 end
 
 component ss_binary_insertion16
@@ -21,7 +19,6 @@ component ss_binary_insertion16
   label    binary insertion: 16
   provides SmallSortKind
   max_input 16
-  uses     small_sort_insertion::InsertionSmallSort small_sort_insertion_strategy::BinaryInsertion
 end
 
 component ss_binary_insertion32
@@ -29,5 +26,4 @@ component ss_binary_insertion32
   label    binary insertion: 32
   provides SmallSortKind
   max_input 32
-  uses     small_sort_insertion::InsertionSmallSort small_sort_insertion_strategy::BinaryInsertion
 end
