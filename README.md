@@ -79,6 +79,7 @@ emit regression that drops a variant fails the build's own tests.
 | `cargo run --release --bin compare_sorts` | Performance regression gate. Pits the generic quick, merge and heap sorts against hand rolled u64 baselines and asserts each pair stays within 1.05x. |
 | `cargo run --release --bin measure_random_shell` | Complexity probe for the random shell sort variants. |
 | `cargo run -p array_vis_bench_min --release` | Minimal link root with two families and no catalog, proving a consumer can take just the leaves it wants. |
+| `./verify.sh [--quick] [--bless]` | The verification gate: release build without warnings, the compiler's golden and the emitted catalog's types, the assembly of the gate symbols, the `compare_sorts` gate, the workspace tests and a timing comparison, each against a baseline under `verify/`. |
 | `cargo test --release` | The whole workspace: compiler unit tests, per crate unit tests, and every emitted entry's correctness battery. The battery runs each entry in a subprocess so a hang or crash names the variant. |
 
 `cargo-nextest` is pinned in `.config/nextest.toml` for faster test runs;
@@ -86,12 +87,14 @@ plain `cargo test` works too.
 
 Helper scripts:
 
-- `dump_asm.sh` and `asmdiff.sh` dump and diff the release assembly of the
-  hand rolled and generic sorts measured by `compare_sorts`, which is how the
-  zero cost claim is checked.
+- `asm_text.sh`, `dump_asm.sh` and `asmdiff.sh` list, dump and diff the
+  release assembly of the hand rolled and generic sorts measured by
+  `compare_sorts`, which is how the zero cost claim is checked.
+- `verify.sh` runs every check above against the baselines in `verify/` and
+  rewrites them with `--bless` after an intended change.
 - `plot_bench.py` is an early prototype that charts a benchmark archive. The
-  Criterion bench that produced that archive has been retired, so the script
-  has no live producer at the moment.
+  Criterion archive it read is gone; `--timing --out` writes a TSV of medians
+  that is the natural replacement input, not yet wired in.
 
 ## Workspace layout
 

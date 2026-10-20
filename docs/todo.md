@@ -52,9 +52,10 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
    a curation decision, not new machinery.
 5. Benchmarking. The Criterion bench and its archive are gone; the
    `benchmark` consumer (`--timing [N] [K]` and `--consumers`) is the live
-   benchmark and `compare_sorts` the gate. A persisted timing archive would
-   give `plot_bench.py` a producer again and restore the N scaling chart;
-   `MainReport::timings` holds the medians such an archive would write.
+   benchmark and `compare_sorts` the gate. `--timing --out PATH` writes the
+   medians as a TSV archive and `verify.sh` compares one against its
+   baseline; pointing `plot_bench.py` at that archive would restore the N
+   scaling chart.
 6. Done: sorts join `CorrectnessSuite` through the `DirectSort` role, one
    `direct_sort!` line per driver type. See
    [implementation_plans/kind_trait.md](implementation_plans/kind_trait.md).
