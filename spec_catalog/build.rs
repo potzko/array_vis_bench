@@ -11,14 +11,15 @@
 //!
 //! This build script runs `cargo metadata`, walks `spec_catalog`'s dependency
 //! CLOSURE (so unrelated workspace members are ignored), reads every gathered
-//! `spec` fragment, merges them into ONE `spec_core` registry (with a
-//! duplicate-component-name guard — the merged namespace is global), then lowers
-//! each `query` INDEPENDENTLY (so a family's helper bindings stay scoped to its
-//! own file), solves, and emits the entries in a single `emit_entries` call.
+//! `spec` fragment, parses each under its owning crate and merges them into ONE
+//! `spec_core` registry (which rejects a duplicate component name, the merged
+//! namespace is global), then lowers each `query` INDEPENDENTLY (so a family's
+//! helper bindings stay scoped to its own file), solves, and emits the entries
+//! in a single `emit_entries` call.
 //!
-//! For tests, the merged registry text and each query are also dumped to
-//! `OUT_DIR` (`merged_catalog.spec`, `q_<stem>.avbs`) so the catalog-driven tests
-//! don't need to reach into sibling crates.
+//! For tests, a `catalog_registry()` that rebuilds the merged registry and each
+//! query are also dumped to `OUT_DIR` (`catalog_registry.rs`, `q_<stem>.avbs`) so
+//! the catalog-driven tests don't need to reach into sibling crates.
 //!
 //! Adding a family = give its crate a `spec`/`query` metadata block + a dep on it
 //! here. If a crate declares a fragment but `spec_catalog` doesn't depend on it,
@@ -136,34 +137,15 @@ fn main() {
         println!("cargo:rerun-if-changed={}", pkg.manifest_path);
     }
 
-    // ── Merge fragments → one registry text, with a duplicate-name guard ──
-    let mut merged = String::new();
-    let mut comp_owner: HashMap<String, String> = HashMap::new();
-    for f in &fragments {
-        let (path, text) = match &f.spec {
-            Some(s) => s,
-            None => continue,
-        };
-        for line in text.lines() {
-            let line = line.trim_start();
-            if let Some(name) = line.strip_prefix("component ") {
-                let name = name.trim().to_string();
-                if let Some(prev) = comp_owner.insert(name.clone(), f.krate.clone()) {
-                    panic!(
-                        "duplicate component `{name}` declared by both `{prev}` and `{}` \
-                         (the merged catalog namespace is global)",
-                        f.krate
-                    );
-                }
-            }
-        }
-        merged.push_str(&format!("# ═══ from crate `{}` ({}) ═══\n", f.krate, path.display()));
-        merged.push_str(text);
-        merged.push_str("\n\n");
-    }
-    fs::write(out_dir.join("merged_catalog.spec"), &merged).expect("write merged_catalog.spec");
-
-    let reg = spec_core::Registry::parse(&merged).expect("parse merged catalog");
+    // One registry over every fragment, each parsed under its owning crate.
+    let specs: Vec<(&str, &str)> = fragments
+        .iter()
+        .filter_map(|f| f.spec.as_ref().map(|(_, text)| (f.krate.as_str(), text.as_str())))
+        .collect();
+    let reg = spec_core::Registry::from_fragments(specs.iter().copied())
+        .unwrap_or_else(|e| panic!("merge the catalog fragments: {e}"));
+    fs::write(out_dir.join("catalog_registry.rs"), registry_helper(&specs))
+        .expect("write catalog_registry.rs");
 
     // ── Lower each query independently, solve, accumulate variants ──
     let mut all_entries: Vec<(spec_core::SpecNode, &str)> = Vec::new();
@@ -278,4 +260,17 @@ pub const DECLARED_CONSUMER_SHAPE: &[(&str, usize, usize)] = &[{shape}];
     };
     fs::write(out_dir.join("declared_consumers.rs"), consumer_code)
         .expect("write declared_consumers.rs");
+}
+
+/// The test helper that rebuilds the merged registry from the same fragments,
+/// each under its owning crate.
+fn registry_helper(specs: &[(&str, &str)]) -> String {
+    let fragments: String =
+        specs.iter().map(|(krate, text)| format!("        ({krate:?}, {text:?}),\n")).collect();
+    format!(
+        "#[cfg(test)]\n\
+         pub(crate) fn catalog_registry() -> spec_core::Registry {{\n    \
+         spec_core::Registry::from_fragments([\n{fragments}    ])\n    \
+         .expect(\"merge the catalog fragments\")\n}}\n"
+    )
 }
