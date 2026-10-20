@@ -35,6 +35,8 @@ impl<A: Arity, DSS: DeferredSmallSort> DeferredQuickHeapSort<A, DSS> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(DeferredQuickHeapSort<A, DSS>; A: Arity, DSS: DeferredSmallSort);
+
 fn deferred_recurse<
     T: Ord + Copy,
     U: ?Sized + SortLogger<T>,

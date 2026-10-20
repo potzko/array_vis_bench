@@ -92,6 +92,8 @@ impl<P: PartitionScheme, SS: SmallSort> CanonicalQuickSort<P, SS> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(CanonicalQuickSort<P, SS>; P: PartitionScheme, SS: SmallSort);
+
 // ── Composable annotations for the pivotless driver ──────────────────
 //
 // The driver reads everything off the partition `P` alone — it is now

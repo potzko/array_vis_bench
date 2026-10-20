@@ -161,6 +161,8 @@ impl<S: Scratchspace> ScratchspaceMergeSort<S> {
         with_scratch::<S, T, U>(arr, logger, nightmare_body::<S, T, U>);
     }
 }
+
+array_vis_bench_traits::direct_sort!(ScratchspaceMergeSort<S>; S: Scratchspace);
 impl<S> HasTimeBounds for ScratchspaceMergeSort<S> {
     const WORST: Complexity = Complexity::N_SQUARED;
     const BEST: Complexity = Complexity::N1; // already sorted → one run, no merges
