@@ -27,8 +27,8 @@ If some consumer should not see it, subtract it in that consumer's query.
    over its slots, and an inherent `sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>`.
 2. Give it the four annotation impls, composed from its parts with
    `Complexity::sum` and `Complexity::product`.
-3. In `<name>.spec` declare the driver component with `category Sort`, a
-   `slot` per type parameter, a `menu` path, and any family local fillers.
+3. In `<name>.spec` declare the driver component with a `slot` per type
+   parameter, a `menu` path, and any family local fillers.
 4. In `<name>.avbs` write the query, usually
    `Name: SortingAlgorithm = SortingAlgorithm<Driver<slot = _, other = _>>`.
    Curate with `_ - {...}` or `where (...)` rather than branching in the

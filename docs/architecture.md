@@ -52,7 +52,8 @@ tests.
    bounds the output before anything is materialised, so an unbounded
    recursive role or an astronomical cross product fails fast with a count.
    A binding that solves to zero rows is an error, not a silent drop.
-4. Emit. `spec_core::emit_entries` writes one `mod __entry_N` per ground type
+4. Emit. `spec_core::emit_entries` takes each ground type paired with the
+   category its query wrapper assigned, and writes one `mod __entry_N` per type
    into `OUT_DIR/catalog_entries.rs`. The compiler emits only structure (the
    module, its `use` lines, the `Ty` alias) and asks the backend,
    `spec_emit::ArrayBackend`, for the registration body.
@@ -170,8 +171,9 @@ spec), `SORT_TEST_CAPS` (a random input cap for slow sorts) and
   are off and enabled nowhere; validation would panic on the duplicate names.
 - Inherit complexity, declare the rest. `worst`, `best`, `average`, `space`
   and `stable` come from the composable traits on the concrete type.
-  `category`, `adaptive`, `max_input`, `menu` and `nondeterministic` come from
-  the catalog. No Big-O literal and no arithmetic in a spec file.
+  `category` comes from the query wrapper; `adaptive`, `max_input`, `menu` and
+  `nondeterministic` come from the catalog. No Big-O literal and no arithmetic
+  in a spec file.
 - Curate in the query, not in the code. A degenerate composition is removed
   with a set difference or a union in the `.avbs` file, never special cased in
   a driver.

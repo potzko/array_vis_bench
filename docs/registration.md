@@ -29,7 +29,6 @@ component pk_single
   type     Pivoted<{scheme}, {pivot}>
   label    {scheme}<{pivot}>
   provides PartitionKind SelectPartition
-  category Partition
   uses     quick_sort_lib::Pivoted
   slot     scheme PartScheme
   slot     pivot  PartPivot
@@ -46,7 +45,6 @@ end
 | `slot <name> <Role> [<default>]` | a type parameter filled by any component of that role; the default applies when a query omits it |
 | `const <name> [values ...]` | a const generic, matched by name or position; the value list is the finite set a quantified hole ranges over |
 | `project <name> <Role>` | a structural parameter absent from `type`, present only so a refinement can constrain it |
-| `category <Cat>` | makes the component emittable as a first class entry; omit for pure slot fillers |
 | `menu <a / b>` | picker sub path beneath the category root |
 | `max_input <n>` | contract cap on input size; becomes `max_input_size` |
 | `adaptive <bool>` | per family literal, not inherited from the type |
@@ -83,7 +81,11 @@ QuickSorts: SortingAlgorithm = SortingAlgorithm<CanonicalQuickSort<
 ### Type wrappers
 
 A binding whose type is one of the emit wrappers is emittable. The wrapper
-sets the category.
+sets the category, and it is the only place a category is named. Kind is a
+property of where a type sits, not of the type: `Pivoted` is a root under
+`PartitionAlg<_>` and a filler in a quick sort's `part` slot. A component
+declares nothing about its kind, and a `category` line in a fragment is a
+parse error that names the wrapper.
 
 | wrapper | category | role enumerated by `_` |
 |---|---|---|
@@ -159,7 +161,8 @@ these places:
 2. `run_<kind>_with_input` and `<kind>_battery` in the same file.
 3. A `<Kind>Suite` impl of `CorrectnessSuite` in `suites.rs`.
 4. An entry body arm in `spec_emit/src/lib.rs`.
-5. The wrapper name and its role in `spec_core/src/avbs.rs`.
+5. The wrapper name, its role and its category: one row of the `WRAPPERS`
+   table in `spec_core/src/avbs.rs`.
 6. A `Kinds: <Kind>Alg = <Kind>Alg<_>` binding in `spec_catalog/kinds.avbs`.
 7. The category in `src/bin/speed_test.rs`.
 

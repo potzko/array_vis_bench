@@ -101,7 +101,6 @@ component pk_single
   type     Pivoted<{scheme}, {pivot}>
   label    {scheme}<{pivot}>
   provides PartitionKind SelectPartition     # <-- two roles
-  category Partition
   uses     quick_sort_lib::Pivoted
   slot     scheme PartScheme
   slot     pivot  PartPivot
@@ -192,7 +191,6 @@ HeapPiv BeapPiv`.
 | `uses <rust::path> [<path>...]` | Module paths spliced into the emitted `use` block so `type` resolves. |
 | `slot <name> <Role> [<default>]` | A type parameter, filled by any component of `<Role>`. Optional `<default>` component if a query omits it. |
 | `project <name> <Role>` | A *structural-only* parameter that does **not** appear in `type` , exists only so a query can refine on it (`Partition[pivot = ...]`). |
-| `category <Cat>` | If present, this component is emitted as a first-class catalog entry (`Sort`, `Partition`, `QuickSelect`, ...). Omit for pure slot-fillers. |
 | `menu <path>` | Picker sub-path beneath the category. |
 | `max_input <n>` | Contract cap: inputs larger than `n` are out of contract (small sorts, or expensive exotic sorts). Becomes `AlgorithmEntry.max_input_size`. |
 | `adaptive <bool>` | Per-family literal: faster on nearly-sorted input. |
@@ -223,7 +221,9 @@ The grammar is `Name: Type = Value`.
 
 - **`Name`** , the binding; each becomes its own solved query.
 - **`Type`** , a role, or an emit **wrapper** like `SortingAlgorithm<...>` / `Selection<...>`.
-  The wrapper marks the binding as emittable and sets the `AlgorithmEntry` category.
+  The wrapper marks the binding as emittable and sets the `AlgorithmEntry` category. It is the
+  only place a category is named: a component declares nothing about its kind, and a `category`
+  line in a `.spec` fragment is a parse error.
 - **`Value`** , the constraint expression:
 
 | Form | Meaning |
