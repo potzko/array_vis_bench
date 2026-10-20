@@ -1,8 +1,8 @@
 # rotations
 
 One crate per rotation. Each implements `Rotation`, declares any scratch it
-needs through `scratch_size`, and provides two roles: `Rotation` as the slot
-of a rotation merge and `RotationKind` as a first class entry.
+needs through `scratch_size`, and provides the `Rotation` role, which is both
+the slot of a rotation merge and the first class rotation entry.
 
 - `rotation_auxiliary`: copy the smaller side to a buffer.
 - `rotation_bridge`: buffer sized to the difference of the sides.

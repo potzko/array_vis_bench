@@ -2,10 +2,6 @@
 
 Insertion sort over an insertion strategy, linear or binary.
 
-Catalog fragment `insertion.spec`:
-
-| component | type | label | provides | category |
-|---|---|---|---|---|
-| `insertion_sort` | `InsertionSort<{strategy}>` | `insertion sort<strategy: {strategy}>` | Sort | Sort |
+Its catalog components are declared in `insertion.spec`.
 
 Query `insertion.avbs` builds: `InsertionSorts`.

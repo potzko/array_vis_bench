@@ -2,8 +2,4 @@
 
 Left right crossing partition, the Hoare scheme.
 
-Catalog fragment `partition_hoare.spec`:
-
-| component | type | label | provides | category |
-|---|---|---|---|---|
-| `pks_hoare` | `LeftRightPartition` | `left-right` | PartScheme |  |
+Its catalog components are declared in `partition_hoare.spec`.
