@@ -128,8 +128,9 @@ impl ArrayBackend {
         // Flush-left template (the leading spaces ARE the generated indentation).
         format!(
 "    const NAME: &str = {label:?};
-    fn sort_noop(arr: &mut [usize], logger: &mut {logger}::NoOpLogger) {{
+    fn sort_noop(arr: &mut [usize], _index: usize, logger: &mut {logger}::NoOpLogger) -> Option<(usize, usize)> {{
         <Ty>::sort(arr, logger);
+        None
     }}
     fn sort_dyn(arr: &mut [usize], _index: usize, logger: &mut dyn {logger}::SortLogger<usize>) {{
         <Ty>::sort(arr, logger);
@@ -206,7 +207,7 @@ impl ArrayBackend {
         {core}::run_with_input({core}::Category::QuickSelect, input_name, config, select_dyn, logger);
     }}
     fn run_correct() {{
-        <{suites}::SelectSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
+        <{suites}::SelectSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME, {max_input});
     }}
     #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
@@ -259,7 +260,7 @@ impl ArrayBackend {
         {core}::run_with_input({core}::Category::Scratchspace, input_name, config, run_dyn, logger);
     }}
     fn run_correct() {{
-        <{suites}::ScratchspaceSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
+        <{suites}::ScratchspaceSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME, None);
     }}
     #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
@@ -313,14 +314,15 @@ impl ArrayBackend {
     fn merge_dyn(arr: &mut [usize], mid: usize, logger: &mut dyn {logger}::SortLogger<usize>) {{
         merge_sort_lib::rotation_merge::run_rotation_merge::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, mid, logger);
     }}
-    fn merge_noop(arr: &mut [usize], mid: usize, logger: &mut {logger}::NoOpLogger) {{
+    fn merge_noop(arr: &mut [usize], mid: usize, logger: &mut {logger}::NoOpLogger) -> Option<(usize, usize)> {{
         merge_sort_lib::rotation_merge::run_rotation_merge::<Ty, usize, {logger}::NoOpLogger>(arr, mid, logger);
+        None
     }}
     fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
         {core}::run_with_input({core}::Category::Merge, input_name, config, merge_dyn, logger);
     }}
     fn run_correct() {{
-        {core}::correctness::merge_battery(merge_noop, NAME);
+        {core}::correctness::merge_battery(merge_noop, NAME, {max_input});
     }}
     #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
@@ -380,7 +382,7 @@ impl ArrayBackend {
         {core}::run_with_input({core}::Category::SmallSort, input_name, config, sort_dyn, logger);
     }}
     fn run_correct() {{
-        <{suites}::SmallSortSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
+        <{suites}::SmallSortSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME, {max_input});
     }}
     #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
@@ -441,7 +443,7 @@ impl ArrayBackend {
         {core}::run_with_input({core}::Category::Partition, input_name, config, partition_dyn, logger);
     }}
     fn run_correct() {{
-        <{suites}::PartitionSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
+        <{suites}::PartitionSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME, {max_input});
     }}
     #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
@@ -499,7 +501,7 @@ impl ArrayBackend {
         {core}::run_with_input({core}::Category::Rotation, input_name, config, rotate_dyn, logger);
     }}
     fn run_correct() {{
-        <{suites}::RotationSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
+        <{suites}::RotationSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME, {max_input});
     }}
     #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
@@ -550,7 +552,7 @@ mod tests {
     #[test]
     fn emits_two_distinct_adapters() {
         let b = sort_body("x");
-        assert!(b.contains("fn sort_noop(arr: &mut [usize], logger: &mut sort_logger::NoOpLogger)"));
+        assert!(b.contains("fn sort_noop(arr: &mut [usize], _index: usize, logger: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)>"));
         assert!(b.contains("fn sort_dyn(arr: &mut [usize], _index: usize, logger: &mut dyn sort_logger::SortLogger<usize>)"));
     }
 
@@ -684,6 +686,16 @@ mod tests {
     }
 
     #[test]
+    fn every_kind_hands_its_cap_to_the_battery() {
+        for cat in ["Sort", "QuickSelect", "Rotation", "SmallSort", "Partition", "Merge"] {
+            let b = ArrayBackend::default()
+                .entry_body(&EntryCtx { label: "x", category: cat, adaptive: false, nondeterministic: false, max_input: Some(8), axes: &[], menu: &[], label_template: "x" })
+                .unwrap();
+            assert!(b.contains("NAME, Some(8))"), "category `{cat}` does not pass its cap to the battery");
+        }
+    }
+
+    #[test]
     fn nondeterministic_flag_sets_the_entry_field() {
         let nd = ArrayBackend::default()
             .entry_body(&EntryCtx { label: "random shell sort<uniform>", category: "Sort", adaptive: false, nondeterministic: true, max_input: Some(1000), axes: &[], menu: &[], label_template: "random shell sort<uniform>" })
@@ -756,7 +768,7 @@ mod tests {
     fn quick_select_correctness_goes_through_the_suite_trait() {
         let b = quick_select_body("quick select: iterative<dual pivot, first / first>");
         assert!(b.contains(
-            "<array_vis_bench_core::suites::SelectSuite<Ty> as array_vis_bench_core::suites::CorrectnessSuite>::verify(NAME);"
+            "<array_vis_bench_core::suites::SelectSuite<Ty> as array_vis_bench_core::suites::CorrectnessSuite>::verify(NAME, None);"
         ));
     }
 

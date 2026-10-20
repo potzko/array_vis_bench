@@ -40,9 +40,10 @@ use crate::bench_registry::correctness;
 /// impl by the leaf's catalog `category` and calls [`CorrectnessSuite::verify`]
 /// from the leaf's `run_correctness` pointer.
 pub trait CorrectnessSuite {
-    /// Run this kind's battery for the entry named `name`. Panics on a
-    /// verification failure (the `Correctness` main catches the panic).
-    fn verify(name: &str);
+    /// Run this kind's battery for the entry named `name`, whose
+    /// `max_input_size` is `cap`. Panics on a verification failure (the
+    /// `Correctness` main catches the panic).
+    fn verify(name: &str, cap: Option<usize>);
 }
 
 /// Quick-select suite: drives [`correctness::quick_select_battery`] through the
@@ -51,15 +52,16 @@ pub trait CorrectnessSuite {
 pub struct SelectSuite<Q>(PhantomData<Q>);
 
 impl<Q: QuickSelect> CorrectnessSuite for SelectSuite<Q> {
-    fn verify(name: &str) {
-        fn noop<Q: QuickSelect>(arr: &mut [usize], target: usize, logger: &mut NoOpLogger) {
+    fn verify(name: &str, cap: Option<usize>) {
+        fn noop<Q: QuickSelect>(arr: &mut [usize], target: usize, logger: &mut NoOpLogger) -> Option<(usize, usize)> {
             if arr.is_empty() {
-                return;
+                return None;
             }
             let t = target.min(arr.len() - 1);
             <Q as QuickSelect>::select(arr, logger, t);
+            None
         }
-        correctness::quick_select_battery(noop::<Q>, name);
+        correctness::quick_select_battery(noop::<Q>, name, cap);
     }
 }
 
@@ -69,27 +71,29 @@ impl<Q: QuickSelect> CorrectnessSuite for SelectSuite<Q> {
 pub struct RotationSuite<R>(PhantomData<R>);
 
 impl<R: Rotation> CorrectnessSuite for RotationSuite<R> {
-    fn verify(name: &str) {
-        fn run<R: Rotation>(arr: &mut [usize], split: usize, logger: &mut NoOpLogger) {
+    fn verify(name: &str, cap: Option<usize>) {
+        fn run<R: Rotation>(arr: &mut [usize], split: usize, logger: &mut NoOpLogger) -> Option<(usize, usize)> {
             array_vis_bench_traits::role::rotation::run_rotation::<R, usize, NoOpLogger>(
                 arr, split, logger,
             );
+            None
         }
-        correctness::rotation_battery(run::<R>, name);
+        correctness::rotation_battery(run::<R>, name, cap);
     }
 }
 
 /// Small-sort suite: drives [`correctness::small_sort_battery`] through the
-/// concrete `S: SmallSort`'s role-trait `sort`, passing the leaf's compile-time
-/// `THRESHOLD` so the battery only feeds inputs the contract covers.
+/// concrete `S: SmallSort`'s role-trait `sort`. The entry's cap is the leaf's
+/// threshold, so the battery only feeds inputs the contract covers.
 pub struct SmallSortSuite<S>(PhantomData<S>);
 
 impl<S: SmallSort> CorrectnessSuite for SmallSortSuite<S> {
-    fn verify(name: &str) {
-        fn run<S: SmallSort>(arr: &mut [usize], logger: &mut NoOpLogger) {
+    fn verify(name: &str, cap: Option<usize>) {
+        fn run<S: SmallSort>(arr: &mut [usize], _index: usize, logger: &mut NoOpLogger) -> Option<(usize, usize)> {
             let _ = <S as SmallSort>::sort(arr, logger);
+            None
         }
-        correctness::small_sort_battery(run::<S>, name, S::THRESHOLD);
+        correctness::small_sort_battery(run::<S>, name, cap);
     }
 }
 
@@ -100,13 +104,13 @@ impl<S: SmallSort> CorrectnessSuite for SmallSortSuite<S> {
 pub struct PartitionSuite<P>(PhantomData<P>);
 
 impl<P: PartitionScheme> CorrectnessSuite for PartitionSuite<P> {
-    fn verify(name: &str) {
-        fn run<P: PartitionScheme>(arr: &mut [usize], logger: &mut NoOpLogger) -> (usize, usize) {
-            array_vis_bench_traits::role::partition::run_partition_bounds::<P, usize, NoOpLogger>(
+    fn verify(name: &str, cap: Option<usize>) {
+        fn run<P: PartitionScheme>(arr: &mut [usize], _index: usize, logger: &mut NoOpLogger) -> Option<(usize, usize)> {
+            Some(array_vis_bench_traits::role::partition::run_partition_bounds::<P, usize, NoOpLogger>(
                 arr, logger,
-            )
+            ))
         }
-        correctness::partition_battery(run::<P>, name);
+        correctness::partition_battery(run::<P>, name, cap);
     }
 }
 
@@ -117,11 +121,12 @@ impl<P: PartitionScheme> CorrectnessSuite for PartitionSuite<P> {
 pub struct ScratchspaceSuite<K>(PhantomData<K>);
 
 impl<K: ScratchspaceRun> CorrectnessSuite for ScratchspaceSuite<K> {
-    fn verify(name: &str) {
-        fn run<K: ScratchspaceRun>(arr: &mut [usize], logger: &mut NoOpLogger) {
+    fn verify(name: &str, cap: Option<usize>) {
+        fn run<K: ScratchspaceRun>(arr: &mut [usize], _index: usize, logger: &mut NoOpLogger) -> Option<(usize, usize)> {
             K::run(arr, logger);
+            None
         }
-        correctness::scratchspace_battery(run::<K>, name);
+        correctness::scratchspace_battery(run::<K>, name, cap);
     }
 }
 
@@ -148,7 +153,7 @@ mod tests {
     #[test]
     fn select_suite_runs_the_quick_select_battery_for_a_valid_impl() {
         // A correct selector passes the battery (no panic).
-        SelectSuite::<SortingSelect>::verify("test: sorting select");
+        SelectSuite::<SortingSelect>::verify("test: sorting select", None);
     }
 
     #[test]

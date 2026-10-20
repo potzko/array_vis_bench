@@ -260,6 +260,11 @@ fn validate_at_startup() {
 /// midpoint and a quick select its target.
 pub type RunFn = fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>);
 
+/// [`RunFn`] with a concrete [`sort_logger::NoOpLogger`], the shape every
+/// correctness battery calls. A partition returns the `(left_end, right_start)`
+/// boundary its battery checks; every other kind returns `None`.
+pub type RunFnNoop = fn(&mut [usize], usize, &mut sort_logger::NoOpLogger) -> Option<(usize, usize)>;
+
 /// Run an algorithm of `category` against a named input. Looks the input up in
 /// [`INPUTS`], generates the array and index via the registered `generate` fn,
 /// emits the initial-state events on `logger`, then calls `f(arr, index, logger)`.
@@ -398,34 +403,24 @@ fn subprocess_dispatch() {
 
 // ── Property-test integration hooks ──────────────────────────────────────────
 //
-// The fixed-pattern correctness batteries used to call into
-// `crate::property_tests::*::run` directly under `#[cfg(test)]`. With
-// the batteries living in this crate, that direct reference would only
-// fire when `cargo test -p array_vis_bench_core` is run — useless,
-// because the algorithm registry is populated by leaves linked into the
+// The batteries live in this crate, so a direct reference to a property test
+// would only fire under `cargo test -p array_vis_bench_core`, which is useless:
+// the algorithm registry is populated by leaves linked into the
 // `array_vis_bench` binary, not core's standalone test build.
 //
-// Instead, each category exposes a distributed slice of hook fn
-// pointers. The wiring crate's test target contributes a hook entry
-// (its `property_tests` module is the natural home); the batteries
-// iterate the slice and call every registered hook. With no hooks
-// registered (a non-test build), the slice is empty and the iteration
-// is a no-op — preserving the existing "property tests only run under
-// cargo test" contract.
+// Instead there is one distributed slice of hook fn pointers. The wiring
+// crate's test target contributes a hook entry (its `property_tests` module is
+// the natural home); each battery iterates the slice and calls every
+// registered hook with its own category, so a hook knows what the index of the
+// fn it was handed means. With no hooks registered (a non-test build), the
+// slice is empty and the iteration is a no-op, preserving the "property tests
+// only run under cargo test" contract.
 
-pub type SortPropHook = fn(correctness::SortFnPtr, &str);
-pub type RotationPropHook = fn(correctness::RotationFnPtr, &str);
-pub type PartitionPropHook = fn(correctness::PartitionFnPtr, &str);
-pub type MergePropHook = fn(correctness::MergeFnPtr, &str);
-pub type QuickSelectPropHook = fn(correctness::QuickSelectFnPtr, &str);
-pub type SmallSortPropHook = fn(correctness::SmallSortFnPtr, &str, usize);
+/// A property test over one battery's fn: the kind it is for, the adapter, the
+/// entry's name and its cap.
+pub type PropHook = fn(Category, RunFnNoop, &str, Option<usize>);
 
-#[distributed_slice] pub static SORT_PROP_HOOKS:         [SortPropHook] = [..];
-#[distributed_slice] pub static ROTATION_PROP_HOOKS:     [RotationPropHook] = [..];
-#[distributed_slice] pub static PARTITION_PROP_HOOKS:    [PartitionPropHook] = [..];
-#[distributed_slice] pub static MERGE_PROP_HOOKS:        [MergePropHook] = [..];
-#[distributed_slice] pub static QUICK_SELECT_PROP_HOOKS: [QuickSelectPropHook] = [..];
-#[distributed_slice] pub static SMALL_SORT_PROP_HOOKS:   [SmallSortPropHook] = [..];
+#[distributed_slice] pub static PROP_HOOKS: [PropHook] = [..];
 
 /// Correctness-test runner. Public so the subprocess dispatch above can
 /// call it; not `#[cfg(test)]` for the same reason.
@@ -436,38 +431,18 @@ pub type SmallSortPropHook = fn(correctness::SmallSortFnPtr, &str, usize);
 /// calls into the matching battery, so the test logic is written once
 /// per category rather than inlined per leaf.
 pub mod correctness {
-    use super::{
-        MERGE_PROP_HOOKS, PARTITION_PROP_HOOKS, QUICK_SELECT_PROP_HOOKS, ROTATION_PROP_HOOKS,
-        SMALL_SORT_PROP_HOOKS, SORT_PROP_HOOKS,
-    };
+    use super::{Category, RunFnNoop, PROP_HOOKS};
     use crate::array_gen::{get_arr, get_rand_arr, get_rand_arr_in_range, get_reversed_arr};
     use rand::seq::SliceRandom;
     use rand::thread_rng;
     use rand::Rng;
     use sort_logger::NoOpLogger;
 
-    /// Type alias for the natural-signature sort entry the macros emit
-    /// (`<Sort>::sort(arr, logger)` constrained to `usize` + `NoOpLogger`
-    /// for the test path).
-    pub type SortFnPtr = fn(&mut [usize], &mut NoOpLogger);
-
-    pub type RotationFnPtr = fn(&mut [usize], usize, &mut NoOpLogger);
-    /// Standalone-partition fn pointer for tests. The pivot selector
-    /// is baked into the registered partition, so callers don't pass
-    /// one — but the (left_end, right_start) tuple is still returned
-    /// so the battery can verify the partition contract.
-    pub type PartitionFnPtr = fn(&mut [usize], &mut NoOpLogger) -> (usize, usize);
-    pub type MergeFnPtr = fn(&mut [usize], usize, &mut NoOpLogger);
-    pub type SmallSortFnPtr = fn(&mut [usize], &mut NoOpLogger);
-    pub type QuickSelectFnPtr = fn(&mut [usize], usize, &mut NoOpLogger);
-    /// In-place scratchspace op (block-roll): takes just the array, like a sort.
-    pub type ScratchspaceFnPtr = fn(&mut [usize], &mut NoOpLogger);
-
     /// Run `sort_fn` on `arr` and verify it produces a sorted permutation.
     /// Emits a `RUNNING: …` stderr line so subprocess TLE diagnostics can
     /// recover the in-flight input.
     fn sort_run_and_verify(
-        sort_fn: SortFnPtr,
+        sort_fn: RunFnNoop,
         name: &str,
         arr: &mut Vec<usize>,
         label: &str,
@@ -483,7 +458,7 @@ pub mod correctness {
         let mut expected = arr.clone();
         expected.sort();
         let mut logger = NoOpLogger;
-        sort_fn(arr, &mut logger);
+        sort_fn(arr, 0, &mut logger);
         assert_eq!(
             arr, &expected,
             "{}: failed on '{}' (n={})",
@@ -494,14 +469,14 @@ pub mod correctness {
     /// Generic sort correctness battery. `cap` is the entry's
     /// `max_input_size`: patterns longer than it are skipped, `None` skips
     /// nothing.
-    pub fn sort_battery(sort_fn: SortFnPtr, name: &str, cap: Option<usize>) {
+    pub fn sort_battery(sort_fn: RunFnNoop, name: &str, cap: Option<usize>) {
         let mut rng = thread_rng();
-        let cap = cap.unwrap_or(usize::MAX);
+        let limit = cap.unwrap_or(usize::MAX);
 
         macro_rules! check {
             ($arr:expr, $label:expr) => {{
                 let arr_vec: Vec<usize> = $arr.into_iter().collect();
-                if arr_vec.len() <= cap {
+                if arr_vec.len() <= limit {
                     sort_run_and_verify(sort_fn, name, &mut { arr_vec }, $label)
                 }
             }};
@@ -583,8 +558,8 @@ pub mod correctness {
 
         check_rand!(5000, get_rand_arr(5000), "random 5000");
 
-        for hook in SORT_PROP_HOOKS {
-            hook(sort_fn, name);
+        for hook in PROP_HOOKS {
+            hook(Category::Sort, sort_fn, name, cap);
         }
     }
 
@@ -592,7 +567,7 @@ pub mod correctness {
     /// Encodes (value, original_index) pairs where comparison is by value
     /// only (value in high bits, index in low bits). After sorting,
     /// equal-valued elements must appear in ascending original-index order.
-    pub fn sort_stability_battery(sort_fn: SortFnPtr, name: &str, stable: bool) {
+    pub fn sort_stability_battery(sort_fn: RunFnNoop, name: &str, stable: bool) {
         if !stable {
             return;
         }
@@ -615,7 +590,7 @@ pub mod correctness {
                 .map(|(i, &v)| encode(v, i))
                 .collect();
             let mut logger = NoOpLogger;
-            sort_fn(&mut arr, &mut logger);
+            sort_fn(&mut arr, 0, &mut logger);
 
             for i in 1..arr.len() {
                 assert!(
@@ -647,7 +622,8 @@ pub mod correctness {
     /// Verify a rotation produces `arr[split..] ++ arr[..split]` (left
     /// rotation by `split` positions, equivalently: split-point moves to
     /// front).
-    pub fn rotation_battery(rotate_fn: RotationFnPtr, name: &str) {
+    pub fn rotation_battery(rotate_fn: RunFnNoop, name: &str, cap: Option<usize>) {
+        let limit = cap.unwrap_or(usize::MAX);
         let cases: Vec<(usize, usize, &str)> = vec![
             (8, 0, "n=8 split=0"),
             (8, 1, "n=8 split=1"),
@@ -658,7 +634,7 @@ pub mod correctness {
             (100, 67, "n=100 split=67"),
             (1000, 500, "n=1000 split=mid"),
         ];
-        for (n, split, label) in cases {
+        for (n, split, label) in cases.into_iter().filter(|&(n, ..)| n <= limit) {
             let original: Vec<usize> = (0..n).collect();
             let mut arr = original.clone();
             let mut logger = NoOpLogger;
@@ -672,8 +648,8 @@ pub mod correctness {
             );
         }
 
-        for hook in ROTATION_PROP_HOOKS {
-            hook(rotate_fn, name);
+        for hook in PROP_HOOKS {
+            hook(Category::Rotation, rotate_fn, name, cap);
         }
     }
 
@@ -683,7 +659,8 @@ pub mod correctness {
     /// `max(arr[..left_end]) ≤ min(arr[right_start..])`. Also checks
     /// the result is a permutation of the input so no element was
     /// dropped or duplicated.
-    pub fn partition_battery(partition_fn: PartitionFnPtr, name: &str) {
+    pub fn partition_battery(partition_fn: RunFnNoop, name: &str, cap: Option<usize>) {
+        let limit = cap.unwrap_or(usize::MAX);
         // Variety of shapes the cross-product (P × V) has to handle:
         // reverse-sorted (stresses pivot landing), random, already
         // sorted, all-equal, and a small case. Sizes ≥ 16 so that
@@ -699,11 +676,12 @@ pub mod correctness {
             (0..200).map(|i| (i * 37 + 13) % 200).collect(),
             "n=200 random-ish",
         ));
-        for (mut arr, label) in cases {
+        for (mut arr, label) in cases.into_iter().filter(|(arr, _)| arr.len() <= limit) {
             let mut sorted_original = arr.clone();
             sorted_original.sort();
             let mut logger = NoOpLogger;
-            let (left_end, right_start) = partition_fn(&mut arr, &mut logger);
+            let (left_end, right_start) = partition_fn(&mut arr, 0, &mut logger)
+                .unwrap_or_else(|| panic!("{name}: the partition adapter returned no boundary"));
             assert!(
                 left_end <= right_start,
                 "{}: partition '{}' — left_end={} > right_start={}",
@@ -725,14 +703,15 @@ pub mod correctness {
             );
         }
 
-        for hook in PARTITION_PROP_HOOKS {
-            hook(partition_fn, name);
+        for hook in PROP_HOOKS {
+            hook(Category::Partition, partition_fn, name, cap);
         }
     }
 
     /// Verify a merge produces a sorted array from two pre-sorted halves
     /// (left = `arr[..mid]`, right = `arr[mid..]`).
-    pub fn merge_battery(merge_fn: MergeFnPtr, name: &str) {
+    pub fn merge_battery(merge_fn: RunFnNoop, name: &str, cap: Option<usize>) {
+        let limit = cap.unwrap_or(usize::MAX);
         let cases: Vec<(usize, usize, &str)> = vec![
             (8, 4, "n=8 mid=4"),
             (9, 4, "n=9 mid=4"),
@@ -740,7 +719,7 @@ pub mod correctness {
             (100, 50, "n=100 mid=50"),
             (500, 250, "n=500 mid=250"),
         ];
-        for (n, mid, label) in cases {
+        for (n, mid, label) in cases.into_iter().filter(|&(n, ..)| n <= limit) {
             let mut arr: Vec<usize> = Vec::with_capacity(n);
             arr.extend((0..mid).map(|i| 2 * i));
             arr.extend((0..n - mid).map(|i| 2 * i + 1));
@@ -751,8 +730,8 @@ pub mod correctness {
             assert_eq!(arr, expected, "{}: merge failed on '{}'", name, label);
         }
 
-        for hook in MERGE_PROP_HOOKS {
-            hook(merge_fn, name);
+        for hook in PROP_HOOKS {
+            hook(Category::Merge, merge_fn, name, cap);
         }
     }
 
@@ -761,9 +740,10 @@ pub mod correctness {
     /// must be identity. Checks several sizes × shapes; any corruption or
     /// dropped/duplicated element shows as a mismatch. (No prop hooks — the op
     /// is deterministic and its own inverse.)
-    pub fn scratchspace_battery(roll_fn: ScratchspaceFnPtr, name: &str) {
+    pub fn scratchspace_battery(roll_fn: RunFnNoop, name: &str, cap: Option<usize>) {
+        let limit = cap.unwrap_or(usize::MAX);
         let sizes = [0usize, 1, 2, 5, 8, 17, 64, 100, 257];
-        for &n in &sizes {
+        for &n in sizes.iter().filter(|&&n| n <= limit) {
             for shape in 0..3 {
                 let original: Vec<usize> = match shape {
                     0 => (0..n).collect(),
@@ -772,7 +752,7 @@ pub mod correctness {
                 };
                 let mut arr = original.clone();
                 let mut logger = NoOpLogger;
-                roll_fn(&mut arr, &mut logger);
+                roll_fn(&mut arr, 0, &mut logger);
                 assert_eq!(
                     arr, original,
                     "{name}: block-roll not a faithful round-trip (n={n}, shape={shape})"
@@ -786,7 +766,8 @@ pub mod correctness {
     /// "all-≤ on the left, all-≥ on the right" shape. Tests several
     /// shapes (reverse, random, all-equal, sorted) and a few target
     /// positions per shape.
-    pub fn quick_select_battery(quick_select_fn: QuickSelectFnPtr, name: &str) {
+    pub fn quick_select_battery(quick_select_fn: RunFnNoop, name: &str, cap: Option<usize>) {
+        let limit = cap.unwrap_or(usize::MAX);
         let shapes: Vec<(Vec<usize>, &str)> = vec![
             ((0..16).rev().collect(),                                     "n=16 reverse"),
             ((0..100).rev().collect(),                                    "n=100 reverse"),
@@ -795,7 +776,7 @@ pub mod correctness {
             (vec![42usize; 50],                                           "n=50 all-equal"),
             ((0..100).collect(),                                          "n=100 sorted"),
         ];
-        for (arr_seed, shape_label) in shapes {
+        for (arr_seed, shape_label) in shapes.into_iter().filter(|(arr, _)| arr.len() <= limit) {
             let n = arr_seed.len();
             if n == 0 {
                 continue;
@@ -844,22 +825,24 @@ pub mod correctness {
             }
         }
 
-        for hook in QUICK_SELECT_PROP_HOOKS {
-            hook(quick_select_fn, name);
+        for hook in PROP_HOOKS {
+            hook(Category::QuickSelect, quick_select_fn, name, cap);
         }
     }
 
-    /// Small-sort battery — only tests sizes within the algorithm's
-    /// declared threshold. A small-sort's contract is "len ≤ THRESHOLD";
-    /// running it past that is out-of-contract, not a failure of the
-    /// algorithm.
-    pub fn small_sort_battery(sort_fn: SmallSortFnPtr, name: &str, threshold: usize) {
+    /// Small-sort battery. Only tests sizes up to `cap`, which for a small sort
+    /// is its threshold: its contract is "len <= threshold", and running it
+    /// past that is out-of-contract, not a failure of the algorithm.
+    pub fn small_sort_battery(sort_fn: RunFnNoop, name: &str, cap: Option<usize>) {
+        let threshold = cap.unwrap_or_else(|| {
+            panic!("{name}: a small sort declares its threshold as max_input, none is set")
+        });
         for n in 0..=threshold {
             let mut arr: Vec<usize> = (0..n).rev().collect();
             let mut expected = arr.clone();
             expected.sort();
             let mut logger = NoOpLogger;
-            sort_fn(&mut arr, &mut logger);
+            sort_fn(&mut arr, 0, &mut logger);
             assert_eq!(arr, expected, "{}: small-sort failed on n={}", name, n);
         }
         // A few random permutations at the upper end.
@@ -871,13 +854,13 @@ pub mod correctness {
                 let mut expected = arr.clone();
                 expected.sort();
                 let mut logger = NoOpLogger;
-                sort_fn(&mut arr, &mut logger);
+                sort_fn(&mut arr, 0, &mut logger);
                 assert_eq!(arr, expected, "{}: small-sort random trial {}", name, trial);
             }
         }
 
-        for hook in SMALL_SORT_PROP_HOOKS {
-            hook(sort_fn, name, threshold);
+        for hook in PROP_HOOKS {
+            hook(Category::SmallSort, sort_fn, name, cap);
         }
     }
 
@@ -910,9 +893,10 @@ pub mod correctness {
 
         // Panics on any input longer than 8, so a battery that feeds a pattern
         // past the cap it was given fails the test.
-        fn refuses_over_eight(arr: &mut [usize], _logger: &mut NoOpLogger) {
+        fn refuses_over_eight(arr: &mut [usize], _index: usize, _logger: &mut NoOpLogger) -> Option<(usize, usize)> {
             assert!(arr.len() <= 8, "fed {} elements past the cap", arr.len());
             arr.sort();
+            None
         }
 
         #[test]
@@ -999,6 +983,75 @@ mod tests {
     fn run_with_input_names_the_category_of_a_missing_input() {
         fn never(_: &mut [usize], _: usize, _: &mut dyn sort_logger::SortLogger<usize>) {}
         run_with_input(Category::Rotation, "nope", &RunConfig::default(), never, &mut sort_logger::NoOpLogger);
+    }
+
+    // The test hook records each category whose battery ran it. Tests share the
+    // slice, so they check for membership and never for an exact log.
+    static HOOKED: std::sync::Mutex<Vec<Category>> = std::sync::Mutex::new(Vec::new());
+
+    #[distributed_slice(PROP_HOOKS)]
+    static RECORD: PropHook = |category, _f, _name, _cap| HOOKED.lock().unwrap().push(category);
+
+    const CAP: usize = 50;
+
+    // Panics on an array past `CAP`, so a battery that feeds a pattern past the
+    // cap it was given fails the test. Each fn below is otherwise a correct
+    // adapter for its kind.
+    fn within_cap(arr: &[usize]) {
+        assert!(arr.len() <= CAP, "fed {} elements past the cap", arr.len());
+    }
+    fn rotate(arr: &mut [usize], split: usize, _l: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)> {
+        within_cap(arr);
+        arr.rotate_left(split);
+        None
+    }
+    fn merge(arr: &mut [usize], _mid: usize, _l: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)> {
+        within_cap(arr);
+        arr.sort();
+        None
+    }
+    fn partition(arr: &mut [usize], _i: usize, _l: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)> {
+        within_cap(arr);
+        arr.sort();
+        Some((arr.len() / 2, arr.len() / 2))
+    }
+    fn roll(arr: &mut [usize], _i: usize, _l: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)> {
+        within_cap(arr);
+        None
+    }
+
+    #[test]
+    fn every_battery_skips_patterns_longer_than_the_cap() {
+        let cap = Some(CAP);
+        correctness::rotation_battery(rotate, "rotation", cap);
+        correctness::merge_battery(merge, "merge", cap);
+        correctness::quick_select_battery(|arr, _target, _l| { within_cap(arr); arr.sort(); None }, "select", cap);
+        correctness::partition_battery(partition, "partition", cap);
+        correctness::scratchspace_battery(roll, "scratchspace", cap);
+    }
+
+    #[test]
+    fn the_small_sort_battery_takes_its_threshold_from_the_cap() {
+        fn within_four(arr: &mut [usize], _i: usize, _l: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)> {
+            assert!(arr.len() <= 4, "fed {} elements past the threshold", arr.len());
+            arr.sort();
+            None
+        }
+        correctness::small_sort_battery(within_four, "small", Some(4));
+    }
+
+    #[test]
+    #[should_panic(expected = "declares its threshold as max_input")]
+    fn the_small_sort_battery_needs_a_cap() {
+        correctness::small_sort_battery(roll, "small", None);
+    }
+
+    #[test]
+    fn one_hook_slice_serves_every_kind_and_names_the_kind() {
+        correctness::rotation_battery(rotate, "rotation", Some(CAP));
+        correctness::merge_battery(merge, "merge", Some(CAP));
+        assert!(HOOKED.lock().unwrap().contains(&Category::Rotation));
+        assert!(HOOKED.lock().unwrap().contains(&Category::Merge));
     }
 
     #[test]
