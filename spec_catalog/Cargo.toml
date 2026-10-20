@@ -7,8 +7,7 @@
 #
 # Layer model (the two-layer language):
 #   * Layer 1, building stones: the leaf crates below (families + components),
-#     each self-describing Rust. Linked here TYPES-ONLY where a crate still has
-#     a legacy self-registration feature (`default-features = false`).
+#     each self-describing Rust, linked here for its types.
 #   * Layer 2, query: each `*.avbs` file is an AVBS program over the merged
 #     registry; `kinds.avbs` here adds the cross-leaf first-class kinds.
 [package]
@@ -67,7 +66,7 @@ small_sort_deferred_insertion = { path = "../crates/small_sorts/small_sort_defer
 rod_sort_lib = { path = "../crates/families/rod_sort_lib" }
 circle_sort_lib = { path = "../crates/families/circle_sort_lib" }
 
-# ── Building stones: merge family + its 11 rotation leaves (none self-register) ─
+# Building stones: merge family + its 11 rotation leaves.
 # (rotation_reversal already linked above.)
 merge_sort_lib = { path = "../crates/families/merge_sort_lib" }
 rotation_juggling = { path = "../crates/rotations/rotation_juggling" }
@@ -84,7 +83,7 @@ rotation_trinity = { path = "../crates/rotations/rotation_trinity" }
 # ── Building stone: Auxiliary (scratchspace) merge kinds ──
 scratchspace_lib = { path = "../crates/components/scratchspace_lib" }
 
-# ── Building stones: heap cluster (heap owns shared HeapDir+HeapPart; none self-register)
+# Building stones: heap cluster (heap owns shared HeapDir+HeapPart).
 heap_sort_lib = { path = "../crates/families/heap_sort_lib" }
 weak_heap_sort_lib = { path = "../crates/families/weak_heap_sort_lib" }
 reverse_storage_lib = { path = "../crates/components/reverse_storage_lib" }
@@ -97,10 +96,10 @@ quick_heap_sort_lib = { path = "../crates/families/quick_heap_sort_lib" }
 # query curates the shared partition population (quick_select.avbs).
 quick_select_lib = { path = "../crates/families/quick_select_lib" }
 
-# ── Building stones: fun-sorts family (TYPES ONLY — self_register off) ─────────
+# Building stones: fun-sorts family.
 # Nests the QuickSelect role (quick_select_lib, above) inside quick-surrender.
 # `gap_distribution_lib` supplies the GapDistribution components for random shell.
-fun_sorts_lib = { path = "../crates/families/fun_sorts_lib", default-features = false }
+fun_sorts_lib = { path = "../crates/families/fun_sorts_lib" }
 gap_distribution_lib = { path = "../crates/components/gap_distribution_lib" }
 
 # The codegen step. `cargo_metadata` walks the dependency graph and gathers each

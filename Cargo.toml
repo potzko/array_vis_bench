@@ -173,8 +173,6 @@ sort_registry_core = { path = "sort_registry_core" }
 spec_catalog = { path = "spec_catalog" }
 
 # ── Aux-dev-tool deps (src/bin/) ──────────────────────────────────────────────
-# Feature selection MATCHES spec_catalog's so the shared build graph and the
-# self-registration state are unchanged by listing these directly.
 # `compare_sorts` benchmarks hand-rolled sorts against these concrete library
 # types (driven by NoOpLogger so trait/inlining overhead is all that's measured).
 heap_sort_lib = { path = "crates/families/heap_sort_lib" }
