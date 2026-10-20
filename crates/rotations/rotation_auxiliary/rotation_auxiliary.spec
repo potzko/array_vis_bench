@@ -4,6 +4,5 @@ component rot_auxiliary
   type     AuxiliaryRotation
   label    auxiliary
   provides Rotation
-  category Rotation
   uses     rotation_auxiliary::AuxiliaryRotation
 end

@@ -16,7 +16,6 @@ component circle_recursive
   type     CircleRecursiveOf<{order},{finish}>
   label    circle sort<recursive: {order}, finish: {finish}>
   provides Sort
-  category Sort
   menu     circle sorts / recursive
   uses     circle_sort_lib::CircleRecursiveOf
   slot     order  CircleOrder  circle_pre_order
@@ -28,7 +27,6 @@ component circle_bottom_up
   type     CircleBottomUpOf<{direction},{finish}>
   label    circle sort<bottom-up: {direction}, finish: {finish}>
   provides Sort
-  category Sort
   menu     circle sorts / bottom-up
   uses     circle_sort_lib::CircleBottomUpOf
   slot     direction CircleDirection circle_decreasing
@@ -40,7 +38,6 @@ component circle_shaker_recursive
   type     CircleSortShakerRecursive
   label    circle sort (recursive shaker)
   provides Sort
-  category Sort
   menu     circle sorts / recursive
   uses     circle_sort_lib::CircleSortShakerRecursive
 end

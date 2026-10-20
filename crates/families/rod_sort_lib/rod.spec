@@ -15,7 +15,6 @@ component rod_sort
   type     RodSort<{strategy}, {merge}>
   label    rod sort<strategy: {strategy}, merge: {merge}>
   provides Sort
-  category Sort
   menu     rod sorts
   uses     rod_sort_lib::RodSort
   slot     strategy RodBranching rod_classic

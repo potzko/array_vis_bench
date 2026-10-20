@@ -10,7 +10,6 @@ component shell_sort
   type     ShellSort<{seq}>
   label    shell sort<sequence: {seq}>
   provides Sort
-  category Sort
   menu     shell sorts / shell sort
   uses     shell_sort_lib::ShellSort
   slot     seq GapSequence classic
@@ -20,7 +19,6 @@ component shell_sort_ordered
   type     ShellSortOrdered<{seq}>
   label    shell sort ordered<sequence: {seq}>
   provides Sort
-  category Sort
   menu     shell sorts / shell sort ordered
   uses     shell_sort_lib::ShellSortOrdered
   slot     seq GapSequence classic

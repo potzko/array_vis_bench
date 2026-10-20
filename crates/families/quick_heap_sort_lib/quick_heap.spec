@@ -18,7 +18,6 @@ component qhs_classic
   type     QuickHeapSort<{arity}, Iterative, {small}>
   label    quick heap sort<arity: {arity}, small: {small}>
   provides Sort
-  category Sort
   menu     quick heap sorts / classic
   uses     quick_heap_sort_lib::quick_heap_sort::QuickHeapSort heap_sort_lib::deep_heapify::Iterative
   slot     arity HeapArity  heap_arity_binary
@@ -29,7 +28,6 @@ component qhs_deferred
   type     DeferredQuickHeapSort<{arity}, {dss}>
   label    quick heap sort deferred<arity: {arity}, small: {dss}>
   provides Sort
-  category Sort
   menu     quick heap sorts / deferred
   uses     quick_heap_sort_lib::deferred_quick_heap_sort::DeferredQuickHeapSort
   slot     arity HeapArity         heap_arity_binary
@@ -106,7 +104,6 @@ component set_quick_heap_sort
   type     SetQuickHeapSort<{dh}>
   label    set quick heap sort<{dh}>
   provides Sort
-  category Sort
   menu     quick heap sorts / set
   uses     quick_heap_sort_lib::SetQuickHeapSort
   slot     dh SetDeepHeapify

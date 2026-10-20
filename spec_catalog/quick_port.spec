@@ -135,7 +135,6 @@ component qs_std_left_left
   type     CanonicalQuickSort<Pivoted<LeftLeftPartition, {pivot}>, {small_sort}>
   label    quick sort<part: left-left, pivot: {pivot}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     quick sorts / left-left pointer
   uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::Pivoted partition_lomuto::LeftLeftPartition
   slot     pivot PivotSingle
@@ -146,7 +145,6 @@ component qs_std_left_right
   type     CanonicalQuickSort<Pivoted<LeftRightPartition, {pivot}>, {small_sort}>
   label    quick sort<part: left-right, pivot: {pivot}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     quick sorts / left-right pointer
   uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::Pivoted partition_hoare::LeftRightPartition
   slot     pivot PivotSingle
@@ -157,7 +155,6 @@ component qs_std_moving_pivot
   type     CanonicalQuickSort<Pivoted<MovingPivot, {pivot}>, {small_sort}>
   label    quick sort<part: moving pivot, pivot: {pivot}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     quick sorts / moving pivot
   uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::Pivoted partition_moving_pivot::MovingPivot
   slot     pivot PivotSingle
@@ -168,7 +165,6 @@ component qs_std_three_way
   type     CanonicalQuickSort<Pivoted<ThreeWay, {pivot}>, {small_sort}>
   label    quick sort<part: three-way, pivot: {pivot}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     quick sorts / three-way
   uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::Pivoted partition_three_way::ThreeWay
   slot     pivot PivotSingle
@@ -179,7 +175,6 @@ component qs_std_block
   type     CanonicalQuickSort<Pivoted<Block, {pivot}>, {small_sort}>
   label    quick sort<part: block, pivot: {pivot}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     quick sorts / block
   uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::Pivoted partition_block::Block
   slot     pivot PivotSingle
@@ -191,7 +186,6 @@ component qs_std_dual_combined
   type     CanonicalQuickSort<DualPivoted<{pivot}>, {small_sort}>
   label    quick sort<part: dual, pivot: {pivot}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     quick sorts / dual pivot / combined
   uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::DualPivoted
   slot     pivot PivotPair
@@ -202,7 +196,6 @@ component qs_std_dual_ninther
   type     CanonicalQuickSort<DualPivoted<NintherDualPivot>, {small_sort}>
   label    quick sort<part: dual, pivot: ninther, small: {small_sort}>
   provides Sort
-  category Sort
   menu     quick sorts / dual pivot / ninther thirds
   uses     quick_sort_lib::CanonicalQuickSort quick_sort_lib::DualPivoted quick_sort_lib::NintherDualPivot
   slot     small_sort SmallSort
@@ -215,7 +208,6 @@ component qs_def_left_left
   type     DeferredCanonicalQuickSort<Pivoted<LeftLeftPartition, {pivot}>, {small_sort}>
   label    deferred quick sort<part: left-left, pivot: {pivot}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     deferred quick sorts / left-left pointer
   uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::Pivoted partition_lomuto::LeftLeftPartition
   slot     pivot PivotSingle
@@ -226,7 +218,6 @@ component qs_def_left_right
   type     DeferredCanonicalQuickSort<Pivoted<LeftRightPartition, {pivot}>, {small_sort}>
   label    deferred quick sort<part: left-right, pivot: {pivot}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     deferred quick sorts / left-right pointer
   uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::Pivoted partition_hoare::LeftRightPartition
   slot     pivot PivotSingle
@@ -237,7 +228,6 @@ component qs_def_moving_pivot
   type     DeferredCanonicalQuickSort<Pivoted<MovingPivot, {pivot}>, {small_sort}>
   label    deferred quick sort<part: moving pivot, pivot: {pivot}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     deferred quick sorts / moving pivot
   uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::Pivoted partition_moving_pivot::MovingPivot
   slot     pivot PivotSingle
@@ -248,7 +238,6 @@ component qs_def_three_way
   type     DeferredCanonicalQuickSort<Pivoted<ThreeWay, {pivot}>, {small_sort}>
   label    deferred quick sort<part: three-way, pivot: {pivot}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     deferred quick sorts / three-way
   uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::Pivoted partition_three_way::ThreeWay
   slot     pivot PivotSingle
@@ -259,7 +248,6 @@ component qs_def_block
   type     DeferredCanonicalQuickSort<Pivoted<Block, {pivot}>, {small_sort}>
   label    deferred quick sort<part: block, pivot: {pivot}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     deferred quick sorts / block
   uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::Pivoted partition_block::Block
   slot     pivot PivotSingle
@@ -270,7 +258,6 @@ component qs_def_dual_combined
   type     DeferredCanonicalQuickSort<DualPivoted<{pivot}>, {small_sort}>
   label    deferred quick sort<part: dual, pivot: {pivot}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     deferred quick sorts / dual pivot / combined
   uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::DualPivoted
   slot     pivot PivotPair
@@ -281,7 +268,6 @@ component qs_def_dual_ninther
   type     DeferredCanonicalQuickSort<DualPivoted<NintherDualPivot>, {small_sort}>
   label    deferred quick sort<part: dual, pivot: ninther, small: {small_sort}>
   provides Sort
-  category Sort
   menu     deferred quick sorts / dual pivot / ninther thirds
   uses     quick_sort_lib::DeferredCanonicalQuickSort quick_sort_lib::DualPivoted quick_sort_lib::NintherDualPivot
   slot     small_sort DeferredSmallSort

@@ -880,9 +880,9 @@ mod tests {
     }
 
     // ────────────────────────── QUICK-SELECT ─────────────────────────────────
-    // The first NON-SORT first-class kind: `category QuickSelect` entries that
-    // emit through the quick-select body + `SelectSuite` correctness trait, NOT
-    // the sort path. Reproduces the standalone registry's curated 56.
+    // The first NON-SORT first-class kind: `Selection<X>` entries that emit
+    // through the quick-select body + `SelectSuite` correctness trait, NOT the
+    // sort path. Reproduces the standalone registry's curated 56.
     mod quick_select {
         use super::*;
         fn entries() -> Vec<&'static AlgorithmEntry> {

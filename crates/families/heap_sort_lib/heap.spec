@@ -138,7 +138,6 @@ component heap_sort_classic
   type     HeapSortClassicOf<{a}, {d}, {dh}>
   label    heap sort<arity: {a}, dir: {d}, build: {dh}>
   provides Sort
-  category Sort
   menu     heap sorts / d-ary / classic
   uses     heap_sort_lib::spec_drivers::HeapSortClassicOf
   slot     a  HeapArity          heap_arity_binary
@@ -149,7 +148,6 @@ component heap_sort_quick_build
   type     HeapSortQuickBuildOf<{a}, {d}, {dh}>
   label    heap sort quick build<arity: {a}, dir: {d}, build: {dh}>
   provides Sort
-  category Sort
   menu     heap sorts / d-ary / quick build / single pivot
   uses     heap_sort_lib::spec_drivers::HeapSortQuickBuildOf
   slot     a  HeapArity        heap_arity_binary
@@ -160,7 +158,6 @@ component heap_sort_dual_build
   type     HeapSortDualBuildOf<{a}, {d}, {dh}>
   label    heap sort quick build dual pivot<arity: {a}, dir: {d}, build: {dh}>
   provides Sort
-  category Sort
   menu     heap sorts / d-ary / quick build / dual pivot
   uses     heap_sort_lib::spec_drivers::HeapSortDualBuildOf
   slot     a  HeapArity       heap_arity_binary
@@ -171,7 +168,6 @@ component weak_heap_sort
   type     HeapSort<WeakHeapSort<{d}, {r}>>
   label    weak heap sort<dir: {d}, storage: {r}>
   provides Sort
-  category Sort
   menu     heap sorts / weak
   uses     heap_sort_lib::heap_sort::HeapSort weak_heap_sort_lib::weak_heap_sort::WeakHeapSort
   slot     d HeapDir       heap_dir_min_reverse
