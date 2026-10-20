@@ -360,6 +360,7 @@ mod tests {
             let report = crate::run_timing(64, 1);
             assert!(report.ran > 0, "timed no sorts");
             assert!(report.all_ok(), "timing had failures: {:?}", report.failures);
+            assert_eq!(report.timings.len(), report.ran, "one timing per entry that ran");
         }
 
         /// THE CLOSED LOOP from the AVBS *language* surface: a `consumers:` program

@@ -22,6 +22,9 @@ pub struct MainReport {
     pub ok: usize,
     /// Names of the algorithms that failed (panicked, or produced no output).
     pub failures: Vec<String>,
+    /// The median run time of each algorithm a timing consumer ran, in the
+    /// order it ran them. Empty for a consumer that does not time.
+    pub timings: Vec<(&'static str, Duration)>,
 }
 
 impl MainReport {
@@ -236,7 +239,9 @@ impl Main for Timing {
                 continue;
             }
             durs.sort_unstable();
-            timed.push((e.name, durs[k / 2])); // median
+            let median = durs[k / 2];
+            timed.push((e.name, median));
+            r.timings.push((e.name, median));
             r.ok += 1;
         }
 
