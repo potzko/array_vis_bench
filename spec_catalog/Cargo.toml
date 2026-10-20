@@ -38,10 +38,10 @@ shell_sort_lib = { path = "../crates/families/shell_sort_lib", default-features 
 # ── Building stones: insertion family ─────────────────────────────────────────
 insertion_sort_lib = { path = "../crates/families/insertion_sort_lib" }
 
-# ── Building stones: cycle + bubble + comb families (TYPES ONLY — self_register off)
-cycle_sort_lib = { path = "../crates/families/cycle_sort_lib", default-features = false }
-bubble_sort_lib = { path = "../crates/families/bubble_sort_lib", default-features = false }
-comb_sort_lib = { path = "../crates/families/comb_sort_lib", default-features = false }
+# Building stones: cycle, bubble and comb families.
+cycle_sort_lib = { path = "../crates/families/cycle_sort_lib" }
+bubble_sort_lib = { path = "../crates/families/bubble_sort_lib" }
+comb_sort_lib = { path = "../crates/families/comb_sort_lib" }
 
 # ── Building stones: quick-sort family + its partition / pivot / small-sort leaves
 quick_sort_lib = { path = "../crates/families/quick_sort_lib" }
