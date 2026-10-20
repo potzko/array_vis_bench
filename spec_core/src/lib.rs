@@ -6,7 +6,7 @@
 //! but they share types and change together, so they're modules, not crates):
 //!   - [`registry`]  stage 1 — load the text catalog (the specification contract)
 //!   - [`spec`]      stage 2 — parse ONE spec tree OR a constraint-language query
-//!   - [`resolve`]   stage 3 — name resolution + defaults + role/arity checks
+//!   - [`resolve`]   stage 3, name resolution + role/arity checks
 //!   - [`emit`]      stage 4 — produce Rust source (structural scaffold only)
 //!   - [`backend`]   the domain seam — `emit` defers each entry's registration body to an [`EmitBackend`]
 //!   - [`enumerate`] stage 0 — naive flat enumeration (the contrast baseline)
@@ -59,74 +59,82 @@ mod tests {
     }
 
     #[test]
-    fn type_plus_const_resolves_and_collects_uses() {
-        // insertion is a TYPE slot (strategy) + a positional CONST (threshold).
+    fn nested_slots_resolve_and_collect_uses() {
+        // The partition composite nests its scheme and pivot; the small sort nests
+        // its strategy.
         let (_, node) = parse_spec(
-            "quick_sort< partition = LL_partition, pivot = middle_element, small_sort = insertion< strategy = binary, 32 > >",
+            "quick_sort< partition = pk_single< scheme = LL_partition, pivot = middle_element >, \
+                         small_sort = insertion< strategy = binary > >",
         )
         .unwrap();
         let r = resolve(&node, &reg()).unwrap();
         assert_eq!(
             r.type_expr,
-            "QuickSort<LeftLeftPartition, MiddleElement, InsertionSmallSort<BinaryInsertion, 32>>"
+            "QuickSort<Pivoted<LeftLeftPartition, MiddleElement>, InsertionSmallSort<BinaryInsertion, 16>>"
         );
         // imports unioned from every nested component
         assert!(r.uses.contains(&"crate::quick_sort_lib::quick_sort::QuickSort".to_string()));
+        assert!(r.uses.contains(&"crate::quick_sort_lib::Pivoted".to_string()));
         assert!(r.uses.contains(&"crate::small_sort_insertion::InsertionSmallSort".to_string()));
         assert!(r.uses.contains(&"crate::small_sort_insertion_strategy::BinaryInsertion".to_string()));
     }
 
     #[test]
     fn bool_consts_named_and_positional() {
-        let (_, node) =
-            parse_spec("top_down_merge< small_sort = no_small_sort, ping_pong = true, early_exit = false >").unwrap();
-        let r = resolve(&node, &reg()).unwrap();
-        assert_eq!(r.type_expr, "TopDownMergeSort<NoSmallSort, true, false>");
+        let named =
+            parse_spec("top_down_merge< small_sort = no_small_sort, ping_pong = true, early_exit = false >").unwrap().1;
+        let positional = parse_spec("top_down_merge< small_sort = no_small_sort, true, false >").unwrap().1;
+        for node in [named, positional] {
+            assert_eq!(resolve(&node, &reg()).unwrap().type_expr, "TopDownMergeSort<NoSmallSort, true, false>");
+        }
     }
 
     #[test]
-    fn const_defaults_apply() {
-        let (_, node) = parse_spec("insertion<>").unwrap();
-        let r = resolve(&node, &reg()).unwrap();
-        // strategy -> linear (default), N -> 16 (default)
-        assert_eq!(r.type_expr, "InsertionSmallSort<LinearInsertion, 16>");
+    fn omitted_slot_and_const_are_errors() {
+        let (_, no_strategy) = parse_spec("insertion<>").unwrap();
+        let err = resolve(&no_strategy, &reg()).unwrap_err();
+        assert!(err.contains("requires slot `strategy` (role InsertionStrategy)"), "got: {err}");
+        let (_, no_arity) = parse_spec("heap_sort<>").unwrap();
+        let err = resolve(&no_arity, &reg()).unwrap_err();
+        assert!(err.contains("needs a value for const `arity`"), "got: {err}");
     }
 
-    // ── THE HIDDEN ISSUE: flat layout cannot pre-check cross-slot arity ───────
     #[test]
-    fn flat_quicksort_accepts_arity_mismatch_at_registry_level() {
-        // single-pivot partition + DUAL selector. Each slot is individually
-        // role-valid (LL provides Partition, ninther provides Pivot), so the
-        // per-slot role check PASSES — the registry emits a type that only
-        // rustc rejects (via `V: PivotInput<Arity = P::Arity>`). The nested
-        // layout would have made arity local; the flat layout cannot.
-        let (_, node) = parse_spec(
-            "quick_sort< partition = LL_partition, pivot = ninther_dual, small_sort = no_small_sort >",
-        )
-        .unwrap();
-        let r = resolve(&node, &reg()).expect("registry accepts it (the gap)");
-        assert_eq!(r.type_expr, "QuickSort<LeftLeftPartition, NintherDualPivot, NoSmallSort>");
+    fn a_hole_over_a_literal_only_const_is_an_error() {
+        let reg = Registry::parse("component c\n  type C<{n}>\n  provides S\n  const n\nend\n").unwrap();
+        let err = solve(&parse_query("let s: S = c(n = .);").unwrap(), &reg).unwrap_err();
+        assert!(err.contains("literal only"), "got: {err}");
+    }
+
+    #[test]
+    fn solver_reports_a_query_that_omits_a_slot() {
+        let err = solve(&parse_query("let s: Sort = quick_sort(partition = .);").unwrap(), &reg()).unwrap_err();
+        assert!(err.contains("requires slot `small_sort` (role SmallSort)"), "got: {err}");
     }
 
     #[test]
     fn unknown_component_and_slot_error() {
         let (_, n1) = parse_spec("banana<>").unwrap();
         assert!(resolve(&n1, &reg()).unwrap_err().contains("unknown component"));
-        let (_, n2) = parse_spec("LL_partition< pivt = first_element >").unwrap();
+        let (_, n2) = parse_spec("pk_single< pivt = first_element >").unwrap();
         assert!(resolve(&n2, &reg()).unwrap_err().contains("no slot named"));
     }
 
     #[test]
-    fn enumeration_overproduces_quicksort_arity_combos() {
+    fn enumeration_builds_only_arity_legal_quicksort_combos() {
         let specs = enumerate(&reg(), "Sort", 5);
         let quick: Vec<_> = specs.iter().filter(|s| s.name == "quick_sort").collect();
-        // partitions(2) × pivots(7: first, mid, ninther, combined{first,mid}×{first,mid}=4) × small(3) = 42
-        assert_eq!(quick.len(), 42);
-        // ...and some are arity-illegal — e.g. LL partition with the dual ninther.
-        // The NAIVE flat enumerator PRODUCES this bad combo (rustc is its only
-        // gate); the constraint solver below never builds it. before/after:
+        // partitions(7: single composite over first, mid; dual composite over ninther
+        // and combined{first,mid}x{first,mid}=4) x small(3) = 21
+        assert_eq!(quick.len(), 21);
+        // The arity is baked into the composite, so even the naive enumerator never
+        // offers a dual selector to the single composite or the reverse.
         let labels: Vec<String> = quick.iter().map(|s| resolve(s, &reg()).unwrap().label).collect();
-        assert!(labels.iter().any(|l| l == "quick[LL/ninther/none]"));
+        let single: Vec<_> = labels.iter().filter(|l| l.starts_with("quick[single<")).collect();
+        let dual: Vec<_> = labels.iter().filter(|l| l.starts_with("quick[dual<")).collect();
+        assert_eq!((single.len(), dual.len()), (6, 15));
+        assert!(single.iter().all(|l| !l.contains("ninther") && !l.contains("combined")));
+        assert!(dual.iter().all(|l| l.contains("ninther") || l.contains("combined")));
     }
 
     // ── the typed constraint language: pinned / partial / full, one evaluator ─
@@ -148,56 +156,56 @@ mod tests {
         // 0 holes → exactly 1 sort.
         let pinned = run(
             "let p: Pivot = first_element;
-             let part: Partition[pivot = p] = LL_partition;
-             let s: Sort = quick_sort(partition = part, pivot = p, small_sort = no_small_sort);",
+             let part: Partition[pivot = p] = pk_single(scheme = LL_partition, pivot = p);
+             let s: Sort = quick_sort(partition = part, small_sort = no_small_sort);",
             &reg,
         );
         assert_eq!(pinned.sorts.len(), 1);
         assert_eq!(
             ty_exprs(&pinned, &reg)[0],
-            "QuickSort<LeftLeftPartition, FirstElement, NoSmallSort>"
+            "QuickSort<Pivoted<LeftLeftPartition, FirstElement>, NoSmallSort>"
         );
 
-        // partial → a family: pivot pinned single ⇒ only the LL partition is
-        // arity-compatible, crossed with the 3 small sorts.
+        // partial, a family: a pivot pinned single lets only the single composite
+        // pass the refinement, its 2 partitions crossed with the 3 small sorts.
         let partial = run(
             "let p: Pivot = first_element;
              let part: Partition[pivot = p] = .;
-             let s: Sort = quick_sort(partition = part, pivot = p, small_sort = .);",
+             let s: Sort = quick_sort(partition = part, small_sort = .);",
             &reg,
         );
-        assert_eq!(partial.sorts.len(), 3);
-        assert!(labels(&partial, &reg).iter().all(|l| l.starts_with("quick[LL/first/")));
+        assert_eq!(partial.sorts.len(), 6);
+        assert!(labels(&partial, &reg).iter().all(|l| l.starts_with("quick[single<LL, ")));
 
         // all holes → many. Same solve(), zero code branches.
-        let full = run("let s: Sort = .;", &reg);
+        let full = run("let s: Sort = quick_sort(partition = ., small_sort = .);", &reg);
         assert!(full.sorts.len() > partial.sorts.len());
         assert!(partial.sorts.len() > pinned.sorts.len());
     }
 
-    // ── THE HEADLINE: a shared variable makes an arity mismatch unrepresentable ─
+    // A refinement admits only the partitions whose pivot slot the shared
+    // variable's value can fill.
     #[test]
-    fn shared_pivot_makes_arity_mismatch_unrepresentable() {
+    fn refinement_keeps_only_arity_matching_partitions() {
         let reg = reg();
-        let out = run(
-            "let p: Pivot = .;
-             let part: Partition[pivot = p] = .;
-             let s: Sort = quick_sort(partition = part, pivot = p, small_sort = .);",
-            &reg,
-        );
-        // 7 pivots, each pinned to its arity-matching partition, × 3 small = 21.
-        assert_eq!(out.sorts.len(), 21);
-
-        let ls = labels(&out, &reg);
-        // the dual selectors NEVER pair with the single-pivot LL partition…
-        assert!(ls.iter().all(|l| !(l.starts_with("quick[LL/") && l.contains("ninther"))));
-        assert!(ls.iter().all(|l| !(l.starts_with("quick[LL/") && l.contains("combined"))));
-        // …and single pivots never pair with the dual partition.
-        assert!(ls.iter().all(|l| !l.starts_with("quick[dual/first")));
-        assert!(ls.iter().all(|l| !l.starts_with("quick[dual/mid")));
-        // The exact combo the FLAT enumerator overproduces is simply absent —
-        // not "produced then rejected by rustc", but never built.
-        assert!(!ls.iter().any(|l| l == "quick[LL/ninther/none]"));
+        let with_pivot = |pivot: &str| {
+            run(
+                &format!(
+                    "let p: Pivot = {pivot};
+                     let part: Partition[pivot = p] = .;
+                     let s: Sort = quick_sort(partition = part, small_sort = .);"
+                ),
+                &reg,
+            )
+        };
+        // a single selector keeps the single composite: 2 partitions x 3 small = 6.
+        let single = labels(&with_pivot("first_element"), &reg);
+        assert_eq!(single.len(), 6);
+        assert!(single.iter().all(|l| l.starts_with("quick[single<")));
+        // a dual selector keeps the dual composite: 5 partitions x 3 small = 15.
+        let dual = labels(&with_pivot("ninther_dual"), &reg);
+        assert_eq!(dual.len(), 15);
+        assert!(dual.iter().all(|l| l.starts_with("quick[dual<")));
     }
 
     #[test]
@@ -251,10 +259,8 @@ mod tests {
     }
 
     #[test]
-    fn consts_default_explicit_enumerated_and_shared() {
+    fn consts_explicit_enumerated_and_shared() {
         let reg = reg();
-        // default
-        assert_eq!(ty_exprs(&run("let h: Sort = heap_sort();", &reg), &reg), ["HeapSort<2>"]);
         // explicit number
         assert_eq!(ty_exprs(&run("let h: Sort = heap_sort(arity = 4);", &reg), &reg), ["HeapSort<4>"]);
         // enumerate the declared "neat values" set (membership only)

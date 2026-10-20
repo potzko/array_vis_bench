@@ -41,7 +41,7 @@ component odd_even_bubble_sort
   category Sort
   menu     bubble sorts / odd-even bubble sort
   uses     bubble_sort_lib::OddEvenBubbleSort
-  slot     small NonTrivialSmallSort ss_insertion32
+  slot     small NonTrivialSmallSort
 end
 
 # NonTrivialSmallSort components (same types quick uses as SmallSort, declared

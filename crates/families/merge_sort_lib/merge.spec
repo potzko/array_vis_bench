@@ -15,9 +15,9 @@ component merge_top_down
   category Sort
   menu     merge sorts / classic / top-down
   uses     merge_sort_lib::top_down::TopDownMergeSort
-  slot     small_sort SmallSort ss_size1
-  const    ping_pong false values false true
-  const    early_exit false values false true
+  slot     small_sort SmallSort
+  const    ping_pong values false true
+  const    early_exit values false true
 end
 
 component merge_bottom_up
@@ -27,9 +27,9 @@ component merge_bottom_up
   category Sort
   menu     merge sorts / classic / bottom-up
   uses     merge_sort_lib::bottom_up::BottomUpMergeSort
-  slot     small_sort SmallSort ss_size1
-  const    ping_pong false values false true
-  const    early_exit false values false true
+  slot     small_sort SmallSort
+  const    ping_pong values false true
+  const    early_exit values false true
 end
 
 component merge_naive
@@ -39,7 +39,7 @@ component merge_naive
   category Sort
   menu     merge sorts / classic / naive
   uses     merge_sort_lib::naive::NaiveMergeSort
-  slot     small_sort SmallSort ss_size1
+  slot     small_sort SmallSort
 end
 
 component merge_natural
@@ -50,13 +50,13 @@ component merge_natural
   adaptive true
   menu     merge sorts / classic / natural
   uses     merge_sort_lib::natural::NaturalMergeSort
-  const    ping_pong false values false true
-  const    early_exit false values false true
+  const    ping_pong values false true
+  const    early_exit values false true
 end
 
 # ── Rotation-based merge sorts (nested RotationMerge slot over Rotation) ────────
-# EARLY_EXIT is pinned false (the legacy families bake `false`), so it is a const
-# taking its default — not exposed as an axis.
+# EARLY_EXIT is pinned false (the legacy families bake `false`): a literal only
+# const that the rotation queries pass as `false`, not exposed as an axis.
 component merge_rot_top_down
   type     TopDownRotationMergeSort<{small_sort}, {rmerge}, {early_exit}>
   label    rotation merge sort<small: {small_sort}, merge: {rmerge}>
@@ -64,9 +64,9 @@ component merge_rot_top_down
   category Sort
   menu     merge sorts / rotation / top-down
   uses     merge_sort_lib::rotation::TopDownRotationMergeSort
-  slot     small_sort SmallSort ss_size1
-  slot     rmerge RotationMerge mrm_naive
-  const    early_exit false
+  slot     small_sort SmallSort
+  slot     rmerge RotationMerge
+  const    early_exit
 end
 
 component merge_rot_bottom_up
@@ -76,9 +76,9 @@ component merge_rot_bottom_up
   category Sort
   menu     merge sorts / rotation / bottom-up
   uses     merge_sort_lib::rotation::BottomUpRotationMergeSort
-  slot     small_sort SmallSort ss_size1
-  slot     rmerge RotationMerge mrm_naive
-  const    early_exit false
+  slot     small_sort SmallSort
+  slot     rmerge RotationMerge
+  const    early_exit
 end
 
 # ── RotationMerge strategies (each wraps a Rotation); also the first class merge kinds ──
@@ -88,7 +88,7 @@ component mrm_naive
   provides RotationMerge MergeKind
   category Merge
   uses     merge_sort_lib::rotation_merge::NaiveRotationMerge
-  slot     rot Rotation rot_reversal
+  slot     rot Rotation
 end
 
 component mrm_smaller_side
@@ -97,6 +97,6 @@ component mrm_smaller_side
   provides RotationMerge MergeKind
   category Merge
   uses     merge_sort_lib::rotation_merge::SmallerSideRotationMerge
-  slot     rot Rotation rot_reversal
+  slot     rot Rotation
 end
 

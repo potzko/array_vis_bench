@@ -183,7 +183,7 @@ fn card_component_memo(reg: &Registry, name: &str, depth: usize, memo: &mut Memo
         .params
         .iter()
         .filter_map(|p| match &p.kind {
-            ParamKind::Type { role, .. } => Some(role.clone()),
+            ParamKind::Type { role } => Some(role.clone()),
             _ => None,
         })
         .collect();
@@ -361,9 +361,8 @@ fn est_app(
         let e = match a {
             QArg::Named { name: pname, value } => match comp.param(pname) {
                 Some(p) => match &p.kind {
-                    ParamKind::Type { role, .. } => est_value(value, role, reg, depth, memo),
-                    ParamKind::Const { values, .. } => est_const(value, values),
-                    ParamKind::Project { .. } => Est::one(),
+                    ParamKind::Type { role } => est_value(value, role, reg, depth, memo),
+                    ParamKind::Const { values } => est_const(value, values),
                 },
                 None => est_value(value, "", reg, depth, memo),
             },
@@ -378,7 +377,8 @@ fn est_app(
 }
 
 /// Estimate a value in CONST context: a hole ranges over the declared "neat
-/// values" (or degenerates to one default); a literal / ref is a single value.
+/// values" (counted as at least one, so a product never collapses to zero); a
+/// literal / ref is a single value.
 fn est_const(value: &QValue, values: &[String]) -> Est {
     match value {
         QValue::Hole(q) => {
@@ -419,7 +419,7 @@ pub fn recursive_roles(reg: &Registry) -> Vec<String> {
             roles.insert(r.clone());
             let entry = edges.entry(r.clone()).or_default();
             for p in &comp.params {
-                if let ParamKind::Type { role, .. } = &p.kind {
+                if let ParamKind::Type { role } = &p.kind {
                     entry.insert(role.clone());
                 }
             }
@@ -538,10 +538,10 @@ mod tests {
     #[test]
     fn take_caps_ground_but_not_peak() {
         let reg = fixture();
-        let e = est_of("3 of let s: Sort = quick_sort(partition = ., pivot = ., small_sort = .);", &reg);
+        let e = est_of("3 of let s: Sort = quick_sort(partition = ., small_sort = .);", &reg);
         assert_eq!(fin(e.ground), 3, "`N of` caps the emitted count");
-        // peak is the full pre-take cross-product (42 quick combos), unprotected.
-        assert_eq!(fin(e.peak), 42);
+        // peak is the full pre-take cross-product (21 quick combos), unprotected.
+        assert_eq!(fin(e.peak), 21);
     }
 
     #[test]

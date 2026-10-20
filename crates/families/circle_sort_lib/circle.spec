@@ -19,8 +19,8 @@ component circle_recursive
   category Sort
   menu     circle sorts / recursive
   uses     circle_sort_lib::CircleRecursiveOf
-  slot     order  CircleOrder  circle_pre_order
-  slot     finish CircleFinish circle_converge
+  slot     order  CircleOrder
+  slot     finish CircleFinish
 end
 
 # ── Bottom-up driver (direction × finish) ────────────────────────────────────
@@ -31,8 +31,8 @@ component circle_bottom_up
   category Sort
   menu     circle sorts / bottom-up
   uses     circle_sort_lib::CircleBottomUpOf
-  slot     direction CircleDirection circle_decreasing
-  slot     finish    CircleFinish    circle_converge
+  slot     direction CircleDirection
+  slot     finish    CircleFinish
 end
 
 # ── Recursive shaker (zero-axis) ─────────────────────────────────────────────

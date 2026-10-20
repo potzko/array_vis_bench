@@ -4,24 +4,16 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub enum ParamKind {
-    /// Filled by a nested component that `provides` `role`. `default` is the
-    /// component name used when the slot is omitted; `None` = required.
-    Type { role: String, default: Option<String> },
-    /// Filled by a literal token (integer OR `true`/`false` — real const
+    /// Filled by a nested component that `provides` `role`. A query must fill it.
+    Type { role: String },
+    /// Filled by a literal token (integer OR `true`/`false`; real const
     /// generics include `const N: usize` and `const PING_PONG: bool`). Matched
     /// either by name (`ping_pong = true`) or positionally (`insertion<32>`).
-    /// `values` is the declared finite set of "neat values" a quantified const
-    /// hole (`threshold = *`/`?`) ranges over — membership only, never
-    /// arithmetic. Empty = the const is literal-only and a hole degenerates to
-    /// `default`.
-    Const { default: Option<String>, values: Vec<String> },
-    /// A REFERENCEABLE STRUCTURAL PARAM that never appears in the type template
-    /// and is never emitted. It exists only so a refinement (`Partition[pivot =
-    /// p]`) can name it and the solver can thread a role constraint through a
-    /// shared variable. A component that does NOT declare a `project pivot`
-    /// simply cannot satisfy `Partition[pivot = …]` — that exclusion *is* the
-    /// arity filter. rustc remains the redundant backstop on the emitted type.
-    Project { role: String },
+    /// A query must supply it. `values` is the declared finite set of "neat
+    /// values" a quantified const hole (`threshold = *`/`?`) ranges over,
+    /// membership only, never arithmetic. Empty = the const is literal only and
+    /// a hole over it is an error.
+    Const { values: Vec<String> },
 }
 
 #[derive(Debug, Clone)]
@@ -62,18 +54,18 @@ pub struct Component {
 }
 
 impl Component {
-    /// A referenceable param by name — any of Type/Const/Project. A refinement
-    /// `[name = …]` is only valid if this returns `Some`.
+    /// A referenceable param by name, a type slot or a const. A refinement
+    /// `[name = ...]` is only valid if this returns `Some`.
     pub fn param(&self, name: &str) -> Option<&Param> {
         self.params.iter().find(|p| p.name == name)
     }
 
     /// The role a referenceable param contributes to whatever is bound to it.
-    /// `Type`/`Project` carry a role; `Const` carries none (its constraint is
-    /// the value set, not a role).
+    /// `Type` carries a role; `Const` carries none (its constraint is the value
+    /// set, not a role).
     pub fn param_role(&self, name: &str) -> Option<&str> {
         match &self.param(name)?.kind {
-            ParamKind::Type { role, .. } | ParamKind::Project { role } => Some(role),
+            ParamKind::Type { role } => Some(role),
             ParamKind::Const { .. } => None,
         }
     }
@@ -169,40 +161,32 @@ impl Registry {
                             let mut it = rest.split_whitespace();
                             let name = it.next().ok_or_else(|| err("slot needs a name"))?;
                             let role = it.next().ok_or_else(|| err("slot needs a role"))?;
-                            let default = it.next().map(str::to_string);
-                            c.params.push(Param {
-                                name: name.to_string(),
-                                kind: ParamKind::Type { role: role.to_string(), default },
-                            });
-                        }
-                        "const" => {
-                            // `const <name> [<default>] [values <v>...]`
-                            let mut it = rest.split_whitespace();
-                            let name = it.next().ok_or_else(|| err("const needs a name"))?;
-                            let mut default = None;
-                            let mut values = Vec::new();
-                            match it.next() {
-                                Some("values") => values.extend(it.map(str::to_string)),
-                                Some(d) => {
-                                    default = Some(d.to_string());
-                                    if it.next() == Some("values") {
-                                        values.extend(it.map(str::to_string));
-                                    }
-                                }
-                                None => {}
+                            if let Some(extra) = it.next() {
+                                return Err(err(&format!(
+                                    "slot takes a name and a role, found `{extra}` after them"
+                                )));
                             }
                             c.params.push(Param {
                                 name: name.to_string(),
-                                kind: ParamKind::Const { default, values },
+                                kind: ParamKind::Type { role: role.to_string() },
                             });
                         }
-                        "project" => {
+                        "const" => {
+                            // `const <name>` or `const <name> values <v>...`
                             let mut it = rest.split_whitespace();
-                            let name = it.next().ok_or_else(|| err("project needs a name"))?;
-                            let role = it.next().ok_or_else(|| err("project needs a role"))?;
+                            let name = it.next().ok_or_else(|| err("const needs a name"))?;
+                            let values = match it.next() {
+                                None => Vec::new(),
+                                Some("values") => it.map(str::to_string).collect(),
+                                Some(other) => {
+                                    return Err(err(&format!(
+                                        "const takes `values <v>...` after its name, found `{other}`"
+                                    )))
+                                }
+                            };
                             c.params.push(Param {
                                 name: name.to_string(),
-                                kind: ParamKind::Project { role: role.to_string() },
+                                kind: ParamKind::Const { values },
                             });
                         }
                         other => return Err(err(&format!("unknown keyword `{other}`"))),
@@ -245,5 +229,46 @@ fn split_first_word(line: &str) -> (&str, &str) {
     match line.find(char::is_whitespace) {
         Some(i) => (&line[..i], &line[i + 1..]),
         None => (line, ""),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parse_body(body: &str) -> Result<Registry, String> {
+        Registry::parse(&format!("component c\n  type T\n{body}\nend\n"))
+    }
+
+    fn const_values(reg: &Registry, name: &str) -> Vec<String> {
+        match &reg.get("c").unwrap().param(name).unwrap().kind {
+            ParamKind::Const { values } => values.clone(),
+            other => panic!("`{name}` should be a const, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn slot_is_a_name_and_a_role() {
+        let reg = parse_body("  slot x Role").unwrap();
+        assert_eq!(reg.get("c").unwrap().param_role("x"), Some("Role"));
+        let err = parse_body("  slot x Role filler").unwrap_err();
+        assert!(err.contains("slot takes a name and a role, found `filler` after them"), "got: {err}");
+    }
+
+    #[test]
+    fn const_is_a_name_with_an_optional_value_set() {
+        let reg = parse_body("  const lit\n  const flag values false true").unwrap();
+        assert!(const_values(&reg, "lit").is_empty());
+        assert_eq!(const_values(&reg, "flag"), ["false", "true"]);
+        for bare_default in ["  const n 16", "  const n 16 values 16 32", "  const flag false"] {
+            let err = parse_body(bare_default).unwrap_err();
+            assert!(err.contains("const takes `values <v>...` after its name"), "`{bare_default}` got: {err}");
+        }
+    }
+
+    #[test]
+    fn project_is_an_unknown_keyword() {
+        let err = parse_body("  project pivot PivotSingle").unwrap_err();
+        assert!(err.contains("unknown keyword `project`"), "got: {err}");
     }
 }

@@ -190,8 +190,8 @@ HeapPiv BeapPiv`.
 | `label <template>` | Human-readable name, same `{hole}` templating. Instantiated into the `AlgorithmEntry.name` / picker path. |
 | `provides <Role> [<Role>...]` | The role(s) this component advertises. This is what slots match against. |
 | `uses <rust::path> [<path>...]` | Module paths spliced into the emitted `use` block so `type` resolves. |
-| `slot <name> <Role> [<default>]` | A type parameter, filled by any component of `<Role>`. Optional `<default>` component if a query omits it. |
-| `project <name> <Role>` | A *structural-only* parameter that does **not** appear in `type` , exists only so a query can refine on it (`Partition[pivot = ...]`). |
+| `slot <name> <Role>` | A type parameter, filled by any component of `<Role>`. A query must fill every slot. |
+| `const <name> [values <v>...]` | A const generic, matched by name or position. `values` is the finite set a quantified hole ranges over; without it the const takes only a literal. A query must pass every const. |
 | `category <Cat>` | If present, this component is emitted as a first-class catalog entry (`Sort`, `Partition`, `QuickSelect`, ...). Omit for pure slot-fillers. |
 | `menu <path>` | Picker sub-path beneath the category. |
 | `max_input <n>` | Cap: inputs larger than `n` are out of scope, either by contract (small sorts) or as a time budget (expensive exotic sorts). Becomes `AlgorithmEntry.max_input_size`. |

@@ -13,7 +13,7 @@ component comb_sort
   category Sort
   menu     comb sorts
   uses     comb_sort_lib::CombSortOf
-  slot     ratio CombRatio comb_13
+  slot     ratio CombRatio
 end
 
 # ── Shrink factors (CombRatio = reciprocal NUM/DEN) ──────────────────────────

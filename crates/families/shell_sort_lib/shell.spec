@@ -13,7 +13,7 @@ component shell_sort
   category Sort
   menu     shell sorts / shell sort
   uses     shell_sort_lib::ShellSort
-  slot     seq GapSequence classic
+  slot     seq GapSequence
 end
 
 component shell_sort_ordered
@@ -23,7 +23,7 @@ component shell_sort_ordered
   category Sort
   menu     shell sorts / shell sort ordered
   uses     shell_sort_lib::ShellSortOrdered
-  slot     seq GapSequence classic
+  slot     seq GapSequence
 end
 
 # Gap sequences (9) — labels match `GapSequence::NAME`.

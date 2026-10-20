@@ -6,15 +6,16 @@
 //!
 //! The decisive property: a *shared variable* threads ONE value to every use,
 //! and a refinement (`Partition[pivot = p]`) adds a role constraint to that
-//! value. So `quick_sort(partition = LL, pivot = ninther_dual)` with a shared
-//! `p` is never *built* — LL's projected `pivot` is `PivotSingle`, a dual
-//! selector doesn't provide it, and the combination is pruned at generation
-//! time. rustc remains a redundant backstop, never the first line of defence.
+//! value. So the single partition composite refined on a shared `p` that holds
+//! a dual selector is never *built*: the composite's `pivot` slot has role
+//! `PivotSingle`, a dual selector doesn't provide it, and the combination is
+//! pruned at generation time. rustc remains a redundant backstop, never the
+//! first line of defence.
 //!
 //! Discipline (enforced by construction): the only constraints are STRUCTURAL
 //! EQUALITY (a shared variable: `a == b`) and ROLE MEMBERSHIP (`x: Role`). No
-//! arithmetic, conditionals, or negation. Numbers are shared/defaulted/finitely
-//! enumerated as opaque tokens — never reasoned about.
+//! arithmetic, conditionals, or negation. Numbers are shared, passed or finitely
+//! enumerated as opaque tokens, never reasoned about.
 
 use std::collections::{HashMap, HashSet};
 
@@ -314,8 +315,8 @@ fn eval_type(
         QValue::Hole(quant) => {
             // Population = every legal ground tree of this role (depth-bounded),
             // restricted to components that actually declare each refined param.
-            // A unit partition that does not `project pivot` is excluded here —
-            // that exclusion IS the arity filter.
+            // A component without the refined slot is excluded here; the role
+            // check on the threaded value follows in `check_refinements`.
             let mut pop: Vec<SpecNode> = enumerate(reg, role, depth)
                 .into_iter()
                 .filter(|node| local_refine_ok(node, refinements, reg))
@@ -491,7 +492,7 @@ fn eval_app(
                         .param(pname)
                         .ok_or_else(|| format!("`{name}` has no parameter `{pname}`"))?;
                     match &param.kind {
-                        ParamKind::Type { role, .. } => {
+                        ParamKind::Type { role } => {
                             eval_type(value, role, &[], &eenv, cvars, reg, depth, warnings)?
                                 .into_iter()
                                 .map(|(node, caps)| {
@@ -499,19 +500,13 @@ fn eval_app(
                                 })
                                 .collect()
                         }
-                        ParamKind::Const { default, values } => {
-                            eval_const(value, Some((default, values)), &eenv, warnings)?
+                        ParamKind::Const { values } => {
+                            eval_const(value, Some(values.as_slice()), &eenv, warnings)?
                                 .into_iter()
                                 .map(|v| {
                                     (Arg::NamedConst { name: pname.clone(), value: v }, Caps::new())
                                 })
                                 .collect()
-                        }
-                        ParamKind::Project { .. } => {
-                            return Err(format!(
-                                "`{pname}` of `{name}` is a structural (projected) param and \
-                                 cannot be passed as an argument — refine it on a binding instead"
-                            ))
                         }
                     }
                 }
@@ -537,11 +532,11 @@ fn eval_app(
 }
 
 /// Evaluate a value in CONST context, returning every literal it stands for.
-/// `param` (when known) supplies the declared value-set + default a const hole
-/// ranges over.
+/// `param` (when known) supplies the declared value set a const hole ranges
+/// over.
 fn eval_const(
     value: &QValue,
-    param: Option<(&Option<String>, &Vec<String>)>,
+    param: Option<&[String]>,
     env: &Env,
     warnings: &mut Vec<String>,
 ) -> Result<Vec<String>, String> {
@@ -555,19 +550,18 @@ fn eval_const(
             None => Err(format!("unknown const variable `{name}`")),
         },
         QValue::Hole(quant) => {
-            let (default, values) = param.ok_or(
+            let values = param.ok_or(
                 "a const hole must be a NAMED argument so its value set is known \
                  (positional const holes are unsupported)",
             )?;
-            // Population is the declared "neat values"; with none declared, a
-            // hole degenerates to the single default. Pure membership — the
+            if values.is_empty() {
+                return Err("a const hole needs a declared `values` set, but this const is \
+                            literal only"
+                    .into());
+            }
+            // Population is the declared "neat values". Pure membership, the
             // solver never reasons about the numbers themselves.
-            let pop: Vec<String> = if values.is_empty() {
-                default.clone().into_iter().collect()
-            } else {
-                values.clone()
-            };
-            apply_quant_str(pop, *quant, warnings)
+            apply_quant_str(values.to_vec(), *quant, warnings)
         }
         QValue::App { name, .. } => {
             Err(format!("`{name}(…)` is a component but a const literal is expected here"))
@@ -624,12 +618,12 @@ fn check_refinements(
         .ok_or_else(|| format!("unknown component `{}`", node.name))?;
 
     for r in &binding.refinements {
-        // The filler must declare the projected/typed param at all…
+        // The filler must declare the refined param at all...
         let role = match comp.param_role(&r.param) {
             Some(role) => role.to_string(),
             None => {
                 if comp.param(&r.param).is_none() {
-                    return Ok(false); // e.g. a unit partition has no `.pivot`
+                    return Ok(false); // e.g. a leaf has no `pivot` slot
                 }
                 return Err(format!(
                     "refinement `{}` of `{}` targets a const param, which is not a role \

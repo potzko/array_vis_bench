@@ -5,7 +5,7 @@ priority order.
 
 - `category_from_the_wrapper.md`: the query wrapper as the one source of an entry's kind; not started.
 - `derive_uses_from_the_owning_crate.md`: imports derived from the declaring crate after the head collisions are renamed; not started.
-- `drop_slot_defaults_and_project.md`: three unused grammar features removed; not started.
+- `drop_slot_defaults_and_project.md`: three unused grammar features removed, done, kept as the record.
 - `entry_owned_flags.md`: the cap and nondeterminism lists became entry fields, done, kept as the record.
 - `entry_owned_navigation.md`: the picker data becomes entry fields and the second registry goes; not started.
 - `enumeration_strategies.md`: `finite` shipped; `affine`, `sample`, `spread` and the rest fill sugar are open.

@@ -1,6 +1,6 @@
-//! Stage 3 — resolve a [`SpecNode`] against the [`Registry`]: fill defaults,
-//! check slot roles/arity, collect imports, and produce a concrete Rust type
-//! expression + label.
+//! Stage 3, resolve a [`SpecNode`] against the [`Registry`]: check slot
+//! roles/arity, collect imports, and produce a concrete Rust type expression +
+//! label.
 
 use std::collections::HashMap;
 
@@ -92,19 +92,13 @@ pub fn resolve(node: &SpecNode, reg: &Registry) -> Result<Resolved, String> {
     for p in &comp.params {
         let hole = format!("{{{}}}", p.name);
         match &p.kind {
-            ParamKind::Type { role, default } => {
-                let child = match named_slots.get(&p.name) {
-                    Some(child) => (*child).clone(),
-                    None => match default {
-                        Some(d) => SpecNode { name: d.clone(), args: vec![] },
-                        None => {
-                            return Err(format!(
-                                "`{}` requires slot `{}` (role {role})",
-                                node.name, p.name
-                            ))
-                        }
-                    },
-                };
+            ParamKind::Type { role } => {
+                let child = named_slots
+                    .get(&p.name)
+                    .map(|child| (*child).clone())
+                    .ok_or_else(|| {
+                        format!("`{}` requires slot `{}` (role {role})", node.name, p.name)
+                    })?;
                 // ROLE CHECK. NOTE: this validates each slot's filler against
                 // that slot's role *independently*. It CANNOT express a
                 // cross-slot constraint (e.g. "partition arity must match pivot
@@ -147,12 +141,11 @@ pub fn resolve(node: &SpecNode, reg: &Registry) -> Result<Resolved, String> {
                     }
                 }
             }
-            ParamKind::Const { default, .. } => {
+            ParamKind::Const { .. } => {
                 let value = named_consts
                     .get(&p.name)
                     .cloned()
                     .or_else(|| pos_iter.next())
-                    .or_else(|| default.clone())
                     .ok_or_else(|| {
                         format!("`{}` needs a value for const `{}`", node.name, p.name)
                     })?;
@@ -160,9 +153,6 @@ pub fn resolve(node: &SpecNode, reg: &Registry) -> Result<Resolved, String> {
                 label = label.replace(&hole, &value);
                 label_template = label_template.replace(&hole, &value);
             }
-            // Structural-only: never appears in the type template, nothing to
-            // emit. Its role constraint is enforced by the solver, not here.
-            ParamKind::Project { .. } => {}
         }
     }
     Ok(Resolved { type_expr, label, uses, axes, label_template })
@@ -211,37 +201,39 @@ mod tests {
 
     #[test]
     fn nested_filler_becomes_child_axes_with_prefixed_paths() {
-        // A quick_sort whose pivot is the composite `combined<first, middle>`:
-        // the pivot node carries the HEAD `combined`, then its a/b sub-slots
-        // appear as `pivot/a`, `pivot/b` — the structural nesting.
+        // A quick_sort whose partition is the dual composite over the composite
+        // pivot `combined<first, middle>`: each node carries its HEAD label, and
+        // the paths accumulate down the nesting (`partition/pivot/a`).
         let axes = axes_of(
-            "quick_sort< partition = LL_partition, \
-                         pivot = combined< a = first_element, b = middle_element >, \
+            "quick_sort< partition = pk_dual< pivot = combined< a = first_element, b = middle_element > >, \
                          small_sort = no_small_sort >",
         );
         assert_eq!(
             axes,
             vec![
-                ("Partition".into(), "LL".into(), "partition".into()),
-                ("Pivot".into(), "combined".into(), "pivot".into()),
-                ("PivotSingle".into(), "first".into(), "pivot/a".into()),
-                ("PivotSingle".into(), "mid".into(), "pivot/b".into()),
+                ("Partition".into(), "dual".into(), "partition".into()),
+                ("PivotDual".into(), "combined".into(), "partition/pivot".into()),
+                ("PivotSingle".into(), "first".into(), "partition/pivot/a".into()),
+                ("PivotSingle".into(), "mid".into(), "partition/pivot/b".into()),
                 ("SmallSort".into(), "none".into(), "small_sort".into()),
             ]
         );
     }
 
     #[test]
-    fn leaf_filler_is_a_single_flat_axis() {
-        // A single (non-composite) pivot → one `pivot` node, no children.
+    fn leaf_fillers_are_single_flat_axes() {
+        // The single composite's scheme and pivot are leaves: one node each under
+        // the partition, no children.
         let axes = axes_of(
-            "quick_sort< partition = LL_partition, pivot = first_element, small_sort = no_small_sort >",
+            "quick_sort< partition = pk_single< scheme = LL_partition, pivot = first_element >, \
+                         small_sort = no_small_sort >",
         );
         assert_eq!(
             axes,
             vec![
-                ("Partition".into(), "LL".into(), "partition".into()),
-                ("Pivot".into(), "first".into(), "pivot".into()),
+                ("Partition".into(), "single".into(), "partition".into()),
+                ("PartScheme".into(), "LL".into(), "partition/scheme".into()),
+                ("PivotSingle".into(), "first".into(), "partition/pivot".into()),
                 ("SmallSort".into(), "none".into(), "small_sort".into()),
             ]
         );

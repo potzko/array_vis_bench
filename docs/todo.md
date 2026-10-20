@@ -91,7 +91,7 @@ afternoon each and remove concepts rather than move them.
    are gone.
    See [implementation_plans/entry_owned_flags.md](implementation_plans/entry_owned_flags.md).
 2. Drop slot defaults and `project` from the spec grammar; no production
-   query uses either.
+   query used either. Done.
    See [implementation_plans/drop_slot_defaults_and_project.md](implementation_plans/drop_slot_defaults_and_project.md).
 3. Category from the wrapper. The query wrapper and the component's
    `category` line both name the kind and nothing checks they agree.
@@ -127,9 +127,8 @@ dropped:
   bindings across files. A prelude of shared bindings is the missing
   piece, and it should come first if the role tags are ever to go.
 - Attributes on the Rust types cannot replace the spec. Slot roles,
-  slot defaults, labels, menus and role tags are not derivable from
-  generics and bounds, so the attribute would restate the spec line for
-  line.
+  labels, menus and role tags are not derivable from generics and
+  bounds, so the attribute would restate the spec line for line.
 
 Three pairs of components still share a type on purpose. The beap and
 heap quick deep heapify strategies differ in the role of their pivot

@@ -67,8 +67,8 @@ component combined
   label    combined<{a}, {b}>
   provides PivotPair
   uses     quick_sort_lib::CombinedSelector
-  slot     a PivotSingle p_first
-  slot     b PivotSingle p_middle
+  slot     a PivotSingle
+  slot     b PivotSingle
 end
 
 # ════════════════════════ STANDARD SMALL SORTS (SS) ═══════════════════════

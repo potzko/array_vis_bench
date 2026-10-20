@@ -21,8 +21,8 @@ component qhs_classic
   category Sort
   menu     quick heap sorts / classic
   uses     quick_heap_sort_lib::quick_heap_sort::QuickHeapSort heap_sort_lib::deep_heapify::Iterative
-  slot     arity HeapArity  heap_arity_binary
-  slot     small SmallSort  ss_size1
+  slot     arity HeapArity
+  slot     small SmallSort
 end
 
 component qhs_deferred
@@ -32,8 +32,8 @@ component qhs_deferred
   category Sort
   menu     quick heap sorts / deferred
   uses     quick_heap_sort_lib::deferred_quick_heap_sort::DeferredQuickHeapSort
-  slot     arity HeapArity         heap_arity_binary
-  slot     dss   DeferredSmallSort dss_lin16
+  slot     arity HeapArity
+  slot     dss   DeferredSmallSort
 end
 # ═══════════════════ HEAP-EXTRACT PARTITIONS (pivotless) ═══════════════════
 # Self-pivoting `PartitionScheme`s (N_PIVOTS = 0) — no pivot to select. Under the

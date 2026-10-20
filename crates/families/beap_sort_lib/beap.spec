@@ -26,8 +26,8 @@ component beap_sort_classic
   category Sort
   menu     heap sorts / beap / classic
   uses     beap_sort_lib::spec_drivers::BeapSortClassicOf
-  slot     d  HeapDir                heap_dir_min_reverse
-  slot     dh BeapDeepHeapifyClassic heap_dh_iterative
+  slot     d  HeapDir
+  slot     dh BeapDeepHeapifyClassic
   max_input 10000
 end
 component beap_sort_quick_build
@@ -37,8 +37,8 @@ component beap_sort_quick_build
   category Sort
   menu     heap sorts / beap / quick build / single pivot
   uses     beap_sort_lib::spec_drivers::BeapSortQuickOf
-  slot     d  HeapDir              heap_dir_min_reverse
-  slot     dh BeapDeepHeapifyQuick beap_qdh_sequential
+  slot     d  HeapDir
+  slot     dh BeapDeepHeapifyQuick
   max_input 10000
 end
 component beap_sort_dual_build
@@ -48,7 +48,7 @@ component beap_sort_dual_build
   category Sort
   menu     heap sorts / beap / quick build / dual pivot
   uses     beap_sort_lib::spec_drivers::BeapSortDualOf
-  slot     d  HeapDir             heap_dir_min_reverse
-  slot     dh BeapDeepHeapifyDual beap_dpqdh_stack_dual
+  slot     d  HeapDir
+  slot     dh BeapDeepHeapifyDual
   max_input 10000
 end
