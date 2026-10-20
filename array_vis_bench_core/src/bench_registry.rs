@@ -426,10 +426,9 @@ pub type PropHook = fn(Category, RunFnNoop, &str, Option<usize>);
 /// call it; not `#[cfg(test)]` for the same reason.
 ///
 /// Each category exposes one generic *battery* function that takes the
-/// algorithm's natural-signature fn pointer and the algorithm's name.
-/// The per-leaf `run_correctness` emitted by every `*_family!` macro
-/// calls into the matching battery, so the test logic is written once
-/// per category rather than inlined per leaf.
+/// algorithm's adapter ([`RunFnNoop`]), the algorithm's name and its cap.
+/// The `CorrectnessSuite` of each kind calls the matching battery, so the
+/// test logic is written once per category rather than inlined per leaf.
 pub mod correctness {
     use super::{Category, RunFnNoop, PROP_HOOKS};
     use crate::array_gen::{get_arr, get_rand_arr, get_rand_arr_in_range, get_reversed_arr};
