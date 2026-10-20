@@ -33,6 +33,9 @@ pub struct Component {
     /// `quick_sort_lib::quick_sort::QuickSort`. Mirrors the real `uses = [...]`
     /// family field. Unioned with nested children's `uses` during resolve.
     pub uses: Vec<String>,
+    /// The crate whose fragment declared this component, when the registry was
+    /// built from fragments. Imports are derived from it unless `uses` overrides.
+    pub krate: Option<String>,
     /// Per-family literal (NOT compositional — can't be inherited from the
     /// type): true if the algorithm runs faster on nearly-sorted input.
     pub adaptive: bool,
@@ -62,10 +65,20 @@ impl Component {
         type_head(&self.type_tmpl)
     }
 
-    /// The path the head is imported from, when `uses` names it.
-    pub fn head_path(&self) -> Option<&str> {
+    /// The path the head is imported from: the `uses` entry that ends in it when
+    /// `uses` is listed, else the head at the root of the owning crate.
+    pub fn head_path(&self) -> Option<String> {
         let head = self.head();
-        self.uses.iter().map(String::as_str).find(|u| u.rsplit("::").next() == Some(head))
+        if self.uses.is_empty() {
+            return self.krate.as_ref().map(|krate| format!("{krate}::{head}"));
+        }
+        self.uses.iter().find(|u| u.rsplit("::").next() == Some(head)).cloned()
+    }
+
+    /// Who declared the component, as an error message names it.
+    fn declarer(&self) -> String {
+        let unowned = || "an unowned fragment".to_string();
+        self.krate.as_ref().map_or_else(unowned, |krate| format!("`{krate}`"))
     }
 
     /// A referenceable param by name, a type slot or a const. A refinement
@@ -95,6 +108,8 @@ pub struct Registry {
     /// instantiations; `pk_single` before `pk_dual`). A raw `HashMap` iteration
     /// would make head resolution — and thus the emitted catalog — nondeterministic.
     order: Vec<String>,
+    /// Type head -> the first component declared with it.
+    heads: HashMap<String, String>,
 }
 
 impl Registry {
@@ -103,6 +118,15 @@ impl Registry {
     /// one path, because a head names exactly one Rust type, in a query and in
     /// the emitted `use` block.
     fn insert_component(&mut self, c: Component) -> Result<(), String> {
+        if let Some(prev) = self.components.get(&c.name) {
+            return Err(format!(
+                "duplicate component `{}`, declared by {} and {}; \
+                 names are unique across the whole catalog",
+                c.name,
+                prev.declarer(),
+                c.declarer()
+            ));
+        }
         let clash = self.iter().find(|o| {
             let same_head = o.name != c.name && o.head() == c.head();
             same_head && matches!((o.head_path(), c.head_path()), (Some(a), Some(b)) if a != b)
@@ -118,14 +142,45 @@ impl Registry {
                 c.head_path().unwrap_or_default()
             ));
         }
-        if !self.components.contains_key(&c.name) {
-            self.order.push(c.name.clone());
-        }
+        self.order.push(c.name.clone());
+        self.heads.entry(c.head().to_string()).or_insert_with(|| c.name.clone());
         self.components.insert(c.name.clone(), c);
         Ok(())
     }
 
+    /// Parse a text whose components have no owning crate, so each must list `uses`.
     pub fn parse(text: &str) -> Result<Registry, String> {
+        Self::parse_owned(text, None)
+    }
+
+    /// Parse the fragment owned by crate `krate`; its components import from it.
+    pub fn parse_fragment(text: &str, krate: &str) -> Result<Registry, String> {
+        Self::parse_owned(text, Some(krate))
+    }
+
+    /// Move every component of `other` in after this registry's own, in order.
+    pub fn merge(&mut self, other: Registry) -> Result<(), String> {
+        let Registry { mut components, order, .. } = other;
+        for name in order {
+            self.insert_component(components.remove(&name).expect("order names a component"))?;
+        }
+        Ok(())
+    }
+
+    /// One registry over every `(crate, fragment text)`, in the order given.
+    pub fn from_fragments<'a>(
+        fragments: impl IntoIterator<Item = (&'a str, &'a str)>,
+    ) -> Result<Registry, String> {
+        let mut reg = Registry::default();
+        for (krate, text) in fragments {
+            let fragment = Registry::parse_fragment(text, krate)
+                .map_err(|e| format!("crate `{krate}`: {e}"))?;
+            reg.merge(fragment)?;
+        }
+        Ok(reg)
+    }
+
+    fn parse_owned(text: &str, krate: Option<&str>) -> Result<Registry, String> {
         let mut reg = Registry::default();
         let mut cur: Option<Component> = None;
         for (lineno, raw) in text.lines().enumerate() {
@@ -147,6 +202,7 @@ impl Registry {
                         provides: vec![],
                         params: vec![],
                         uses: vec![],
+                        krate: krate.map(str::to_string),
                         adaptive: false,
                         nondeterministic: false,
                         max_input: None,
@@ -250,6 +306,12 @@ impl Registry {
         self.order.iter().filter_map(move |n| self.components.get(n))
     }
 
+    /// The component that declares `head` as its type head, the first declared
+    /// when several share it (they share one import path).
+    pub fn component_with_head(&self, head: &str) -> Option<&Component> {
+        self.components.get(self.heads.get(head)?)
+    }
+
     /// All components that can satisfy `role`, name-sorted for deterministic
     /// enumeration order.
     pub fn providing(&self, role: &str) -> Vec<&Component> {
@@ -319,6 +381,37 @@ mod tests {
         let err = Registry::parse(&pair("y::T")).unwrap_err();
         assert!(err.contains("`a` and `b` share the type head `T`"), "got: {err}");
         assert!(err.contains("`x::T` and `y::T`"), "got: {err}");
+    }
+
+    #[test]
+    fn a_fragment_records_its_owning_crate_and_a_plain_parse_records_none() {
+        let text = "component c\n  type C\nend\n";
+        let owned = Registry::parse_fragment(text, "k").unwrap();
+        assert_eq!(owned.get("c").unwrap().krate.as_deref(), Some("k"));
+        assert_eq!(Registry::parse(text).unwrap().get("c").unwrap().krate, None);
+    }
+
+    #[test]
+    fn merged_fragments_share_one_namespace_that_names_both_crates_on_a_clash() {
+        let err = Registry::from_fragments([
+            ("k1", "component c\n  type A\nend\n"),
+            ("k2", "component c\n  type B\nend\n"),
+        ])
+        .unwrap_err();
+        assert!(err.contains("duplicate component `c`"), "got: {err}");
+        assert!(err.contains("`k1` and `k2`"), "got: {err}");
+    }
+
+    #[test]
+    fn one_head_in_two_crates_is_two_import_paths() {
+        let err = Registry::from_fragments([
+            ("k1", "component a\n  type T\nend\n"),
+            ("k2", "component b\n  type T\nend\n"),
+        ])
+        .unwrap_err();
+        assert!(err.contains("`k1::T` and `k2::T`"), "got: {err}");
+        let one_crate = "component a\n  type T\nend\ncomponent b\n  type T<{s}>\n  slot s R\nend\n";
+        assert!(Registry::parse_fragment(one_crate, "k1").is_ok());
     }
 
     #[test]
