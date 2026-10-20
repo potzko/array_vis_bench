@@ -38,7 +38,6 @@ component qs_recursive
   label    quick select: recursive<{part}>
   provides QuickSelect
   menu     recursive
-  uses     quick_select_lib::RecursiveQuickSelect
   slot     part SelectPartition
 end
 
@@ -47,6 +46,5 @@ component qs_iterative
   label    quick select: iterative<{part}>
   provides QuickSelect
   menu     iterative
-  uses     quick_select_lib::IterativeQuickSelect
   slot     part SelectPartition
 end

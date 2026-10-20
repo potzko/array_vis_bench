@@ -20,7 +20,6 @@ component fs_slow_sort
   label     slow sort
   provides  Sort
   menu      fun sorts / slow sort
-  uses      fun_sorts_lib::SlowSort
   max_input 150
 end
 
@@ -29,7 +28,6 @@ component fs_slow_sort_potzko
   label     slow sort potzko
   provides  Sort
   menu      fun sorts / slow sort potzko
-  uses      fun_sorts_lib::SlowSortPotzko
   max_input 20
 end
 
@@ -38,7 +36,6 @@ component fs_bad_heap_sort
   label     bad heap sort
   provides  Sort
   menu      fun sorts / bad heap sort
-  uses      fun_sorts_lib::BadHeapSort
   max_input 200
 end
 
@@ -47,7 +44,6 @@ component fs_bad_heap_sort_alt
   label    bad heap sort alt
   provides Sort
   menu     fun sorts / bad heap sort alt
-  uses     fun_sorts_lib::BadHeapSortAlt
 end
 
 # ═════════════════════ CYCLENT PARTITIONS (curated, no MovingPivot) ══════════
@@ -60,7 +56,6 @@ component fs_cyclent_sort
   label    cyclent sort<{part}>
   provides Sort
   menu     fun sorts / cyclent sort
-  uses     fun_sorts_lib::CyclentSort
   slot     part PartScheme
   max_input 5000
 end
@@ -70,7 +65,6 @@ component fs_cyclent_sort_opt
   label    cyclent sort opt<{part}>
   provides Sort
   menu     fun sorts / cyclent sort opt
-  uses     fun_sorts_lib::CyclentSortOpt
   slot     part PartScheme
   max_input 5000
 end
@@ -80,7 +74,6 @@ component fs_cyclent_sort_stack
   label    cyclent sort stack<{part}>
   provides Sort
   menu     fun sorts / cyclent sort stack
-  uses     fun_sorts_lib::CyclentSortStack
   slot     part PartScheme
   max_input 5000
 end
@@ -90,7 +83,6 @@ component fs_cyclent_sort_stack_optimized
   label    cyclent sort stack optimized<{part}>
   provides Sort
   menu     fun sorts / cyclent sort stack optimized
-  uses     fun_sorts_lib::CyclentSortStackOptimized
   slot     part PartScheme
   max_input 5000
 end
@@ -105,7 +97,6 @@ component fs_stooge_sort
   label     stooge sort<{small}>
   provides  Sort
   menu      fun sorts / stooge sort
-  uses      fun_sorts_lib::StoogeSort
   slot      small FunSmallSort
   max_input 500
 end
@@ -116,7 +107,6 @@ component fs_random_shell_sort
   label           random shell sort<{dist}>
   provides        Sort
   menu            fun sorts / random shell sort
-  uses            fun_sorts_lib::RandomShellSort
   slot            dist GapDistribution
   max_input       1000
   nondeterministic true
@@ -130,7 +120,6 @@ component fs_quick_surrender
   label     quick surrender<{inner}>
   provides  Sort
   menu      fun sorts / quick surrender
-  uses      fun_sorts_lib::QuickSurrender
   slot      inner QuickSelect
   max_input 500
 end
@@ -140,7 +129,6 @@ component fs_quick_surrender_optimised
   label     quick surrender optimised<{inner}, small: {small}>
   provides  Sort
   menu      fun sorts / quick surrender optimised
-  uses      fun_sorts_lib::QuickSurrenderOptimised
   slot      inner QuickSelect
   slot      small FunSmallSort
   max_input 1000

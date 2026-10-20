@@ -13,7 +13,6 @@ component merge_top_down
   label    merge sort<small: {small_sort}, pp={ping_pong}, ee={early_exit}>
   provides Sort
   menu     merge sorts / classic / top-down
-  uses     merge_sort_lib::TopDownMergeSort
   slot     small_sort SmallSort
   const    ping_pong values false true
   const    early_exit values false true
@@ -24,7 +23,6 @@ component merge_bottom_up
   label    bottom-up merge sort<small: {small_sort}, pp={ping_pong}, ee={early_exit}>
   provides Sort
   menu     merge sorts / classic / bottom-up
-  uses     merge_sort_lib::BottomUpMergeSort
   slot     small_sort SmallSort
   const    ping_pong values false true
   const    early_exit values false true
@@ -35,7 +33,6 @@ component merge_naive
   label    naive merge sort<small: {small_sort}>
   provides Sort
   menu     merge sorts / classic / naive
-  uses     merge_sort_lib::NaiveMergeSort
   slot     small_sort SmallSort
 end
 
@@ -45,7 +42,6 @@ component merge_natural
   provides Sort
   adaptive true
   menu     merge sorts / classic / natural
-  uses     merge_sort_lib::NaturalMergeSort
   const    ping_pong values false true
   const    early_exit values false true
 end
@@ -58,7 +54,6 @@ component merge_rot_top_down
   label    rotation merge sort<small: {small_sort}, merge: {rmerge}>
   provides Sort
   menu     merge sorts / rotation / top-down
-  uses     merge_sort_lib::TopDownRotationMergeSort
   slot     small_sort SmallSort
   slot     rmerge RotationMerge
   const    early_exit
@@ -69,7 +64,6 @@ component merge_rot_bottom_up
   label    bottom-up rotation merge sort<small: {small_sort}, merge: {rmerge}>
   provides Sort
   menu     merge sorts / rotation / bottom-up
-  uses     merge_sort_lib::BottomUpRotationMergeSort
   slot     small_sort SmallSort
   slot     rmerge RotationMerge
   const    early_exit
@@ -80,7 +74,6 @@ component mrm_naive
   type     NaiveRotationMerge<{rot}>
   label    naive<{rot}>
   provides RotationMerge MergeKind
-  uses     merge_sort_lib::NaiveRotationMerge
   slot     rot Rotation
 end
 
@@ -88,7 +81,6 @@ component mrm_smaller_side
   type     SmallerSideRotationMerge<{rot}>
   label    smaller-side<{rot}>
   provides RotationMerge MergeKind
-  uses     merge_sort_lib::SmallerSideRotationMerge
   slot     rot Rotation
 end
 
