@@ -30,7 +30,9 @@
 
 use std::marker::PhantomData;
 
-use array_vis_bench_traits::{PartitionScheme, QuickSelect, Rotation, ScratchspaceRun, SmallSort};
+use array_vis_bench_traits::{
+    PartitionScheme, QuickSelect, Rotation, RotationMerge, ScratchspaceRun, SmallSort,
+};
 use sort_logger::NoOpLogger;
 
 use crate::bench_registry::correctness;
@@ -97,6 +99,23 @@ impl<S: SmallSort> CorrectnessSuite for SmallSortSuite<S> {
     }
 }
 
+/// Merge suite: drives [`correctness::merge_battery`] through the concrete
+/// `M: RotationMerge` via the shared `run_rotation_merge` one-shot (which
+/// allocates/frees the merge's scratch buffer).
+pub struct MergeSuite<M>(PhantomData<M>);
+
+impl<M: RotationMerge> CorrectnessSuite for MergeSuite<M> {
+    fn verify(name: &str, cap: Option<usize>) {
+        fn run<M: RotationMerge>(arr: &mut [usize], mid: usize, logger: &mut NoOpLogger) -> Option<(usize, usize)> {
+            array_vis_bench_traits::role::merge::run_rotation_merge::<M, usize, NoOpLogger>(
+                arr, mid, logger,
+            );
+            None
+        }
+        correctness::merge_battery(run::<M>, name, cap);
+    }
+}
+
 /// Partition suite: drives [`correctness::partition_battery`] through a
 /// self-pivoting `P: PartitionScheme` (typically `Pivoted<Scheme, Sel>`) via the
 /// shared `run_partition_bounds`, which returns the `(left_end, right_start)`
@@ -154,6 +173,47 @@ mod tests {
     fn select_suite_runs_the_quick_select_battery_for_a_valid_impl() {
         // A correct selector passes the battery (no panic).
         SelectSuite::<SortingSelect>::verify("test: sorting select", None);
+    }
+
+    // A merge by full sort, and one that does nothing, so the suite can be
+    // exercised without pulling a family crate into core's dev-deps.
+    struct SortingMerge;
+    impl RotationMerge for SortingMerge {
+        fn scratch_size(_n: usize) -> usize {
+            0
+        }
+        fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+            arr: &mut [T],
+            _mid: usize,
+            _scratch: &mut [T],
+            _logger: &mut U,
+        ) {
+            arr.sort();
+        }
+    }
+    struct IdleMerge;
+    impl RotationMerge for IdleMerge {
+        fn scratch_size(_n: usize) -> usize {
+            0
+        }
+        fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+            _arr: &mut [T],
+            _mid: usize,
+            _scratch: &mut [T],
+            _logger: &mut U,
+        ) {
+        }
+    }
+
+    #[test]
+    fn merge_suite_runs_the_merge_battery_for_a_valid_impl() {
+        MergeSuite::<SortingMerge>::verify("test: sorting merge", None);
+    }
+
+    #[test]
+    #[should_panic(expected = "merge failed")]
+    fn merge_suite_fails_a_merge_that_leaves_the_runs_apart() {
+        MergeSuite::<IdleMerge>::verify("test: idle merge", None);
     }
 
     #[test]
