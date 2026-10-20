@@ -23,7 +23,7 @@ design left open:
 - A `KINDS` row also carries the picker root and the complexity bounds a kind
   fixes instead of inheriting (a small sort's time, a scratchspace's all
   three). The row holds the bare category name, so `Category::` is spelled
-  once in the template.
+  only in the template.
 - `EmitBackend::wrappers` hands the table to `lower` and `lower_program` as a
   slice parameter. The `category` parse error in `registry.rs` still names
   wrappers as examples.
