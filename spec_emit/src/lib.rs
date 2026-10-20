@@ -647,12 +647,14 @@ mod tests {
     }
 
     #[test]
-    fn no_kind_registers_a_name_keyed_test_cap() {
+    fn every_kind_registers_only_its_entry() {
+        // The cap and the flag live on the entry, so the only slice an emitted
+        // body joins is `ALGORITHMS`.
         for cat in ["Sort", "QuickSelect", "Rotation", "SmallSort", "Partition", "Merge", "Scratchspace"] {
             let b = ArrayBackend::default()
                 .entry_body(&EntryCtx { label: "x", category: Some(cat), adaptive: false, nondeterministic: false, max_input: Some(8), axes: &[], menu: &[], label_template: "x" })
                 .unwrap();
-            assert!(!b.contains("SORT_TEST_CAPS"), "category `{cat}` still registers a test cap");
+            assert_eq!(b.matches("distributed_slice").count(), 1, "category `{cat}` joins a second slice");
         }
     }
 
@@ -662,7 +664,7 @@ mod tests {
             .entry_body(&EntryCtx { label: "random shell sort<uniform>", category: Some("Sort"), adaptive: false, nondeterministic: true, max_input: Some(1000), axes: &[], menu: &[], label_template: "random shell sort<uniform>" })
             .unwrap();
         assert!(nd.contains("nondeterministic: true,"));
-        assert!(!nd.contains("NONDETERMINISTIC_ALGOS"));
+        assert_eq!(nd.matches("distributed_slice").count(), 1, "the flag is not a side list");
 
         // A deterministic sort says so on the entry too.
         assert!(sort_body("classic").contains("nondeterministic: false,"));
