@@ -3,7 +3,6 @@ members = [
     ".",
     "sort_logger",
     "sort_vis",
-    "sort_registry_core",
     "array_vis_bench_traits",
     "array_vis_bench_core",
     "array_vis_bench_min",
@@ -69,7 +68,6 @@ default-members = [
     ".",
     "sort_logger",
     "sort_vis",
-    "sort_registry_core",
     "array_vis_bench_traits",
     "array_vis_bench_core",
     "array_vis_bench_min",
@@ -166,7 +164,6 @@ array_vis_bench_core = { path = "array_vis_bench_core" }
 rand = "0.8"
 sort_logger = { path = "sort_logger" }
 sort_vis = { path = "sort_vis" }
-sort_registry_core = { path = "sort_registry_core" }
 # The unified spec catalog the default binary anchors: ONE crate whose build.rs
 # lowers every `.avbs` query over one `catalog.spec` and emits AlgorithmEntry rows
 # (spec → emit → register → visualise) for all families.

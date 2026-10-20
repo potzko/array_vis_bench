@@ -108,7 +108,6 @@ array_vis_bench_min      minimal link root demo
 sort_logger              SortLog<T> events, SortLogger<T> trait, NoOpLogger,
                          VisualizerLogger
 sort_vis                 MP4 renderer over a SortLog stream (drives ffmpeg)
-sort_registry_core       picker navigation registry (categories + facet axes)
 
 spec_core                the constraint compiler: registry, query lowering,
                          solver, cardinality guard, emit scaffold
