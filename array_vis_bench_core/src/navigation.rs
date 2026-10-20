@@ -2,8 +2,10 @@
 //! `axes` and `label_template`. [`variants`] lists one [`VariantDesc`] per
 //! entry for the faceted picker. [`SortTree`] nests the entries by menu path
 //! and axis values, and `bench_registry::sorted` reads its depth first order.
+//! [`repeated_name_errors`] backs the startup check that a name labels one entry.
 
 use crate::bench_registry::{AlgorithmEntry, ALGORITHMS};
+use std::collections::BTreeMap;
 
 /// One filled generic slot of a variant's type: a humanized trait label
 /// (e.g. `"Pivot"`), the chosen value's head label (e.g. `"combined"`), and a
@@ -65,6 +67,29 @@ pub fn variants() -> Vec<VariantDesc> {
 pub fn flat_path(entry: &AlgorithmEntry) -> Vec<&'static str> {
     let axis_values = entry.axes.iter().map(|&(_, value, _)| value);
     entry.menu.iter().copied().chain(axis_values).collect()
+}
+
+/// One message per name that labels more than one entry, listing each entry's
+/// tree path. The picker looks a chosen name back up in `ALGORITHMS`, so a
+/// shared name leaves all but one of its entries unreachable.
+pub fn repeated_name_errors(
+    entries: impl IntoIterator<Item = &'static AlgorithmEntry>,
+) -> Vec<String> {
+    let mut by_name: BTreeMap<&'static str, Vec<&'static AlgorithmEntry>> = BTreeMap::new();
+    entries.into_iter().for_each(|entry| by_name.entry(entry.name).or_default().push(entry));
+    by_name
+        .into_iter()
+        .filter(|(_, group)| group.len() > 1)
+        .map(|(name, group)| {
+            let paths: Vec<String> =
+                group.iter().map(|entry| format!("[{}]", flat_path(entry).join("/"))).collect();
+            format!(
+                "algorithm '{name}' registered at {} distinct tree paths: {}",
+                group.len(),
+                paths.join(", ")
+            )
+        })
+        .collect()
 }
 
 /// A node of the flat navigation tree, every level one menu segment or axis
@@ -163,6 +188,9 @@ mod tests {
     static TWIN_B: AlgorithmEntry = entry!("twin b", &["sorts", "twins"], &[], "");
     static TWIN_A: AlgorithmEntry = entry!("twin a", &["sorts", "twins"], &[], "");
     static LONE: AlgorithmEntry = entry!("lone", &["sorts", "alone", "inner"], &[], "");
+    static SHARED_A: AlgorithmEntry = entry!("shared", &["sorts", "a"], &[], "");
+    static SHARED_B: AlgorithmEntry =
+        entry!("shared", &["sorts", "b"], &[("Role", "value", "role")], "");
 
     fn names(entries: &[&'static AlgorithmEntry]) -> Vec<&'static str> {
         entries.iter().map(|entry| entry.name).collect()
@@ -187,6 +215,20 @@ mod tests {
     fn the_flat_path_is_the_menu_then_the_axis_values() {
         assert_eq!(flat_path(&LEFT), ["sorts", "quick sorts", "left"]);
         assert_eq!(flat_path(&SOLO), ["sorts", "cycle sorts"]);
+    }
+
+    #[test]
+    fn a_name_on_two_entries_reports_both_tree_paths() {
+        let errors = repeated_name_errors([&LEFT, &SHARED_A, &SHARED_B, &SOLO]);
+        assert_eq!(
+            errors,
+            ["algorithm 'shared' registered at 2 distinct tree paths: [sorts/a], [sorts/b/value]"]
+        );
+    }
+
+    #[test]
+    fn unique_names_report_nothing() {
+        assert!(repeated_name_errors([&LEFT, &RIGHT, &SOLO]).is_empty());
     }
 
     #[test]

@@ -248,31 +248,13 @@ pub fn validate_registries() -> Result<(), String> {
 
     // ── Tree path uniqueness ─────────────────────────────────────────
     //
-    // The interactive picker walks `sort_registry_core`'s tree and
-    // expects one entry per algorithm. If the same name registers a
-    // path twice (e.g. two ctors emitting the same family! call), the
-    // tree picks one arbitrarily and the duplicate becomes invisible.
-    // Catch that here rather than silently shipping a half-broken menu.
-    {
-        let entries = sort_registry_core::registered_path_entries();
-        let mut by_name: std::collections::HashMap<String, Vec<Vec<String>>> =
-            Default::default();
-        for (name, path) in entries {
-            by_name.entry(name).or_default().push(path);
-        }
-        for (name, paths) in &by_name {
-            if paths.len() > 1 {
-                let formatted: Vec<String> =
-                    paths.iter().map(|p| format!("[{}]", p.join("/"))).collect();
-                errors.push(format!(
-                    "algorithm '{}' registered at {} distinct tree paths: {}",
-                    name,
-                    paths.len(),
-                    formatted.join(", ")
-                ));
-            }
-        }
-    }
+    // The interactive picker places every entry in the navigation tree and
+    // then looks the chosen name back up in `ALGORITHMS`, so a name must
+    // label one entry. A name shared across categories passes the check
+    // above, but the picker would resolve it to one entry and the other
+    // would be invisible. Catch that here rather than silently shipping a
+    // half-broken menu.
+    errors.extend(crate::navigation::repeated_name_errors(ALGORITHMS.iter()));
 
     // ── Per-category input checks ────────────────────────────────────
     fn check_inputs<E, NF, PF>(
@@ -574,23 +556,16 @@ pub struct AlgorithmEntry {
 pub static ALGORITHMS: [AlgorithmEntry] = [..];
 
 /// All registered algorithm entries in canonical menu order — depth-first
-/// traversal of the registry's tree, which sorts each level by subtree
-/// size so specialised (small-group) entries surface first.
+/// traversal of the navigation tree built from each entry's `menu` and `axes`,
+/// which sorts each level by subtree size so specialised (small-group) entries
+/// surface first.
 ///
 /// `linkme` makes no guarantee about link-time ordering, so consumers
 /// that produce user-visible output should iterate this instead of
 /// `ALGORITHMS` directly. Bench output and UI menu therefore surface
 /// variants in the same order without either side having to declare it.
 pub fn sorted() -> Vec<&'static AlgorithmEntry> {
-    let order: std::collections::HashMap<String, usize> =
-        sort_registry_core::get_registered_sorts()
-            .into_iter()
-            .enumerate()
-            .map(|(i, n)| (n, i))
-            .collect();
-    let mut v: Vec<&'static AlgorithmEntry> = ALGORITHMS.iter().collect();
-    v.sort_by_key(|e| (order.get(e.name).copied().unwrap_or(usize::MAX), e.name));
-    v
+    crate::navigation::SortTree::of(ALGORITHMS.iter()).entries()
 }
 
 pub fn for_each<F: FnMut(&'static AlgorithmEntry)>(mut f: F) {

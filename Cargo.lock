@@ -43,7 +43,6 @@ dependencies = [
  "linkme",
  "rand",
  "sort_logger",
- "sort_registry_core",
  "sort_vis",
 ]
 
