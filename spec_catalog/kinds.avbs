@@ -22,7 +22,7 @@ SmallSorts: SmallSortAlg = SmallSortAlg<_>
 //    are legitimate standalone partitions even though quick excludes them). ──
 Partitions: PartitionAlg = PartitionAlg<_>
 
-// ── Merges: enumerate MergeKind (mk_naive + mk_smaller), filling the rot slot
+// ── Merges: enumerate MergeKind (mrm_naive + mrm_smaller_side), filling the rot slot
 //    (reuses Rotation) = 2 × 11 = 22. Role enumeration: the type-heads
 //    `NaiveRotationMerge`/`SmallerSideRotationMerge` ALSO exist as merge.spec
 //    slot-fillers, so referencing them by head would be ambiguous. ──
