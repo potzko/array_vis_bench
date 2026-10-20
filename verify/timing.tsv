@@ -1,0 +1,1510 @@
+auxiliary	1972
+auxiliary<full>	3951
+auxiliary<half>	3939
+auxiliary<none>	234865
+bad heap sort alt	2082323
+beap sort quick build dual pivot<dir: max forward, build: stack dual-pivot partition<dps: first>>	377145
+beap sort quick build dual pivot<dir: max forward, build: stack dual-pivot partition<dps: middle>>	387739
+beap sort quick build dual pivot<dir: max forward, build: stack dual-pivot partition<dps: ninther 1/3 + 2/3>>	378500
+beap sort quick build dual pivot<dir: min reverse, build: stack dual-pivot partition<dps: first>>	383057
+beap sort quick build dual pivot<dir: min reverse, build: stack dual-pivot partition<dps: middle>>	387793
+beap sort quick build dual pivot<dir: min reverse, build: stack dual-pivot partition<dps: ninther 1/3 + 2/3>>	384786
+beap sort quick build<dir: max forward, build: recursive partition<part: block, pivot: first>>	392154
+beap sort quick build<dir: max forward, build: recursive partition<part: block, pivot: median of 3>>	399977
+beap sort quick build<dir: max forward, build: recursive partition<part: block, pivot: median of medians>>	390535
+beap sort quick build<dir: max forward, build: recursive partition<part: block, pivot: middle>>	389123
+beap sort quick build<dir: max forward, build: recursive partition<part: left-left pointer, pivot: first>>	379110
+beap sort quick build<dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of 3>>	384253
+beap sort quick build<dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of medians>>	389870
+beap sort quick build<dir: max forward, build: recursive partition<part: left-left pointer, pivot: middle>>	381126
+beap sort quick build<dir: max forward, build: recursive partition<part: left-right pointer, pivot: first>>	542524
+beap sort quick build<dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of 3>>	550518
+beap sort quick build<dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of medians>>	915611
+beap sort quick build<dir: max forward, build: recursive partition<part: left-right pointer, pivot: middle>>	423571
+beap sort quick build<dir: max forward, build: sequential<part: block, pivot: first>>	5006788
+beap sort quick build<dir: max forward, build: sequential<part: block, pivot: median of 3>>	450678
+beap sort quick build<dir: max forward, build: sequential<part: block, pivot: median of medians>>	429089
+beap sort quick build<dir: max forward, build: sequential<part: block, pivot: middle>>	434845
+beap sort quick build<dir: max forward, build: sequential<part: left-left pointer, pivot: first>>	2977096
+beap sort quick build<dir: max forward, build: sequential<part: left-left pointer, pivot: median of 3>>	425849
+beap sort quick build<dir: max forward, build: sequential<part: left-left pointer, pivot: median of medians>>	423256
+beap sort quick build<dir: max forward, build: sequential<part: left-left pointer, pivot: middle>>	421149
+beap sort quick build<dir: max forward, build: sequential<part: left-right pointer, pivot: first>>	1881917
+beap sort quick build<dir: max forward, build: sequential<part: left-right pointer, pivot: median of 3>>	407016
+beap sort quick build<dir: max forward, build: sequential<part: left-right pointer, pivot: median of medians>>	419737
+beap sort quick build<dir: max forward, build: sequential<part: left-right pointer, pivot: middle>>	429479
+beap sort quick build<dir: max forward, build: stack partition<part: block, pivot: first>>	424101
+beap sort quick build<dir: max forward, build: stack partition<part: block, pivot: median of 3>>	417861
+beap sort quick build<dir: max forward, build: stack partition<part: block, pivot: median of medians>>	416097
+beap sort quick build<dir: max forward, build: stack partition<part: block, pivot: middle>>	409378
+beap sort quick build<dir: max forward, build: stack partition<part: left-left pointer, pivot: first>>	393937
+beap sort quick build<dir: max forward, build: stack partition<part: left-left pointer, pivot: median of 3>>	399133
+beap sort quick build<dir: max forward, build: stack partition<part: left-left pointer, pivot: median of medians>>	403331
+beap sort quick build<dir: max forward, build: stack partition<part: left-left pointer, pivot: middle>>	393968
+beap sort quick build<dir: max forward, build: stack partition<part: left-right pointer, pivot: first>>	403979
+beap sort quick build<dir: max forward, build: stack partition<part: left-right pointer, pivot: median of 3>>	433868
+beap sort quick build<dir: max forward, build: stack partition<part: left-right pointer, pivot: median of medians>>	421362
+beap sort quick build<dir: max forward, build: stack partition<part: left-right pointer, pivot: middle>>	388645
+beap sort quick build<dir: min reverse, build: recursive partition<part: block, pivot: first>>	390803
+beap sort quick build<dir: min reverse, build: recursive partition<part: block, pivot: median of 3>>	385475
+beap sort quick build<dir: min reverse, build: recursive partition<part: block, pivot: median of medians>>	391295
+beap sort quick build<dir: min reverse, build: recursive partition<part: block, pivot: middle>>	391251
+beap sort quick build<dir: min reverse, build: recursive partition<part: left-left pointer, pivot: first>>	394865
+beap sort quick build<dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of 3>>	410651
+beap sort quick build<dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of medians>>	395826
+beap sort quick build<dir: min reverse, build: recursive partition<part: left-left pointer, pivot: middle>>	392845
+beap sort quick build<dir: min reverse, build: recursive partition<part: left-right pointer, pivot: first>>	400939
+beap sort quick build<dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of 3>>	382601
+beap sort quick build<dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of medians>>	371387
+beap sort quick build<dir: min reverse, build: recursive partition<part: left-right pointer, pivot: middle>>	364761
+beap sort quick build<dir: min reverse, build: sequential<part: block, pivot: first>>	812317
+beap sort quick build<dir: min reverse, build: sequential<part: block, pivot: median of 3>>	462623
+beap sort quick build<dir: min reverse, build: sequential<part: block, pivot: median of medians>>	443184
+beap sort quick build<dir: min reverse, build: sequential<part: block, pivot: middle>>	452183
+beap sort quick build<dir: min reverse, build: sequential<part: left-left pointer, pivot: first>>	567703
+beap sort quick build<dir: min reverse, build: sequential<part: left-left pointer, pivot: median of 3>>	442579
+beap sort quick build<dir: min reverse, build: sequential<part: left-left pointer, pivot: median of medians>>	415579
+beap sort quick build<dir: min reverse, build: sequential<part: left-left pointer, pivot: middle>>	422530
+beap sort quick build<dir: min reverse, build: sequential<part: left-right pointer, pivot: first>>	487860
+beap sort quick build<dir: min reverse, build: sequential<part: left-right pointer, pivot: median of 3>>	415484
+beap sort quick build<dir: min reverse, build: sequential<part: left-right pointer, pivot: median of medians>>	436257
+beap sort quick build<dir: min reverse, build: sequential<part: left-right pointer, pivot: middle>>	414117
+beap sort quick build<dir: min reverse, build: stack partition<part: block, pivot: first>>	397753
+beap sort quick build<dir: min reverse, build: stack partition<part: block, pivot: median of 3>>	394025
+beap sort quick build<dir: min reverse, build: stack partition<part: block, pivot: median of medians>>	398861
+beap sort quick build<dir: min reverse, build: stack partition<part: block, pivot: middle>>	392112
+beap sort quick build<dir: min reverse, build: stack partition<part: left-left pointer, pivot: first>>	380563
+beap sort quick build<dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of 3>>	394801
+beap sort quick build<dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of medians>>	389915
+beap sort quick build<dir: min reverse, build: stack partition<part: left-left pointer, pivot: middle>>	386840
+beap sort quick build<dir: min reverse, build: stack partition<part: left-right pointer, pivot: first>>	385686
+beap sort quick build<dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of 3>>	383763
+beap sort quick build<dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of medians>>	390981
+beap sort quick build<dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	387226
+beap sort<dir: max forward, build: iterative>	483667
+beap sort<dir: min reverse, build: iterative>	485900
+block<first>	10745
+block<last>	8683
+block<median of 3>	10924
+block<median of medians>	10231
+block<middle>	9729
+block<ninther>	10897
+bottom-up merge sort<small: insertion: 32, pp=false, ee=false>	50165
+bottom-up merge sort<small: insertion: 32, pp=false, ee=true>	50768
+bottom-up merge sort<small: insertion: 32, pp=true, ee=false>	50880
+bottom-up merge sort<small: insertion: 32, pp=true, ee=true>	48663
+bottom-up merge sort<small: network: 16, pp=false, ee=false>	52993
+bottom-up merge sort<small: network: 16, pp=false, ee=true>	53012
+bottom-up merge sort<small: network: 16, pp=true, ee=false>	49776
+bottom-up merge sort<small: network: 16, pp=true, ee=true>	49433
+bottom-up merge sort<small: size: 1, pp=false, ee=false>	64515
+bottom-up merge sort<small: size: 1, pp=false, ee=true>	63945
+bottom-up merge sort<small: size: 1, pp=true, ee=false>	60087
+bottom-up merge sort<small: size: 1, pp=true, ee=true>	60382
+bottom-up merge sort<small: size: 2, pp=false, ee=false>	59518
+bottom-up merge sort<small: size: 2, pp=false, ee=true>	59778
+bottom-up merge sort<small: size: 2, pp=true, ee=false>	56738
+bottom-up merge sort<small: size: 2, pp=true, ee=true>	57988
+bottom-up rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>	211114
+bottom-up rotation merge sort<small: insertion: 32, merge: naive<bridge>>	217795
+bottom-up rotation merge sort<small: insertion: 32, merge: naive<contrev>>	255396
+bottom-up rotation merge sort<small: insertion: 32, merge: naive<drill>>	209260
+bottom-up rotation merge sort<small: insertion: 32, merge: naive<grail>>	209155
+bottom-up rotation merge sort<small: insertion: 32, merge: naive<gries-mills>>	252894
+bottom-up rotation merge sort<small: insertion: 32, merge: naive<helix>>	199093
+bottom-up rotation merge sort<small: insertion: 32, merge: naive<juggling>>	211061
+bottom-up rotation merge sort<small: insertion: 32, merge: naive<piston>>	253408
+bottom-up rotation merge sort<small: insertion: 32, merge: naive<reversal>>	147604
+bottom-up rotation merge sort<small: insertion: 32, merge: naive<trinity>>	218128
+bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<auxiliary>>	112522
+bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<bridge>>	115776
+bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<contrev>>	103159
+bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<drill>>	109412
+bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<grail>>	108365
+bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<gries-mills>>	100295
+bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<helix>>	109236
+bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<juggling>>	110017
+bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>	95616
+bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>	101459
+bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>	115260
+bottom-up rotation merge sort<small: network: 16, merge: naive<auxiliary>>	209980
+bottom-up rotation merge sort<small: network: 16, merge: naive<bridge>>	220112
+bottom-up rotation merge sort<small: network: 16, merge: naive<contrev>>	275880
+bottom-up rotation merge sort<small: network: 16, merge: naive<drill>>	204051
+bottom-up rotation merge sort<small: network: 16, merge: naive<grail>>	224316
+bottom-up rotation merge sort<small: network: 16, merge: naive<gries-mills>>	284624
+bottom-up rotation merge sort<small: network: 16, merge: naive<helix>>	220709
+bottom-up rotation merge sort<small: network: 16, merge: naive<juggling>>	223926
+bottom-up rotation merge sort<small: network: 16, merge: naive<piston>>	254029
+bottom-up rotation merge sort<small: network: 16, merge: naive<reversal>>	147196
+bottom-up rotation merge sort<small: network: 16, merge: naive<trinity>>	223507
+bottom-up rotation merge sort<small: network: 16, merge: smaller-side<auxiliary>>	122311
+bottom-up rotation merge sort<small: network: 16, merge: smaller-side<bridge>>	118696
+bottom-up rotation merge sort<small: network: 16, merge: smaller-side<contrev>>	105251
+bottom-up rotation merge sort<small: network: 16, merge: smaller-side<drill>>	108641
+bottom-up rotation merge sort<small: network: 16, merge: smaller-side<grail>>	100650
+bottom-up rotation merge sort<small: network: 16, merge: smaller-side<gries-mills>>	100355
+bottom-up rotation merge sort<small: network: 16, merge: smaller-side<helix>>	106600
+bottom-up rotation merge sort<small: network: 16, merge: smaller-side<juggling>>	110394
+bottom-up rotation merge sort<small: network: 16, merge: smaller-side<piston>>	101770
+bottom-up rotation merge sort<small: network: 16, merge: smaller-side<reversal>>	91821
+bottom-up rotation merge sort<small: network: 16, merge: smaller-side<trinity>>	109140
+bottom-up rotation merge sort<small: size: 1, merge: naive<auxiliary>>	250909
+bottom-up rotation merge sort<small: size: 1, merge: naive<bridge>>	240287
+bottom-up rotation merge sort<small: size: 1, merge: naive<contrev>>	272239
+bottom-up rotation merge sort<small: size: 1, merge: naive<drill>>	231019
+bottom-up rotation merge sort<small: size: 1, merge: naive<grail>>	234346
+bottom-up rotation merge sort<small: size: 1, merge: naive<gries-mills>>	280087
+bottom-up rotation merge sort<small: size: 1, merge: naive<helix>>	223671
+bottom-up rotation merge sort<small: size: 1, merge: naive<juggling>>	234193
+bottom-up rotation merge sort<small: size: 1, merge: naive<piston>>	275159
+bottom-up rotation merge sort<small: size: 1, merge: naive<reversal>>	160396
+bottom-up rotation merge sort<small: size: 1, merge: naive<trinity>>	248396
+bottom-up rotation merge sort<small: size: 1, merge: smaller-side<auxiliary>>	152006
+bottom-up rotation merge sort<small: size: 1, merge: smaller-side<bridge>>	142276
+bottom-up rotation merge sort<small: size: 1, merge: smaller-side<contrev>>	121552
+bottom-up rotation merge sort<small: size: 1, merge: smaller-side<drill>>	122732
+bottom-up rotation merge sort<small: size: 1, merge: smaller-side<grail>>	119560
+bottom-up rotation merge sort<small: size: 1, merge: smaller-side<gries-mills>>	117798
+bottom-up rotation merge sort<small: size: 1, merge: smaller-side<helix>>	122075
+bottom-up rotation merge sort<small: size: 1, merge: smaller-side<juggling>>	127682
+bottom-up rotation merge sort<small: size: 1, merge: smaller-side<piston>>	112102
+bottom-up rotation merge sort<small: size: 1, merge: smaller-side<reversal>>	106659
+bottom-up rotation merge sort<small: size: 1, merge: smaller-side<trinity>>	120583
+bottom-up rotation merge sort<small: size: 2, merge: naive<auxiliary>>	240687
+bottom-up rotation merge sort<small: size: 2, merge: naive<bridge>>	240065
+bottom-up rotation merge sort<small: size: 2, merge: naive<contrev>>	273810
+bottom-up rotation merge sort<small: size: 2, merge: naive<drill>>	222109
+bottom-up rotation merge sort<small: size: 2, merge: naive<grail>>	229564
+bottom-up rotation merge sort<small: size: 2, merge: naive<gries-mills>>	274303
+bottom-up rotation merge sort<small: size: 2, merge: naive<helix>>	222796
+bottom-up rotation merge sort<small: size: 2, merge: naive<juggling>>	233948
+bottom-up rotation merge sort<small: size: 2, merge: naive<piston>>	272004
+bottom-up rotation merge sort<small: size: 2, merge: naive<reversal>>	157192
+bottom-up rotation merge sort<small: size: 2, merge: naive<trinity>>	250749
+bottom-up rotation merge sort<small: size: 2, merge: smaller-side<auxiliary>>	149258
+bottom-up rotation merge sort<small: size: 2, merge: smaller-side<bridge>>	142696
+bottom-up rotation merge sort<small: size: 2, merge: smaller-side<contrev>>	120909
+bottom-up rotation merge sort<small: size: 2, merge: smaller-side<drill>>	121591
+bottom-up rotation merge sort<small: size: 2, merge: smaller-side<grail>>	119065
+bottom-up rotation merge sort<small: size: 2, merge: smaller-side<gries-mills>>	117996
+bottom-up rotation merge sort<small: size: 2, merge: smaller-side<helix>>	123668
+bottom-up rotation merge sort<small: size: 2, merge: smaller-side<juggling>>	127080
+bottom-up rotation merge sort<small: size: 2, merge: smaller-side<piston>>	115101
+bottom-up rotation merge sort<small: size: 2, merge: smaller-side<reversal>>	106011
+bottom-up rotation merge sort<small: size: 2, merge: smaller-side<trinity>>	127550
+bridge	1230
+bubble sort	709815
+bubble sort recursive	1359082
+circle sort (recursive shaker)	181086
+circle sort<bottom-up: decreasing, finish: converge>	177200
+circle sort<bottom-up: decreasing, finish: short circuit: insertion>	157145
+circle sort<bottom-up: increasing, finish: converge>	276871
+circle sort<bottom-up: increasing, finish: short circuit: insertion>	157917
+circle sort<bottom-up: shaker dec→inc, finish: converge>	242186
+circle sort<bottom-up: shaker dec→inc, finish: short circuit: insertion>	243324
+circle sort<bottom-up: shaker inc→dec, finish: converge>	237992
+circle sort<bottom-up: shaker inc→dec, finish: short circuit: insertion>	237987
+circle sort<recursive: left-mid-right, finish: converge>	234693
+circle sort<recursive: left-mid-right, finish: short circuit: insertion>	157037
+circle sort<recursive: post-order, finish: converge>	185836
+circle sort<recursive: post-order, finish: short circuit: insertion>	148132
+circle sort<recursive: pre-order, finish: converge>	154197
+circle sort<recursive: pre-order, finish: short circuit: insertion>	140511
+circle sort<recursive: right-mid-left, finish: converge>	260735
+circle sort<recursive: right-mid-left, finish: short circuit: insertion>	165863
+comb sort<1.3>	63033
+comb sort<11/8>	63829
+comb sort<4/3>	62306
+comb sort<5/4>	57583
+comb sort<φ ≈ 1.618>	223940
+comb sort<√2 ≈ 1.414>	72977
+contrev	1437
+cycle sort	1317150
+cyclent sort opt<block>	1363515
+cyclent sort opt<left-left>	822761
+cyclent sort opt<left-right>	494280
+cyclent sort opt<three-way>	15222559
+cyclent sort stack optimized<block>	92466
+cyclent sort stack optimized<left-left>	70605
+cyclent sort stack optimized<left-right>	61133
+cyclent sort stack optimized<three-way>	84607
+cyclent sort stack<block>	68425
+cyclent sort stack<left-left>	50560
+cyclent sort stack<left-right>	48700
+cyclent sort stack<three-way>	55681
+cyclent sort<block>	1948584
+cyclent sort<left-left>	1158607
+cyclent sort<left-right>	702009
+cyclent sort<three-way>	26864081
+deferred quick sort<part: block<first>, small: deferred binary insertion: 16>	61904
+deferred quick sort<part: block<first>, small: deferred binary insertion: 32>	62757
+deferred quick sort<part: block<first>, small: deferred insertion: 16>	57378
+deferred quick sort<part: block<first>, small: deferred insertion: 32>	52078
+deferred quick sort<part: block<median of 3>, small: deferred binary insertion: 16>	58579
+deferred quick sort<part: block<median of 3>, small: deferred binary insertion: 32>	60984
+deferred quick sort<part: block<median of 3>, small: deferred insertion: 16>	51150
+deferred quick sort<part: block<median of 3>, small: deferred insertion: 32>	49996
+deferred quick sort<part: block<median of medians>, small: deferred binary insertion: 16>	58613
+deferred quick sort<part: block<median of medians>, small: deferred binary insertion: 32>	59273
+deferred quick sort<part: block<median of medians>, small: deferred insertion: 16>	51793
+deferred quick sort<part: block<median of medians>, small: deferred insertion: 32>	49569
+deferred quick sort<part: block<middle>, small: deferred binary insertion: 16>	58688
+deferred quick sort<part: block<middle>, small: deferred binary insertion: 32>	61832
+deferred quick sort<part: block<middle>, small: deferred insertion: 16>	54136
+deferred quick sort<part: block<middle>, small: deferred insertion: 32>	51852
+deferred quick sort<part: block<ninther>, small: deferred binary insertion: 16>	59625
+deferred quick sort<part: block<ninther>, small: deferred binary insertion: 32>	59746
+deferred quick sort<part: block<ninther>, small: deferred insertion: 16>	53478
+deferred quick sort<part: block<ninther>, small: deferred insertion: 32>	49949
+deferred quick sort<part: dual<combined<first, first>>, small: deferred binary insertion: 16>	48211
+deferred quick sort<part: dual<combined<first, first>>, small: deferred binary insertion: 32>	49427
+deferred quick sort<part: dual<combined<first, first>>, small: deferred insertion: 16>	41636
+deferred quick sort<part: dual<combined<first, first>>, small: deferred insertion: 32>	40149
+deferred quick sort<part: dual<combined<first, median of 3>>, small: deferred binary insertion: 16>	46925
+deferred quick sort<part: dual<combined<first, median of 3>>, small: deferred binary insertion: 32>	47566
+deferred quick sort<part: dual<combined<first, median of 3>>, small: deferred insertion: 16>	40470
+deferred quick sort<part: dual<combined<first, median of 3>>, small: deferred insertion: 32>	39741
+deferred quick sort<part: dual<combined<first, median of medians>>, small: deferred binary insertion: 16>	47545
+deferred quick sort<part: dual<combined<first, median of medians>>, small: deferred binary insertion: 32>	48978
+deferred quick sort<part: dual<combined<first, median of medians>>, small: deferred insertion: 16>	42268
+deferred quick sort<part: dual<combined<first, median of medians>>, small: deferred insertion: 32>	39171
+deferred quick sort<part: dual<combined<first, middle>>, small: deferred binary insertion: 16>	45573
+deferred quick sort<part: dual<combined<first, middle>>, small: deferred binary insertion: 32>	50485
+deferred quick sort<part: dual<combined<first, middle>>, small: deferred insertion: 16>	43579
+deferred quick sort<part: dual<combined<first, middle>>, small: deferred insertion: 32>	38526
+deferred quick sort<part: dual<combined<first, ninther>>, small: deferred binary insertion: 16>	47906
+deferred quick sort<part: dual<combined<first, ninther>>, small: deferred binary insertion: 32>	49495
+deferred quick sort<part: dual<combined<first, ninther>>, small: deferred insertion: 16>	42264
+deferred quick sort<part: dual<combined<first, ninther>>, small: deferred insertion: 32>	40190
+deferred quick sort<part: dual<combined<median of 3, first>>, small: deferred binary insertion: 16>	47001
+deferred quick sort<part: dual<combined<median of 3, first>>, small: deferred binary insertion: 32>	49709
+deferred quick sort<part: dual<combined<median of 3, first>>, small: deferred insertion: 16>	42241
+deferred quick sort<part: dual<combined<median of 3, first>>, small: deferred insertion: 32>	40280
+deferred quick sort<part: dual<combined<median of 3, median of 3>>, small: deferred binary insertion: 16>	47124
+deferred quick sort<part: dual<combined<median of 3, median of 3>>, small: deferred binary insertion: 32>	48343
+deferred quick sort<part: dual<combined<median of 3, median of 3>>, small: deferred insertion: 16>	42638
+deferred quick sort<part: dual<combined<median of 3, median of 3>>, small: deferred insertion: 32>	39073
+deferred quick sort<part: dual<combined<median of 3, median of medians>>, small: deferred binary insertion: 16>	48220
+deferred quick sort<part: dual<combined<median of 3, median of medians>>, small: deferred binary insertion: 32>	52183
+deferred quick sort<part: dual<combined<median of 3, median of medians>>, small: deferred insertion: 16>	44600
+deferred quick sort<part: dual<combined<median of 3, median of medians>>, small: deferred insertion: 32>	41011
+deferred quick sort<part: dual<combined<median of 3, middle>>, small: deferred binary insertion: 16>	48232
+deferred quick sort<part: dual<combined<median of 3, middle>>, small: deferred binary insertion: 32>	48217
+deferred quick sort<part: dual<combined<median of 3, middle>>, small: deferred insertion: 16>	44289
+deferred quick sort<part: dual<combined<median of 3, middle>>, small: deferred insertion: 32>	39752
+deferred quick sort<part: dual<combined<median of 3, ninther>>, small: deferred binary insertion: 16>	50806
+deferred quick sort<part: dual<combined<median of 3, ninther>>, small: deferred binary insertion: 32>	51905
+deferred quick sort<part: dual<combined<median of 3, ninther>>, small: deferred insertion: 16>	43011
+deferred quick sort<part: dual<combined<median of 3, ninther>>, small: deferred insertion: 32>	41278
+deferred quick sort<part: dual<combined<median of medians, first>>, small: deferred binary insertion: 16>	51121
+deferred quick sort<part: dual<combined<median of medians, first>>, small: deferred binary insertion: 32>	57839
+deferred quick sort<part: dual<combined<median of medians, first>>, small: deferred insertion: 16>	42730
+deferred quick sort<part: dual<combined<median of medians, first>>, small: deferred insertion: 32>	43124
+deferred quick sort<part: dual<combined<median of medians, median of 3>>, small: deferred binary insertion: 16>	48497
+deferred quick sort<part: dual<combined<median of medians, median of 3>>, small: deferred binary insertion: 32>	50942
+deferred quick sort<part: dual<combined<median of medians, median of 3>>, small: deferred insertion: 16>	43880
+deferred quick sort<part: dual<combined<median of medians, median of 3>>, small: deferred insertion: 32>	41505
+deferred quick sort<part: dual<combined<median of medians, median of medians>>, small: deferred binary insertion: 16>	50789
+deferred quick sort<part: dual<combined<median of medians, median of medians>>, small: deferred binary insertion: 32>	53387
+deferred quick sort<part: dual<combined<median of medians, median of medians>>, small: deferred insertion: 16>	49064
+deferred quick sort<part: dual<combined<median of medians, median of medians>>, small: deferred insertion: 32>	51562
+deferred quick sort<part: dual<combined<median of medians, middle>>, small: deferred binary insertion: 16>	57848
+deferred quick sort<part: dual<combined<median of medians, middle>>, small: deferred binary insertion: 32>	66499
+deferred quick sort<part: dual<combined<median of medians, middle>>, small: deferred insertion: 16>	45356
+deferred quick sort<part: dual<combined<median of medians, middle>>, small: deferred insertion: 32>	44864
+deferred quick sort<part: dual<combined<median of medians, ninther>>, small: deferred binary insertion: 16>	54906
+deferred quick sort<part: dual<combined<median of medians, ninther>>, small: deferred binary insertion: 32>	51054
+deferred quick sort<part: dual<combined<median of medians, ninther>>, small: deferred insertion: 16>	44369
+deferred quick sort<part: dual<combined<median of medians, ninther>>, small: deferred insertion: 32>	41806
+deferred quick sort<part: dual<combined<middle, first>>, small: deferred binary insertion: 16>	47508
+deferred quick sort<part: dual<combined<middle, first>>, small: deferred binary insertion: 32>	50102
+deferred quick sort<part: dual<combined<middle, first>>, small: deferred insertion: 16>	42448
+deferred quick sort<part: dual<combined<middle, first>>, small: deferred insertion: 32>	40111
+deferred quick sort<part: dual<combined<middle, median of 3>>, small: deferred binary insertion: 16>	47344
+deferred quick sort<part: dual<combined<middle, median of 3>>, small: deferred binary insertion: 32>	49865
+deferred quick sort<part: dual<combined<middle, median of 3>>, small: deferred insertion: 16>	40024
+deferred quick sort<part: dual<combined<middle, median of 3>>, small: deferred insertion: 32>	39277
+deferred quick sort<part: dual<combined<middle, median of medians>>, small: deferred binary insertion: 16>	60655
+deferred quick sort<part: dual<combined<middle, median of medians>>, small: deferred binary insertion: 32>	69522
+deferred quick sort<part: dual<combined<middle, median of medians>>, small: deferred insertion: 16>	42454
+deferred quick sort<part: dual<combined<middle, median of medians>>, small: deferred insertion: 32>	39671
+deferred quick sort<part: dual<combined<middle, middle>>, small: deferred binary insertion: 16>	45911
+deferred quick sort<part: dual<combined<middle, middle>>, small: deferred binary insertion: 32>	49173
+deferred quick sort<part: dual<combined<middle, middle>>, small: deferred insertion: 16>	40117
+deferred quick sort<part: dual<combined<middle, middle>>, small: deferred insertion: 32>	38852
+deferred quick sort<part: dual<combined<middle, ninther>>, small: deferred binary insertion: 16>	48126
+deferred quick sort<part: dual<combined<middle, ninther>>, small: deferred binary insertion: 32>	50436
+deferred quick sort<part: dual<combined<middle, ninther>>, small: deferred insertion: 16>	43253
+deferred quick sort<part: dual<combined<middle, ninther>>, small: deferred insertion: 32>	40777
+deferred quick sort<part: dual<combined<ninther, first>>, small: deferred binary insertion: 16>	50162
+deferred quick sort<part: dual<combined<ninther, first>>, small: deferred binary insertion: 32>	50056
+deferred quick sort<part: dual<combined<ninther, first>>, small: deferred insertion: 16>	42821
+deferred quick sort<part: dual<combined<ninther, first>>, small: deferred insertion: 32>	40933
+deferred quick sort<part: dual<combined<ninther, median of 3>>, small: deferred binary insertion: 16>	48331
+deferred quick sort<part: dual<combined<ninther, median of 3>>, small: deferred binary insertion: 32>	51745
+deferred quick sort<part: dual<combined<ninther, median of 3>>, small: deferred insertion: 16>	43215
+deferred quick sort<part: dual<combined<ninther, median of 3>>, small: deferred insertion: 32>	41266
+deferred quick sort<part: dual<combined<ninther, median of medians>>, small: deferred binary insertion: 16>	50158
+deferred quick sort<part: dual<combined<ninther, median of medians>>, small: deferred binary insertion: 32>	49659
+deferred quick sort<part: dual<combined<ninther, median of medians>>, small: deferred insertion: 16>	44751
+deferred quick sort<part: dual<combined<ninther, median of medians>>, small: deferred insertion: 32>	39665
+deferred quick sort<part: dual<combined<ninther, middle>>, small: deferred binary insertion: 16>	46543
+deferred quick sort<part: dual<combined<ninther, middle>>, small: deferred binary insertion: 32>	49249
+deferred quick sort<part: dual<combined<ninther, middle>>, small: deferred insertion: 16>	42153
+deferred quick sort<part: dual<combined<ninther, middle>>, small: deferred insertion: 32>	40250
+deferred quick sort<part: dual<combined<ninther, ninther>>, small: deferred binary insertion: 16>	50725
+deferred quick sort<part: dual<combined<ninther, ninther>>, small: deferred binary insertion: 32>	50696
+deferred quick sort<part: dual<combined<ninther, ninther>>, small: deferred insertion: 16>	44435
+deferred quick sort<part: dual<combined<ninther, ninther>>, small: deferred insertion: 32>	41626
+deferred quick sort<part: dual<ninther>, small: deferred binary insertion: 16>	46157
+deferred quick sort<part: dual<ninther>, small: deferred binary insertion: 32>	47395
+deferred quick sort<part: dual<ninther>, small: deferred insertion: 16>	40137
+deferred quick sort<part: dual<ninther>, small: deferred insertion: 32>	37914
+deferred quick sort<part: left-left<first>, small: deferred binary insertion: 16>	49948
+deferred quick sort<part: left-left<first>, small: deferred binary insertion: 32>	54867
+deferred quick sort<part: left-left<first>, small: deferred insertion: 16>	45552
+deferred quick sort<part: left-left<first>, small: deferred insertion: 32>	43389
+deferred quick sort<part: left-left<median of 3>, small: deferred binary insertion: 16>	51991
+deferred quick sort<part: left-left<median of 3>, small: deferred binary insertion: 32>	53792
+deferred quick sort<part: left-left<median of 3>, small: deferred insertion: 16>	45339
+deferred quick sort<part: left-left<median of 3>, small: deferred insertion: 32>	44732
+deferred quick sort<part: left-left<median of medians>, small: deferred binary insertion: 16>	48989
+deferred quick sort<part: left-left<median of medians>, small: deferred binary insertion: 32>	52716
+deferred quick sort<part: left-left<median of medians>, small: deferred insertion: 16>	44799
+deferred quick sort<part: left-left<median of medians>, small: deferred insertion: 32>	43429
+deferred quick sort<part: left-left<middle>, small: deferred binary insertion: 16>	47363
+deferred quick sort<part: left-left<middle>, small: deferred binary insertion: 32>	52465
+deferred quick sort<part: left-left<middle>, small: deferred insertion: 16>	42989
+deferred quick sort<part: left-left<middle>, small: deferred insertion: 32>	43235
+deferred quick sort<part: left-left<ninther>, small: deferred binary insertion: 16>	51000
+deferred quick sort<part: left-left<ninther>, small: deferred binary insertion: 32>	53346
+deferred quick sort<part: left-left<ninther>, small: deferred insertion: 16>	44598
+deferred quick sort<part: left-left<ninther>, small: deferred insertion: 32>	43301
+deferred quick sort<part: left-right<first>, small: deferred binary insertion: 16>	44341
+deferred quick sort<part: left-right<first>, small: deferred binary insertion: 32>	50357
+deferred quick sort<part: left-right<first>, small: deferred insertion: 16>	40064
+deferred quick sort<part: left-right<first>, small: deferred insertion: 32>	42201
+deferred quick sort<part: left-right<median of 3>, small: deferred binary insertion: 16>	49454
+deferred quick sort<part: left-right<median of 3>, small: deferred binary insertion: 32>	53103
+deferred quick sort<part: left-right<median of 3>, small: deferred insertion: 16>	43671
+deferred quick sort<part: left-right<median of 3>, small: deferred insertion: 32>	43399
+deferred quick sort<part: left-right<median of medians>, small: deferred binary insertion: 16>	48223
+deferred quick sort<part: left-right<median of medians>, small: deferred binary insertion: 32>	53624
+deferred quick sort<part: left-right<median of medians>, small: deferred insertion: 16>	42346
+deferred quick sort<part: left-right<median of medians>, small: deferred insertion: 32>	43271
+deferred quick sort<part: left-right<middle>, small: deferred binary insertion: 16>	45734
+deferred quick sort<part: left-right<middle>, small: deferred binary insertion: 32>	51720
+deferred quick sort<part: left-right<middle>, small: deferred insertion: 16>	42648
+deferred quick sort<part: left-right<middle>, small: deferred insertion: 32>	43618
+deferred quick sort<part: left-right<ninther>, small: deferred binary insertion: 16>	48984
+deferred quick sort<part: left-right<ninther>, small: deferred binary insertion: 32>	52342
+deferred quick sort<part: left-right<ninther>, small: deferred insertion: 16>	43096
+deferred quick sort<part: left-right<ninther>, small: deferred insertion: 32>	44022
+deferred quick sort<part: moving pivot<first>, small: deferred binary insertion: 16>	55364
+deferred quick sort<part: moving pivot<first>, small: deferred binary insertion: 32>	59267
+deferred quick sort<part: moving pivot<first>, small: deferred insertion: 16>	50768
+deferred quick sort<part: moving pivot<first>, small: deferred insertion: 32>	49813
+deferred quick sort<part: moving pivot<median of 3>, small: deferred binary insertion: 16>	54691
+deferred quick sort<part: moving pivot<median of 3>, small: deferred binary insertion: 32>	58201
+deferred quick sort<part: moving pivot<median of 3>, small: deferred insertion: 16>	48915
+deferred quick sort<part: moving pivot<median of 3>, small: deferred insertion: 32>	46699
+deferred quick sort<part: moving pivot<median of medians>, small: deferred binary insertion: 16>	53949
+deferred quick sort<part: moving pivot<median of medians>, small: deferred binary insertion: 32>	57082
+deferred quick sort<part: moving pivot<median of medians>, small: deferred insertion: 16>	49989
+deferred quick sort<part: moving pivot<median of medians>, small: deferred insertion: 32>	48210
+deferred quick sort<part: moving pivot<middle>, small: deferred binary insertion: 16>	53060
+deferred quick sort<part: moving pivot<middle>, small: deferred binary insertion: 32>	57217
+deferred quick sort<part: moving pivot<middle>, small: deferred insertion: 16>	49420
+deferred quick sort<part: moving pivot<middle>, small: deferred insertion: 32>	46767
+deferred quick sort<part: moving pivot<ninther>, small: deferred binary insertion: 16>	53822
+deferred quick sort<part: moving pivot<ninther>, small: deferred binary insertion: 32>	57461
+deferred quick sort<part: moving pivot<ninther>, small: deferred insertion: 16>	49507
+deferred quick sort<part: moving pivot<ninther>, small: deferred insertion: 32>	47526
+deferred quick sort<part: three-way<first>, small: deferred binary insertion: 16>	57358
+deferred quick sort<part: three-way<first>, small: deferred binary insertion: 32>	59637
+deferred quick sort<part: three-way<first>, small: deferred insertion: 16>	51470
+deferred quick sort<part: three-way<first>, small: deferred insertion: 32>	50383
+deferred quick sort<part: three-way<median of 3>, small: deferred binary insertion: 16>	58371
+deferred quick sort<part: three-way<median of 3>, small: deferred binary insertion: 32>	61104
+deferred quick sort<part: three-way<median of 3>, small: deferred insertion: 16>	53098
+deferred quick sort<part: three-way<median of 3>, small: deferred insertion: 32>	50425
+deferred quick sort<part: three-way<median of medians>, small: deferred binary insertion: 16>	55912
+deferred quick sort<part: three-way<median of medians>, small: deferred binary insertion: 32>	58920
+deferred quick sort<part: three-way<median of medians>, small: deferred insertion: 16>	51862
+deferred quick sort<part: three-way<median of medians>, small: deferred insertion: 32>	49433
+deferred quick sort<part: three-way<middle>, small: deferred binary insertion: 16>	54250
+deferred quick sort<part: three-way<middle>, small: deferred binary insertion: 32>	60063
+deferred quick sort<part: three-way<middle>, small: deferred insertion: 16>	49297
+deferred quick sort<part: three-way<middle>, small: deferred insertion: 32>	51567
+deferred quick sort<part: three-way<ninther>, small: deferred binary insertion: 16>	56130
+deferred quick sort<part: three-way<ninther>, small: deferred binary insertion: 32>	61614
+deferred quick sort<part: three-way<ninther>, small: deferred insertion: 16>	53283
+deferred quick sort<part: three-way<ninther>, small: deferred insertion: 32>	48093
+drill	1951
+dual<combined<first, first>>	8090
+dual<combined<first, last>>	8865
+dual<combined<first, median of 3>>	9668
+dual<combined<first, median of medians>>	8743
+dual<combined<first, middle>>	8014
+dual<combined<first, ninther>>	8717
+dual<combined<last, first>>	8118
+dual<combined<last, last>>	8509
+dual<combined<last, median of 3>>	9128
+dual<combined<last, median of medians>>	8448
+dual<combined<last, middle>>	7929
+dual<combined<last, ninther>>	8633
+dual<combined<median of 3, first>>	9256
+dual<combined<median of 3, last>>	8630
+dual<combined<median of 3, median of 3>>	7913
+dual<combined<median of 3, median of medians>>	8164
+dual<combined<median of 3, middle>>	7611
+dual<combined<median of 3, ninther>>	9650
+dual<combined<median of medians, first>>	9104
+dual<combined<median of medians, last>>	8304
+dual<combined<median of medians, median of 3>>	7903
+dual<combined<median of medians, median of medians>>	7770
+dual<combined<median of medians, middle>>	7471
+dual<combined<median of medians, ninther>>	9916
+dual<combined<middle, first>>	8657
+dual<combined<middle, last>>	7998
+dual<combined<middle, median of 3>>	7654
+dual<combined<middle, median of medians>>	7597
+dual<combined<middle, middle>>	7155
+dual<combined<middle, ninther>>	9180
+dual<combined<ninther, first>>	9664
+dual<combined<ninther, last>>	9294
+dual<combined<ninther, median of 3>>	9681
+dual<combined<ninther, median of medians>>	8961
+dual<combined<ninther, middle>>	8799
+dual<combined<ninther, ninther>>	9156
+dual<ninther>	10159
+exercise<full>	7333
+exercise<none>	7757
+exercise<sqrt>	7753
+grail	1216
+gries-mills	1426
+heap sort quick build dual pivot<arity: 16-ary, dir: max forward, build: stack dual-pivot partition<first>>	96513
+heap sort quick build dual pivot<arity: 16-ary, dir: max forward, build: stack dual-pivot partition<middle>>	97072
+heap sort quick build dual pivot<arity: 16-ary, dir: max forward, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	106678
+heap sort quick build dual pivot<arity: 16-ary, dir: min reverse, build: stack dual-pivot partition<first>>	107826
+heap sort quick build dual pivot<arity: 16-ary, dir: min reverse, build: stack dual-pivot partition<middle>>	105164
+heap sort quick build dual pivot<arity: 16-ary, dir: min reverse, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	105321
+heap sort quick build dual pivot<arity: 256-ary, dir: max forward, build: stack dual-pivot partition<first>>	373547
+heap sort quick build dual pivot<arity: 256-ary, dir: max forward, build: stack dual-pivot partition<middle>>	407984
+heap sort quick build dual pivot<arity: 256-ary, dir: max forward, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	428430
+heap sort quick build dual pivot<arity: 256-ary, dir: min reverse, build: stack dual-pivot partition<first>>	421022
+heap sort quick build dual pivot<arity: 256-ary, dir: min reverse, build: stack dual-pivot partition<middle>>	424656
+heap sort quick build dual pivot<arity: 256-ary, dir: min reverse, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	423762
+heap sort quick build dual pivot<arity: binary, dir: max forward, build: stack dual-pivot partition<first>>	82857
+heap sort quick build dual pivot<arity: binary, dir: max forward, build: stack dual-pivot partition<middle>>	81313
+heap sort quick build dual pivot<arity: binary, dir: max forward, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	80064
+heap sort quick build dual pivot<arity: binary, dir: min reverse, build: stack dual-pivot partition<first>>	86150
+heap sort quick build dual pivot<arity: binary, dir: min reverse, build: stack dual-pivot partition<middle>>	86309
+heap sort quick build dual pivot<arity: binary, dir: min reverse, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	84363
+heap sort quick build dual pivot<arity: ternary, dir: max forward, build: stack dual-pivot partition<first>>	86018
+heap sort quick build dual pivot<arity: ternary, dir: max forward, build: stack dual-pivot partition<middle>>	80577
+heap sort quick build dual pivot<arity: ternary, dir: max forward, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	78926
+heap sort quick build dual pivot<arity: ternary, dir: min reverse, build: stack dual-pivot partition<first>>	86502
+heap sort quick build dual pivot<arity: ternary, dir: min reverse, build: stack dual-pivot partition<middle>>	83164
+heap sort quick build dual pivot<arity: ternary, dir: min reverse, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	83827
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: block, pivot: first>>	105541
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: block, pivot: median of 3>>	110297
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: block, pivot: median of medians>>	108654
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: block, pivot: middle>>	104459
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: block, pivot: ninther>>	106033
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: first>>	106788
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of 3>>	103222
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of medians>>	101102
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: middle>>	100254
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: ninther>>	108909
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: first>>	97899
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of 3>>	104980
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of medians>>	98064
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: middle>>	106616
+heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: ninther>>	101703
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: block, pivot: first>>	110043
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: block, pivot: median of 3>>	108170
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: block, pivot: median of medians>>	108075
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: block, pivot: middle>>	109876
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: block, pivot: ninther>>	105260
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: first>>	101220
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of 3>>	105210
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of medians>>	98365
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: middle>>	98029
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: ninther>>	104256
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: first>>	99696
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of 3>>	105585
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of medians>>	100599
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: middle>>	103479
+heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: ninther>>	99457
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: block, pivot: first>>	107118
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: block, pivot: median of 3>>	111359
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: block, pivot: median of medians>>	109705
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: block, pivot: middle>>	107302
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: block, pivot: ninther>>	110559
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: first>>	99967
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of 3>>	105802
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of medians>>	100656
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: middle>>	97716
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: ninther>>	104843
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: first>>	102341
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of 3>>	102505
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of medians>>	102784
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: middle>>	102761
+heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: ninther>>	102927
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: block, pivot: first>>	116710
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: block, pivot: median of 3>>	110726
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: block, pivot: median of medians>>	108628
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: block, pivot: middle>>	108599
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: block, pivot: ninther>>	109286
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: first>>	106461
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of 3>>	105770
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of medians>>	105447
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: middle>>	107909
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: ninther>>	105517
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: first>>	107074
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of 3>>	104715
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of medians>>	104173
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: middle>>	106146
+heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: ninther>>	106090
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: block, pivot: first>>	127982
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: block, pivot: median of 3>>	111130
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: block, pivot: median of medians>>	109651
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: block, pivot: middle>>	110179
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: block, pivot: ninther>>	108972
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: first>>	111656
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of 3>>	106271
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of medians>>	107705
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: middle>>	105591
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: ninther>>	107962
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: first>>	110129
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of 3>>	102564
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of medians>>	107784
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: middle>>	106851
+heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: ninther>>	108231
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: block, pivot: first>>	116376
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: block, pivot: median of 3>>	111211
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: block, pivot: median of medians>>	110891
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: block, pivot: middle>>	112504
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: block, pivot: ninther>>	107055
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: first>>	106528
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of 3>>	111468
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of medians>>	106191
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: middle>>	108045
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: ninther>>	103266
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: first>>	105134
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of 3>>	105385
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of medians>>	109714
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	107426
+heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: ninther>>	111924
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: block, pivot: first>>	403621
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: block, pivot: median of 3>>	419952
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: block, pivot: median of medians>>	408470
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: block, pivot: middle>>	411139
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: block, pivot: ninther>>	416272
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: first>>	412955
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of 3>>	421827
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of medians>>	408724
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: middle>>	410378
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: ninther>>	411363
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: first>>	405572
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of 3>>	422374
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of medians>>	406609
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: middle>>	403387
+heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: ninther>>	414758
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: block, pivot: first>>	421620
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: block, pivot: median of 3>>	426470
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: block, pivot: median of medians>>	418853
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: block, pivot: middle>>	413787
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: block, pivot: ninther>>	414665
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: first>>	406756
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of 3>>	425620
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of medians>>	406240
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: middle>>	402598
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: ninther>>	410641
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: first>>	405305
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of 3>>	417079
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of medians>>	411728
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: middle>>	403889
+heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: ninther>>	417346
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: block, pivot: first>>	418539
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: block, pivot: median of 3>>	425979
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: block, pivot: median of medians>>	412521
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: block, pivot: middle>>	413314
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: block, pivot: ninther>>	415730
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: first>>	401823
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of 3>>	422288
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of medians>>	405508
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: middle>>	401003
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: ninther>>	411106
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: first>>	397871
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of 3>>	423233
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of medians>>	407922
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: middle>>	403057
+heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: ninther>>	415517
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: block, pivot: first>>	424690
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: block, pivot: median of 3>>	414447
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: block, pivot: median of medians>>	426192
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: block, pivot: middle>>	423309
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: block, pivot: ninther>>	418923
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: first>>	430012
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of 3>>	419178
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of medians>>	425573
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: middle>>	422549
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: ninther>>	445031
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: first>>	416864
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of 3>>	434986
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of medians>>	416283
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: middle>>	413033
+heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: ninther>>	414052
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: block, pivot: first>>	441946
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: block, pivot: median of 3>>	425192
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: block, pivot: median of medians>>	536663
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: block, pivot: middle>>	417763
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: block, pivot: ninther>>	461773
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: first>>	451557
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of 3>>	413577
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of medians>>	419294
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: middle>>	469797
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: ninther>>	465912
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: first>>	421591
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of 3>>	409774
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of medians>>	424583
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: middle>>	416806
+heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: ninther>>	421616
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: block, pivot: first>>	437849
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: block, pivot: median of 3>>	416416
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: block, pivot: median of medians>>	428120
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: block, pivot: middle>>	435598
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: block, pivot: ninther>>	422730
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: first>>	420525
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of 3>>	492598
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of medians>>	466452
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: middle>>	413354
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: ninther>>	456047
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: first>>	409097
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of 3>>	409536
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of medians>>	413569
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	408292
+heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: ninther>>	410687
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: block, pivot: first>>	90256
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: block, pivot: median of 3>>	92503
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: block, pivot: median of medians>>	88299
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: block, pivot: middle>>	88158
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: block, pivot: ninther>>	85904
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: first>>	79574
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of 3>>	79588
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of medians>>	81154
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: middle>>	81477
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: ninther>>	77571
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: first>>	76629
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of 3>>	77113
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of medians>>	77092
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: middle>>	77291
+heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: ninther>>	76523
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: block, pivot: first>>	109855
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: block, pivot: median of 3>>	87515
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: block, pivot: median of medians>>	87063
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: block, pivot: middle>>	86444
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: block, pivot: ninther>>	84393
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-left pointer, pivot: first>>	89784
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of 3>>	80502
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of medians>>	76458
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-left pointer, pivot: middle>>	77188
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-left pointer, pivot: ninther>>	80028
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-right pointer, pivot: first>>	77725
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of 3>>	82350
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of medians>>	77090
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-right pointer, pivot: middle>>	80348
+heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-right pointer, pivot: ninther>>	79337
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: block, pivot: first>>	89929
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: block, pivot: median of 3>>	88927
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: block, pivot: median of medians>>	88328
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: block, pivot: middle>>	88098
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: block, pivot: ninther>>	88489
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-left pointer, pivot: first>>	115402
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of 3>>	77576
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of medians>>	79685
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-left pointer, pivot: middle>>	79142
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-left pointer, pivot: ninther>>	76892
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-right pointer, pivot: first>>	73683
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of 3>>	78792
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of medians>>	76493
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-right pointer, pivot: middle>>	74956
+heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-right pointer, pivot: ninther>>	79863
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: block, pivot: first>>	88081
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: block, pivot: median of 3>>	88079
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: block, pivot: median of medians>>	85245
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: block, pivot: middle>>	85874
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: block, pivot: ninther>>	87812
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: first>>	82483
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of 3>>	79483
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of medians>>	79541
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: middle>>	80688
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: ninther>>	81343
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: first>>	80021
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of 3>>	78488
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of medians>>	78938
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: middle>>	80475
+heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: ninther>>	80643
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: block, pivot: first>>	133627
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: block, pivot: median of 3>>	87656
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: block, pivot: median of medians>>	89006
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: block, pivot: middle>>	86545
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: block, pivot: ninther>>	90148
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-left pointer, pivot: first>>	99198
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of 3>>	79888
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of medians>>	79726
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-left pointer, pivot: middle>>	80345
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-left pointer, pivot: ninther>>	81137
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-right pointer, pivot: first>>	86338
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of 3>>	80644
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of medians>>	81228
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-right pointer, pivot: middle>>	77200
+heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-right pointer, pivot: ninther>>	81501
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: block, pivot: first>>	91108
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: block, pivot: median of 3>>	86363
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: block, pivot: median of medians>>	86504
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: block, pivot: middle>>	84991
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: block, pivot: ninther>>	90055
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: first>>	79878
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of 3>>	78747
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of medians>>	81374
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: middle>>	79837
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: ninther>>	81375
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: first>>	80672
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of 3>>	79200
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of medians>>	79783
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	78494
+heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: ninther>>	78491
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: block, pivot: first>>	87882
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: block, pivot: median of 3>>	86495
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: block, pivot: median of medians>>	81513
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: block, pivot: middle>>	80484
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: block, pivot: ninther>>	86343
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: first>>	80818
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of 3>>	83571
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of medians>>	76425
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: middle>>	76946
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: ninther>>	78881
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: first>>	82120
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of 3>>	73001
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of medians>>	77106
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: middle>>	73937
+heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: ninther>>	79644
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: block, pivot: first>>	97202
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: block, pivot: median of 3>>	80637
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: block, pivot: median of medians>>	83418
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: block, pivot: middle>>	85777
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: block, pivot: ninther>>	86643
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-left pointer, pivot: first>>	77742
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of 3>>	79732
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of medians>>	80977
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-left pointer, pivot: middle>>	77708
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-left pointer, pivot: ninther>>	76513
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-right pointer, pivot: first>>	80174
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of 3>>	75772
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of medians>>	77223
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-right pointer, pivot: middle>>	76247
+heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-right pointer, pivot: ninther>>	77199
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: block, pivot: first>>	91556
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: block, pivot: median of 3>>	86373
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: block, pivot: median of medians>>	85460
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: block, pivot: middle>>	84174
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: block, pivot: ninther>>	84703
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-left pointer, pivot: first>>	77942
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of 3>>	80278
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of medians>>	74108
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-left pointer, pivot: middle>>	78634
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-left pointer, pivot: ninther>>	81547
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-right pointer, pivot: first>>	77862
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of 3>>	77159
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of medians>>	78785
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-right pointer, pivot: middle>>	74216
+heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-right pointer, pivot: ninther>>	82866
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: block, pivot: first>>	91356
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: block, pivot: median of 3>>	84828
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: block, pivot: median of medians>>	85962
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: block, pivot: middle>>	85431
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: block, pivot: ninther>>	88716
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: first>>	80852
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of 3>>	80314
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of medians>>	80074
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: middle>>	80688
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: ninther>>	79602
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: first>>	81157
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of 3>>	79187
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of medians>>	80629
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: middle>>	79131
+heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: ninther>>	79010
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: block, pivot: first>>	107396
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: block, pivot: median of 3>>	86066
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: block, pivot: median of medians>>	88338
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: block, pivot: middle>>	88543
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: block, pivot: ninther>>	89092
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-left pointer, pivot: first>>	91131
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of 3>>	79554
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of medians>>	80780
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-left pointer, pivot: middle>>	79397
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-left pointer, pivot: ninther>>	81407
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-right pointer, pivot: first>>	87485
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of 3>>	80264
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of medians>>	80237
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-right pointer, pivot: middle>>	79801
+heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-right pointer, pivot: ninther>>	80748
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: block, pivot: first>>	88259
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: block, pivot: median of 3>>	84257
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: block, pivot: median of medians>>	87307
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: block, pivot: middle>>	86544
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: block, pivot: ninther>>	88220
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: first>>	80857
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of 3>>	80775
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of medians>>	80718
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: middle>>	79741
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: ninther>>	80673
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: first>>	79094
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of 3>>	81817
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of medians>>	80797
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	80330
+heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: ninther>>	78562
+heap sort<arity: 16-ary, dir: max forward, build: iterative>	97946
+heap sort<arity: 16-ary, dir: max forward, build: recursive>	100016
+heap sort<arity: 16-ary, dir: min reverse, build: iterative>	97074
+heap sort<arity: 16-ary, dir: min reverse, build: recursive>	101694
+heap sort<arity: 256-ary, dir: max forward, build: iterative>	450171
+heap sort<arity: 256-ary, dir: max forward, build: recursive>	430466
+heap sort<arity: 256-ary, dir: min reverse, build: iterative>	463946
+heap sort<arity: 256-ary, dir: min reverse, build: recursive>	467796
+heap sort<arity: binary, dir: max forward, build: iterative>	70955
+heap sort<arity: binary, dir: max forward, build: recursive>	70612
+heap sort<arity: binary, dir: min reverse, build: iterative>	71470
+heap sort<arity: binary, dir: min reverse, build: recursive>	74630
+heap sort<arity: ternary, dir: max forward, build: iterative>	74942
+heap sort<arity: ternary, dir: max forward, build: recursive>	78271
+heap sort<arity: ternary, dir: min reverse, build: iterative>	72206
+heap sort<arity: ternary, dir: min reverse, build: recursive>	76827
+helix	1707
+insertion sort<strategy: binary>	295877
+insertion sort<strategy: linear>	283498
+juggling	2550
+left-left<first>	7986
+left-left<last>	7808
+left-left<median of 3>	8429
+left-left<median of medians>	8687
+left-left<middle>	8601
+left-left<ninther>	8314
+left-right<first>	7891
+left-right<last>	6355
+left-right<median of 3>	8701
+left-right<median of medians>	8451
+left-right<middle>	8750
+left-right<ninther>	7886
+merge sort<small: insertion: 32, pp=false, ee=false>	51026
+merge sort<small: insertion: 32, pp=false, ee=true>	53561
+merge sort<small: insertion: 32, pp=true, ee=false>	49384
+merge sort<small: insertion: 32, pp=true, ee=true>	50329
+merge sort<small: network: 16, pp=false, ee=false>	52086
+merge sort<small: network: 16, pp=false, ee=true>	51509
+merge sort<small: network: 16, pp=true, ee=false>	50662
+merge sort<small: network: 16, pp=true, ee=true>	53165
+merge sort<small: size: 1, pp=false, ee=false>	69105
+merge sort<small: size: 1, pp=false, ee=true>	69541
+merge sort<small: size: 1, pp=true, ee=false>	63317
+merge sort<small: size: 1, pp=true, ee=true>	65835
+merge sort<small: size: 2, pp=false, ee=false>	64965
+merge sort<small: size: 2, pp=false, ee=true>	63052
+merge sort<small: size: 2, pp=true, ee=false>	58624
+merge sort<small: size: 2, pp=true, ee=true>	59717
+moving pivot<first>	7787
+moving pivot<last>	6597
+moving pivot<median of 3>	8822
+moving pivot<median of medians>	8632
+moving pivot<middle>	8693
+moving pivot<ninther>	8619
+naive merge sort<small: insertion: 32>	53040
+naive merge sort<small: network: 16>	56581
+naive merge sort<small: size: 1>	83431
+naive merge sort<small: size: 2>	69720
+naive<auxiliary>	136420
+naive<bridge>	138775
+naive<contrev>	184749
+naive<drill>	129478
+naive<grail>	130376
+naive<gries-mills>	287977
+naive<helix>	129293
+naive<juggling>	132999
+naive<piston>	244657
+naive<reversal>	73628
+naive<trinity>	162021
+natural merge sort<pp=false, ee=false>	62627
+natural merge sort<pp=false, ee=true>	60941
+natural merge sort<pp=true, ee=false>	60673
+natural merge sort<pp=true, ee=true>	61418
+odd-even bubble sort<small: insertion: 32>	430827
+odd-even bubble sort<small: network: 16>	627553
+odd-even bubble sort<small: size: 2>	850662
+park-loop<full>	5479
+park-loop<none>	4241
+park-loop<sqrt>	4898
+park-sweep<full>	13974
+park-sweep<none>	4308
+park-sweep<sqrt>	5208
+piston	1427
+quick heap sort deferred<arity: 16-ary, small: deferred binary insertion: 16>	241569
+quick heap sort deferred<arity: 16-ary, small: deferred binary insertion: 32>	233162
+quick heap sort deferred<arity: 16-ary, small: deferred insertion: 16>	238215
+quick heap sort deferred<arity: 16-ary, small: deferred insertion: 32>	220023
+quick heap sort deferred<arity: 256-ary, small: deferred binary insertion: 16>	635013
+quick heap sort deferred<arity: 256-ary, small: deferred binary insertion: 32>	654638
+quick heap sort deferred<arity: 256-ary, small: deferred insertion: 16>	634049
+quick heap sort deferred<arity: 256-ary, small: deferred insertion: 32>	632864
+quick heap sort deferred<arity: binary, small: deferred binary insertion: 16>	250068
+quick heap sort deferred<arity: binary, small: deferred binary insertion: 32>	231458
+quick heap sort deferred<arity: binary, small: deferred insertion: 16>	242914
+quick heap sort deferred<arity: binary, small: deferred insertion: 32>	218243
+quick heap sort deferred<arity: ternary, small: deferred binary insertion: 16>	229408
+quick heap sort deferred<arity: ternary, small: deferred binary insertion: 32>	213721
+quick heap sort deferred<arity: ternary, small: deferred insertion: 16>	217765
+quick heap sort deferred<arity: ternary, small: deferred insertion: 32>	202285
+quick heap sort<arity: 16-ary, small: insertion: 32>	216690
+quick heap sort<arity: 16-ary, small: network: 16>	232191
+quick heap sort<arity: 16-ary, small: size: 1>	261221
+quick heap sort<arity: 16-ary, small: size: 2>	258892
+quick heap sort<arity: 256-ary, small: insertion: 32>	607571
+quick heap sort<arity: 256-ary, small: network: 16>	629550
+quick heap sort<arity: 256-ary, small: size: 1>	671983
+quick heap sort<arity: 256-ary, small: size: 2>	657247
+quick heap sort<arity: binary, small: insertion: 32>	227808
+quick heap sort<arity: binary, small: network: 16>	239102
+quick heap sort<arity: binary, small: size: 1>	267973
+quick heap sort<arity: binary, small: size: 2>	253898
+quick heap sort<arity: ternary, small: insertion: 32>	192222
+quick heap sort<arity: ternary, small: network: 16>	208308
+quick heap sort<arity: ternary, small: size: 1>	240572
+quick heap sort<arity: ternary, small: size: 2>	231759
+quick select: iterative<block<first>>	16734
+quick select: iterative<block<last>>	26808
+quick select: iterative<block<median of 3>>	18225
+quick select: iterative<block<middle>>	16714
+quick select: iterative<block<ninther>>	18213
+quick select: iterative<dual<combined<first, first>>>	15473
+quick select: iterative<dual<combined<first, last>>>	15305
+quick select: iterative<dual<combined<middle, middle>>>	16042
+quick select: iterative<dual<ninther>>	16020
+quick select: iterative<heap extract: binary iterative>	81697
+quick select: iterative<heap extract: binary recursive>	77036
+quick select: iterative<heap extract: ternary iterative>	80346
+quick select: iterative<heap extract: ternary recursive>	86440
+quick select: iterative<left-left<first>>	14358
+quick select: iterative<left-left<last>>	14208
+quick select: iterative<left-left<median of 3>>	12412
+quick select: iterative<left-left<middle>>	14965
+quick select: iterative<left-left<ninther>>	13229
+quick select: iterative<left-right<first>>	16444
+quick select: iterative<left-right<last>>	13801
+quick select: iterative<left-right<median of 3>>	13819
+quick select: iterative<left-right<middle>>	12331
+quick select: iterative<left-right<ninther>>	14087
+quick select: iterative<three-way<first>>	15626
+quick select: iterative<three-way<last>>	16543
+quick select: iterative<three-way<median of 3>>	15945
+quick select: iterative<three-way<middle>>	16939
+quick select: iterative<three-way<ninther>>	18305
+quick select: recursive<block<first>>	18754
+quick select: recursive<block<last>>	28280
+quick select: recursive<block<median of 3>>	18846
+quick select: recursive<block<middle>>	17702
+quick select: recursive<block<ninther>>	18880
+quick select: recursive<dual<combined<first, first>>>	15172
+quick select: recursive<dual<combined<first, last>>>	15140
+quick select: recursive<dual<combined<middle, middle>>>	15207
+quick select: recursive<dual<ninther>>	15264
+quick select: recursive<heap extract: binary iterative>	82572
+quick select: recursive<heap extract: binary recursive>	80142
+quick select: recursive<heap extract: ternary iterative>	81112
+quick select: recursive<heap extract: ternary recursive>	87872
+quick select: recursive<left-left<first>>	14674
+quick select: recursive<left-left<last>>	14770
+quick select: recursive<left-left<median of 3>>	12908
+quick select: recursive<left-left<middle>>	15032
+quick select: recursive<left-left<ninther>>	13716
+quick select: recursive<left-right<first>>	16715
+quick select: recursive<left-right<last>>	12993
+quick select: recursive<left-right<median of 3>>	14177
+quick select: recursive<left-right<middle>>	12666
+quick select: recursive<left-right<ninther>>	14575
+quick select: recursive<three-way<first>>	16200
+quick select: recursive<three-way<last>>	16742
+quick select: recursive<three-way<median of 3>>	16097
+quick select: recursive<three-way<middle>>	15021
+quick select: recursive<three-way<ninther>>	18805
+quick sort<part: block<first>, small: insertion: 32>	56711
+quick sort<part: block<first>, small: network: 16>	54796
+quick sort<part: block<first>, small: size: 1>	62364
+quick sort<part: block<first>, small: size: 2>	59416
+quick sort<part: block<median of 3>, small: insertion: 32>	51591
+quick sort<part: block<median of 3>, small: network: 16>	51895
+quick sort<part: block<median of 3>, small: size: 1>	59730
+quick sort<part: block<median of 3>, small: size: 2>	56259
+quick sort<part: block<median of medians>, small: insertion: 32>	52502
+quick sort<part: block<median of medians>, small: network: 16>	53116
+quick sort<part: block<median of medians>, small: size: 1>	64863
+quick sort<part: block<median of medians>, small: size: 2>	62201
+quick sort<part: block<middle>, small: insertion: 32>	50687
+quick sort<part: block<middle>, small: network: 16>	52725
+quick sort<part: block<middle>, small: size: 1>	60482
+quick sort<part: block<middle>, small: size: 2>	57680
+quick sort<part: block<ninther>, small: insertion: 32>	50919
+quick sort<part: block<ninther>, small: network: 16>	51551
+quick sort<part: block<ninther>, small: size: 1>	62715
+quick sort<part: block<ninther>, small: size: 2>	60997
+quick sort<part: dual<combined<first, first>>, small: insertion: 32>	40988
+quick sort<part: dual<combined<first, first>>, small: network: 16>	41049
+quick sort<part: dual<combined<first, first>>, small: size: 1>	44808
+quick sort<part: dual<combined<first, first>>, small: size: 2>	44604
+quick sort<part: dual<combined<first, median of 3>>, small: insertion: 32>	41893
+quick sort<part: dual<combined<first, median of 3>>, small: network: 16>	39708
+quick sort<part: dual<combined<first, median of 3>>, small: size: 1>	44337
+quick sort<part: dual<combined<first, median of 3>>, small: size: 2>	45377
+quick sort<part: dual<combined<first, median of medians>>, small: insertion: 32>	41801
+quick sort<part: dual<combined<first, median of medians>>, small: network: 16>	42151
+quick sort<part: dual<combined<first, median of medians>>, small: size: 1>	48756
+quick sort<part: dual<combined<first, median of medians>>, small: size: 2>	48087
+quick sort<part: dual<combined<first, middle>>, small: insertion: 32>	39210
+quick sort<part: dual<combined<first, middle>>, small: network: 16>	40293
+quick sort<part: dual<combined<first, middle>>, small: size: 1>	44413
+quick sort<part: dual<combined<first, middle>>, small: size: 2>	44025
+quick sort<part: dual<combined<first, ninther>>, small: insertion: 32>	43370
+quick sort<part: dual<combined<first, ninther>>, small: network: 16>	42162
+quick sort<part: dual<combined<first, ninther>>, small: size: 1>	48156
+quick sort<part: dual<combined<first, ninther>>, small: size: 2>	48117
+quick sort<part: dual<combined<median of 3, first>>, small: insertion: 32>	40474
+quick sort<part: dual<combined<median of 3, first>>, small: network: 16>	40272
+quick sort<part: dual<combined<median of 3, first>>, small: size: 1>	45427
+quick sort<part: dual<combined<median of 3, first>>, small: size: 2>	45173
+quick sort<part: dual<combined<median of 3, median of 3>>, small: insertion: 32>	39924
+quick sort<part: dual<combined<median of 3, median of 3>>, small: network: 16>	40644
+quick sort<part: dual<combined<median of 3, median of 3>>, small: size: 1>	47566
+quick sort<part: dual<combined<median of 3, median of 3>>, small: size: 2>	47008
+quick sort<part: dual<combined<median of 3, median of medians>>, small: insertion: 32>	41448
+quick sort<part: dual<combined<median of 3, median of medians>>, small: network: 16>	41573
+quick sort<part: dual<combined<median of 3, median of medians>>, small: size: 1>	49584
+quick sort<part: dual<combined<median of 3, median of medians>>, small: size: 2>	48854
+quick sort<part: dual<combined<median of 3, middle>>, small: insertion: 32>	40211
+quick sort<part: dual<combined<median of 3, middle>>, small: network: 16>	39189
+quick sort<part: dual<combined<median of 3, middle>>, small: size: 1>	47497
+quick sort<part: dual<combined<median of 3, middle>>, small: size: 2>	45431
+quick sort<part: dual<combined<median of 3, ninther>>, small: insertion: 32>	41836
+quick sort<part: dual<combined<median of 3, ninther>>, small: network: 16>	42828
+quick sort<part: dual<combined<median of 3, ninther>>, small: size: 1>	52225
+quick sort<part: dual<combined<median of 3, ninther>>, small: size: 2>	51748
+quick sort<part: dual<combined<median of medians, first>>, small: insertion: 32>	41166
+quick sort<part: dual<combined<median of medians, first>>, small: network: 16>	41502
+quick sort<part: dual<combined<median of medians, first>>, small: size: 1>	48243
+quick sort<part: dual<combined<median of medians, first>>, small: size: 2>	47125
+quick sort<part: dual<combined<median of medians, median of 3>>, small: insertion: 32>	41698
+quick sort<part: dual<combined<median of medians, median of 3>>, small: network: 16>	43456
+quick sort<part: dual<combined<median of medians, median of 3>>, small: size: 1>	51232
+quick sort<part: dual<combined<median of medians, median of 3>>, small: size: 2>	49476
+quick sort<part: dual<combined<median of medians, median of medians>>, small: insertion: 32>	41074
+quick sort<part: dual<combined<median of medians, median of medians>>, small: network: 16>	43090
+quick sort<part: dual<combined<median of medians, median of medians>>, small: size: 1>	53070
+quick sort<part: dual<combined<median of medians, median of medians>>, small: size: 2>	51599
+quick sort<part: dual<combined<median of medians, middle>>, small: insertion: 32>	39749
+quick sort<part: dual<combined<median of medians, middle>>, small: network: 16>	41603
+quick sort<part: dual<combined<median of medians, middle>>, small: size: 1>	48806
+quick sort<part: dual<combined<median of medians, middle>>, small: size: 2>	48630
+quick sort<part: dual<combined<median of medians, ninther>>, small: insertion: 32>	43902
+quick sort<part: dual<combined<median of medians, ninther>>, small: network: 16>	44949
+quick sort<part: dual<combined<median of medians, ninther>>, small: size: 1>	53154
+quick sort<part: dual<combined<median of medians, ninther>>, small: size: 2>	52240
+quick sort<part: dual<combined<middle, first>>, small: insertion: 32>	40749
+quick sort<part: dual<combined<middle, first>>, small: network: 16>	40330
+quick sort<part: dual<combined<middle, first>>, small: size: 1>	43510
+quick sort<part: dual<combined<middle, first>>, small: size: 2>	43290
+quick sort<part: dual<combined<middle, median of 3>>, small: insertion: 32>	39915
+quick sort<part: dual<combined<middle, median of 3>>, small: network: 16>	41927
+quick sort<part: dual<combined<middle, median of 3>>, small: size: 1>	46350
+quick sort<part: dual<combined<middle, median of 3>>, small: size: 2>	46292
+quick sort<part: dual<combined<middle, median of medians>>, small: insertion: 32>	41396
+quick sort<part: dual<combined<middle, median of medians>>, small: network: 16>	42846
+quick sort<part: dual<combined<middle, median of medians>>, small: size: 1>	48033
+quick sort<part: dual<combined<middle, median of medians>>, small: size: 2>	49508
+quick sort<part: dual<combined<middle, middle>>, small: insertion: 32>	39076
+quick sort<part: dual<combined<middle, middle>>, small: network: 16>	38622
+quick sort<part: dual<combined<middle, middle>>, small: size: 1>	44950
+quick sort<part: dual<combined<middle, middle>>, small: size: 2>	42751
+quick sort<part: dual<combined<middle, ninther>>, small: insertion: 32>	41889
+quick sort<part: dual<combined<middle, ninther>>, small: network: 16>	42213
+quick sort<part: dual<combined<middle, ninther>>, small: size: 1>	49127
+quick sort<part: dual<combined<middle, ninther>>, small: size: 2>	48812
+quick sort<part: dual<combined<ninther, first>>, small: insertion: 32>	41743
+quick sort<part: dual<combined<ninther, first>>, small: network: 16>	42616
+quick sort<part: dual<combined<ninther, first>>, small: size: 1>	49916
+quick sort<part: dual<combined<ninther, first>>, small: size: 2>	49343
+quick sort<part: dual<combined<ninther, median of 3>>, small: insertion: 32>	41052
+quick sort<part: dual<combined<ninther, median of 3>>, small: network: 16>	41845
+quick sort<part: dual<combined<ninther, median of 3>>, small: size: 1>	50606
+quick sort<part: dual<combined<ninther, median of 3>>, small: size: 2>	49853
+quick sort<part: dual<combined<ninther, median of medians>>, small: insertion: 32>	42732
+quick sort<part: dual<combined<ninther, median of medians>>, small: network: 16>	44064
+quick sort<part: dual<combined<ninther, median of medians>>, small: size: 1>	52497
+quick sort<part: dual<combined<ninther, median of medians>>, small: size: 2>	51730
+quick sort<part: dual<combined<ninther, middle>>, small: insertion: 32>	40156
+quick sort<part: dual<combined<ninther, middle>>, small: network: 16>	42312
+quick sort<part: dual<combined<ninther, middle>>, small: size: 1>	49034
+quick sort<part: dual<combined<ninther, middle>>, small: size: 2>	48347
+quick sort<part: dual<combined<ninther, ninther>>, small: insertion: 32>	42126
+quick sort<part: dual<combined<ninther, ninther>>, small: network: 16>	44017
+quick sort<part: dual<combined<ninther, ninther>>, small: size: 1>	53158
+quick sort<part: dual<combined<ninther, ninther>>, small: size: 2>	54061
+quick sort<part: dual<ninther>, small: insertion: 32>	38627
+quick sort<part: dual<ninther>, small: network: 16>	41184
+quick sort<part: dual<ninther>, small: size: 1>	45569
+quick sort<part: dual<ninther>, small: size: 2>	46865
+quick sort<part: left-left<first>, small: insertion: 32>	42090
+quick sort<part: left-left<first>, small: network: 16>	43872
+quick sort<part: left-left<first>, small: size: 1>	48116
+quick sort<part: left-left<first>, small: size: 2>	47498
+quick sort<part: left-left<median of 3>, small: insertion: 32>	43448
+quick sort<part: left-left<median of 3>, small: network: 16>	43295
+quick sort<part: left-left<median of 3>, small: size: 1>	51851
+quick sort<part: left-left<median of 3>, small: size: 2>	50413
+quick sort<part: left-left<median of medians>, small: insertion: 32>	42788
+quick sort<part: left-left<median of medians>, small: network: 16>	46441
+quick sort<part: left-left<median of medians>, small: size: 1>	53447
+quick sort<part: left-left<median of medians>, small: size: 2>	52537
+quick sort<part: left-left<middle>, small: insertion: 32>	41577
+quick sort<part: left-left<middle>, small: network: 16>	43586
+quick sort<part: left-left<middle>, small: size: 1>	47804
+quick sort<part: left-left<middle>, small: size: 2>	46861
+quick sort<part: left-left<ninther>, small: insertion: 32>	43466
+quick sort<part: left-left<ninther>, small: network: 16>	44361
+quick sort<part: left-left<ninther>, small: size: 1>	51610
+quick sort<part: left-left<ninther>, small: size: 2>	52129
+quick sort<part: left-right<first>, small: insertion: 32>	41982
+quick sort<part: left-right<first>, small: network: 16>	42715
+quick sort<part: left-right<first>, small: size: 1>	46462
+quick sort<part: left-right<first>, small: size: 2>	43288
+quick sort<part: left-right<median of 3>, small: insertion: 32>	43060
+quick sort<part: left-right<median of 3>, small: network: 16>	42593
+quick sort<part: left-right<median of 3>, small: size: 1>	50777
+quick sort<part: left-right<median of 3>, small: size: 2>	48556
+quick sort<part: left-right<median of medians>, small: insertion: 32>	40764
+quick sort<part: left-right<median of medians>, small: network: 16>	41834
+quick sort<part: left-right<median of medians>, small: size: 1>	51462
+quick sort<part: left-right<median of medians>, small: size: 2>	50482
+quick sort<part: left-right<middle>, small: insertion: 32>	40685
+quick sort<part: left-right<middle>, small: network: 16>	42183
+quick sort<part: left-right<middle>, small: size: 1>	45543
+quick sort<part: left-right<middle>, small: size: 2>	43611
+quick sort<part: left-right<ninther>, small: insertion: 32>	40470
+quick sort<part: left-right<ninther>, small: network: 16>	42576
+quick sort<part: left-right<ninther>, small: size: 1>	51317
+quick sort<part: left-right<ninther>, small: size: 2>	49971
+quick sort<part: moving pivot<first>, small: insertion: 32>	47620
+quick sort<part: moving pivot<first>, small: network: 16>	50330
+quick sort<part: moving pivot<first>, small: size: 1>	60607
+quick sort<part: moving pivot<first>, small: size: 2>	59023
+quick sort<part: moving pivot<median of 3>, small: insertion: 32>	46086
+quick sort<part: moving pivot<median of 3>, small: network: 16>	47037
+quick sort<part: moving pivot<median of 3>, small: size: 1>	60818
+quick sort<part: moving pivot<median of 3>, small: size: 2>	56689
+quick sort<part: moving pivot<median of medians>, small: insertion: 32>	45126
+quick sort<part: moving pivot<median of medians>, small: network: 16>	50030
+quick sort<part: moving pivot<median of medians>, small: size: 1>	61135
+quick sort<part: moving pivot<median of medians>, small: size: 2>	59697
+quick sort<part: moving pivot<middle>, small: insertion: 32>	48046
+quick sort<part: moving pivot<middle>, small: network: 16>	50834
+quick sort<part: moving pivot<middle>, small: size: 1>	57981
+quick sort<part: moving pivot<middle>, small: size: 2>	58559
+quick sort<part: moving pivot<ninther>, small: insertion: 32>	48271
+quick sort<part: moving pivot<ninther>, small: network: 16>	51688
+quick sort<part: moving pivot<ninther>, small: size: 1>	65509
+quick sort<part: moving pivot<ninther>, small: size: 2>	64524
+quick sort<part: three-way<first>, small: insertion: 32>	52341
+quick sort<part: three-way<first>, small: network: 16>	55308
+quick sort<part: three-way<first>, small: size: 1>	56029
+quick sort<part: three-way<first>, small: size: 2>	55040
+quick sort<part: three-way<median of 3>, small: insertion: 32>	48950
+quick sort<part: three-way<median of 3>, small: network: 16>	51126
+quick sort<part: three-way<median of 3>, small: size: 1>	57533
+quick sort<part: three-way<median of 3>, small: size: 2>	56024
+quick sort<part: three-way<median of medians>, small: insertion: 32>	49122
+quick sort<part: three-way<median of medians>, small: network: 16>	51606
+quick sort<part: three-way<median of medians>, small: size: 1>	59583
+quick sort<part: three-way<median of medians>, small: size: 2>	59348
+quick sort<part: three-way<middle>, small: insertion: 32>	46694
+quick sort<part: three-way<middle>, small: network: 16>	54119
+quick sort<part: three-way<middle>, small: size: 1>	52978
+quick sort<part: three-way<middle>, small: size: 2>	53252
+quick sort<part: three-way<ninther>, small: insertion: 32>	47978
+quick sort<part: three-way<ninther>, small: network: 16>	54275
+quick sort<part: three-way<ninther>, small: size: 1>	57425
+quick sort<part: three-way<ninther>, small: size: 2>	57871
+quick surrender optimised<quick select: iterative<block<first>>, small: insertion: 32>	314977
+quick surrender optimised<quick select: iterative<block<first>>, small: network: 16>	441712
+quick surrender optimised<quick select: iterative<block<last>>, small: insertion: 32>	8542835
+quick surrender optimised<quick select: iterative<block<last>>, small: network: 16>	23672801
+quick surrender optimised<quick select: iterative<block<median of 3>>, small: insertion: 32>	105310
+quick surrender optimised<quick select: iterative<block<median of 3>>, small: network: 16>	157785
+quick surrender optimised<quick select: iterative<block<middle>>, small: insertion: 32>	107132
+quick surrender optimised<quick select: iterative<block<middle>>, small: network: 16>	159243
+quick surrender optimised<quick select: iterative<block<ninther>>, small: insertion: 32>	110839
+quick surrender optimised<quick select: iterative<block<ninther>>, small: network: 16>	163998
+quick surrender optimised<quick select: iterative<dual<combined<first, first>>>, small: insertion: 32>	136721
+quick surrender optimised<quick select: iterative<dual<combined<first, first>>>, small: network: 16>	172595
+quick surrender optimised<quick select: iterative<dual<combined<first, last>>>, small: insertion: 32>	306310
+quick surrender optimised<quick select: iterative<dual<combined<first, last>>>, small: network: 16>	442439
+quick surrender optimised<quick select: iterative<dual<combined<middle, middle>>>, small: insertion: 32>	96794
+quick surrender optimised<quick select: iterative<dual<combined<middle, middle>>>, small: network: 16>	160609
+quick surrender optimised<quick select: iterative<dual<ninther>>, small: insertion: 32>	76751
+quick surrender optimised<quick select: iterative<dual<ninther>>, small: network: 16>	115924
+quick surrender optimised<quick select: iterative<heap extract: binary iterative>, small: insertion: 32>	765829
+quick surrender optimised<quick select: iterative<heap extract: binary iterative>, small: network: 16>	1408259
+quick surrender optimised<quick select: iterative<heap extract: binary recursive>, small: insertion: 32>	766687
+quick surrender optimised<quick select: iterative<heap extract: binary recursive>, small: network: 16>	1413279
+quick surrender optimised<quick select: iterative<heap extract: ternary iterative>, small: insertion: 32>	666001
+quick surrender optimised<quick select: iterative<heap extract: ternary iterative>, small: network: 16>	1137041
+quick surrender optimised<quick select: iterative<heap extract: ternary recursive>, small: insertion: 32>	771858
+quick surrender optimised<quick select: iterative<heap extract: ternary recursive>, small: network: 16>	1315549
+quick surrender optimised<quick select: iterative<left-left<first>>, small: insertion: 32>	142203
+quick surrender optimised<quick select: iterative<left-left<first>>, small: network: 16>	217733
+quick surrender optimised<quick select: iterative<left-left<last>>, small: insertion: 32>	5220874
+quick surrender optimised<quick select: iterative<left-left<last>>, small: network: 16>	15324819
+quick surrender optimised<quick select: iterative<left-left<median of 3>>, small: insertion: 32>	86435
+quick surrender optimised<quick select: iterative<left-left<median of 3>>, small: network: 16>	136176
+quick surrender optimised<quick select: iterative<left-left<middle>>, small: insertion: 32>	88008
+quick surrender optimised<quick select: iterative<left-left<middle>>, small: network: 16>	142810
+quick surrender optimised<quick select: iterative<left-left<ninther>>, small: insertion: 32>	90780
+quick surrender optimised<quick select: iterative<left-left<ninther>>, small: network: 16>	148047
+quick surrender optimised<quick select: iterative<left-right<first>>, small: insertion: 32>	141016
+quick surrender optimised<quick select: iterative<left-right<first>>, small: network: 16>	180415
+quick surrender optimised<quick select: iterative<left-right<last>>, small: insertion: 32>	2703189
+quick surrender optimised<quick select: iterative<left-right<last>>, small: network: 16>	6086426
+quick surrender optimised<quick select: iterative<left-right<median of 3>>, small: insertion: 32>	89603
+quick surrender optimised<quick select: iterative<left-right<median of 3>>, small: network: 16>	136683
+quick surrender optimised<quick select: iterative<left-right<middle>>, small: insertion: 32>	73366
+quick surrender optimised<quick select: iterative<left-right<middle>>, small: network: 16>	122935
+quick surrender optimised<quick select: iterative<left-right<ninther>>, small: insertion: 32>	78277
+quick surrender optimised<quick select: iterative<left-right<ninther>>, small: network: 16>	121689
+quick surrender optimised<quick select: iterative<three-way<first>>, small: insertion: 32>	216782
+quick surrender optimised<quick select: iterative<three-way<first>>, small: network: 16>	324415
+quick surrender optimised<quick select: iterative<three-way<last>>, small: insertion: 32>	269892
+quick surrender optimised<quick select: iterative<three-way<last>>, small: network: 16>	405732
+quick surrender optimised<quick select: iterative<three-way<median of 3>>, small: insertion: 32>	126790
+quick surrender optimised<quick select: iterative<three-way<median of 3>>, small: network: 16>	214992
+quick surrender optimised<quick select: iterative<three-way<middle>>, small: insertion: 32>	128164
+quick surrender optimised<quick select: iterative<three-way<middle>>, small: network: 16>	216391
+quick surrender optimised<quick select: iterative<three-way<ninther>>, small: insertion: 32>	123118
+quick surrender optimised<quick select: iterative<three-way<ninther>>, small: network: 16>	207364
+quick surrender optimised<quick select: recursive<block<first>>, small: insertion: 32>	311529
+quick surrender optimised<quick select: recursive<block<first>>, small: network: 16>	441635
+quick surrender optimised<quick select: recursive<block<last>>, small: insertion: 32>	8589885
+quick surrender optimised<quick select: recursive<block<last>>, small: network: 16>	24140437
+quick surrender optimised<quick select: recursive<block<median of 3>>, small: insertion: 32>	107539
+quick surrender optimised<quick select: recursive<block<median of 3>>, small: network: 16>	158589
+quick surrender optimised<quick select: recursive<block<middle>>, small: insertion: 32>	106128
+quick surrender optimised<quick select: recursive<block<middle>>, small: network: 16>	160114
+quick surrender optimised<quick select: recursive<block<ninther>>, small: insertion: 32>	109565
+quick surrender optimised<quick select: recursive<block<ninther>>, small: network: 16>	166043
+quick surrender optimised<quick select: recursive<dual<combined<first, first>>>, small: insertion: 32>	115522
+quick surrender optimised<quick select: recursive<dual<combined<first, first>>>, small: network: 16>	173878
+quick surrender optimised<quick select: recursive<dual<combined<first, last>>>, small: insertion: 32>	308521
+quick surrender optimised<quick select: recursive<dual<combined<first, last>>>, small: network: 16>	445766
+quick surrender optimised<quick select: recursive<dual<combined<middle, middle>>>, small: insertion: 32>	94683
+quick surrender optimised<quick select: recursive<dual<combined<middle, middle>>>, small: network: 16>	160895
+quick surrender optimised<quick select: recursive<dual<ninther>>, small: insertion: 32>	78885
+quick surrender optimised<quick select: recursive<dual<ninther>>, small: network: 16>	116328
+quick surrender optimised<quick select: recursive<heap extract: binary iterative>, small: insertion: 32>	765101
+quick surrender optimised<quick select: recursive<heap extract: binary iterative>, small: network: 16>	1413438
+quick surrender optimised<quick select: recursive<heap extract: binary recursive>, small: insertion: 32>	776358
+quick surrender optimised<quick select: recursive<heap extract: binary recursive>, small: network: 16>	1416047
+quick surrender optimised<quick select: recursive<heap extract: ternary iterative>, small: insertion: 32>	677010
+quick surrender optimised<quick select: recursive<heap extract: ternary iterative>, small: network: 16>	1135196
+quick surrender optimised<quick select: recursive<heap extract: ternary recursive>, small: insertion: 32>	766088
+quick surrender optimised<quick select: recursive<heap extract: ternary recursive>, small: network: 16>	1327151
+quick surrender optimised<quick select: recursive<left-left<first>>, small: insertion: 32>	123159
+quick surrender optimised<quick select: recursive<left-left<first>>, small: network: 16>	220216
+quick surrender optimised<quick select: recursive<left-left<last>>, small: insertion: 32>	5815364
+quick surrender optimised<quick select: recursive<left-left<last>>, small: network: 16>	15013398
+quick surrender optimised<quick select: recursive<left-left<median of 3>>, small: insertion: 32>	85851
+quick surrender optimised<quick select: recursive<left-left<median of 3>>, small: network: 16>	140573
+quick surrender optimised<quick select: recursive<left-left<middle>>, small: insertion: 32>	84310
+quick surrender optimised<quick select: recursive<left-left<middle>>, small: network: 16>	144600
+quick surrender optimised<quick select: recursive<left-left<ninther>>, small: insertion: 32>	89645
+quick surrender optimised<quick select: recursive<left-left<ninther>>, small: network: 16>	145681
+quick surrender optimised<quick select: recursive<left-right<first>>, small: insertion: 32>	135120
+quick surrender optimised<quick select: recursive<left-right<first>>, small: network: 16>	178491
+quick surrender optimised<quick select: recursive<left-right<last>>, small: insertion: 32>	2672530
+quick surrender optimised<quick select: recursive<left-right<last>>, small: network: 16>	6107454
+quick surrender optimised<quick select: recursive<left-right<median of 3>>, small: insertion: 32>	88317
+quick surrender optimised<quick select: recursive<left-right<median of 3>>, small: network: 16>	148171
+quick surrender optimised<quick select: recursive<left-right<middle>>, small: insertion: 32>	71542
+quick surrender optimised<quick select: recursive<left-right<middle>>, small: network: 16>	113695
+quick surrender optimised<quick select: recursive<left-right<ninther>>, small: insertion: 32>	80652
+quick surrender optimised<quick select: recursive<left-right<ninther>>, small: network: 16>	128072
+quick surrender optimised<quick select: recursive<three-way<first>>, small: insertion: 32>	237541
+quick surrender optimised<quick select: recursive<three-way<first>>, small: network: 16>	357854
+quick surrender optimised<quick select: recursive<three-way<last>>, small: insertion: 32>	272514
+quick surrender optimised<quick select: recursive<three-way<last>>, small: network: 16>	406632
+quick surrender optimised<quick select: recursive<three-way<median of 3>>, small: insertion: 32>	125792
+quick surrender optimised<quick select: recursive<three-way<median of 3>>, small: network: 16>	214941
+quick surrender optimised<quick select: recursive<three-way<middle>>, small: insertion: 32>	112628
+quick surrender optimised<quick select: recursive<three-way<middle>>, small: network: 16>	187231
+quick surrender optimised<quick select: recursive<three-way<ninther>>, small: insertion: 32>	126627
+quick surrender optimised<quick select: recursive<three-way<ninther>>, small: network: 16>	220644
+random shell sort<cubic>	73376
+random shell sort<distinct parabolic>	70025
+random shell sort<log uniform>	73057
+random shell sort<parabolic>	70164
+random shell sort<uniform>	66490
+relocate<full>	6258
+relocate<none>	6899
+relocate<sqrt>	6754
+reversal	1770
+rod sort<strategy: 3-parity, merge: aux>	72755
+rod sort<strategy: 3-parity, merge: insertion>	66334
+rod sort<strategy: classic, merge: aux>	89672
+rod sort<strategy: classic, merge: insertion>	70226
+rod sort<strategy: fibonacci, merge: aux>	100514
+rod sort<strategy: fibonacci, merge: insertion>	50237
+rod sort<strategy: log-parity, merge: aux>	80295
+rod sort<strategy: log-parity, merge: insertion>	57401
+rod sort<strategy: optimised, merge: aux>	130348
+rod sort<strategy: optimised, merge: insertion>	48876
+rod sort<strategy: root-parity, merge: aux>	147733
+rod sort<strategy: root-parity, merge: insertion>	64430
+rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>	206094
+rotation merge sort<small: insertion: 32, merge: naive<bridge>>	207527
+rotation merge sort<small: insertion: 32, merge: naive<contrev>>	244522
+rotation merge sort<small: insertion: 32, merge: naive<drill>>	200923
+rotation merge sort<small: insertion: 32, merge: naive<grail>>	205647
+rotation merge sort<small: insertion: 32, merge: naive<gries-mills>>	240027
+rotation merge sort<small: insertion: 32, merge: naive<helix>>	194749
+rotation merge sort<small: insertion: 32, merge: naive<juggling>>	206922
+rotation merge sort<small: insertion: 32, merge: naive<piston>>	251380
+rotation merge sort<small: insertion: 32, merge: naive<reversal>>	136391
+rotation merge sort<small: insertion: 32, merge: naive<trinity>>	224539
+rotation merge sort<small: insertion: 32, merge: smaller-side<auxiliary>>	119896
+rotation merge sort<small: insertion: 32, merge: smaller-side<bridge>>	112496
+rotation merge sort<small: insertion: 32, merge: smaller-side<contrev>>	99207
+rotation merge sort<small: insertion: 32, merge: smaller-side<drill>>	106474
+rotation merge sort<small: insertion: 32, merge: smaller-side<grail>>	97734
+rotation merge sort<small: insertion: 32, merge: smaller-side<gries-mills>>	97146
+rotation merge sort<small: insertion: 32, merge: smaller-side<helix>>	100807
+rotation merge sort<small: insertion: 32, merge: smaller-side<juggling>>	105369
+rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>	98293
+rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>	85976
+rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>	100780
+rotation merge sort<small: network: 16, merge: naive<auxiliary>>	215612
+rotation merge sort<small: network: 16, merge: naive<bridge>>	218080
+rotation merge sort<small: network: 16, merge: naive<contrev>>	250646
+rotation merge sort<small: network: 16, merge: naive<drill>>	207978
+rotation merge sort<small: network: 16, merge: naive<grail>>	211195
+rotation merge sort<small: network: 16, merge: naive<gries-mills>>	281165
+rotation merge sort<small: network: 16, merge: naive<helix>>	198299
+rotation merge sort<small: network: 16, merge: naive<juggling>>	213321
+rotation merge sort<small: network: 16, merge: naive<piston>>	252548
+rotation merge sort<small: network: 16, merge: naive<reversal>>	138703
+rotation merge sort<small: network: 16, merge: naive<trinity>>	228400
+rotation merge sort<small: network: 16, merge: smaller-side<auxiliary>>	124550
+rotation merge sort<small: network: 16, merge: smaller-side<bridge>>	122134
+rotation merge sort<small: network: 16, merge: smaller-side<contrev>>	106643
+rotation merge sort<small: network: 16, merge: smaller-side<drill>>	107803
+rotation merge sort<small: network: 16, merge: smaller-side<grail>>	102444
+rotation merge sort<small: network: 16, merge: smaller-side<gries-mills>>	102504
+rotation merge sort<small: network: 16, merge: smaller-side<helix>>	107837
+rotation merge sort<small: network: 16, merge: smaller-side<juggling>>	112030
+rotation merge sort<small: network: 16, merge: smaller-side<piston>>	106353
+rotation merge sort<small: network: 16, merge: smaller-side<reversal>>	94142
+rotation merge sort<small: network: 16, merge: smaller-side<trinity>>	108494
+rotation merge sort<small: size: 1, merge: naive<auxiliary>>	241215
+rotation merge sort<small: size: 1, merge: naive<bridge>>	238856
+rotation merge sort<small: size: 1, merge: naive<contrev>>	266096
+rotation merge sort<small: size: 1, merge: naive<drill>>	235524
+rotation merge sort<small: size: 1, merge: naive<grail>>	239800
+rotation merge sort<small: size: 1, merge: naive<gries-mills>>	296534
+rotation merge sort<small: size: 1, merge: naive<helix>>	216379
+rotation merge sort<small: size: 1, merge: naive<juggling>>	235166
+rotation merge sort<small: size: 1, merge: naive<piston>>	277860
+rotation merge sort<small: size: 1, merge: naive<reversal>>	157688
+rotation merge sort<small: size: 1, merge: naive<trinity>>	249108
+rotation merge sort<small: size: 1, merge: smaller-side<auxiliary>>	157685
+rotation merge sort<small: size: 1, merge: smaller-side<bridge>>	154918
+rotation merge sort<small: size: 1, merge: smaller-side<contrev>>	127280
+rotation merge sort<small: size: 1, merge: smaller-side<drill>>	127444
+rotation merge sort<small: size: 1, merge: smaller-side<grail>>	124922
+rotation merge sort<small: size: 1, merge: smaller-side<gries-mills>>	121121
+rotation merge sort<small: size: 1, merge: smaller-side<helix>>	135508
+rotation merge sort<small: size: 1, merge: smaller-side<juggling>>	142508
+rotation merge sort<small: size: 1, merge: smaller-side<piston>>	166731
+rotation merge sort<small: size: 1, merge: smaller-side<reversal>>	110680
+rotation merge sort<small: size: 1, merge: smaller-side<trinity>>	149597
+rotation merge sort<small: size: 2, merge: naive<auxiliary>>	235133
+rotation merge sort<small: size: 2, merge: naive<bridge>>	241835
+rotation merge sort<small: size: 2, merge: naive<contrev>>	269744
+rotation merge sort<small: size: 2, merge: naive<drill>>	228212
+rotation merge sort<small: size: 2, merge: naive<grail>>	231154
+rotation merge sort<small: size: 2, merge: naive<gries-mills>>	274024
+rotation merge sort<small: size: 2, merge: naive<helix>>	219034
+rotation merge sort<small: size: 2, merge: naive<juggling>>	234016
+rotation merge sort<small: size: 2, merge: naive<piston>>	274484
+rotation merge sort<small: size: 2, merge: naive<reversal>>	158650
+rotation merge sort<small: size: 2, merge: naive<trinity>>	243834
+rotation merge sort<small: size: 2, merge: smaller-side<auxiliary>>	150207
+rotation merge sort<small: size: 2, merge: smaller-side<bridge>>	140942
+rotation merge sort<small: size: 2, merge: smaller-side<contrev>>	118459
+rotation merge sort<small: size: 2, merge: smaller-side<drill>>	121205
+rotation merge sort<small: size: 2, merge: smaller-side<grail>>	118005
+rotation merge sort<small: size: 2, merge: smaller-side<gries-mills>>	119593
+rotation merge sort<small: size: 2, merge: smaller-side<helix>>	128268
+rotation merge sort<small: size: 2, merge: smaller-side<juggling>>	134153
+rotation merge sort<small: size: 2, merge: smaller-side<piston>>	120997
+rotation merge sort<small: size: 2, merge: smaller-side<reversal>>	106358
+rotation merge sort<small: size: 2, merge: smaller-side<trinity>>	125129
+scratchspace-nightmare<full>	75739
+scratchspace-nightmare<none>	443907
+scratchspace-nightmare<sqrt>	437971
+shaker sort	779328
+shell sort ordered<sequence: ciura>	57878
+shell sort ordered<sequence: classic>	59978
+shell sort ordered<sequence: hibbard>	64997
+shell sort ordered<sequence: knuth>	55999
+shell sort ordered<sequence: optimized-256>	59767
+shell sort ordered<sequence: pratt>	94664
+shell sort ordered<sequence: sedgewick-branching>	59717
+shell sort ordered<sequence: sedgewick>	55334
+shell sort ordered<sequence: tokuda>	59204
+shell sort<sequence: ciura>	58895
+shell sort<sequence: classic>	64978
+shell sort<sequence: hibbard>	65257
+shell sort<sequence: knuth>	57325
+shell sort<sequence: optimized-256>	60216
+shell sort<sequence: pratt>	83965
+shell sort<sequence: sedgewick-branching>	57579
+shell sort<sequence: sedgewick>	51661
+shell sort<sequence: tokuda>	57968
+smaller-side<auxiliary>	16289
+smaller-side<bridge>	10693
+smaller-side<contrev>	10170
+smaller-side<drill>	11548
+smaller-side<grail>	10696
+smaller-side<gries-mills>	9913
+smaller-side<helix>	11552
+smaller-side<juggling>	13382
+smaller-side<piston>	9028
+smaller-side<reversal>	9697
+smaller-side<trinity>	10197
+three-way<first>	8670
+three-way<last>	7125
+three-way<median of 3>	9330
+three-way<median of medians>	9102
+three-way<middle>	9317
+three-way<ninther>	9322
+trinity	1457
+weak heap sort<dir: max forward, storage: bit storage>	79784
+weak heap sort<dir: max forward, storage: byte storage>	79811
+weak heap sort<dir: min reverse, storage: bit storage>	79366
+weak heap sort<dir: min reverse, storage: byte storage>	71377
