@@ -73,12 +73,11 @@ pub struct ArrayBackend {
 
 impl EmitBackend for ArrayBackend {
     fn entry_body(&self, ctx: &EntryCtx) -> Result<String, String> {
-        // A component with no declared category defaults to Sort (the domain's
-        // call — the compiler treats `category` as opaque). Each first-class
-        // KIND has its own per-kind body; the correctness battery lives behind
+        // The compiler treats the category as opaque. Each first-class KIND has
+        // its own per-kind body; the correctness battery lives behind
         // `CorrectnessSuite` (one impl per role-trait-backed kind) so adding a
         // kind is a new body + a `CorrectnessSuite` impl, not a battery `match`.
-        match ctx.category.unwrap_or("Sort") {
+        match ctx.category {
             "Sort" => Ok(self.sort_entry_body(ctx)),
             "QuickSelect" => Ok(self.quick_select_entry_body(ctx)),
             "Rotation" => Ok(self.rotation_entry_body(ctx)),
@@ -610,7 +609,7 @@ mod tests {
     fn sort_body(label: &str) -> String {
         // A slot-less variant: its template equals its label (no holes).
         ArrayBackend::default()
-            .entry_body(&EntryCtx { label, category: Some("Sort"), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: label })
+            .entry_body(&EntryCtx { label, category: "Sort", adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: label })
             .unwrap()
     }
 
@@ -673,7 +672,7 @@ mod tests {
         let b = ArrayBackend::default()
             .entry_body(&EntryCtx {
                 label: "spec::quick sort<part: left-left, pivot: first>",
-                category: Some("Sort"),
+                category: "Sort",
                 adaptive: false,
                 nondeterministic: false,
                 max_input: None,
@@ -696,10 +695,8 @@ mod tests {
     #[test]
     fn catalog_facets_thread_through() {
         let b = ArrayBackend::default()
-            .entry_body(&EntryCtx { label: "x", category: None, adaptive: true, nondeterministic: false, max_input: Some(32), axes: &[], menu: &[], label_template: "x" })
+            .entry_body(&EntryCtx { label: "x", category: "Sort", adaptive: true, nondeterministic: false, max_input: Some(32), axes: &[], menu: &[], label_template: "x" })
             .unwrap();
-        // category=None defaults to Sort in the backend, not the compiler.
-        assert!(b.contains("category: array_vis_bench_core::bench_registry::Category::Sort,"));
         assert!(b.contains("adaptive: true,"));
         assert!(b.contains("max_input_size: Some(32),"));
     }
@@ -710,7 +707,7 @@ mod tests {
         // (a `SORT_TEST_CAPS` static) — emitting only the former would leave a
         // bounded sort uncapped under test.
         let capped = ArrayBackend::default()
-            .entry_body(&EntryCtx { label: "slow", category: Some("Sort"), adaptive: false, nondeterministic: false, max_input: Some(64), axes: &[], menu: &[], label_template: "slow" })
+            .entry_body(&EntryCtx { label: "slow", category: "Sort", adaptive: false, nondeterministic: false, max_input: Some(64), axes: &[], menu: &[], label_template: "slow" })
             .unwrap();
         assert!(capped.contains("max_input_size: Some(64),"));
         assert!(capped
@@ -726,7 +723,7 @@ mod tests {
     #[test]
     fn nondeterministic_flag_registers_the_determinism_opt_out() {
         let nd = ArrayBackend::default()
-            .entry_body(&EntryCtx { label: "random shell sort<uniform>", category: Some("Sort"), adaptive: false, nondeterministic: true, max_input: Some(1000), axes: &[], menu: &[], label_template: "random shell sort<uniform>" })
+            .entry_body(&EntryCtx { label: "random shell sort<uniform>", category: "Sort", adaptive: false, nondeterministic: true, max_input: Some(1000), axes: &[], menu: &[], label_template: "random shell sort<uniform>" })
             .unwrap();
         assert!(nd.contains(
             "#[linkme::distributed_slice(array_vis_bench_core::bench_registry::NONDETERMINISTIC_ALGOS)]"
@@ -743,13 +740,13 @@ mod tests {
         for cat in ["Sort", "QuickSelect", "Rotation", "SmallSort", "Partition", "Merge", "Scratchspace"] {
             assert!(
                 ArrayBackend::default()
-                    .entry_body(&EntryCtx { label: "x", category: Some(cat), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
+                    .entry_body(&EntryCtx { label: "x", category: cat, adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
                     .is_ok(),
                 "category `{cat}` should be wired"
             );
         }
         let err = ArrayBackend::default()
-            .entry_body(&EntryCtx { label: "x", category: Some("Nonsense"), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
+            .entry_body(&EntryCtx { label: "x", category: "Nonsense", adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
             .unwrap_err();
         assert!(err.contains("category `Nonsense`"));
     }
@@ -757,7 +754,7 @@ mod tests {
     #[test]
     fn rotation_body_uses_the_rotation_abi_and_suite() {
         let b = ArrayBackend::default()
-            .entry_body(&EntryCtx { label: "reversal", category: Some("Rotation"), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "reversal" })
+            .entry_body(&EntryCtx { label: "reversal", category: "Rotation", adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "reversal" })
             .unwrap();
         assert!(b.contains("run_rotation::<Ty"));
         assert!(b.contains("run_rotation_with_input(input_name, config, rotate_dyn, logger);"));
@@ -767,7 +764,7 @@ mod tests {
 
     fn quick_select_body(label: &str) -> String {
         ArrayBackend::default()
-            .entry_body(&EntryCtx { label, category: Some("QuickSelect"), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &["recursive".to_string()], label_template: label })
+            .entry_body(&EntryCtx { label, category: "QuickSelect", adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &["recursive".to_string()], label_template: label })
             .unwrap()
     }
 
@@ -808,7 +805,7 @@ mod tests {
             paths: AbiPaths { core: "c".into(), traits: "t".into(), nav: "n".into(), logger: "l".into(), suites: "s".into() },
         };
         let b = backend
-            .entry_body(&EntryCtx { label: "x", category: Some("Sort"), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
+            .entry_body(&EntryCtx { label: "x", category: "Sort", adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
             .unwrap();
         assert!(b.contains("&mut l::NoOpLogger"));
         assert!(b.contains("c::run_sort_with_input"));
