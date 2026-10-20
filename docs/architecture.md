@@ -80,6 +80,7 @@ mod __entry_42 {
         space: <Ty as HasSpace>::SPACE,
         stable: <Ty as HasStability>::STABLE,
         adaptive: false,
+        nondeterministic: false,
         max_input_size: None,
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -92,14 +93,13 @@ mod __entry_42 {
 Per category the backend picks the run driver (`run_sort_with_input`,
 `run_rotation_with_input`, and so on) and the correctness battery. Kinds backed
 by a role trait go through `CorrectnessSuite`, one impl per kind; full sorts
-call `sort_battery` directly because a sort has no role trait, only an inherent
-`sort` method.
+call `sort_battery` directly, passing the entry's cap, because a sort has no
+role trait, only an inherent `sort` method.
 
 ## Startup flow
 
 1. Link time. linkme collects every `#[distributed_slice(ALGORITHMS)]` static
-   into one slice, and likewise the input slices and the opt out slices
-   (`SORT_TEST_CAPS`, `NONDETERMINISTIC_ALGOS`).
+   into one slice, and likewise the input slices.
 2. Constructors. Each entry's `#[ctor]` registers its picker variant with
    `sort_registry_core::register_sort_variant`: a category path plus the
    `(role, value)` facet axes the picker navigates.
@@ -142,10 +142,11 @@ The workspace test suite walks `ALGORITHMS` and, for each entry, spawns the
 test binary again with `AVB_RUN_CHECK_SORT=<name>`. A constructor in the child
 sees the variable, calls the entry's `run_correctness` and exits before the
 test runner starts. A freshly emitted algorithm is picked up with no separate
-runner, and a hang or crash names the variant. Three per entry opt outs
-survive emission: `max_input_size` (a contract cap, from `max_input` in the
-spec), `SORT_TEST_CAPS` (a random input cap for slow sorts) and
-`NONDETERMINISTIC_ALGOS` (skips the trace determinism check).
+runner, and a hang or crash names the variant. Two per entry fields survive
+emission: `max_input_size` (the cap, from `max_input` in the spec, passed on to
+`sort_battery` so a bounded or slow sort skips longer patterns) and
+`nondeterministic` (the trace varies between runs, so a check that compares
+two traces of one entry skips it).
 
 ## Why the benchmark path costs nothing
 
