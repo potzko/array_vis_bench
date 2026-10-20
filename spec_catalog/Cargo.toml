@@ -32,8 +32,8 @@ sort_registry_core = { path = "../sort_registry_core" }
 linkme = "0.3"
 ctor = "0.2"
 
-# ── Building stones: shell family (TYPES ONLY — its self-registration is off) ──
-shell_sort_lib = { path = "../crates/families/shell_sort_lib", default-features = false }
+# Building stones: shell family.
+shell_sort_lib = { path = "../crates/families/shell_sort_lib" }
 
 # ── Building stones: insertion family ─────────────────────────────────────────
 insertion_sort_lib = { path = "../crates/families/insertion_sort_lib" }
