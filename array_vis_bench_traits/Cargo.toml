@@ -8,8 +8,5 @@ description = "Pure-trait crate: PartitionScheme, PivotSelector, Rotation, Small
 name = "array_vis_bench_traits"
 path = "src/lib.rs"
 
-[package.metadata.array_vis_bench]
-spec = "array_vis_bench_traits.spec"
-
 [dependencies]
 sort_logger = { path = "../sort_logger" }

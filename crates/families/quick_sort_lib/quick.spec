@@ -13,8 +13,8 @@
 #
 # ARITY COUPLING (structural, baked into the composite, no query refinement): the
 # single composite `pk_single` pairs a single scheme (`PartScheme`) with a single
-# pivot (`PartPivot`); the dual composite `pk_dual` pairs the dual scheme
-# (`PartSchemeDual`) with a dual selector (`PartPivotDual`). No component mixes
+# pivot (`PartPivot`); the dual composite `pk_dual` bakes the dual partition into
+# its type and takes a dual selector (`PartPivotDual`). No component mixes
 # arities, so an arity-illegal pairing is unrepresentable.
 
 # ════════════════════════════ DUAL PIVOT SELECTORS ═══════════════════════
@@ -35,14 +35,6 @@ component ninther_dual
   label    ninther
   provides PartPivotDual
   uses     quick_sort_lib::NintherDualPivot
-end
-
-# ════════════════════════════ DUAL PARTITION SCHEME ══════════════════════
-component pks_dual
-  type     DualPivotPartition
-  label    dual
-  provides PartSchemeDual
-  uses     quick_sort_lib::DualPivotPartition
 end
 
 # ════════════════════ FIRST-CLASS PARTITION COMPOSITES ════════════════════
