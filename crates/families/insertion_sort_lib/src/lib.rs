@@ -16,6 +16,8 @@ impl<S: InsertionStrategy> InsertionSort<S> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(InsertionSort<S>; S: InsertionStrategy);
+
 // Composable annotations — the spec compiler emits each entry's complexity by
 // inheriting these from the concrete type. Insertion sort's bounds are the same
 // for both strategies (linear and binary differ only in compares, not the

@@ -105,6 +105,8 @@ impl<Order: RecursiveOrder, Finish: CircleFinish> CircleRecursiveOf<Order, Finis
     }
 }
 
+array_vis_bench_traits::direct_sort!(CircleRecursiveOf<Order, Finish>; Order: RecursiveOrder, Finish: CircleFinish);
+
 // ---------------------------------------------------------------------------
 // Bottom-up driver: type-head per (Dir, Finish).
 // ---------------------------------------------------------------------------
@@ -134,6 +136,8 @@ impl<Dir: BottomUpDirection, Finish: CircleFinish> CircleBottomUpOf<Dir, Finish>
         Finish::finish(arr, logger);
     }
 }
+
+array_vis_bench_traits::direct_sort!(CircleBottomUpOf<Dir, Finish>; Dir: BottomUpDirection, Finish: CircleFinish);
 
 // ---------------------------------------------------------------------------
 // Composable annotations (spec compiler reads these). Circle sort is

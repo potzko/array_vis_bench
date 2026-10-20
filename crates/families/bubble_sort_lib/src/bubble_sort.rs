@@ -14,6 +14,8 @@ impl BubbleSort {
     }
 }
 
+array_vis_bench_traits::direct_sort!(BubbleSort);
+
 // Composable annotations (spec compiler inherits these). This implementation has
 // no early-exit flag, so it is Θ(N²) on every input; in-place; stable.
 impl HasTimeBounds for BubbleSort {

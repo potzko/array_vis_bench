@@ -64,3 +64,5 @@ impl CycleSort {
         }
     }
 }
+
+array_vis_bench_traits::direct_sort!(CycleSort);

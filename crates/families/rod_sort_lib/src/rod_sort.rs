@@ -80,6 +80,8 @@ impl<S: BranchingStrategy, M: RodMerge> RodSort<S, M> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(RodSort<S, M>; S: BranchingStrategy, M: RodMerge);
+
 // ── Composable annotations ──────────────────────────────────────────
 //
 // RodSort's complexity is dominated by the merge strategy — the

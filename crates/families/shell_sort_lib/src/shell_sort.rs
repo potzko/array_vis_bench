@@ -33,6 +33,8 @@ impl<Seq: GapSequence> ShellSort<Seq> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(ShellSort<Seq>; Seq: GapSequence);
+
 // ── Composable annotations ──────────────────────────────────────────
 //
 // Shell sort's time complexity is determined entirely by the gap
