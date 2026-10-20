@@ -10,15 +10,15 @@
 //! - `run_with_input` — drives the algorithm with a dyn-logger.
 //! - `run_correctness` — drives the category's correctness battery.
 //!
-//! Input shapes are registered separately, per category, into a
-//! distributed slice (`SORT_INPUTS`, `ROTATION_INPUTS`, etc.). The
-//! algorithm picks its input by name at runtime; the input
-//! implements its category's `*Input` trait to translate a
-//! [`RunConfig`] into the algorithm's natural-shape argument list.
+//! Input shapes are registered separately into one distributed slice,
+//! `INPUTS`, each tagged with the categories it serves. The algorithm
+//! picks its input by name at runtime; the input's `generate` fn
+//! translates a [`RunConfig`] into the array and index the algorithm takes.
 //!
 //! Library consumers usually only read `ALGORITHMS` (and friends). New
 //! algorithms are emitted into it by the spec catalog, and new inputs
-//! register through `register_input!`; neither touches the registry directly.
+//! register through `#[distributed_slice(INPUTS)]`; neither touches the
+//! registry directly.
 
 use linkme::distributed_slice;
 
@@ -84,131 +84,98 @@ impl Default for RunConfig {
     }
 }
 
-// ── Per-category input traits ────────────────────────────────────────────────
+// ── Inputs ───────────────────────────────────────────────────────────────────
 //
-// Each category has one trait that registered input types implement. The
-// trait's only job is `generate` — translate a `RunConfig` into the
-// natural-shape input the algorithm wants. Concrete `*Input` types
-// register themselves into the matching distributed slice via the
-// `register_input!` macros below, so they're selectable by name at
-// runtime without giving up the typed `generate` signature.
+// An input is a first-class registered thing, on par with algorithms. Every
+// shape registers once, tagged with the categories it serves, and returns an
+// array plus one index: a rotation's split, a merge's midpoint, a quick
+// select's target, `0` for a kind that takes none. UI and harness code
+// filters the one slice by category to populate input pickers and to look an
+// input up by name.
 
-/// Generates the input array for a sort benchmark / visualisation.
-pub trait SortInput {
-    /// Build a `Vec<usize>` of length `config.size` following this
-    /// input's shape (random / sorted / reversed / sawtooth / …).
-    fn generate(config: &RunConfig) -> Vec<usize>;
-}
-
-/// Generates the input for a single rotation step.
-pub trait RotationInput {
-    /// Returns (array, split index).
-    fn generate(config: &RunConfig) -> (Vec<usize>, usize);
-}
-
-/// Generates the input for a single merge step — two adjacent runs.
-pub trait MergeInput {
-    /// Returns (array, mid). `arr[..mid]` and `arr[mid..]` are each sorted.
-    fn generate(config: &RunConfig) -> (Vec<usize>, usize);
-}
-
-/// Generates the input for a small-sort variant. Same shape as
-/// [`SortInput`] but typically sized below the algorithm's threshold.
-pub trait SmallSortInput {
-    /// Build a `Vec<usize>` shorter than the small-sort threshold.
-    fn generate(config: &RunConfig) -> Vec<usize>;
-}
-
-/// Generates the input for a quickselect step.
-pub trait QuickSelectInput {
-    /// Returns (array, target index). Quickselect reorders `arr` so
-    /// that the value which would land at `target` after a full sort
-    /// lands there. Different target positions stress different
-    /// recursion paths (mid = balanced, first = always recurse left,
-    /// last = always recurse right).
-    fn generate(config: &RunConfig) -> (Vec<usize>, usize);
-}
-
-// ── Per-category input registries ────────────────────────────────────────────
-//
-// Inputs are first-class registered things, on par with algorithms. Each
-// category gets a distributed slice keyed by the natural-shape signature
-// of its `generate` fn pointer. UI / harness code iterates the slice for
-// the algorithm's category to populate input pickers / lookups by name.
-
-pub struct SortInputEntry {
+pub struct InputEntry {
     pub name: &'static str,
-    pub generate: fn(&RunConfig) -> Vec<usize>,
+    /// Every category this shape is a meaningful input for. A partition or a
+    /// scratchspace operation takes the same array as a sort, so those three
+    /// share the sort shapes.
+    pub categories: &'static [Category],
+    pub generate: fn(&RunConfig) -> (Vec<usize>, usize),
     /// Exactly one entry per category is `primary = true`. Harness code
     /// that needs a sensible default without prompting the user picks
-    /// the primary. Multiple primaries → startup panic; zero primaries
-    /// → also a startup panic.
+    /// the primary. Multiple primaries -> startup panic; zero primaries
+    /// -> also a startup panic.
     pub primary: bool,
 }
 
-pub struct RotationInputEntry {
-    pub name: &'static str,
-    pub generate: fn(&RunConfig) -> (Vec<usize>, usize),
-    pub primary: bool,
-}
+#[distributed_slice] pub static INPUTS: [InputEntry] = [..];
 
-pub struct MergeInputEntry {
-    pub name: &'static str,
-    pub generate: fn(&RunConfig) -> (Vec<usize>, usize),
-    pub primary: bool,
+fn inputs_of(category: Category) -> impl Iterator<Item = &'static InputEntry> {
+    INPUTS.iter().filter(move |e| e.categories.contains(&category))
 }
-
-pub struct SmallSortInputEntry {
-    pub name: &'static str,
-    pub generate: fn(&RunConfig) -> Vec<usize>,
-    pub primary: bool,
-}
-
-pub struct QuickSelectInputEntry {
-    pub name: &'static str,
-    pub generate: fn(&RunConfig) -> (Vec<usize>, usize),
-    pub primary: bool,
-}
-
-#[distributed_slice] pub static SORT_INPUTS:         [SortInputEntry] = [..];
-#[distributed_slice] pub static ROTATION_INPUTS:     [RotationInputEntry] = [..];
-#[distributed_slice] pub static MERGE_INPUTS:        [MergeInputEntry] = [..];
-#[distributed_slice] pub static SMALL_SORT_INPUTS:   [SmallSortInputEntry] = [..];
-#[distributed_slice] pub static QUICK_SELECT_INPUTS: [QuickSelectInputEntry] = [..];
 
 /// All registered input names for `category`, in registry order.
-///
-/// `Partition` shares the `Sort` input registry: a partition algorithm
-/// (with internal pivot selection) takes the same shape of input as a
-/// sort — a single `Vec<usize>` — so any sort input is meaningful for
-/// it. No need for a parallel partition-input registry.
 pub fn list_inputs(category: Category) -> Vec<&'static str> {
-    match category {
-        Category::Sort | Category::Partition | Category::Scratchspace => {
-            SORT_INPUTS.iter().map(|e| e.name).collect()
-        }
-        Category::Rotation => ROTATION_INPUTS.iter().map(|e| e.name).collect(),
-        Category::Merge => MERGE_INPUTS.iter().map(|e| e.name).collect(),
-        Category::SmallSort => SMALL_SORT_INPUTS.iter().map(|e| e.name).collect(),
-        Category::QuickSelect => QUICK_SELECT_INPUTS.iter().map(|e| e.name).collect(),
-    }
+    inputs_of(category).map(|e| e.name).collect()
 }
 
-/// The primary input for `category` — the one harness code uses as a
+/// The primary input for `category`, the one harness code uses as a
 /// sensible default when there's no explicit user pick. Each category
 /// must have exactly one primary; uniqueness is enforced at startup by
 /// [`validate_registries`].
 pub fn primary_input(category: Category) -> &'static str {
-    match category {
-        Category::Sort | Category::Partition | Category::Scratchspace => {
-            SORT_INPUTS.iter().find(|e| e.primary).map(|e| e.name)
-        }
-        Category::Rotation => ROTATION_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
-        Category::Merge => MERGE_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
-        Category::SmallSort => SMALL_SORT_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
-        Category::QuickSelect => QUICK_SELECT_INPUTS.iter().find(|e| e.primary).map(|e| e.name),
-    }
-    .unwrap_or_else(|| panic!("no primary input registered for category {:?}", category))
+    inputs_of(category)
+        .find(|e| e.primary)
+        .map(|e| e.name)
+        .unwrap_or_else(|| panic!("no primary input registered for category {:?}", category))
+}
+
+/// The input called `name` that serves `category`. Panics when there is none.
+pub fn find_input(category: Category, name: &str) -> &'static InputEntry {
+    inputs_of(category)
+        .find(|e| e.name == name)
+        .unwrap_or_else(|| panic!("{} input '{name}' not registered", category.as_str()))
+}
+
+// The problems with one category's inputs: a repeated name, no primary or two,
+// or no inputs at all while `algorithms` entries need one.
+fn category_input_errors(
+    category: Category,
+    inputs: &[&InputEntry],
+    algorithms: usize,
+) -> Vec<String> {
+    let mut seen = std::collections::HashSet::new();
+    let repeated = inputs
+        .iter()
+        .filter(|e| !seen.insert(e.name))
+        .map(|e| format!("duplicate input name '{}' in category {category:?}", e.name));
+    let primaries: Vec<&str> = inputs.iter().filter(|e| e.primary).map(|e| e.name).collect();
+    let primary = match (inputs.len(), primaries.len()) {
+        (0, _) if algorithms > 0 => Some(format!(
+            "no inputs registered for category {category:?} (but {algorithms} algorithm(s) need one)"
+        )),
+        (0, _) | (_, 1) => None,
+        (_, 0) => Some(format!(
+            "no primary input for category {category:?}; mark one entry with `primary: true`"
+        )),
+        _ => Some(format!("multiple primary inputs for category {category:?}: {primaries:?}")),
+    };
+    repeated.chain(primary).collect()
+}
+
+// The input problems of every category that has an input or an algorithm.
+fn input_errors(inputs: &[InputEntry], algorithms: &[Category]) -> Vec<String> {
+    let mut seen = std::collections::HashSet::new();
+    let categories = inputs.iter().flat_map(|e| e.categories).chain(algorithms);
+    let distinct: Vec<Category> = categories.filter(|&&c| seen.insert(c)).copied().collect();
+    distinct
+        .into_iter()
+        .flat_map(|category| {
+            let serving: Vec<&InputEntry> =
+                inputs.iter().filter(|e| e.categories.contains(&category)).collect();
+            let needing = algorithms.iter().filter(|&&c| c == category).count();
+            category_input_errors(category, &serving, needing)
+        })
+        .collect()
 }
 
 /// Validate the registries at startup. Runs once via [`#[ctor::ctor]`]
@@ -257,67 +224,8 @@ pub fn validate_registries() -> Result<(), String> {
     errors.extend(crate::navigation::repeated_name_errors(ALGORITHMS.iter()));
 
     // ── Per-category input checks ────────────────────────────────────
-    fn check_inputs<E, NF, PF>(
-        category: Category,
-        entries: &[E],
-        name_of: NF,
-        primary_of: PF,
-        algorithms_in_category: usize,
-        errors: &mut Vec<String>,
-    ) where
-        NF: Fn(&E) -> &'static str,
-        PF: Fn(&E) -> bool,
-    {
-        let mut seen: std::collections::HashSet<&'static str> = Default::default();
-        for e in entries {
-            if !seen.insert(name_of(e)) {
-                errors.push(format!(
-                    "duplicate input name '{}' in category {:?}",
-                    name_of(e), category
-                ));
-            }
-        }
-        let primaries: Vec<&'static str> =
-            entries.iter().filter(|e| primary_of(e)).map(&name_of).collect();
-        if entries.is_empty() && algorithms_in_category > 0 {
-            errors.push(format!(
-                "no inputs registered for category {:?} (but {} algorithm(s) need one)",
-                category, algorithms_in_category
-            ));
-        } else if !entries.is_empty() {
-            match primaries.len() {
-                0 => errors.push(format!(
-                    "no primary input for category {:?}; mark one entry with `primary: true`",
-                    category
-                )),
-                1 => {}
-                _ => errors.push(format!(
-                    "multiple primary inputs for category {:?}: {:?}",
-                    category, primaries
-                )),
-            }
-        }
-    }
-
-    // Partitions reuse SORT_INPUTS, so they're not validated as a
-    // separate registry. The "sort inputs exist when sort or partition
-    // algorithms exist" check rolls partition count into the sort
-    // category's expected-non-empty assertion.
-    let sort_or_partition_count = ALGORITHMS
-        .iter()
-        .filter(|e| matches!(e.category, Category::Sort | Category::Partition | Category::Scratchspace))
-        .count();
-    let count = |cat: Category| ALGORITHMS.iter().filter(|e| e.category == cat).count();
-    let sort_inputs: &[SortInputEntry] = &SORT_INPUTS;
-    let rotation_inputs: &[RotationInputEntry] = &ROTATION_INPUTS;
-    let merge_inputs: &[MergeInputEntry] = &MERGE_INPUTS;
-    let small_inputs: &[SmallSortInputEntry] = &SMALL_SORT_INPUTS;
-    let qsel_inputs: &[QuickSelectInputEntry] = &QUICK_SELECT_INPUTS;
-    check_inputs(Category::Sort,        sort_inputs,     |e| e.name, |e| e.primary, sort_or_partition_count,       &mut errors);
-    check_inputs(Category::Rotation,    rotation_inputs, |e| e.name, |e| e.primary, count(Category::Rotation),     &mut errors);
-    check_inputs(Category::Merge,       merge_inputs,    |e| e.name, |e| e.primary, count(Category::Merge),        &mut errors);
-    check_inputs(Category::SmallSort,   small_inputs,    |e| e.name, |e| e.primary, count(Category::SmallSort),    &mut errors);
-    check_inputs(Category::QuickSelect, qsel_inputs,     |e| e.name, |e| e.primary, count(Category::QuickSelect),  &mut errors);
+    let algorithms: Vec<Category> = ALGORITHMS.iter().map(|e| e.category).collect();
+    errors.extend(input_errors(&INPUTS, &algorithms));
 
     if errors.is_empty() { Ok(()) } else { Err(errors.join("\n")) }
 }
@@ -348,7 +256,7 @@ fn validate_at_startup() {
 // WriteData fully describes the initial state").
 
 /// Run a sort against a named input. Looks the input up in
-/// [`SORT_INPUTS`], generates the array via the registered `generate`
+/// [`INPUTS`], generates the array via the registered `generate`
 /// fn, emits the initial-state events on `logger`, then calls
 /// `sort_fn(arr, logger)`.
 pub fn run_sort_with_input(
@@ -357,11 +265,7 @@ pub fn run_sort_with_input(
     sort_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
     logger: &mut dyn sort_logger::SortLogger<usize>,
 ) {
-    let input = SORT_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("sort input '{input_name}' not registered"));
-    let mut arr = (input.generate)(config);
+    let (mut arr, _) = (find_input(Category::Sort, input_name).generate)(config);
     emit_init_events(&arr, logger);
     sort_fn(&mut arr, logger);
 }
@@ -374,19 +278,15 @@ pub fn run_rotation_with_input(
     rotate_fn: fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>),
     logger: &mut dyn sort_logger::SortLogger<usize>,
 ) {
-    let input = ROTATION_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("rotation input '{input_name}' not registered"));
-    let (mut arr, split) = (input.generate)(config);
+    let (mut arr, split) = (find_input(Category::Rotation, input_name).generate)(config);
     emit_init_events(&arr, logger);
     rotate_fn(&mut arr, split, logger);
 }
 
 /// Run a partition against a named input. Partitions register with
 /// their pivot selector baked in, so the standalone partition fn
-/// signature matches a sort's — `(&mut [usize], &mut dyn SortLogger)`
-/// — and the input registry is just `SORT_INPUTS`. The (left_end,
+/// signature matches a sort's, `(&mut [usize], &mut dyn SortLogger)`,
+/// and its inputs are the sort inputs. The (left_end,
 /// right_start) tuple a partition returns isn't useful to the
 /// visualiser; tests use the `PartitionFnPtr` variant that keeps the
 /// return value.
@@ -396,11 +296,7 @@ pub fn run_partition_with_input(
     partition_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
     logger: &mut dyn sort_logger::SortLogger<usize>,
 ) {
-    let input = SORT_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("sort input '{input_name}' not registered"));
-    let mut arr = (input.generate)(config);
+    let (mut arr, _) = (find_input(Category::Partition, input_name).generate)(config);
     emit_init_events(&arr, logger);
     partition_fn(&mut arr, logger);
 }
@@ -413,11 +309,7 @@ pub fn run_merge_with_input(
     merge_fn: fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>),
     logger: &mut dyn sort_logger::SortLogger<usize>,
 ) {
-    let input = MERGE_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("merge input '{input_name}' not registered"));
-    let (mut arr, mid) = (input.generate)(config);
+    let (mut arr, mid) = (find_input(Category::Merge, input_name).generate)(config);
     emit_init_events(&arr, logger);
     merge_fn(&mut arr, mid, logger);
 }
@@ -431,28 +323,20 @@ pub fn run_quick_select_with_input(
     quick_select_fn: fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>),
     logger: &mut dyn sort_logger::SortLogger<usize>,
 ) {
-    let input = QUICK_SELECT_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("quick-select input '{input_name}' not registered"));
-    let (mut arr, target) = (input.generate)(config);
+    let (mut arr, target) = (find_input(Category::QuickSelect, input_name).generate)(config);
     emit_init_events(&arr, logger);
     quick_select_fn(&mut arr, target, logger);
 }
 
 /// Run a small-sort against a named input. Mirrors `run_sort_with_input`
-/// but pulls from [`SMALL_SORT_INPUTS`].
+/// but pulls the small-sort inputs.
 pub fn run_small_sort_with_input(
     input_name: &str,
     config: &RunConfig,
     sort_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
     logger: &mut dyn sort_logger::SortLogger<usize>,
 ) {
-    let input = SMALL_SORT_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("small-sort input '{input_name}' not registered"));
-    let mut arr = (input.generate)(config);
+    let (mut arr, _) = (find_input(Category::SmallSort, input_name).generate)(config);
     emit_init_events(&arr, logger);
     sort_fn(&mut arr, logger);
 }
@@ -465,11 +349,7 @@ pub fn run_scratchspace_with_input(
     scratchspace_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
     logger: &mut dyn sort_logger::SortLogger<usize>,
 ) {
-    let input = SORT_INPUTS
-        .iter()
-        .find(|e| e.name == input_name)
-        .unwrap_or_else(|| panic!("sort input '{input_name}' not registered"));
-    let mut arr = (input.generate)(config);
+    let (mut arr, _) = (find_input(Category::Scratchspace, input_name).generate)(config);
     emit_init_events(&arr, logger);
     scratchspace_fn(&mut arr, logger);
 }
@@ -1124,5 +1004,63 @@ pub mod correctness {
         fn sort_battery_without_a_cap_feeds_long_patterns() {
             sort_battery(refuses_over_eight, "unbounded", None);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn input(name: &'static str, categories: &'static [Category], primary: bool) -> InputEntry {
+        InputEntry { name, categories, generate: |c| (vec![0; c.size], 0), primary }
+    }
+
+    #[test]
+    fn a_shared_input_counts_as_primary_in_every_category_it_serves() {
+        let both = &[Category::Sort, Category::Partition];
+        let inputs = [input("a", both, true), input("b", both, false)];
+        assert!(input_errors(&inputs, &[Category::Sort, Category::Partition]).is_empty());
+    }
+
+    #[test]
+    fn each_category_needs_exactly_one_primary() {
+        let inputs = [
+            input("a", &[Category::Sort], true),
+            input("b", &[Category::Sort], true),
+            input("c", &[Category::Merge], false),
+        ];
+        let errors = input_errors(&inputs, &[]);
+        assert_eq!(errors.len(), 2, "got {errors:?}");
+        assert!(errors.iter().any(|e| e.contains("multiple primary inputs for category Sort")));
+        assert!(errors.iter().any(|e| e.contains("no primary input for category Merge")));
+    }
+
+    #[test]
+    fn a_primary_tagged_for_one_category_does_not_cover_another() {
+        let inputs = [input("a", &[Category::Sort], true), input("b", &[Category::Rotation], false)];
+        let errors = input_errors(&inputs, &[]);
+        assert_eq!(errors.len(), 1, "got {errors:?}");
+        assert!(errors[0].contains("no primary input for category Rotation"));
+    }
+
+    #[test]
+    fn a_category_with_algorithms_and_no_inputs_is_reported() {
+        let errors = input_errors(&[], &[Category::Merge, Category::Merge]);
+        assert_eq!(errors.len(), 1, "got {errors:?}");
+        assert!(errors[0].contains("no inputs registered for category Merge (but 2 algorithm(s)"));
+    }
+
+    #[test]
+    fn a_repeated_name_within_a_category_is_reported() {
+        let inputs = [input("a", &[Category::Sort], true), input("a", &[Category::Sort], false)];
+        let errors = input_errors(&inputs, &[]);
+        assert_eq!(errors.len(), 1, "got {errors:?}");
+        assert!(errors[0].contains("duplicate input name 'a' in category Sort"));
+    }
+
+    #[test]
+    fn the_same_name_may_serve_different_categories() {
+        let inputs = [input("a", &[Category::Sort], true), input("a", &[Category::SmallSort], true)];
+        assert!(input_errors(&inputs, &[]).is_empty());
     }
 }
