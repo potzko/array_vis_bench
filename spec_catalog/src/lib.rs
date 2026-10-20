@@ -72,6 +72,7 @@ mod tests {
     use array_vis_bench_core::bench_registry::{
         primary_input, AlgorithmEntry, Category, RunConfig, ALGORITHMS,
     };
+    use array_vis_bench_core::navigation;
     use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
     use array_vis_bench_traits::Complexity;
     use sort_logger::NoOpLogger;
@@ -177,6 +178,34 @@ mod tests {
         }
         let dups: Vec<_> = seen.iter().filter(|(_, &n)| n > 1).collect();
         assert!(dups.is_empty(), "duplicate registrations: {dups:?}");
+    }
+
+    /// The picker view lists every entry once, and every entry carries a label
+    /// template, so no catalog entry falls back to the generic breadcrumb.
+    #[test]
+    fn the_picker_view_lists_every_entry_with_a_template() {
+        let all = navigation::variants();
+        assert_eq!(all.len(), ALGORITHMS.len());
+        assert_eq!(all.len(), COUNT_TOTAL);
+        assert_eq!(all.len(), 1580, "the catalog size pinned by catalog.golden");
+        let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
+        assert_eq!(names.len(), all.len(), "a name is listed twice");
+        let bare: Vec<&str> =
+            ALGORITHMS.iter().filter(|e| e.label_template.is_empty()).map(|e| e.name).collect();
+        assert!(bare.is_empty(), "entries without a label template: {bare:?}");
+    }
+
+    /// `sorted` lists every entry once, and `for_each` visits them in that order.
+    #[test]
+    fn sorted_lists_every_entry_once_and_for_each_follows_it() {
+        use array_vis_bench_core::bench_registry::{for_each, sorted};
+        let order: Vec<&str> = sorted().into_iter().map(|e| e.name).collect();
+        assert_eq!(order.len(), ALGORITHMS.len());
+        let distinct: std::collections::HashSet<&str> = order.iter().copied().collect();
+        assert_eq!(distinct.len(), order.len(), "an entry is listed twice");
+        let mut visited = Vec::new();
+        for_each(|e| visited.push(e.name));
+        assert_eq!(visited, order);
     }
 
     /// The picker's constructor registration and the entry's own fields agree
@@ -453,7 +482,7 @@ mod tests {
         #[test]
         fn registered_under_the_old_shape_algorithm_branch_sequence_facet() {
             // sorts → shell sorts → shell sort → <sequence facet>, no `spec` branch.
-            let variants = sort_registry_core::all_variants();
+            let variants = navigation::variants();
             let v = variants
                 .iter()
                 .find(|v| v.name == "shell sort<sequence: classic>")
@@ -534,7 +563,7 @@ mod tests {
 
         #[test]
         fn registered_under_its_menu_with_the_strategy_facet() {
-            let variants = sort_registry_core::all_variants();
+            let variants = navigation::variants();
             let v = variants
                 .iter()
                 .find(|v| v.name == "insertion sort<strategy: linear>")
@@ -571,7 +600,7 @@ mod tests {
 
         #[test]
         fn registered_as_a_leaf_under_cycle_sorts() {
-            let variants = sort_registry_core::all_variants();
+            let variants = navigation::variants();
             let v = variants.iter().find(|v| v.name == "cycle sort").expect("registered");
             assert_eq!(v.category, vec!["sorts", "cycle sorts"], "got {:?}", v.category);
             assert!(v.axes.is_empty(), "zero-axis: no facets, got {:?}", v.axes);
@@ -637,7 +666,7 @@ mod tests {
 
         #[test]
         fn odd_even_is_registered_with_the_small_sort_facet() {
-            let variants = sort_registry_core::all_variants();
+            let variants = navigation::variants();
             let v = variants
                 .iter()
                 .find(|v| v.name == "odd-even bubble sort<small: insertion: 32>")
@@ -691,7 +720,7 @@ mod tests {
 
         #[test]
         fn registered_with_the_ratio_facet() {
-            let variants = sort_registry_core::all_variants();
+            let variants = navigation::variants();
             let v = variants.iter().find(|v| v.name == "comb sort<1.3>").expect("registered");
             assert_eq!(v.category, vec!["sorts", "comb sorts"], "got {:?}", v.category);
             let axes: Vec<(&str, &str)> =
@@ -720,7 +749,7 @@ mod tests {
         }
         #[test]
         fn registered_under_rod_sorts_with_two_facets() {
-            let v = sort_registry_core::all_variants();
+            let v = navigation::variants();
             let one = v.iter().find(|v| v.name.starts_with("rod sort<")).expect("registered");
             assert_eq!(one.category, vec!["sorts", "rod sorts"], "got {:?}", one.category);
             let roles: Vec<&str> = one.axes.iter().map(|a| a.role.as_str()).collect();
@@ -825,7 +854,7 @@ mod tests {
 
         #[test]
         fn heap_cluster_nests_under_heap_sorts() {
-            let v = sort_registry_core::all_variants();
+            let v = navigation::variants();
             for name_prefix in ["heap sort<", "weak heap sort<", "beap sort<"] {
                 let one = v.iter().find(|v| v.name.starts_with(name_prefix))
                     .unwrap_or_else(|| panic!("no variant `{name_prefix}`"));
@@ -1427,7 +1456,7 @@ mod tests {
 
         #[test]
         fn registered_with_partition_as_a_facet_axis() {
-            let variants = sort_registry_core::all_variants();
+            let variants = navigation::variants();
             let v = variants
                 .iter()
                 .find(|v| v.name == "quick sort<part: left-left<first>, small: size: 1>")
