@@ -69,7 +69,7 @@ macro_rules! register_circle {
 
             #[allow(dead_code)]
             fn run_correctness() {
-                array_vis_bench_core::bench_registry::correctness::sort_battery(sort_fn, SORT_NAME);
+                array_vis_bench_core::bench_registry::correctness::sort_battery(sort_fn, SORT_NAME, None);
                 array_vis_bench_core::bench_registry::correctness::sort_stability_battery(sort_fn, SORT_NAME, false);
             }
 

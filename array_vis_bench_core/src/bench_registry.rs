@@ -534,12 +534,16 @@ pub struct AlgorithmEntry {
     /// such as a randomised gap sequence. A check that compares two traces
     /// of the same entry must skip it.
     pub nondeterministic: bool,
-    /// Optional contract-defined upper bound on input size. `None` =
-    /// unbounded (every general-purpose sort/rotation/partition/merge).
-    /// `Some(n)` means inputs larger than `n` are out-of-contract —
-    /// e.g. a small-sort with `THRESHOLD = 32`. The interactive picker
-    /// uses this to cap the size prompt; `run_with_input` does its own
-    /// defensive clamp so misuse from elsewhere is still safe.
+    /// Upper bound on input size, `None` for unbounded (every general
+    /// purpose sort, rotation, partition and merge). One field holds two
+    /// kinds of limit. For the small sorts it is a contract: the type
+    /// refuses longer input, as with `THRESHOLD = 32`. For beap, the chaos
+    /// sorts and the set quick heap sort it is a time budget: longer input
+    /// is correct but too slow to wait for. Every consumer treats the two
+    /// alike: the picker caps its size prompt, the correctness battery
+    /// skips longer patterns, the benchmark clamps its size and the timing
+    /// table skips the entry. Split the field when a consumer needs to tell
+    /// them apart.
     pub max_input_size: Option<usize>,
     /// Run the algorithm against the named input. The input must be
     /// registered in the input registry matching `category`. The
@@ -717,8 +721,8 @@ pub type SmallSortPropHook = fn(correctness::SmallSortFnPtr, &str, usize);
 /// per category rather than inlined per leaf.
 pub mod correctness {
     use super::{
-        max_n_for_tests, MERGE_PROP_HOOKS, PARTITION_PROP_HOOKS, QUICK_SELECT_PROP_HOOKS,
-        ROTATION_PROP_HOOKS, SMALL_SORT_PROP_HOOKS, SORT_PROP_HOOKS,
+        MERGE_PROP_HOOKS, PARTITION_PROP_HOOKS, QUICK_SELECT_PROP_HOOKS, ROTATION_PROP_HOOKS,
+        SMALL_SORT_PROP_HOOKS, SORT_PROP_HOOKS,
     };
     use crate::array_gen::{get_arr, get_rand_arr, get_rand_arr_in_range, get_reversed_arr};
     use rand::seq::SliceRandom;
@@ -771,12 +775,12 @@ pub mod correctness {
         );
     }
 
-    /// Generic sort correctness battery. Pattern bank is identical to the
-    /// pre-refactor `check_sort` — same inputs, same caps, same assertions
-    /// — just with the sort_fn passed in instead of an entry.
-    pub fn sort_battery(sort_fn: SortFnPtr, name: &str) {
+    /// Generic sort correctness battery. `cap` is the entry's
+    /// `max_input_size`: patterns longer than it are skipped, `None` skips
+    /// nothing.
+    pub fn sort_battery(sort_fn: SortFnPtr, name: &str, cap: Option<usize>) {
         let mut rng = thread_rng();
-        let cap = max_n_for_tests(name).unwrap_or(usize::MAX);
+        let cap = cap.unwrap_or(usize::MAX);
 
         macro_rules! check {
             ($arr:expr, $label:expr) => {{
@@ -1181,6 +1185,29 @@ pub mod correctness {
                 arr.swap(0, k - 1);
             }
             heap_permute(arr, k - 1, f);
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        // Panics on any input longer than 8, so a battery that feeds a pattern
+        // past the cap it was given fails the test.
+        fn refuses_over_eight(arr: &mut [usize], _logger: &mut NoOpLogger) {
+            assert!(arr.len() <= 8, "fed {} elements past the cap", arr.len());
+            arr.sort();
+        }
+
+        #[test]
+        fn sort_battery_skips_patterns_longer_than_the_cap() {
+            sort_battery(refuses_over_eight, "bounded", Some(8));
+        }
+
+        #[test]
+        #[should_panic(expected = "past the cap")]
+        fn sort_battery_without_a_cap_feeds_long_patterns() {
+            sort_battery(refuses_over_eight, "unbounded", None);
         }
     }
 }
