@@ -56,11 +56,11 @@ impl<Seq: GapSequence> HasStability for ShellSort<Seq> {
 #[cfg(test)]
 mod annotation_tests {
     use super::*;
-    use crate::sequences::{Ciura, Classic, Pratt};
+    use crate::sequences::{Ciura, ClassicGaps, Pratt};
 
     #[test]
     fn complexity_pulled_from_sequence() {
-        assert_eq!(<ShellSort<Classic> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
+        assert_eq!(<ShellSort<ClassicGaps> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
         assert_eq!(<ShellSort<Ciura> as HasTimeBounds>::WORST, Complexity::N_LOG_N);
         assert_eq!(<ShellSort<Pratt> as HasTimeBounds>::WORST, Complexity::N_LOG_SQUARED);
     }
@@ -68,12 +68,12 @@ mod annotation_tests {
     #[test]
     fn shell_sort_never_stable() {
         // Stability is a property of the algorithm, not the sequence.
-        assert!(!<ShellSort<Classic> as HasStability>::STABLE);
+        assert!(!<ShellSort<ClassicGaps> as HasStability>::STABLE);
         assert!(!<ShellSort<Pratt> as HasStability>::STABLE);
     }
 
     #[test]
     fn shell_sort_in_place() {
-        assert!(<ShellSort<Classic> as HasSpace>::SPACE.is_in_place());
+        assert!(<ShellSort<ClassicGaps> as HasSpace>::SPACE.is_in_place());
     }
 }

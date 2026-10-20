@@ -26,10 +26,10 @@ end
 
 # Gap sequences (9) — labels match `GapSequence::NAME`.
 component classic
-  type     Classic
+  type     ClassicGaps
   label    classic
   provides GapSequence
-  uses     shell_sort_lib::Classic
+  uses     shell_sort_lib::ClassicGaps
 end
 
 component knuth

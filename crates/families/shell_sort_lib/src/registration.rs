@@ -13,7 +13,7 @@
 // Only the gated registration modules reference the concrete sequences.
 #[cfg(feature = "self_register")]
 use crate::sequences::{
-    Ciura, Classic, GapSequence, Hibbard, Knuth, Optimized256, Pratt, Sedgewick,
+    Ciura, ClassicGaps, GapSequence, Hibbard, Knuth, Optimized256, Pratt, Sedgewick,
     SedgewickBranching, Tokuda,
 };
 
@@ -132,7 +132,7 @@ macro_rules! register_sequence {
     };
 }
 
-register_sequence!(classic,              classic_ordered,              Classic);
+register_sequence!(classic,              classic_ordered,              ClassicGaps);
 register_sequence!(knuth,                knuth_ordered,                Knuth);
 register_sequence!(hibbard,              hibbard_ordered,              Hibbard);
 register_sequence!(sedgewick,            sedgewick_ordered,            Sedgewick);

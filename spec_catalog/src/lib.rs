@@ -289,7 +289,7 @@ mod tests {
     // ───────────────────────────── SHELL ─────────────────────────────────────
     mod shell {
         use super::*;
-        use shell_sort_lib::{Ciura, Classic, ShellSort, ShellSortOrdered};
+        use shell_sort_lib::{Ciura, ClassicGaps, ShellSort, ShellSortOrdered};
 
         fn entries() -> Vec<&'static AlgorithmEntry> {
             ALGORITHMS.iter().filter(|e| e.name.starts_with("shell sort")).collect()
@@ -428,7 +428,7 @@ mod tests {
                     assert_eq!(e.stable, <$ty as HasStability>::STABLE, "stable: {}", $name);
                 }};
             }
-            assert_inherits!("shell sort<sequence: classic>", ShellSort<Classic>);
+            assert_inherits!("shell sort<sequence: classic>", ShellSort<ClassicGaps>);
             assert_inherits!("shell sort ordered<sequence: ciura>", ShellSortOrdered<Ciura>);
         }
 

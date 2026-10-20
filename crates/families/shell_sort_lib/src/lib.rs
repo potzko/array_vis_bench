@@ -12,7 +12,7 @@ pub mod shell_sort_ordered;
 
 pub use registration::{GapSequenceEntry, SortFn, GAP_SEQUENCES};
 pub use sequences::{
-    Ciura, Classic, GapSequence, Hibbard, Knuth, Optimized256, Pratt, Sedgewick,
+    Ciura, ClassicGaps, GapSequence, Hibbard, Knuth, Optimized256, Pratt, Sedgewick,
     SedgewickBranching, Tokuda,
 };
 pub use shell_sort::ShellSort;

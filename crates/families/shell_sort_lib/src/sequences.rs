@@ -14,8 +14,8 @@ pub trait GapSequence {
 // ---------------------------------------------------------------------------
 // Shell's original sequence: n/2, n/4, ..., 1
 // ---------------------------------------------------------------------------
-pub struct Classic;
-impl GapSequence for Classic {
+pub struct ClassicGaps;
+impl GapSequence for ClassicGaps {
     const NAME: &'static str = "classic";
     const BIG_O: &'static str = "O(N^2)";
 
@@ -270,7 +270,7 @@ macro_rules! impl_seq_annotations {
     };
 }
 
-impl_seq_annotations!(Classic,            Complexity::N_SQUARED);
+impl_seq_annotations!(ClassicGaps,        Complexity::N_SQUARED);
 impl_seq_annotations!(Knuth,              Complexity::N_SQRT_N);    // O(N^1.5)
 impl_seq_annotations!(Hibbard,            Complexity::N_SQRT_N);    // O(N^1.5)
 impl_seq_annotations!(Sedgewick,          Complexity::N_SQRT_N);    // O(N^4/3), bucketed up

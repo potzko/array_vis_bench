@@ -2,7 +2,7 @@
 name = "shell_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Shell sort family: GapSequence trait + 9 sequences (Classic, Knuth, Hibbard, Sedgewick, SedgewickBranching, Ciura, Tokuda, Pratt, Optimized256) and the ShellSort / ShellSortOrdered generic algorithms over them, declared in shell.spec and built by shell.avbs."
+description = "Shell sort family: GapSequence trait + 9 sequences (ClassicGaps, Knuth, Hibbard, Sedgewick, SedgewickBranching, Ciura, Tokuda, Pratt, Optimized256) and the ShellSort / ShellSortOrdered generic algorithms over them, declared in shell.spec and built by shell.avbs."
 
 [lib]
 name = "shell_sort_lib"
