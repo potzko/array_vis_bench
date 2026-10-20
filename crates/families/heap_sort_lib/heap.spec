@@ -77,13 +77,13 @@ end
 component heap_dh_iterative
   type     Iterative
   label    iterative
-  provides DeepHeapifyClassic
+  provides DeepHeapifyClassic BeapDeepHeapifyClassic RecDeepHeapify
   uses     heap_sort_lib::deep_heapify::Iterative
 end
 component heap_dh_recursive
   type     Recursive
   label    recursive
-  provides DeepHeapifyClassic
+  provides DeepHeapifyClassic RecDeepHeapify
   uses     heap_sort_lib::deep_heapify::Recursive
 end
 
@@ -176,13 +176,6 @@ component weak_heap_sort
   uses     heap_sort_lib::heap_sort::HeapSort weak_heap_sort_lib::weak_heap_sort::WeakHeapSort
   slot     d HeapDir       heap_dir_min_reverse
   slot     r ReverseStorage weak_byte_storage
-end
-
-component beap_dh_iterative
-  type     Iterative
-  label    iterative
-  provides BeapDeepHeapifyClassic
-  uses     heap_sort_lib::deep_heapify::Iterative
 end
 
 component beap_qdh_sequential

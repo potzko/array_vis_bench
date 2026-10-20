@@ -81,18 +81,6 @@ end
 # leaf deep-heapify. The driver's `dh` slot is the SET-ONLY `SetDeepHeapify` (so only
 # the recursive arm is emitted — the Iterative/Recursive leaves are the classic family,
 # not re-emitted here). finite() emits the 2 bounded variants; without it, nothing.
-component rdh_iter
-  type     Iterative
-  label    iterative
-  provides RecDeepHeapify
-  uses     heap_sort_lib::deep_heapify::Iterative
-end
-component rdh_rec
-  type     Recursive
-  label    recursive
-  provides RecDeepHeapify
-  uses     heap_sort_lib::deep_heapify::Recursive
-end
 component rdh_set
   type     SequentialSet<{qs}>
   label    set<{qs}>

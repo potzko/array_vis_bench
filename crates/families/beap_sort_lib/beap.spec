@@ -27,7 +27,7 @@ component beap_sort_classic
   menu     heap sorts / beap / classic
   uses     beap_sort_lib::spec_drivers::BeapSortClassicOf
   slot     d  HeapDir                heap_dir_min_reverse
-  slot     dh BeapDeepHeapifyClassic beap_dh_iterative
+  slot     dh BeapDeepHeapifyClassic heap_dh_iterative
   max_input 10000
 end
 component beap_sort_quick_build
