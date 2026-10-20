@@ -4,6 +4,5 @@ component pks_lomuto
   type     LeftLeftPartition
   label    left-left
   provides PartScheme
-  uses     partition_lomuto::LeftLeftPartition
 end
 

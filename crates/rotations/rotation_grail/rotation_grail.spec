@@ -4,5 +4,4 @@ component rot_grail
   type     GrailRotation
   label    grail
   provides Rotation
-  uses     rotation_grail::GrailRotation
 end

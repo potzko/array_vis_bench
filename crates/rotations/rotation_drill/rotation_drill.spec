@@ -4,5 +4,4 @@ component rot_drill
   type     DrillRotation
   label    drill
   provides Rotation
-  uses     rotation_drill::DrillRotation
 end
