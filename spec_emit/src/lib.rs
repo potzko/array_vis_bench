@@ -11,7 +11,7 @@
 //!    `<Ty as SortAlgo<…, dyn …>>::sort` — the real `SortAlgo` is the legacy
 //!    indirect path and its `U` is `Sized` (can't take `dyn SortLogger`).
 //!  - **Two adapters.** A `dyn`-logger adapter for the vis path
-//!    (`run_sort_with_input`) and a concrete `&mut NoOpLogger` adapter for the
+//!    (`run_with_input`) and a concrete `&mut NoOpLogger` adapter for the
 //!    correctness batteries (`sort_battery` takes `fn(&mut [usize], &mut NoOpLogger)`).
 //!  - **Real correctness.** `correctness::sort_battery` + `sort_stability_battery`
 //!    (the stub's `assert_sorts` does not exist).
@@ -37,7 +37,7 @@ use spec_core::{EmitBackend, EntryCtx};
 /// The crate paths the emitted code targets. The live ABI is split across three
 /// crates (the prototype collapsed them into one `abi` string):
 ///  - `core`   — `AlgorithmEntry`/`Category`/`RunConfig`/`ALGORITHMS`/
-///    `run_sort_with_input`/`correctness::*` (`array_vis_bench_core::bench_registry`)
+///    `run_with_input`/`correctness::*` (`array_vis_bench_core::bench_registry`)
 ///  - `traits` — `composable::{HasTimeBounds, HasSpace, HasStability}` and
 ///    `Complexity` as the entry field type (`array_vis_bench_traits`)
 ///  - `logger` — `SortLogger` / `NoOpLogger` (`sort_logger`)
@@ -131,11 +131,11 @@ impl ArrayBackend {
     fn sort_noop(arr: &mut [usize], logger: &mut {logger}::NoOpLogger) {{
         <Ty>::sort(arr, logger);
     }}
-    fn sort_dyn(arr: &mut [usize], logger: &mut dyn {logger}::SortLogger<usize>) {{
+    fn sort_dyn(arr: &mut [usize], _index: usize, logger: &mut dyn {logger}::SortLogger<usize>) {{
         <Ty>::sort(arr, logger);
     }}
     fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
-        {core}::run_sort_with_input(input_name, config, sort_dyn, logger);
+        {core}::run_with_input({core}::Category::Sort, input_name, config, sort_dyn, logger);
     }}
     fn run_correct() {{
         {core}::correctness::sort_battery(sort_noop, NAME, {max_input});
@@ -175,7 +175,7 @@ impl ArrayBackend {
     ///  - the dyn adapter is `(arr, target, logger)` calling
     ///    `<Ty as QuickSelect>::select` (empty-guard + target-clamp, matching
     ///    the standalone `quick_select_registry`);
-    ///  - the vis path uses `run_quick_select_with_input`;
+    ///  - the vis path uses `run_with_input`;
     ///  - correctness goes through `CorrectnessSuite::verify` — the per-kind
     ///    battery trait — so no battery call is inlined here.
     /// Entries nest under the `"quick selects"` picker root.
@@ -203,7 +203,7 @@ impl ArrayBackend {
         <Ty as {traits}::QuickSelect>::select(arr, logger, t);
     }}
     fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
-        {core}::run_quick_select_with_input(input_name, config, select_dyn, logger);
+        {core}::run_with_input({core}::Category::QuickSelect, input_name, config, select_dyn, logger);
     }}
     fn run_correct() {{
         <{suites}::SelectSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
@@ -252,11 +252,11 @@ impl ArrayBackend {
         let template_lit = format!("{:?}", ctx.label_template);
         format!(
 "    const NAME: &str = {label:?};
-    fn run_dyn(arr: &mut [usize], logger: &mut dyn {logger}::SortLogger<usize>) {{
+    fn run_dyn(arr: &mut [usize], _index: usize, logger: &mut dyn {logger}::SortLogger<usize>) {{
         <Ty as {traits}::role::ScratchspaceRun>::run::<usize, dyn {logger}::SortLogger<usize>>(arr, logger);
     }}
     fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
-        {core}::run_scratchspace_with_input(input_name, config, run_dyn, logger);
+        {core}::run_with_input({core}::Category::Scratchspace, input_name, config, run_dyn, logger);
     }}
     fn run_correct() {{
         <{suites}::ScratchspaceSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
@@ -317,7 +317,7 @@ impl ArrayBackend {
         merge_sort_lib::rotation_merge::run_rotation_merge::<Ty, usize, {logger}::NoOpLogger>(arr, mid, logger);
     }}
     fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
-        {core}::run_merge_with_input(input_name, config, merge_dyn, logger);
+        {core}::run_with_input({core}::Category::Merge, input_name, config, merge_dyn, logger);
     }}
     fn run_correct() {{
         {core}::correctness::merge_battery(merge_noop, NAME);
@@ -348,9 +348,9 @@ impl ArrayBackend {
     }
 
     /// The `Category::SmallSort` registration body. ABI is the [`SmallSort`]
-    /// role trait: `sort_dyn(arr, logger)` calls `<Ty as SmallSort>::sort`
+    /// role trait: `sort_dyn(arr, index, logger)` calls `<Ty as SmallSort>::sort`
     /// (the mutation bool is discarded), the vis path uses
-    /// `run_small_sort_with_input`, and correctness goes through `SmallSortSuite`
+    /// `run_with_input`, and correctness goes through `SmallSortSuite`
     /// (which feeds the leaf's `THRESHOLD` to the battery). A small sort is only
     /// correct up to its threshold, so `max_input` (set per leaf to the
     /// threshold) caps the interactive picker. Entries nest
@@ -373,11 +373,11 @@ impl ArrayBackend {
         let template_lit = format!("{:?}", ctx.label_template);
         format!(
 "    const NAME: &str = {label:?};
-    fn sort_dyn(arr: &mut [usize], logger: &mut dyn {logger}::SortLogger<usize>) {{
+    fn sort_dyn(arr: &mut [usize], _index: usize, logger: &mut dyn {logger}::SortLogger<usize>) {{
         let _ = <Ty as {traits}::SmallSort>::sort(arr, logger);
     }}
     fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
-        {core}::run_small_sort_with_input(input_name, config, sort_dyn, logger);
+        {core}::run_with_input({core}::Category::SmallSort, input_name, config, sort_dyn, logger);
     }}
     fn run_correct() {{
         <{suites}::SmallSortSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
@@ -434,11 +434,11 @@ impl ArrayBackend {
         let template_lit = format!("{:?}", ctx.label_template);
         format!(
 "    const NAME: &str = {label:?};
-    fn partition_dyn(arr: &mut [usize], logger: &mut dyn {logger}::SortLogger<usize>) {{
+    fn partition_dyn(arr: &mut [usize], _index: usize, logger: &mut dyn {logger}::SortLogger<usize>) {{
         let _ = {traits}::role::partition::run_partition_bounds::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, logger);
     }}
     fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
-        {core}::run_partition_with_input(input_name, config, partition_dyn, logger);
+        {core}::run_with_input({core}::Category::Partition, input_name, config, partition_dyn, logger);
     }}
     fn run_correct() {{
         <{suites}::PartitionSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
@@ -471,7 +471,7 @@ impl ArrayBackend {
     /// The `Category::Rotation` registration body. ABI is the [`Rotation`]
     /// role trait: the adapter is `(arr, split, logger)` calling the shared
     /// `run_rotation` one-shot (which allocates/frees the rotation's scratch),
-    /// the vis path uses `run_rotation_with_input`, and correctness goes
+    /// the vis path uses `run_with_input`, and correctness goes
     /// through `RotationSuite` via [`CorrectnessSuite`]. Entries nest under the
     /// `"rotations"` picker root.
     fn rotation_entry_body(&self, ctx: &EntryCtx) -> String {
@@ -496,7 +496,7 @@ impl ArrayBackend {
         {traits}::role::rotation::run_rotation::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, split, logger);
     }}
     fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
-        {core}::run_rotation_with_input(input_name, config, rotate_dyn, logger);
+        {core}::run_with_input({core}::Category::Rotation, input_name, config, rotate_dyn, logger);
     }}
     fn run_correct() {{
         <{suites}::RotationSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
@@ -551,13 +551,13 @@ mod tests {
     fn emits_two_distinct_adapters() {
         let b = sort_body("x");
         assert!(b.contains("fn sort_noop(arr: &mut [usize], logger: &mut sort_logger::NoOpLogger)"));
-        assert!(b.contains("fn sort_dyn(arr: &mut [usize], logger: &mut dyn sort_logger::SortLogger<usize>)"));
+        assert!(b.contains("fn sort_dyn(arr: &mut [usize], _index: usize, logger: &mut dyn sort_logger::SortLogger<usize>)"));
     }
 
     #[test]
-    fn vis_path_uses_run_sort_with_input_with_the_dyn_adapter() {
+    fn vis_path_runs_the_dyn_adapter_under_the_sort_category() {
         let b = sort_body("x");
-        assert!(b.contains("array_vis_bench_core::bench_registry::run_sort_with_input(input_name, config, sort_dyn, logger);"));
+        assert!(b.contains("array_vis_bench_core::bench_registry::run_with_input(array_vis_bench_core::bench_registry::Category::Sort, input_name, config, sort_dyn, logger);"));
     }
 
     #[test]
@@ -728,7 +728,7 @@ mod tests {
             .entry_body(&EntryCtx { label: "reversal", category: "Rotation", adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "reversal" })
             .unwrap();
         assert!(b.contains("run_rotation::<Ty"));
-        assert!(b.contains("run_rotation_with_input(input_name, config, rotate_dyn, logger);"));
+        assert!(b.contains("run_with_input(array_vis_bench_core::bench_registry::Category::Rotation, input_name, config, rotate_dyn, logger);"));
         assert!(b.contains("RotationSuite<Ty>"));
         assert!(b.contains("category: array_vis_bench_core::bench_registry::Category::Rotation,"));
     }
@@ -746,7 +746,7 @@ mod tests {
         assert!(b.contains("<Ty as array_vis_bench_traits::QuickSelect>::select(arr, logger, t);"));
         assert!(b.contains("let t = target.min(arr.len() - 1);"));
         // … the vis path uses the quick-select runner …
-        assert!(b.contains("array_vis_bench_core::bench_registry::run_quick_select_with_input(input_name, config, select_dyn, logger);"));
+        assert!(b.contains("array_vis_bench_core::bench_registry::run_with_input(array_vis_bench_core::bench_registry::Category::QuickSelect, input_name, config, select_dyn, logger);"));
         // … and never the sort inherent method or sort battery.
         assert!(!b.contains("<Ty>::sort"));
         assert!(!b.contains("sort_battery"));
@@ -779,7 +779,7 @@ mod tests {
             .entry_body(&EntryCtx { label: "x", category: "Sort", adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
             .unwrap();
         assert!(b.contains("&mut l::NoOpLogger"));
-        assert!(b.contains("c::run_sort_with_input"));
+        assert!(b.contains("c::run_with_input(c::Category::Sort,"));
         assert!(b.contains("<Ty as t::composable::HasTimeBounds>::WORST"));
     }
 }

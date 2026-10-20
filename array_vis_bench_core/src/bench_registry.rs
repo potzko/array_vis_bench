@@ -247,111 +247,32 @@ fn validate_at_startup() {
     }
 }
 
-// ── Shared per-category dispatchers ──────────────────────────────────────────
+// ── The run driver ───────────────────────────────────────────────────────────
 //
-// The macro-generated `run_with_input` in every algorithm entry is a
-// one-liner around the matching helper below. Putting the
-// init-event-emitting code in a single place keeps the generated code
-// small and centralises the visualiser contract ("CreateArr + N
+// Every kind runs on an array plus one index, so one driver serves them all.
+// The `run_with_input` in every algorithm entry is a one-liner around it.
+// Putting the init-event-emitting code in a single place keeps the generated
+// code small and centralises the visualiser contract ("CreateArr + N
 // WriteData fully describes the initial state").
 
-/// Run a sort against a named input. Looks the input up in
-/// [`INPUTS`], generates the array via the registered `generate`
-/// fn, emits the initial-state events on `logger`, then calls
-/// `sort_fn(arr, logger)`.
-pub fn run_sort_with_input(
-    input_name: &str,
-    config: &RunConfig,
-    sort_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
-    logger: &mut dyn sort_logger::SortLogger<usize>,
-) {
-    let (mut arr, _) = (find_input(Category::Sort, input_name).generate)(config);
-    emit_init_events(&arr, logger);
-    sort_fn(&mut arr, logger);
-}
+/// The one shape an entry's adapter has: the array, the input's index and a dyn
+/// logger. A sort ignores the index, a rotation takes its split, a merge its
+/// midpoint and a quick select its target.
+pub type RunFn = fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>);
 
-/// Run a rotation against a named input. Returns the (arr, split) tuple
-/// from the input registry; rotates with `rotate_fn(arr, split, logger)`.
-pub fn run_rotation_with_input(
+/// Run an algorithm of `category` against a named input. Looks the input up in
+/// [`INPUTS`], generates the array and index via the registered `generate` fn,
+/// emits the initial-state events on `logger`, then calls `f(arr, index, logger)`.
+pub fn run_with_input(
+    category: Category,
     input_name: &str,
     config: &RunConfig,
-    rotate_fn: fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>),
+    f: RunFn,
     logger: &mut dyn sort_logger::SortLogger<usize>,
 ) {
-    let (mut arr, split) = (find_input(Category::Rotation, input_name).generate)(config);
+    let (mut arr, index) = (find_input(category, input_name).generate)(config);
     emit_init_events(&arr, logger);
-    rotate_fn(&mut arr, split, logger);
-}
-
-/// Run a partition against a named input. Partitions register with
-/// their pivot selector baked in, so the standalone partition fn
-/// signature matches a sort's, `(&mut [usize], &mut dyn SortLogger)`,
-/// and its inputs are the sort inputs. The (left_end,
-/// right_start) tuple a partition returns isn't useful to the
-/// visualiser; tests use the `PartitionFnPtr` variant that keeps the
-/// return value.
-pub fn run_partition_with_input(
-    input_name: &str,
-    config: &RunConfig,
-    partition_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
-    logger: &mut dyn sort_logger::SortLogger<usize>,
-) {
-    let (mut arr, _) = (find_input(Category::Partition, input_name).generate)(config);
-    emit_init_events(&arr, logger);
-    partition_fn(&mut arr, logger);
-}
-
-/// Run a merge against a named input. The registry guarantees both
-/// halves of `arr` are individually sorted before merge.
-pub fn run_merge_with_input(
-    input_name: &str,
-    config: &RunConfig,
-    merge_fn: fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>),
-    logger: &mut dyn sort_logger::SortLogger<usize>,
-) {
-    let (mut arr, mid) = (find_input(Category::Merge, input_name).generate)(config);
-    emit_init_events(&arr, logger);
-    merge_fn(&mut arr, mid, logger);
-}
-
-/// Run a quick-select against a named input. The input supplies both
-/// the array and the target index; the algorithm reorders the array so
-/// `arr[target]` ends up as the value it would have after a full sort.
-pub fn run_quick_select_with_input(
-    input_name: &str,
-    config: &RunConfig,
-    quick_select_fn: fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>),
-    logger: &mut dyn sort_logger::SortLogger<usize>,
-) {
-    let (mut arr, target) = (find_input(Category::QuickSelect, input_name).generate)(config);
-    emit_init_events(&arr, logger);
-    quick_select_fn(&mut arr, target, logger);
-}
-
-/// Run a small-sort against a named input. Mirrors `run_sort_with_input`
-/// but pulls the small-sort inputs.
-pub fn run_small_sort_with_input(
-    input_name: &str,
-    config: &RunConfig,
-    sort_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
-    logger: &mut dyn sort_logger::SortLogger<usize>,
-) {
-    let (mut arr, _) = (find_input(Category::SmallSort, input_name).generate)(config);
-    emit_init_events(&arr, logger);
-    sort_fn(&mut arr, logger);
-}
-
-/// Run an in-place scratchspace block-roll against a named input. Shares the
-/// `Sort` input registry — the op takes a single `Vec<usize>`, like a partition.
-pub fn run_scratchspace_with_input(
-    input_name: &str,
-    config: &RunConfig,
-    scratchspace_fn: fn(&mut [usize], &mut dyn sort_logger::SortLogger<usize>),
-    logger: &mut dyn sort_logger::SortLogger<usize>,
-) {
-    let (mut arr, _) = (find_input(Category::Scratchspace, input_name).generate)(config);
-    emit_init_events(&arr, logger);
-    scratchspace_fn(&mut arr, logger);
+    f(&mut arr, index, logger);
 }
 
 /// Emit the visualiser's "this array exists with these initial values"
@@ -1056,6 +977,28 @@ mod tests {
         let errors = input_errors(&inputs, &[]);
         assert_eq!(errors.len(), 1, "got {errors:?}");
         assert!(errors[0].contains("duplicate input name 'a' in category Sort"));
+    }
+
+    #[test]
+    fn run_with_input_hands_the_adapter_the_inputs_array_and_index() {
+        fn expect_the_mid_split(arr: &mut [usize], split: usize, _logger: &mut dyn sort_logger::SortLogger<usize>) {
+            assert_eq!(split, 4);
+            assert_eq!(arr, &[0, 1, 2, 3, 4, 5, 6, 7]);
+        }
+        let mut logger = sort_logger::VisualizerLogger::<usize> {
+            type_ghost: std::marker::PhantomData,
+            log: Vec::new(),
+        };
+        let config = RunConfig { size: 8, seed: 0 };
+        run_with_input(Category::Rotation, "mid-split", &config, expect_the_mid_split, &mut logger);
+        assert!(!logger.log.is_empty(), "the initial array is logged before the run");
+    }
+
+    #[test]
+    #[should_panic(expected = "rotation input 'nope' not registered")]
+    fn run_with_input_names_the_category_of_a_missing_input() {
+        fn never(_: &mut [usize], _: usize, _: &mut dyn sort_logger::SortLogger<usize>) {}
+        run_with_input(Category::Rotation, "nope", &RunConfig::default(), never, &mut sort_logger::NoOpLogger);
     }
 
     #[test]
