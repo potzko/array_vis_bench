@@ -4,13 +4,10 @@
 //! It anchors `spec_catalog`, so the registry the shared CLI folds over holds
 //! exactly the spec emitted entries, and calls `array_vis_bench_cli::run`. The
 //! aux dev tools in `src/bin/` build alongside it.
-//!
-//! `shell_sort_lib` arrives through `spec_catalog` with its self registration
-//! feature off, so the shell sorts are the catalog's own emitted entries.
 
-// Anchor the unified spec catalog so the linker keeps it: its entries
-// self-register (linkme + #[ctor]) into ALGORITHMS and the picker tree. One
-// crate now emits every family across all kinds (sorts + quick-selects).
+// Anchor the unified spec catalog so the linker keeps it: its entries join
+// ALGORITHMS through linkme. One crate emits every family across all kinds
+// (sorts + quick-selects).
 use spec_catalog as _;
 
 fn main() {

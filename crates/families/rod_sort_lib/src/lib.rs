@@ -1,32 +1,14 @@
 //! Rod sort family — `RodSort<S, M>` plus the `BranchingStrategy` trait
 //! and its six concrete strategies, and two `RodMerge` variants
 //! (insertion / aux). The catalog emits every (strategy x merge) pair from
-//! `rod.spec` and `rod.avbs`; the older in-crate registration in
-//! [`branching`] sits behind the `self_register` feature, off by default.
+//! `rod.spec` and `rod.avbs`.
 
-pub mod branching;
 pub mod merge;
 pub mod rod_sort;
 pub mod shell_branching;
 
-pub use branching::{RodEntry, ROD_STRATEGIES};
 pub use merge::{AuxMerge, InsertionMerge, RodMerge};
 pub use rod_sort::RodSort;
 pub use shell_branching::{
     BranchingStrategy, Classic, Fibonacci, LogParity, Optimised, Parity3, RootParity,
 };
-
-/// Iterates the ROD_STRATEGIES distributed slice at startup and
-/// registers every variant into `sort_registry_core`'s menu tree.
-///
-/// Gated OFF by default: the spec compiler (`spec_catalog`) registers the
-/// canonical rod entries (`RodSort<{strategy}, {merge}>`), so running this ctor
-/// too would double-list rod in the picker. See `[features]` in Cargo.toml.
-#[cfg(feature = "self_register")]
-#[ctor::ctor]
-fn register_rod_sorts() {
-    for entry in ROD_STRATEGIES {
-        let full: Vec<&str> = std::iter::once("sorts").chain(entry.path.iter().copied()).collect();
-        sort_registry_core::register_sort_path(entry.name, entry.big_o, false, &full);
-    }
-}

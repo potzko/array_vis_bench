@@ -1,16 +1,13 @@
-//! Shell sort family — `ShellSort` + `ShellSortOrdered` generic over a
-//! [`sequences::GapSequence`], with nine concrete sequences registered.
+//! Shell sort family: `ShellSort` + `ShellSortOrdered` generic over a
+//! [`sequences::GapSequence`], with nine concrete sequences.
 //!
 //! The catalog emits every (algorithm x sequence) pair from `shell.spec` and
-//! `shell.avbs`. The `self_register` feature, off by default and enabled
-//! nowhere, keeps the older in-crate registration in [`registration`].
+//! `shell.avbs`.
 
-pub mod registration;
 pub mod sequences;
 pub mod shell_sort;
 pub mod shell_sort_ordered;
 
-pub use registration::{GapSequenceEntry, SortFn, GAP_SEQUENCES};
 pub use sequences::{
     Ciura, Classic, GapSequence, Hibbard, Knuth, Optimized256, Pratt, Sedgewick,
     SedgewickBranching, Tokuda,

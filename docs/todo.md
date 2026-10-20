@@ -63,8 +63,6 @@ category drivers plus the per category input slices fill that role, and the
    port the remaining users or add a catalog facet that switches the
    adapters.
 8. Legacy residue to delete once nothing depends on it:
-   - the `self_register` features in the shell, circle, comb and rod
-     crates, off and enabled nowhere;
    - `crates/components/comb_ratio_components` and
      `crates/components/heap_internals_components`, metadata only crates
      for the retired generator with no consumer left;
@@ -96,8 +94,10 @@ afternoon each and remove concepts rather than move them.
 3. Category from the wrapper. Done: the query wrapper is the one source of an
    entry's kind and a `category` line in a fragment is a parse error.
    See [implementation_plans/category_from_the_wrapper.md](implementation_plans/category_from_the_wrapper.md).
-4. The entry owns its navigation. Every entry registers twice, once in
-   `ALGORITHMS` and once through a constructor into `sort_registry_core`.
+4. The entry owns its navigation. Done: `AlgorithmEntry` carries `menu`,
+   `axes` and `label_template`, the picker view is built from `ALGORITHMS`,
+   and the second registry crate and the four self registration features
+   are gone.
    See [implementation_plans/entry_owned_navigation.md](implementation_plans/entry_owned_navigation.md).
 5. One timing consumer. `--timing`, `speed_test` and the `Benchmark` and
    `Timing` mains collapse to one `benchmark` consumer.
@@ -149,8 +149,7 @@ slot, and the beap ninther dual selector has its own label.
   and rustc is a backstop, never the first line of defence.
 - Recursion is bounded at solve time, declaratively. Runtime loop detection,
   per component recursion budgets and visit counters were rejected.
-- One registration path. Two emitters for the same name is a startup panic,
-  and the legacy self registration features stay off.
+- One registration path. Two emitters for the same name is a startup panic.
 - Curate in the query. When one composition misbehaves, subtract it; do not
   patch the driver.
 - A Rust type is one component. Its roles are the populations it joins.

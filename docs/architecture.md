@@ -23,7 +23,7 @@ crates/{pivots,partitions,rotations,small_sorts,components}
     |                                             |
 crates/families (drivers, composers)              |
     |                                             |
-    +----> spec_catalog <---- array_vis_bench_core (the ABI) <---- sort_registry_core
+    +----> spec_catalog <---- array_vis_bench_core (the ABI)
                |  build.rs uses spec_core + spec_emit
                v
          array_vis_bench (src/main.rs)  ---- array_vis_bench_cli ---- sort_vis
@@ -83,13 +83,21 @@ mod __entry_42 {
         adaptive: false,
         nondeterministic: false,
         max_input_size: None,
+        menu: &["sorts", "quick sorts"],
+        axes: &[("PartitionKind", "", "part"), ("PartScheme", "left-left", "part/scheme") /* ... */],
+        label_template: "quick sort<part: {PartitionKind}, small: {SmallSort}>",
         run_with_input: run_default,
         run_correctness: run_correct,
     };
-    #[ctor::ctor]
-    fn register() { register_sort_variant(/* name, category path, facet axes */) }
 }
 ```
+
+The entry also carries what the picker needs: `menu` is the category path from
+the root, `axes` the filled slots as `(role, value, path)` triples, and
+`label_template` the label with one `{Role}` hole per axis.
+`array_vis_bench_core::navigation` builds the picker's view from `ALGORITHMS`
+on demand, and `bench_registry::sorted` orders the entries through the same
+tree.
 
 Per category the backend picks the run driver (`run_sort_with_input`,
 `run_rotation_with_input`, and so on) and the correctness battery. Kinds backed
@@ -100,13 +108,11 @@ role trait, only an inherent `sort` method.
 ## Startup flow
 
 1. Link time. linkme collects every `#[distributed_slice(ALGORITHMS)]` static
-   into one slice, and likewise the input slices.
-2. Constructors. Each entry's `#[ctor]` registers its picker variant with
-   `sort_registry_core::register_sort_variant`: a category path plus the
-   `(role, value)` facet axes the picker navigates.
-3. Validation. `bench_registry::validate_registries` runs before `main` and
-   panics with a precise message on a duplicate name, a duplicate picker path,
-   or a category without exactly one primary input.
+   into one slice, and likewise the input slices. An entry already carries its
+   picker menu, axes and label template, so nothing else registers it.
+2. Validation. `bench_registry::validate_registries` runs from a constructor
+   before `main` and panics with a precise message on a duplicate name, a name
+   at two picker paths, or a category without exactly one primary input.
 
 ## The consumers
 
@@ -168,8 +174,7 @@ two traces of one entry skips it).
 ## Invariants
 
 - One registration path. The spec catalog is the only emitter into
-  `ALGORITHMS`. The legacy self registration features in a few family crates
-  are off and enabled nowhere; validation would panic on the duplicate names.
+  `ALGORITHMS`, and an entry is the only record of its own picker placement.
 - Inherit complexity, declare the rest. `worst`, `best`, `average`, `space`
   and `stable` come from the composable traits on the concrete type.
   `category` comes from the query wrapper; `adaptive`, `max_input`, `menu` and

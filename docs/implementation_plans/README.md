@@ -7,7 +7,7 @@ priority order.
 - `derive_uses_from_the_owning_crate.md`: imports derived from the declaring crate after the head collisions are renamed; not started.
 - `drop_slot_defaults_and_project.md`: three unused grammar features removed, done, kept as the record.
 - `entry_owned_flags.md`: the cap and nondeterminism lists became entry fields, done, kept as the record.
-- `entry_owned_navigation.md`: the picker data becomes entry fields and the second registry goes; not started.
+- `entry_owned_navigation.md`: the picker data became entry fields and the second registry went, done, kept as the record.
 - `enumeration_strategies.md`: `finite` shipped; `affine`, `sample`, `spread` and the rest fill sugar are open.
 - `full_merge_partition_roles.md`: the unification of the partition roles, done, kept as the record.
 - `kind_trait.md`: one input shape, one driver and one emit template over a kinds table; not started.

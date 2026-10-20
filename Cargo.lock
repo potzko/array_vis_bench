@@ -19,7 +19,6 @@ dependencies = [
  "small_sort_insertion",
  "small_sort_insertion_strategy",
  "sort_logger",
- "sort_registry_core",
  "sort_vis",
  "spec_catalog",
 ]
@@ -31,7 +30,6 @@ dependencies = [
  "array_vis_bench_core",
  "array_vis_bench_traits",
  "sort_logger",
- "sort_registry_core",
  "sort_vis",
 ]
 
@@ -44,7 +42,6 @@ dependencies = [
  "linkme",
  "rand",
  "sort_logger",
- "sort_registry_core",
  "sort_vis",
 ]
 
@@ -139,14 +136,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "circle_sort_lib"
 version = "0.1.0"
 dependencies = [
- "array_vis_bench_core",
  "array_vis_bench_traits",
- "const_format",
- "ctor",
- "linkme",
  "small_sort_insertion_strategy",
  "sort_logger",
- "sort_registry_core",
 ]
 
 [[package]]
@@ -157,33 +149,8 @@ version = "0.1.0"
 name = "comb_sort_lib"
 version = "0.1.0"
 dependencies = [
- "array_vis_bench_core",
  "array_vis_bench_traits",
- "const_format",
- "ctor",
- "linkme",
  "sort_logger",
- "sort_registry_core",
-]
-
-[[package]]
-name = "const_format"
-version = "0.2.35"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7faa7469a93a566e9ccc1c73fe783b4a65c274c5ace346038dca9c39fe0030ad"
-dependencies = [
- "const_format_proc_macros",
-]
-
-[[package]]
-name = "const_format_proc_macros"
-version = "0.2.34"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d57c2eccfb16dbac1f4e61e206105db5820c9d26c3c472bc17c774259ef7744"
-dependencies = [
- "proc-macro2",
- "quote",
- "unicode-xid",
 ]
 
 [[package]]
@@ -303,12 +270,6 @@ name = "itoa"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1a46d1a171d865aa5f83f92695765caa047a9b4cbae2cbf37dbd613a793fd4c"
-
-[[package]]
-name = "lazy_static"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
@@ -575,13 +536,8 @@ dependencies = [
 name = "rod_sort_lib"
 version = "0.1.0"
 dependencies = [
- "array_vis_bench_core",
  "array_vis_bench_traits",
- "const_format",
- "ctor",
- "linkme",
  "sort_logger",
- "sort_registry_core",
 ]
 
 [[package]]
@@ -754,13 +710,8 @@ dependencies = [
 name = "shell_sort_lib"
 version = "0.1.0"
 dependencies = [
- "array_vis_bench_core",
  "array_vis_bench_traits",
- "const_format",
- "ctor",
- "linkme",
  "sort_logger",
- "sort_registry_core",
 ]
 
 [[package]]
@@ -821,13 +772,6 @@ name = "sort_logger"
 version = "0.1.0"
 
 [[package]]
-name = "sort_registry_core"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
-]
-
-[[package]]
 name = "sort_vis"
 version = "0.1.0"
 dependencies = [
@@ -845,7 +789,6 @@ dependencies = [
  "cargo_metadata",
  "circle_sort_lib",
  "comb_sort_lib",
- "ctor",
  "cycle_sort_lib",
  "fun_sorts_lib",
  "gap_distribution_lib",
@@ -888,7 +831,6 @@ dependencies = [
  "small_sort_insertion_strategy",
  "small_sort_network_16",
  "sort_logger",
- "sort_registry_core",
  "spec_core",
  "spec_emit",
  "weak_heap_sort_lib",
@@ -957,12 +899,6 @@ name = "unicode-ident"
 version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
-
-[[package]]
-name = "unicode-xid"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
 
 [[package]]
 name = "version_check"

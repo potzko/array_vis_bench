@@ -10,6 +10,9 @@
 pub mod array_gen;
 pub mod bench_registry;
 pub mod inputs;
+/// The picker's view of `ALGORITHMS`: the variant list the CLI walks and the
+/// tree `bench_registry::sorted` orders by.
+pub mod navigation;
 /// The `Main` consumer abstraction (visualise / correctness / benchmark over a
 /// set of registered algorithms) — the Rust counterpart of AVBS `consumers`.
 pub mod mains;

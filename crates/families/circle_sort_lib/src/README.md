@@ -10,4 +10,3 @@ Source of `circle_sort_lib`. The crate README one level up says what it is for.
 - `finishing.rs`: Circle sort finishing strategies.
 - `lib.rs`: Circle sort family, recursive + bottom-up, with finishing strategies.
 - `orderings.rs`: Recursive circle sort orderings.
-- `sequences.rs`: Circle sort variant registration.
