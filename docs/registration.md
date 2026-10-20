@@ -43,9 +43,8 @@ end
 | `label <template>` | the human name, same templating; becomes `AlgorithmEntry.name` and the picker label |
 | `provides <Role> ...` | the roles slots match against; a component may provide several |
 | `uses <path> ...` | module paths spliced into the emitted `use` block |
-| `slot <name> <Role> [<default>]` | a type parameter filled by any component of that role; the default applies when a query omits it |
-| `const <name> [values ...]` | a const generic, matched by name or position; the value list is the finite set a quantified hole ranges over |
-| `project <name> <Role>` | a structural parameter absent from `type`, present only so a refinement can constrain it |
+| `slot <name> <Role>` | a type parameter filled by any component of that role; a query fills every slot |
+| `const <name> [values <v>...]` | a const generic, matched by name or position; the value list is the finite set a quantified hole ranges over, and a const without one takes only a literal |
 | `category <Cat>` | makes the component emittable as a first class entry; omit for pure slot fillers |
 | `menu <a / b>` | picker sub path beneath the category root |
 | `max_input <n>` | contract cap on input size; becomes `max_input_size` |
