@@ -6,7 +6,7 @@
 // same-named slot-filler roles the merge/quick families use, so `_` enumerates
 // only this kind's leaves.
 
-// ── Rotations: every RotationKind leaf (11), no slots ──
+// ── Rotations: every Rotation leaf (11), no slots ──
 Rotations: RotationAlg = RotationAlg<_>
 
 // ── Small sorts: every SmallSortKind leaf (7), no slots ──
@@ -23,7 +23,7 @@ SmallSorts: SmallSortAlg = SmallSortAlg<_>
 Partitions: PartitionAlg = PartitionAlg<_>
 
 // ── Merges: enumerate MergeKind (mk_naive + mk_smaller), filling the rot slot
-//    (reuses RotationKind) = 2 × 11 = 22. Role enumeration: the type-heads
+//    (reuses Rotation) = 2 × 11 = 22. Role enumeration: the type-heads
 //    `NaiveRotationMerge`/`SmallerSideRotationMerge` ALSO exist as merge.spec
 //    slot-fillers, so referencing them by head would be ambiguous. ──
 Merges: MergeAlg = MergeAlg<_>

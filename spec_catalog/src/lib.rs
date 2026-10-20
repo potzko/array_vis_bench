@@ -915,8 +915,8 @@ mod tests {
     // ──────────────────────────── ROTATIONS ──────────────────────────────────
     // The rotation KIND: 11 standalone rotation leaves emitted as their own
     // first-class `Category::Rotation` entries (role-trait `Rotation` ABI via
-    // `run_rotation`, `RotationSuite` battery). Distinct role `RotationKind`
-    // keeps them from colliding with merge.spec's `Rotation`-role slot-fillers.
+    // `run_rotation`, `RotationSuite` battery). The same components fill the
+    // rotation slot of the rotation merges.
     mod rotation {
         use super::*;
         fn entries() -> Vec<&'static AlgorithmEntry> {
@@ -1059,7 +1059,7 @@ mod tests {
     // The merge KIND: 2 RotationMerge families (naive, smaller-side) × 11
     // rotations = 22, emitted `Category::Merge`. No role trait (RotationMerge is
     // in merge_sort_lib) → emit inlines `merge_battery`; the rot slot REUSES the
-    // RotationKind leaves. NOTE these are distinct from merge.spec's 216 merge
+    // Rotation leaves. NOTE these are distinct from merge.spec's 216 merge
     // SORTS — these are standalone single-merge-step algorithms.
     mod merge_kind {
         use super::*;

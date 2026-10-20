@@ -66,7 +66,7 @@ fn wrapper_role(name: &str) -> Result<String, String> {
     match name {
         "SortingAlgorithm" => Ok("Sort".to_string()),
         "Selection" => Ok("QuickSelect".to_string()),
-        "RotationAlg" => Ok("RotationKind".to_string()),
+        "RotationAlg" => Ok("Rotation".to_string()),
         "SmallSortAlg" => Ok("SmallSortKind".to_string()),
         "PartitionAlg" => Ok("PartitionKind".to_string()),
         "MergeAlg" => Ok("MergeKind".to_string()),

@@ -2,7 +2,7 @@
 #
 # The spec compiler (`spec_catalog`) gathers this fragment via
 # `[package.metadata.array_vis_bench] spec = "merge.spec"` and merges it into the
-# unified registry. Component names are prefixed `merge_` / `mrm_` / `mrot_` for
+# unified registry. Component names are prefixed `merge_` / `mrm_` / `mk_` for
 # global uniqueness. SmallSort role components (ss_size1/ss_size2/ss_insertion32/
 # ss_network16) are REUSED from quick.spec — do NOT redeclare them here. `uses`
 # paths resolve in the consumer (`spec_catalog`), which links the leaf crates.
@@ -87,7 +87,7 @@ component mrm_naive
   label    naive<{rot}>
   provides RotationMerge
   uses     merge_sort_lib::rotation_merge::NaiveRotationMerge
-  slot     rot Rotation mrot_reversal
+  slot     rot Rotation rot_reversal
 end
 
 component mrm_smaller_side
@@ -95,7 +95,7 @@ component mrm_smaller_side
   label    smaller-side<{rot}>
   provides RotationMerge
   uses     merge_sort_lib::rotation_merge::SmallerSideRotationMerge
-  slot     rot Rotation mrot_reversal
+  slot     rot Rotation rot_reversal
 end
 
 # ── Rotation components (11; uses resolve to the rotation leaf crates) ───────────
@@ -106,7 +106,7 @@ component mk_naive
   provides MergeKind
   category Merge
   uses     merge_sort_lib::rotation_merge::NaiveRotationMerge
-  slot     rot RotationKind
+  slot     rot Rotation
 end
 
 component mk_smaller
@@ -115,5 +115,5 @@ component mk_smaller
   provides MergeKind
   category Merge
   uses     merge_sort_lib::rotation_merge::SmallerSideRotationMerge
-  slot     rot RotationKind
+  slot     rot Rotation
 end
