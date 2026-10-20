@@ -80,6 +80,34 @@ category drivers plus the per category input slices fill that role, and the
    stays in the monorepo. Keep implementations, program and a
    consumer in one link unit so the inlining story holds.
 
+## Concept cleanups, 2026-10-20 review
+
+Seven more places where one fact is stated twice, each with a plan. The
+recommended order is 1, 2, 3, then 4, 5, 6, then 7; the first three are an
+afternoon each and remove concepts rather than move them.
+
+1. The entry owns its flags. Replace the `SORT_TEST_CAPS` and
+   `NONDETERMINISTIC_ALGOS` name lists with fields on `AlgorithmEntry`.
+   See [implementation_plans/entry_owned_flags.md](implementation_plans/entry_owned_flags.md).
+2. Drop slot defaults and `project` from the spec grammar; no production
+   query uses either.
+   See [implementation_plans/drop_slot_defaults_and_project.md](implementation_plans/drop_slot_defaults_and_project.md).
+3. Category from the wrapper. The query wrapper and the component's
+   `category` line both name the kind and nothing checks they agree.
+   See [implementation_plans/category_from_the_wrapper.md](implementation_plans/category_from_the_wrapper.md).
+4. The entry owns its navigation. Every entry registers twice, once in
+   `ALGORITHMS` and once through a constructor into `sort_registry_core`.
+   See [implementation_plans/entry_owned_navigation.md](implementation_plans/entry_owned_navigation.md).
+5. One timing consumer. `--timing`, `speed_test` and the `Benchmark` and
+   `Timing` mains collapse to one `benchmark` consumer.
+   See [implementation_plans/one_timing_consumer.md](implementation_plans/one_timing_consumer.md).
+6. Derive `uses` from the owning crate, after renaming the four colliding
+   type heads.
+   See [implementation_plans/derive_uses_from_the_owning_crate.md](implementation_plans/derive_uses_from_the_owning_crate.md).
+7. One shape per kind. One input entry, one run driver, one emit template
+   over a kinds table, sorts under `CorrectnessSuite`.
+   See [implementation_plans/kind_trait.md](implementation_plans/kind_trait.md).
+
 ## Role collapse, what held and what did not
 
 A review of the specs found 205 components for 163 Rust types. The
