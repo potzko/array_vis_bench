@@ -27,7 +27,7 @@ it.
 | the build | `spec_catalog/build.rs`, `spec_catalog/Cargo.toml`, `kinds.avbs`, `consumers.avbs` |
 | golden counts and catalog tests | `spec_catalog/src/lib.rs` |
 | consumers | `array_vis_bench_core/src/mains.rs`, `suites.rs`, `inputs.rs` |
-| the interactive picker | `array_vis_bench_cli/src/lib.rs`, `sort_registry_core/src/lib.rs` |
+| the interactive picker | `array_vis_bench_cli/src/lib.rs`, `array_vis_bench_core/src/navigation.rs` |
 | rendering | `sort_vis/src/mp4_bar_visualiser.rs` |
 | performance | `src/bin/compare_sorts.rs`, `dump_asm.sh`, `asmdiff.sh`, the release profile in `Cargo.toml` |
 | open work | `docs/todo.md`, `docs/implementation_plans/` |

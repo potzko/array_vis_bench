@@ -131,9 +131,9 @@ or exceeds the budget before any enumeration runs.
 
 ## What the emit does per entry
 
-For each ground type the backend writes a module containing the `Ty` alias,
-the `AlgorithmEntry` static and a constructor that registers the picker
-variant with its facet axes. The entry's `run_with_input` is the category's
+For each ground type the backend writes a module containing the `Ty` alias
+and the `AlgorithmEntry` static, which carries the picker `menu`, the facet
+`axes` and the `label_template`. The entry's `run_with_input` is the category's
 driver and its `run_correctness` is the category's battery:
 
 | category | driver | battery |
