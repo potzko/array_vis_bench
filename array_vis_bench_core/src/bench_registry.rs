@@ -541,9 +541,8 @@ pub struct AlgorithmEntry {
     /// sorts and the set quick heap sort it is a time budget: longer input
     /// is correct but too slow to wait for. Every consumer treats the two
     /// alike: the picker caps its size prompt, the correctness battery
-    /// skips longer patterns, the benchmark clamps its size and the timing
-    /// table skips the entry. Split the field when a consumer needs to tell
-    /// them apart.
+    /// skips longer patterns and the benchmark skips the entry. Split the
+    /// field when a consumer needs to tell them apart.
     pub max_input_size: Option<usize>,
     /// Run the algorithm against the named input. The input must be
     /// registered in the input registry matching `category`. The

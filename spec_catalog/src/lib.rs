@@ -51,15 +51,15 @@ pub fn run_over_catalog(
 
 /// Time every registered SORT on a random array of size `n`, `k` times each,
 /// and print the 10 fastest + 10 slowest by median run time (see
-/// [`array_vis_bench_core::mains::Timing`]). Runs over the `Category::Sort`
+/// [`array_vis_bench_core::mains::Benchmark`]). Runs over the `Category::Sort`
 /// slice of the emitted catalog — the "sorts we're looking at" — so the ranking
 /// compares like with like (a merge/rotation step isn't a full sort).
 pub fn run_timing(n: usize, k: usize) -> array_vis_bench_core::mains::MainReport {
     use array_vis_bench_core::bench_registry::{Category, AlgorithmEntry, ALGORITHMS};
-    use array_vis_bench_core::mains::{Main, Timing};
+    use array_vis_bench_core::mains::{Benchmark, Main};
     let sorts: Vec<&'static AlgorithmEntry> =
         ALGORITHMS.iter().filter(|e| e.category == Category::Sort).collect();
-    Timing { n, k }.run(&sorts)
+    Benchmark { n, k }.run(&sorts)
 }
 
 #[cfg(test)]
@@ -72,6 +72,7 @@ mod tests {
     use array_vis_bench_core::bench_registry::{
         primary_input, AlgorithmEntry, Category, RunConfig, ALGORITHMS,
     };
+    use array_vis_bench_core::mains::MainReport;
     use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
     use array_vis_bench_traits::Complexity;
     use sort_logger::NoOpLogger;
@@ -229,6 +230,13 @@ mod tests {
         }
     }
 
+    /// A benchmark report carries one timing per entry that ran, any other
+    /// consumer none.
+    fn assert_timings_match_ran(report: &MainReport) {
+        let expected = if report.consumer == "benchmark" { report.ran } else { 0 };
+        assert_eq!(report.timings.len(), expected, "{}: timings", report.consumer);
+    }
+
     /// Acceptance: every new first-class kind ticks cleanly through ALL THREE
     /// consumer Mains (Correctness, Visualiser, Benchmark) — the same pipeline
     /// the sorts run through. Each Main is kind-agnostic (keys off `e.category`
@@ -237,11 +245,10 @@ mod tests {
     #[test]
     fn each_new_kind_ticks_through_all_three_mains() {
         use array_vis_bench_core::mains::{Benchmark, Correctness, Main, Visualiser};
-        let mains: Vec<Box<dyn Main>> = vec![
-            Box::new(Correctness),
-            Box::new(Visualiser::default()),
-            Box::new(Benchmark::default()),
-        ];
+        // n = 16 is within the cap of most small sorts, so they run rather than skip.
+        let benchmark = Benchmark { n: 16, k: 1 };
+        let mains: Vec<Box<dyn Main>> =
+            vec![Box::new(Correctness), Box::new(Visualiser::default()), Box::new(benchmark)];
         for cat in [
             Category::Rotation,
             Category::Partition,
@@ -254,7 +261,12 @@ mod tests {
             assert!(!es.is_empty(), "no entries for {cat:?}");
             for m in &mains {
                 let r = m.run(&es);
-                assert_eq!(r.ran, es.len(), "{cat:?}/{}: ran {} of {}", m.name(), r.ran, es.len());
+                let expected = match m.name() {
+                    "benchmark" => es.iter().filter(|e| benchmark.admits(e)).count(),
+                    _ => es.len(),
+                };
+                assert_eq!(r.ran, expected, "{cat:?}/{}: ran {} of {}", m.name(), r.ran, expected);
+                assert_timings_match_ran(&r);
                 assert!(
                     r.failures.is_empty(),
                     "{cat:?}/{}: failures {:?}",
@@ -350,6 +362,7 @@ mod tests {
                 assert_eq!(rep.ran, 18, "{} ran {} of 18", rep.consumer, rep.ran);
                 assert!(rep.all_ok(), "{} had failures: {:?}", rep.consumer, rep.failures);
                 assert_eq!(rep.ok, 18, "{} ok {} of 18", rep.consumer, rep.ok);
+                assert_timings_match_ran(rep);
             }
         }
 
@@ -402,6 +415,7 @@ mod tests {
                 assert_eq!(rep.ran, 18, "{} ran {} of 18", rep.consumer, rep.ran);
                 assert!(rep.all_ok(), "{} had failures: {:?}", rep.consumer, rep.failures);
                 assert_eq!(rep.ok, 18, "{} ok {} of 18", rep.consumer, rep.ok);
+                assert_timings_match_ran(rep);
             }
         }
 

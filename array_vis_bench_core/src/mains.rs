@@ -152,16 +152,30 @@ impl Main for Visualiser {
     }
 }
 
-/// Benchmark consumer: runs each algorithm with a [`NoOpLogger`] (so only the
-/// algorithm's work is exercised; timing is left to the caller). A panic is a
-/// failure. Included for parity with the AVBS consumer list.
+/// Benchmark consumer: times each algorithm on a random array of size `n`, `k`
+/// times (fresh seed per run, [`NoOpLogger`] so only the algorithm's work is
+/// measured), then prints the 10 fastest + 10 slowest by median run time.
+///
+/// An algorithm whose contract cap (`max_input_size`) is below `n` cannot run
+/// at that size, so it is skipped and counted, not a failure. It is excluded
+/// rather than clamped so every timed entry ran at the same `n` and the ranking
+/// is fair.
+#[derive(Clone, Copy, Debug)]
 pub struct Benchmark {
-    pub config: RunConfig,
+    pub n: usize,
+    pub k: usize,
 }
 
 impl Default for Benchmark {
     fn default() -> Self {
-        Self { config: RunConfig { size: 256, seed: 0 } }
+        Self { n: 1024, k: 3 }
+    }
+}
+
+impl Benchmark {
+    /// Whether `entry`'s cap lets it run at this benchmark's `n`.
+    pub fn admits(&self, entry: &AlgorithmEntry) -> bool {
+        entry.max_input_size.map_or(true, |cap| cap >= self.n)
     }
 }
 
@@ -171,50 +185,11 @@ impl Main for Benchmark {
     }
     fn run(&self, sorts: &[&'static AlgorithmEntry]) -> MainReport {
         let mut r = MainReport { consumer: self.name(), ..Default::default() };
-        for e in sorts {
-            r.ran += 1;
-            let input = primary_input(e.category);
-            // Respect each algorithm's contract cap: a super-polynomial sort
-            // (e.g. slow sort) declares a small `max_input` precisely so it is
-            // never run at a size that won't return. Clamp to it.
-            let size = e.max_input_size.map_or(self.config.size, |c| self.config.size.min(c));
-            let cfg = RunConfig { size, seed: self.config.seed };
-            let res = catch_unwind(AssertUnwindSafe(|| {
-                (e.run_with_input)(input, &cfg, &mut NoOpLogger);
-            }));
-            match res {
-                Ok(()) => r.ok += 1,
-                Err(_) => r.failures.push(e.name.to_string()),
-            }
-        }
-        r
-    }
-}
-
-/// Timing consumer: times each algorithm on a random array of size `n`, `k`
-/// times (fresh seed per run, [`NoOpLogger`] so only the algorithm's work is
-/// measured), then prints the 10 fastest + 10 slowest by median run time.
-///
-/// An algorithm whose contract cap (`max_input_size`) is below `n` cannot run
-/// at that size, so it is skipped (counted, not a failure — same reasoning as
-/// [`Benchmark`]'s clamp, but here we exclude rather than clamp so every timed
-/// entry ran at the *same* `n` and the ranking is fair).
-pub struct Timing {
-    pub n: usize,
-    pub k: usize,
-}
-
-impl Main for Timing {
-    fn name(&self) -> &'static str {
-        "timing"
-    }
-    fn run(&self, sorts: &[&'static AlgorithmEntry]) -> MainReport {
-        let mut r = MainReport { consumer: self.name(), ..Default::default() };
         let k = self.k.max(1);
         let mut timed: Vec<(&str, Duration)> = Vec::new();
         let mut skipped = 0usize;
         for e in sorts {
-            if e.max_input_size.map_or(false, |cap| cap < self.n) {
+            if !self.admits(e) {
                 skipped += 1;
                 continue;
             }
@@ -247,7 +222,7 @@ impl Main for Timing {
 
         timed.sort_by_key(|(_, d)| *d);
         println!(
-            "=== timing: n={}, k={} — {} timed, {} skipped (cap < n) ===",
+            "=== benchmark: n={}, k={}, {} timed, {} skipped (cap < n) ===",
             self.n, self.k, timed.len(), skipped
         );
         let show = |label: &str, rows: &[(&str, Duration)]| {
@@ -263,5 +238,63 @@ impl Main for Timing {
             println!("{} panicked: {}", r.failures.len(), r.failures.join(", "));
         }
         r
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::bench_registry::Category;
+    use array_vis_bench_traits::Complexity;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    static RUNS: AtomicUsize = AtomicUsize::new(0);
+    static SIZE: AtomicUsize = AtomicUsize::new(0);
+
+    // Records how often and at what size it ran, so a test can read the
+    // consumer's `k` and `n` back out of the entry it drove.
+    fn record(_input: &str, config: &RunConfig, _logger: &mut dyn SortLogger<usize>) {
+        RUNS.fetch_add(1, Ordering::SeqCst);
+        SIZE.store(config.size, Ordering::SeqCst);
+    }
+
+    fn no_battery() {}
+
+    const fn entry(name: &'static str, cap: Option<usize>) -> AlgorithmEntry {
+        AlgorithmEntry {
+            name,
+            category: Category::Sort,
+            worst: Complexity::N1,
+            best: Complexity::N1,
+            average: Complexity::N1,
+            space: Complexity::CONST,
+            stable: true,
+            adaptive: false,
+            nondeterministic: false,
+            max_input_size: cap,
+            run_with_input: record,
+            run_correctness: no_battery,
+        }
+    }
+
+    static FITS: AlgorithmEntry = entry("fits", Some(1024));
+    static TOO_SMALL: AlgorithmEntry = entry("too small", Some(1023));
+
+    #[test]
+    fn benchmark_defaults_to_1024_and_3() {
+        let defaults = Benchmark::default();
+        assert_eq!((defaults.n, defaults.k), (1024, 3));
+    }
+
+    #[test]
+    fn the_benchmark_by_name_runs_at_the_defaults() {
+        let benchmark = main_by_name("benchmark").expect("benchmark is registered by name");
+        assert_eq!(benchmark.name(), "benchmark");
+        let report = benchmark.run(&[&FITS, &TOO_SMALL]);
+        assert_eq!((report.ran, report.ok), (1, 1), "the entry capped below n is skipped");
+        assert_eq!(RUNS.load(Ordering::SeqCst), 3, "k runs of the one entry that ran");
+        assert_eq!(SIZE.load(Ordering::SeqCst), 1024);
+        assert_eq!(report.timings.len(), 1);
+        assert_eq!(report.timings[0].0, "fits");
     }
 }
