@@ -1176,10 +1176,10 @@ mod tests {
 
     // ──────────────────────────── MERGES ─────────────────────────────────────
     // The merge KIND: 2 RotationMerge families (naive, smaller-side) × 11
-    // rotations = 22, emitted `Category::Merge`. No role trait (RotationMerge is
-    // in merge_sort_lib) → emit inlines `merge_battery`; the rot slot REUSES the
-    // Rotation leaves. NOTE these are distinct from merge.spec's 216 merge
-    // SORTS — these are standalone single-merge-step algorithms.
+    // rotations = 22, emitted `Category::Merge` and verified through `MergeSuite`;
+    // the rot slot REUSES the Rotation leaves. NOTE these are distinct from
+    // merge.spec's 216 merge SORTS: these are standalone single-merge-step
+    // algorithms.
     mod merge_kind {
         use super::*;
         fn entries() -> Vec<&'static AlgorithmEntry> {
@@ -1202,8 +1202,8 @@ mod tests {
             assert!(entries().iter().any(|e| e.name == "naive<reversal>"));
         }
 
-        /// Each of the 22 drives `merge_battery` (inlined in the merge emit body,
-        /// via `run_rotation_merge`) and passes end-to-end.
+        /// Each of the 22 drives `merge_battery` (via `MergeSuite::verify` and
+        /// `run_rotation_merge`) and passes end-to-end.
         #[test]
         fn all_twenty_two_pass_the_merge_battery() {
             let es = entries();

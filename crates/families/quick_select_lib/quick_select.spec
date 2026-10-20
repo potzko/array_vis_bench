@@ -2,8 +2,8 @@
 #
 # The first NON-SORT first-class kind in the catalog: the `Selection<X>` AVBS
 # wrapper marks `X` emittable at role `QuickSelect`, and its drivers emit through
-# `spec_emit`'s quick-select body (role-trait `select` ABI,
-# `run_quick_select_with_input`, `CorrectnessSuite`/`SelectSuite` battery).
+# `spec_emit`'s quick-select row (role-trait `select` ABI,
+# `run_with_input`, `CorrectnessSuite`/`SelectSuite` battery).
 #
 # ONE partition role-system (shared with quick): each driver slots a single
 # self-pivoting `part` — a `Pivoted<scheme, pivot>` composite (`PartitionKind`) or a
