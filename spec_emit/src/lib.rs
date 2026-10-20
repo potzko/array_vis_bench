@@ -287,14 +287,13 @@ impl ArrayBackend {
         )
     }
 
-    /// The `Category::Merge` registration body. Merges have no role trait in the
-    /// traits crate — `RotationMerge` lives in the `merge_sort_lib` family — so,
-    /// like sorts, this inlines `merge_battery` directly (no `CorrectnessSuite`,
-    /// which would force `array_vis_bench_core` to depend on a family crate). The
-    /// shared `run_rotation_merge` one-shot allocates/frees the merge's scratch.
-    /// Entries nest under the `"merges"` picker root, faceted by the rotation.
+    /// The `Category::Merge` registration body. ABI is the `RotationMerge` role
+    /// trait: the adapter is `(arr, mid, logger)` calling the shared
+    /// `run_rotation_merge` one-shot (which allocates/frees the merge's scratch),
+    /// and correctness goes through `MergeSuite`. Entries nest under the
+    /// `"merges"` picker root, faceted by the rotation.
     fn merge_entry_body(&self, ctx: &EntryCtx) -> String {
-        let AbiPaths { core, traits, logger, suites: _ } = &self.paths;
+        let AbiPaths { core, traits, logger, suites } = &self.paths;
         let max_input = match ctx.max_input {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
@@ -312,17 +311,13 @@ impl ArrayBackend {
         format!(
 "    const NAME: &str = {label:?};
     fn merge_dyn(arr: &mut [usize], mid: usize, logger: &mut dyn {logger}::SortLogger<usize>) {{
-        merge_sort_lib::rotation_merge::run_rotation_merge::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, mid, logger);
-    }}
-    fn merge_noop(arr: &mut [usize], mid: usize, logger: &mut {logger}::NoOpLogger) -> Option<(usize, usize)> {{
-        merge_sort_lib::rotation_merge::run_rotation_merge::<Ty, usize, {logger}::NoOpLogger>(arr, mid, logger);
-        None
+        {traits}::role::merge::run_rotation_merge::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, mid, logger);
     }}
     fn run_default(input_name: &str, config: &{core}::RunConfig, logger: &mut dyn {logger}::SortLogger<usize>) {{
         {core}::run_with_input({core}::Category::Merge, input_name, config, merge_dyn, logger);
     }}
     fn run_correct() {{
-        {core}::correctness::merge_battery(merge_noop, NAME, {max_input});
+        <{suites}::MergeSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME, {max_input});
     }}
     #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
@@ -732,6 +727,17 @@ mod tests {
             .entry_body(&EntryCtx { label: "x", category: "Nonsense", adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
             .unwrap_err();
         assert!(err.contains("category `Nonsense`"));
+    }
+
+    #[test]
+    fn merge_body_uses_the_merge_role_and_suite() {
+        let b = ArrayBackend::default()
+            .entry_body(&EntryCtx { label: "naive", category: "Merge", adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "naive" })
+            .unwrap();
+        assert!(b.contains("array_vis_bench_traits::role::merge::run_rotation_merge::<Ty"));
+        assert!(b.contains("MergeSuite<Ty>"));
+        assert!(!b.contains("merge_sort_lib"), "the emitted code names no family crate");
+        assert!(!b.contains("merge_battery"), "the battery runs behind the suite");
     }
 
     #[test]
