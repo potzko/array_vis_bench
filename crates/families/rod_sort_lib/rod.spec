@@ -16,7 +16,6 @@ component rod_sort
   label    rod sort<strategy: {strategy}, merge: {merge}>
   provides Sort
   menu     rod sorts
-  uses     rod_sort_lib::RodSort
   slot     strategy RodBranching
   slot     merge RodMerge
 end
@@ -27,42 +26,36 @@ component rod_classic
   type     Classic
   label    classic
   provides RodBranching
-  uses     rod_sort_lib::Classic
 end
 
 component rod_parity3
   type     Parity3
   label    3-parity
   provides RodBranching
-  uses     rod_sort_lib::Parity3
 end
 
 component rod_log_parity
   type     LogParity
   label    log-parity
   provides RodBranching
-  uses     rod_sort_lib::LogParity
 end
 
 component rod_root_parity
   type     RootParity
   label    root-parity
   provides RodBranching
-  uses     rod_sort_lib::RootParity
 end
 
 component rod_optimised
   type     Optimised
   label    optimised
   provides RodBranching
-  uses     rod_sort_lib::Optimised
 end
 
 component rod_fibonacci
   type     Fibonacci
   label    fibonacci
   provides RodBranching
-  uses     rod_sort_lib::Fibonacci
 end
 
 # ════════════════════════ MERGE MODES (2) ═══════════════════════
@@ -71,12 +64,10 @@ component rod_insertion
   type     InsertionMerge
   label    insertion
   provides RodMerge
-  uses     rod_sort_lib::InsertionMerge
 end
 
 component rod_aux
   type     AuxMerge
   label    aux
   provides RodMerge
-  uses     rod_sort_lib::AuxMerge
 end
