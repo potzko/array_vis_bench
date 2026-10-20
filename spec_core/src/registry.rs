@@ -171,40 +171,32 @@ impl Registry {
                             let mut it = rest.split_whitespace();
                             let name = it.next().ok_or_else(|| err("slot needs a name"))?;
                             let role = it.next().ok_or_else(|| err("slot needs a role"))?;
-                            let default = it.next().map(str::to_string);
-                            c.params.push(Param {
-                                name: name.to_string(),
-                                kind: ParamKind::Type { role: role.to_string(), default },
-                            });
-                        }
-                        "const" => {
-                            // `const <name> [<default>] [values <v>...]`
-                            let mut it = rest.split_whitespace();
-                            let name = it.next().ok_or_else(|| err("const needs a name"))?;
-                            let mut default = None;
-                            let mut values = Vec::new();
-                            match it.next() {
-                                Some("values") => values.extend(it.map(str::to_string)),
-                                Some(d) => {
-                                    default = Some(d.to_string());
-                                    if it.next() == Some("values") {
-                                        values.extend(it.map(str::to_string));
-                                    }
-                                }
-                                None => {}
+                            if let Some(extra) = it.next() {
+                                return Err(err(&format!(
+                                    "slot takes a name and a role, found `{extra}` after them"
+                                )));
                             }
                             c.params.push(Param {
                                 name: name.to_string(),
-                                kind: ParamKind::Const { default, values },
+                                kind: ParamKind::Type { role: role.to_string(), default: None },
                             });
                         }
-                        "project" => {
+                        "const" => {
+                            // `const <name>` or `const <name> values <v>...`
                             let mut it = rest.split_whitespace();
-                            let name = it.next().ok_or_else(|| err("project needs a name"))?;
-                            let role = it.next().ok_or_else(|| err("project needs a role"))?;
+                            let name = it.next().ok_or_else(|| err("const needs a name"))?;
+                            let values = match it.next() {
+                                None => Vec::new(),
+                                Some("values") => it.map(str::to_string).collect(),
+                                Some(other) => {
+                                    return Err(err(&format!(
+                                        "const takes `values <v>...` after its name, found `{other}`"
+                                    )))
+                                }
+                            };
                             c.params.push(Param {
                                 name: name.to_string(),
-                                kind: ParamKind::Project { role: role.to_string() },
+                                kind: ParamKind::Const { default: None, values },
                             });
                         }
                         other => return Err(err(&format!("unknown keyword `{other}`"))),
@@ -247,5 +239,46 @@ fn split_first_word(line: &str) -> (&str, &str) {
     match line.find(char::is_whitespace) {
         Some(i) => (&line[..i], &line[i + 1..]),
         None => (line, ""),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parse_body(body: &str) -> Result<Registry, String> {
+        Registry::parse(&format!("component c\n  type T\n{body}\nend\n"))
+    }
+
+    fn const_values(reg: &Registry, name: &str) -> Vec<String> {
+        match &reg.get("c").unwrap().param(name).unwrap().kind {
+            ParamKind::Const { values, .. } => values.clone(),
+            other => panic!("`{name}` should be a const, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn slot_is_a_name_and_a_role() {
+        let reg = parse_body("  slot x Role").unwrap();
+        assert_eq!(reg.get("c").unwrap().param_role("x"), Some("Role"));
+        let err = parse_body("  slot x Role filler").unwrap_err();
+        assert!(err.contains("slot takes a name and a role, found `filler` after them"), "got: {err}");
+    }
+
+    #[test]
+    fn const_is_a_name_with_an_optional_value_set() {
+        let reg = parse_body("  const lit\n  const flag values false true").unwrap();
+        assert!(const_values(&reg, "lit").is_empty());
+        assert_eq!(const_values(&reg, "flag"), ["false", "true"]);
+        for bare_default in ["  const n 16", "  const n 16 values 16 32", "  const flag false"] {
+            let err = parse_body(bare_default).unwrap_err();
+            assert!(err.contains("const takes `values <v>...` after its name"), "`{bare_default}` got: {err}");
+        }
+    }
+
+    #[test]
+    fn project_is_an_unknown_keyword() {
+        let err = parse_body("  project pivot PivotSingle").unwrap_err();
+        assert!(err.contains("unknown keyword `project`"), "got: {err}");
     }
 }
