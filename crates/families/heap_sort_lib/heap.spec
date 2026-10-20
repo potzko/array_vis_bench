@@ -94,7 +94,7 @@ component heap_qdh_sequential
   provides DeepHeapifyQuick
   uses     heap_sort_lib::quick_deep_heapify::SequentialQuickDeepHeapify
   slot     hp HeapPart heap_part_left_left
-  slot     v  HeapPiv  heap_piv_first
+  slot     v  HeapPiv  piv_first
 end
 component heap_qdh_recursive_partial
   type     RecursivePartialQuickDeepHeapify<{hp}, {v}>
@@ -102,7 +102,7 @@ component heap_qdh_recursive_partial
   provides DeepHeapifyQuick
   uses     heap_sort_lib::quick_deep_heapify::RecursivePartialQuickDeepHeapify
   slot     hp HeapPart heap_part_left_left
-  slot     v  HeapPiv  heap_piv_first
+  slot     v  HeapPiv  piv_first
 end
 component heap_qdh_stack_partial
   type     StackPartialQuickDeepHeapify<{hp}, {v}>
@@ -110,7 +110,7 @@ component heap_qdh_stack_partial
   provides DeepHeapifyQuick
   uses     heap_sort_lib::quick_deep_heapify::StackPartialQuickDeepHeapify
   slot     hp HeapPart heap_part_left_left
-  slot     v  HeapPiv  heap_piv_first
+  slot     v  HeapPiv  piv_first
 end
 
 # ════════════════ DeepHeapifyDual (3 dual-pivot selectors) ════════════════
@@ -191,7 +191,7 @@ component beap_qdh_sequential
   provides BeapDeepHeapifyQuick
   uses     heap_sort_lib::quick_deep_heapify::SequentialQuickDeepHeapify
   slot     hp HeapPart heap_part_left_left
-  slot     v  BeapPiv  beap_v_first
+  slot     v  BeapPiv  piv_first
 end
 
 component beap_qdh_recursive_partial
@@ -200,7 +200,7 @@ component beap_qdh_recursive_partial
   provides BeapDeepHeapifyQuick
   uses     heap_sort_lib::quick_deep_heapify::RecursivePartialQuickDeepHeapify
   slot     hp HeapPart heap_part_left_left
-  slot     v  BeapPiv  beap_v_first
+  slot     v  BeapPiv  piv_first
 end
 
 component beap_qdh_stack_partial
@@ -209,7 +209,7 @@ component beap_qdh_stack_partial
   provides BeapDeepHeapifyQuick
   uses     heap_sort_lib::quick_deep_heapify::StackPartialQuickDeepHeapify
   slot     hp HeapPart heap_part_left_left
-  slot     v  BeapPiv  beap_v_first
+  slot     v  BeapPiv  piv_first
 end
 
 component beap_dpqdh_stack_dual

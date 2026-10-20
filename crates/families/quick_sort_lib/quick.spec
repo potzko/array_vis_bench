@@ -25,8 +25,8 @@ component combined
   label    combined<{a}, {b}>
   provides PartPivotDual
   uses     quick_sort_lib::CombinedSelector
-  slot     a PartPivot pkp_first
-  slot     b PartPivot pkp_middle
+  slot     a PartPivot piv_first
+  slot     b PartPivot piv_middle
 end
 
 # The baked "ninther thirds" dual selector (1 variant).
