@@ -147,6 +147,10 @@ fn main() {
     fs::write(out_dir.join("catalog_registry.rs"), registry_helper(&specs))
         .expect("write catalog_registry.rs");
 
+    // The backend names the wrappers a query is written under, and emits the entries.
+    let backend = spec_emit::ArrayBackend::default();
+    let wrappers = spec_core::EmitBackend::wrappers(&backend);
+
     // ── Lower each query independently, solve, accumulate variants ──
     let mut all_entries: Vec<(spec_core::SpecNode, &str)> = Vec::new();
     let mut count_consts = String::new();
@@ -157,7 +161,7 @@ fn main() {
             None => continue,
         };
         let stem = path.file_stem().unwrap().to_string_lossy().to_string();
-        let program = spec_core::avbs::lower(text, &reg)
+        let program = spec_core::avbs::lower(text, &reg, &wrappers)
             .unwrap_or_else(|e| panic!("lower {}.avbs ({}): {e}", stem, f.krate));
 
         let before = all_entries.len();
@@ -201,7 +205,7 @@ fn main() {
     assert!(total > 0, "spec_catalog: emitted ZERO AlgorithmEntry rows total — the \
         catalog is empty; the fragment gather/merge/solve pipeline is misconfigured.");
 
-    let code = spec_core::emit_entries(&reg, &all_entries, &spec_emit::ArrayBackend::default())
+    let code = spec_core::emit_entries(&reg, &all_entries, &backend)
         .expect("emit_entries");
     fs::write(out_dir.join("catalog_entries.rs"), code).expect("write catalog_entries.rs");
 
@@ -218,7 +222,7 @@ fn main() {
     println!("cargo:rerun-if-changed={}", consumers_path.display());
     let consumer_code = if consumers_path.exists() {
         let text = fs::read_to_string(&consumers_path).expect("read consumers.avbs");
-        let program = spec_core::avbs::lower(&text, &reg).expect("lower consumers.avbs");
+        let program = spec_core::avbs::lower(&text, &reg, &wrappers).expect("lower consumers.avbs");
         let resolved = program.resolve_consumers(&reg).expect("resolve consumers.avbs");
         let mut runs = String::new();
         let mut shape = String::new();

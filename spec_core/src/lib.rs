@@ -27,7 +27,7 @@ pub mod resolve;
 pub mod solve;
 pub mod spec;
 
-pub use backend::{EmitBackend, EntryCtx};
+pub use backend::{EmitBackend, EntryCtx, Wrapper};
 pub use cardinality::{card_role, check_size, estimate, Card, SizeEstimate, DEFAULT_MAX_GROUND};
 pub use emit::{emit_entries, emit_one, generate_table};
 pub use enumerate::enumerate;

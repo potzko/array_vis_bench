@@ -85,6 +85,15 @@ mod tests {
     use array_vis_bench_traits::Complexity;
     use sort_logger::NoOpLogger;
 
+    /// Lower a query against the wrappers the array backend writes the catalog under.
+    pub(crate) fn lower(
+        text: &str,
+        reg: &spec_core::Registry,
+    ) -> Result<spec_core::avbs::Program, String> {
+        let wrappers = spec_core::EmitBackend::wrappers(&spec_emit::ArrayBackend::default());
+        spec_core::avbs::lower(text, reg, &wrappers)
+    }
+
     /// No family carries the legacy `spec::` tag — these are the canonical names.
     #[test]
     fn no_spec_marker_remains() {
@@ -252,7 +261,7 @@ mod tests {
     fn kinds_families_take_their_category_from_the_wrapper() {
         let reg = crate::catalog_registry();
         let program =
-            spec_core::avbs::lower(include_str!(concat!(env!("OUT_DIR"), "/q_kinds.avbs")), &reg)
+            crate::tests::lower(include_str!(concat!(env!("OUT_DIR"), "/q_kinds.avbs")), &reg)
                 .expect("lower kinds.avbs");
         let families: Vec<(&str, &str)> =
             program.algos.iter().map(|a| (a.name.as_str(), a.category)).collect();
@@ -460,7 +469,7 @@ mod tests {
 
             // The merged registry, dumped by build.rs from the gathered fragments.
             let reg = crate::catalog_registry();
-            let program = spec_core::avbs::lower(
+            let program = crate::tests::lower(
                 r#"
                 ShellSorts:        SortingAlgorithm = SortingAlgorithm<ShellSort<_>>
                 ShellSortsOrdered: SortingAlgorithm = SortingAlgorithm<ShellSortOrdered<_>>
@@ -934,10 +943,10 @@ mod tests {
         /// catalog (the same registry the emitted family solves over).
         #[test]
         fn finite_is_load_bearing_for_the_set_family() {
-            use spec_core::{avbs, solve};
+            use spec_core::solve;
             let reg = crate::catalog_registry();
             let count = |src: &str| {
-                let p = avbs::lower(src, &reg).unwrap();
+                let p = crate::tests::lower(src, &reg).unwrap();
                 solve(&p.algos[0].query, &reg).unwrap().sorts.len()
             };
             // finite(_) is DEPTH-INDEPENDENT: the cycle unfolds once → 2, at any depth.
@@ -1439,7 +1448,7 @@ mod tests {
         /// retained `quick_port.spec` baseline.
         #[test]
         fn slotted_decomposition_reproduces_the_baked_types() {
-            use spec_core::{avbs, parse_query, resolve, solve, Registry};
+            use spec_core::{parse_query, resolve, solve, Registry};
             use std::collections::BTreeSet;
 
             // Slotted side solves against the MERGED registry (proving the extra
@@ -1452,7 +1461,7 @@ mod tests {
             };
 
             let program =
-                avbs::lower(include_str!(concat!(env!("OUT_DIR"), "/q_quick.avbs")), &slotted_reg)
+                crate::tests::lower(include_str!(concat!(env!("OUT_DIR"), "/q_quick.avbs")), &slotted_reg)
                     .unwrap();
             assert_eq!(program.algos.len(), 2, "standard + deferred families");
             let mut slotted: BTreeSet<String> = BTreeSet::new();

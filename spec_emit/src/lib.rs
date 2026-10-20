@@ -1,8 +1,8 @@
 //! The array-domain emit backend, against the live runtime ABI.
 //!
 //! `ArrayBackend` implements `spec_core::EmitBackend`. A kind is one row of
-//! `KINDS` (its category, picker root, the call its adapter makes, its
-//! `CorrectnessSuite`), and `entry_body` is the one template that
+//! `KINDS` (its query wrapper, role and category, picker root, the call its
+//! adapter makes, its `CorrectnessSuite`), and `entry_body` is the one template that
 //! reads the row and writes the `AlgorithmEntry` registration block spliced
 //! into the compiler's `mod __entry_N`. `AbiPaths` names the crates the emitted
 //! code targets.
@@ -22,7 +22,7 @@
 //! no such method, so the emitted `<Ty>::sort` would fail to compile (fail loud,
 //! not silent).
 
-use spec_core::{EmitBackend, EntryCtx};
+use spec_core::{EmitBackend, EntryCtx, Wrapper};
 
 /// The crate paths the emitted code targets. The live ABI is split across three
 /// crates (the prototype collapsed them into one `abi` string):
@@ -57,6 +57,10 @@ impl Default for AbiPaths {
 /// `Category` variant in `array_vis_bench_core`.
 #[derive(Debug, Clone, Copy)]
 struct Kind {
+    /// The query wrapper that marks a binding as this kind.
+    wrapper: &'static str,
+    /// The role `_` enumerates under the wrapper.
+    role: &'static str,
     /// The `Category` variant. The query wrapper hands it to the compiler, which
     /// hands it back verbatim as `EntryCtx::category`.
     category: &'static str,
@@ -78,6 +82,8 @@ struct Kind {
 
 const KINDS: &[Kind] = &[
     Kind {
+        wrapper: "SortingAlgorithm",
+        role: "Sort",
         category: "Sort",
         root: "sorts",
         dispatch: "<Ty>::sort(arr, logger);",
@@ -89,6 +95,8 @@ const KINDS: &[Kind] = &[
     // The target is clamped into the array and an empty array is left alone, the
     // way the standalone quick select registration does.
     Kind {
+        wrapper: "Selection",
+        role: "QuickSelect",
         category: "QuickSelect",
         root: "quick selects",
         dispatch: "if let Some(last) = arr.len().checked_sub(1) { <Ty as {traits}::QuickSelect>::select(arr, logger, index.min(last)); }",
@@ -99,6 +107,8 @@ const KINDS: &[Kind] = &[
     },
     // `run_rotation` allocates and frees the rotation's scratch buffer.
     Kind {
+        wrapper: "RotationAlg",
+        role: "Rotation",
         category: "Rotation",
         root: "rotations",
         dispatch: "{traits}::role::rotation::run_rotation::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, index, logger);",
@@ -112,6 +122,8 @@ const KINDS: &[Kind] = &[
     // N^2, say). This is the reasoning a quick sort uses to treat its small sort
     // slot as constant.
     Kind {
+        wrapper: "SmallSortAlg",
+        role: "SmallSortKind",
         category: "SmallSort",
         root: "small sorts",
         dispatch: "let _ = <Ty as {traits}::SmallSort>::sort(arr, logger);",
@@ -123,6 +135,8 @@ const KINDS: &[Kind] = &[
     // A standalone partition is a self pivoting `Pivoted<Scheme, Sel>`; the
     // bounds it returns matter to the battery and not to the visualiser.
     Kind {
+        wrapper: "PartitionAlg",
+        role: "PartitionKind",
         category: "Partition",
         root: "partitions",
         dispatch: "let _ = {traits}::role::partition::run_partition_bounds::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, logger);",
@@ -133,6 +147,8 @@ const KINDS: &[Kind] = &[
     },
     // `run_rotation_merge` allocates and frees the merge's scratch buffer.
     Kind {
+        wrapper: "MergeAlg",
+        role: "MergeKind",
         category: "Merge",
         root: "merges",
         dispatch: "{traits}::role::merge::run_rotation_merge::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, index, logger);",
@@ -145,6 +161,8 @@ const KINDS: &[Kind] = &[
     // backings, which differ only in block width, so the bounds are fixed here
     // and not inherited. Every workflow nets to the identity, so it is stable.
     Kind {
+        wrapper: "ScratchspaceAlg",
+        role: "ScratchspaceKind",
         category: "Scratchspace",
         root: "scratchspaces",
         dispatch: "<Ty as {traits}::role::ScratchspaceRun>::run::<usize, dyn {logger}::SortLogger<usize>>(arr, logger);",
@@ -165,6 +183,18 @@ impl EmitBackend for ArrayBackend {
     fn entry_body(&self, ctx: &EntryCtx) -> Result<String, String> {
         entry_body(KINDS, &self.paths, ctx)
     }
+
+    fn wrappers(&self) -> Vec<Wrapper> {
+        wrappers(KINDS)
+    }
+}
+
+// The query wrappers the kinds are written under, so the lowering names no kind.
+fn wrappers(kinds: &[Kind]) -> Vec<Wrapper> {
+    kinds
+        .iter()
+        .map(|k| Wrapper { name: k.wrapper, role: k.role, category: k.category })
+        .collect()
 }
 
 // The registration body for `ctx`, spliced inside the compiler's
@@ -299,6 +329,24 @@ mod tests {
 
     fn sort_body(label: &'static str) -> String {
         body(EntryCtx { label, label_template: label, ..plain("Sort") })
+    }
+
+    #[test]
+    fn each_kind_is_written_under_its_own_wrapper_and_role() {
+        let wrappers = ArrayBackend::default().wrappers();
+        let table: Vec<(&str, &str, &str)> = wrappers.iter().map(|w| (w.name, w.role, w.category)).collect();
+        assert_eq!(
+            table,
+            [
+                ("SortingAlgorithm", "Sort", "Sort"),
+                ("Selection", "QuickSelect", "QuickSelect"),
+                ("RotationAlg", "Rotation", "Rotation"),
+                ("SmallSortAlg", "SmallSortKind", "SmallSort"),
+                ("PartitionAlg", "PartitionKind", "Partition"),
+                ("MergeAlg", "MergeKind", "Merge"),
+                ("ScratchspaceAlg", "ScratchspaceKind", "Scratchspace"),
+            ]
+        );
     }
 
     #[test]
@@ -478,6 +526,8 @@ mod tests {
     #[test]
     fn a_new_kind_is_a_row_and_a_suite() {
         let toy = Kind {
+            wrapper: "ShuffleAlg",
+            role: "ShuffleKind",
             category: "Shuffle",
             root: "shuffles",
             dispatch: "<Ty as {traits}::Shuffle>::shuffle(arr, logger, index);",
@@ -492,6 +542,8 @@ mod tests {
         assert!(b.contains(&format!("<{SUITES}::ShuffleSuite<Ty> as {SUITES}::CorrectnessSuite>::verify(NAME, None);")));
         assert!(b.contains(&format!("category: {CORE}::Category::Shuffle,")));
         assert!(b.contains(r#"menu: &["shuffles"],"#));
+        let w = wrappers(&table);
+        assert_eq!((w[7].name, w[7].role, w[7].category), ("ShuffleAlg", "ShuffleKind", "Shuffle"));
         // The production table does not know it.
         assert!(entry_body(KINDS, &AbiPaths::default(), &plain("Shuffle")).is_err());
     }

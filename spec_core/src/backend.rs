@@ -46,6 +46,18 @@ pub struct EntryCtx<'a> {
     pub label_template: &'a str,
 }
 
+/// One query wrapper a backend can emit. `name<X>` marks a binding as emittable,
+/// the role `_` enumerates under it is `role`, and every entry the binding emits
+/// carries `category` in [`EntryCtx::category`]. The wrapper is the single source
+/// of an entry's category: kind is a property of where a type sits, so the
+/// component says nothing about it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Wrapper {
+    pub name: &'static str,
+    pub role: &'static str,
+    pub category: &'static str,
+}
+
 /// How a domain turns a resolved type into a registry entry. Given the
 /// per-entry context (with `Ty` in scope at the emission site), return the Rust
 /// source spliced inside the compiler's generated
@@ -56,4 +68,8 @@ pub struct EntryCtx<'a> {
 /// `}` of the module verbatim.
 pub trait EmitBackend {
     fn entry_body(&self, ctx: &EntryCtx) -> Result<String, String>;
+
+    /// The wrappers a query may use to mark a binding emittable. The lowering
+    /// takes this table as a parameter, so the compiler names no kind.
+    fn wrappers(&self) -> Vec<Wrapper>;
 }

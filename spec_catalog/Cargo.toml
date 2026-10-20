@@ -115,3 +115,4 @@ cargo_metadata = "0.18"
 # resolver 2 keeps it host/test-side, out of any shipped artifact.
 [dev-dependencies]
 spec_core = { path = "../spec_core", features = ["pest-frontend"] }
+spec_emit = { path = "../spec_emit" }
