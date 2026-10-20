@@ -9,8 +9,9 @@
 //! entry emitted by the spec compiler and one registered by the legacy combo
 //! path look identical here (both are just `AlgorithmEntry` rows).
 
-use crate::bench_registry::{primary_input, AlgorithmEntry, RunConfig, ALGORITHMS};
+use crate::bench_registry::{primary_input, AlgorithmEntry, Category, RunConfig, ALGORITHMS};
 use sort_logger::{NoOpLogger, SortLogger, VisualizerLogger};
+use std::collections::BTreeMap;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::time::{Duration, Instant};
 
@@ -154,7 +155,8 @@ impl Main for Visualiser {
 
 /// Benchmark consumer: times each algorithm on a random array of size `n`, `k`
 /// times (fresh seed per run, [`NoOpLogger`] so only the algorithm's work is
-/// measured), then prints the 10 fastest + 10 slowest by median run time.
+/// measured), then prints one table per category of the median run times,
+/// fastest first. `k` is at least 1, `run` clamps it.
 ///
 /// An algorithm whose contract cap (`max_input_size`) is below `n` cannot run
 /// at that size, so it is skipped and counted, not a failure. It is excluded
@@ -177,6 +179,50 @@ impl Benchmark {
     pub fn admits(&self, entry: &AlgorithmEntry) -> bool {
         entry.max_input_size.map_or(true, |cap| cap >= self.n)
     }
+
+    // The median of `k` timed runs on seeds 0 to k - 1, `None` when one panicked.
+    fn median(&self, entry: &AlgorithmEntry, k: usize) -> Option<Duration> {
+        let input = primary_input(entry.category);
+        let mut runs = (0..k as u64)
+            .map(|seed| {
+                let config = RunConfig { size: self.n, seed };
+                let start = Instant::now();
+                catch_unwind(AssertUnwindSafe(|| {
+                    (entry.run_with_input)(input, &config, &mut NoOpLogger)
+                }))
+                .ok()
+                .map(|()| start.elapsed())
+            })
+            .collect::<Option<Vec<_>>>()?;
+        runs.sort_unstable();
+        Some(runs[k / 2])
+    }
+}
+
+// One table per category, categories in name order, each table fastest first
+// with the name column as wide as its longest name.
+fn tables(timed: &[(Category, &str, Duration)]) -> String {
+    let grouped = BTreeMap::<&str, Vec<_>>::new();
+    let by_category = timed.iter().fold(grouped, |mut acc, &(category, name, median)| {
+        acc.entry(category.as_str()).or_default().push((name, median));
+        acc
+    });
+    by_category
+        .into_iter()
+        .map(|(category, mut rows)| {
+            rows.sort_by_key(|&(_, median)| median);
+            let width = rows.iter().map(|(name, _)| name.len()).fold("algorithm".len(), usize::max);
+            let header = [
+                format!("=== {category} ({} variants) ===", rows.len()),
+                format!("{:<width$}  {:>12}", "algorithm", "median"),
+                format!("{:-<width$}  {:->12}", "", ""),
+            ];
+            let lines =
+                rows.iter().map(|(name, median)| format!("{name:<width$}  {median:>12.2?}"));
+            header.into_iter().chain(lines).collect::<Vec<_>>().join("\n")
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n")
 }
 
 impl Main for Benchmark {
@@ -184,56 +230,26 @@ impl Main for Benchmark {
         "benchmark"
     }
     fn run(&self, sorts: &[&'static AlgorithmEntry]) -> MainReport {
-        let mut r = MainReport { consumer: self.name(), ..Default::default() };
         let k = self.k.max(1);
-        let mut timed: Vec<(&str, Duration)> = Vec::new();
-        let mut skipped = 0usize;
-        for e in sorts {
-            if !self.admits(e) {
-                skipped += 1;
-                continue;
-            }
-            r.ran += 1;
-            let input = primary_input(e.category);
-            let mut durs: Vec<Duration> = Vec::with_capacity(k);
-            let mut failed = false;
-            for trial in 0..k {
-                let cfg = RunConfig { size: self.n, seed: trial as u64 };
-                let start = Instant::now();
-                let res = catch_unwind(AssertUnwindSafe(|| {
-                    (e.run_with_input)(input, &cfg, &mut NoOpLogger);
-                }));
-                if res.is_err() {
-                    failed = true;
-                    break;
-                }
-                durs.push(start.elapsed());
-            }
-            if failed {
-                r.failures.push(e.name.to_string());
-                continue;
-            }
-            durs.sort_unstable();
-            let median = durs[k / 2];
-            timed.push((e.name, median));
-            r.timings.push((e.name, median));
-            r.ok += 1;
-        }
-
-        timed.sort_by_key(|(_, d)| *d);
-        println!(
-            "=== benchmark: n={}, k={}, {} timed, {} skipped (cap < n) ===",
-            self.n, self.k, timed.len(), skipped
-        );
-        let show = |label: &str, rows: &[(&str, Duration)]| {
-            println!("{label}:");
-            for (name, d) in rows {
-                println!("  {:>12}  {}", format!("{d:.3?}"), name);
-            }
+        let (runnable, skipped): (Vec<_>, Vec<_>) =
+            sorts.iter().copied().partition(|e| self.admits(e));
+        let results: Vec<_> = runnable.into_iter().map(|e| (e, self.median(e, k))).collect();
+        let timed: Vec<_> =
+            results.iter().filter_map(|&(e, median)| median.map(|m| (e, m))).collect();
+        let failed = results.iter().filter(|(_, median)| median.is_none());
+        let r = MainReport {
+            consumer: self.name(),
+            ran: results.len(),
+            ok: timed.len(),
+            failures: failed.map(|(e, _)| e.name.to_string()).collect(),
+            timings: timed.iter().map(|&(e, median)| (e.name, median)).collect(),
         };
-        let ten = 10.min(timed.len());
-        show("10 fastest", &timed[..ten]);
-        show("10 slowest", &timed[timed.len() - ten..]);
+        println!(
+            "=== benchmark: n={}, k={k}, {} timed, {} skipped (cap < n) ===",
+            self.n, r.ok, skipped.len()
+        );
+        let rows: Vec<_> = timed.iter().map(|&(e, median)| (e.category, e.name, median)).collect();
+        println!("\n{}", tables(&rows));
         if !r.failures.is_empty() {
             println!("{} panicked: {}", r.failures.len(), r.failures.join(", "));
         }
@@ -244,7 +260,6 @@ impl Main for Benchmark {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bench_registry::Category;
     use array_vis_bench_traits::Complexity;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -284,6 +299,34 @@ mod tests {
     fn benchmark_defaults_to_1024_and_3() {
         let defaults = Benchmark::default();
         assert_eq!((defaults.n, defaults.k), (1024, 3));
+    }
+
+    fn ms(millis: u64) -> Duration {
+        Duration::from_millis(millis)
+    }
+
+    #[test]
+    fn a_table_lists_the_fastest_first_with_right_aligned_medians() {
+        let timed = [(Category::Sort, "slow", ms(5)), (Category::Sort, "fast", ms(1))];
+        let table = tables(&timed);
+        let lines: Vec<&str> = table.lines().collect();
+        assert_eq!(lines[0], "=== sort (2 variants) ===");
+        assert!(lines[3].starts_with("fast") && lines[3].ends_with("1.00ms"), "{table}");
+        assert!(lines[4].starts_with("slow") && lines[4].ends_with("5.00ms"), "{table}");
+        assert_eq!(lines[3].len(), lines[4].len(), "the median column lines up");
+    }
+
+    #[test]
+    fn there_is_one_table_per_category_that_timed_something() {
+        let timed = [
+            (Category::Sort, "a sort", ms(2)),
+            (Category::Rotation, "a rotation", ms(1)),
+            (Category::Sort, "another sort", ms(3)),
+        ];
+        let table = tables(&timed);
+        let headers: Vec<&str> = table.lines().filter(|l| l.starts_with("===")).collect();
+        assert_eq!(headers, ["=== rotation (1 variants) ===", "=== sort (2 variants) ==="]);
+        assert!(tables(&[]).is_empty(), "no entries, no tables");
     }
 
     #[test]

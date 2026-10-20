@@ -49,17 +49,14 @@ pub fn run_over_catalog(
     Ok(run_all(&refs, &all))
 }
 
-/// Time every registered SORT on a random array of size `n`, `k` times each,
-/// and print the 10 fastest + 10 slowest by median run time (see
-/// [`array_vis_bench_core::mains::Benchmark`]). Runs over the `Category::Sort`
-/// slice of the emitted catalog — the "sorts we're looking at" — so the ranking
-/// compares like with like (a merge/rotation step isn't a full sort).
+/// Benchmark the ENTIRE emitted catalog at array size `n`, `k` runs per entry,
+/// and print one fastest first table of median run times per category (see
+/// [`array_vis_bench_core::mains::Benchmark`]). Backs `--timing`.
 pub fn run_timing(n: usize, k: usize) -> array_vis_bench_core::mains::MainReport {
-    use array_vis_bench_core::bench_registry::{Category, AlgorithmEntry, ALGORITHMS};
+    use array_vis_bench_core::bench_registry::{AlgorithmEntry, ALGORITHMS};
     use array_vis_bench_core::mains::{Benchmark, Main};
-    let sorts: Vec<&'static AlgorithmEntry> =
-        ALGORITHMS.iter().filter(|e| e.category == Category::Sort).collect();
-    Benchmark { n, k }.run(&sorts)
+    let all: Vec<&'static AlgorithmEntry> = ALGORITHMS.iter().collect();
+    Benchmark { n, k }.run(&all)
 }
 
 #[cfg(test)]
@@ -366,12 +363,15 @@ mod tests {
             }
         }
 
-        /// The timing consumer runs over the Sort category, times each survivor,
-        /// and produces a clean ranking. Small n/k so it's a smoke test, not a bench.
+        /// `run_timing` benchmarks the whole emitted catalog, every category, and
+        /// times each entry whose cap admits `n`. Small n/k so it's a smoke test,
+        /// not a bench.
         #[test]
-        fn timing_consumer_ranks_sorts() {
+        fn run_timing_times_the_whole_catalog() {
             let report = crate::run_timing(64, 1);
-            assert!(report.ran > 0, "timed no sorts");
+            let benchmark = array_vis_bench_core::mains::Benchmark { n: 64, k: 1 };
+            let skipped = ALGORITHMS.iter().filter(|e| !benchmark.admits(e)).count();
+            assert_eq!(report.ran + skipped, ALGORITHMS.len(), "every entry ran or was skipped");
             assert!(report.all_ok(), "timing had failures: {:?}", report.failures);
             assert_eq!(report.timings.len(), report.ran, "one timing per entry that ran");
         }
