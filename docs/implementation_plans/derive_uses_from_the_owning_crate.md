@@ -1,8 +1,9 @@
 # Implementation plan: derive `uses` from the owning crate
 
-Status: NOT STARTED. Designed 2026-10-20 from the concept review recorded in
-`../todo.md`. Do it after `category_from_the_wrapper.md` and
-`drop_slot_defaults_and_project.md`, since all three edit every fragment.
+Status: DONE (2026-10-20). Designed from the concept review recorded in
+`../todo.md`. The emitted catalog is the same set of types as before, the
+`use` lines differ only by the four renames and the nested to root paths, and
+`catalog.golden` is untouched.
 
 ## Problem
 
@@ -65,3 +66,22 @@ Two things stop a plain `owning_crate::Head` rule.
   `use` lines change from nested to root paths; rustc checks them.
 - `grep -rhn '^\s*uses' crates --include=*.spec` is empty, or every hit has
   a comment.
+
+## Outcome
+
+Three things differ from the design above.
+
+- Step 3 needed no new re-export. Every nested head was already re-exported
+  at its crate root, the four `quick_deep_heapify` types included, so the
+  script alone flattened the 63 paths.
+- `uses` is not zero. A listed `uses` replaces the derived imports of its
+  component, and three components keep one with a comment: `weak_heap_sort`
+  names `WeakHeapSort`, in a crate that depends on the owner, and `rdh_set`
+  and `rsel` name `SequentialSet` and `SetSelect`, declared in sibling
+  crates. Moving each component into the fragment of the crate that owns its
+  head type would remove them.
+- `Registry::from_fragments` wraps `parse_fragment` and `merge`, and the
+  registry itself rejects a duplicate component name, so the build script's
+  own scan went. The merged text dump became a generated
+  `catalog_registry()` test helper, since the text no longer carries the
+  owning crate.

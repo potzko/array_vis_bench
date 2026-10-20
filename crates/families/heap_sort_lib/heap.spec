@@ -15,25 +15,21 @@ component heap_arity_binary
   type     Binary
   label    binary
   provides HeapArity
-  uses     heap_sort_lib::arity::Binary
 end
 component heap_arity_ternary
   type     Ternary
   label    ternary
   provides HeapArity
-  uses     heap_sort_lib::arity::Ternary
 end
 component heap_arity_16
   type     Base16
   label    16-ary
   provides HeapArity
-  uses     heap_sort_lib::arity::Base16
 end
 component heap_arity_256
   type     Base256
   label    256-ary
   provides HeapArity
-  uses     heap_sort_lib::arity::Base256
 end
 
 # ════════════════════════ HeapDir (2, SHARED) ════════════════════════
@@ -42,33 +38,28 @@ component heap_dir_min_reverse
   type     MinReverse
   label    min reverse
   provides HeapDir
-  uses     heap_sort_lib::direction::MinReverse
 end
 component heap_dir_max_forward
   type     MaxForward
   label    max forward
   provides HeapDir
-  uses     heap_sort_lib::direction::MaxForward
 end
 
 # ════════════════════════ HeapPart (3, SHARED) ════════════════════════
 component heap_part_left_left
-  type     LeftLeftPartition
+  type     HeapLeftLeft
   label    left-left pointer
   provides HeapPart
-  uses     heap_sort_lib::heap_partition::LeftLeftPartition
 end
 component heap_part_left_right
-  type     LeftRightPartition
+  type     HeapLeftRight
   label    left-right pointer
   provides HeapPart
-  uses     heap_sort_lib::heap_partition::LeftRightPartition
 end
 component heap_part_block
-  type     Block
+  type     HeapBlock
   label    block
   provides HeapPart
-  uses     heap_sort_lib::heap_partition::Block
 end
 
 # ════════════════════════ HeapPiv (5, heap-only) ════════════════════════
@@ -78,13 +69,11 @@ component heap_dh_iterative
   type     Iterative
   label    iterative
   provides DeepHeapifyClassic BeapDeepHeapifyClassic RecDeepHeapify
-  uses     heap_sort_lib::deep_heapify::Iterative
 end
 component heap_dh_recursive
   type     Recursive
   label    recursive
   provides DeepHeapifyClassic RecDeepHeapify
-  uses     heap_sort_lib::deep_heapify::Recursive
 end
 
 # ════════════════ DeepHeapifyQuick (3 composites, each <HP, V>) ════════════════
@@ -92,7 +81,6 @@ component heap_qdh_sequential
   type     SequentialQuickDeepHeapify<{hp}, {v}>
   label    sequential<part: {hp}, pivot: {v}>
   provides DeepHeapifyQuick
-  uses     heap_sort_lib::quick_deep_heapify::SequentialQuickDeepHeapify
   slot     hp HeapPart
   slot     v  HeapPiv
 end
@@ -100,7 +88,6 @@ component heap_qdh_recursive_partial
   type     RecursivePartialQuickDeepHeapify<{hp}, {v}>
   label    recursive partition<part: {hp}, pivot: {v}>
   provides DeepHeapifyQuick
-  uses     heap_sort_lib::quick_deep_heapify::RecursivePartialQuickDeepHeapify
   slot     hp HeapPart
   slot     v  HeapPiv
 end
@@ -108,7 +95,6 @@ component heap_qdh_stack_partial
   type     StackPartialQuickDeepHeapify<{hp}, {v}>
   label    stack partition<part: {hp}, pivot: {v}>
   provides DeepHeapifyQuick
-  uses     heap_sort_lib::quick_deep_heapify::StackPartialQuickDeepHeapify
   slot     hp HeapPart
   slot     v  HeapPiv
 end
@@ -118,19 +104,16 @@ component heap_dps_first
   type     StackDualPivotPartialQuickDeepHeapify<CombinedSelector<FirstElement, FirstElement>>
   label    stack dual-pivot partition<first>
   provides DeepHeapifyDual
-  uses     heap_sort_lib::quick_deep_heapify::StackDualPivotPartialQuickDeepHeapify quick_sort_lib::CombinedSelector pivot_first::FirstElement
 end
 component heap_dps_middle
   type     StackDualPivotPartialQuickDeepHeapify<CombinedSelector<MiddleElement, MiddleElement>>
   label    stack dual-pivot partition<middle>
   provides DeepHeapifyDual
-  uses     heap_sort_lib::quick_deep_heapify::StackDualPivotPartialQuickDeepHeapify quick_sort_lib::CombinedSelector pivot_middle::MiddleElement
 end
 component heap_dps_ninther
   type     StackDualPivotPartialQuickDeepHeapify<NintherDualPivot>
   label    stack dual-pivot partition<ninther 1/3 + 2/3>
   provides DeepHeapifyDual
-  uses     heap_sort_lib::quick_deep_heapify::StackDualPivotPartialQuickDeepHeapify quick_sort_lib::NintherDualPivot
 end
 
 # ════════════════════════ DRIVERS (3 unique heads) ════════════════════════
@@ -139,7 +122,6 @@ component heap_sort_classic
   label    heap sort<arity: {a}, dir: {d}, build: {dh}>
   provides Sort
   menu     heap sorts / d-ary / classic
-  uses     heap_sort_lib::spec_drivers::HeapSortClassicOf
   slot     a  HeapArity
   slot     d  HeapDir
   slot     dh DeepHeapifyClassic
@@ -149,7 +131,6 @@ component heap_sort_quick_build
   label    heap sort quick build<arity: {a}, dir: {d}, build: {dh}>
   provides Sort
   menu     heap sorts / d-ary / quick build / single pivot
-  uses     heap_sort_lib::spec_drivers::HeapSortQuickBuildOf
   slot     a  HeapArity
   slot     d  HeapDir
   slot     dh DeepHeapifyQuick
@@ -159,7 +140,6 @@ component heap_sort_dual_build
   label    heap sort quick build dual pivot<arity: {a}, dir: {d}, build: {dh}>
   provides Sort
   menu     heap sorts / d-ary / quick build / dual pivot
-  uses     heap_sort_lib::spec_drivers::HeapSortDualBuildOf
   slot     a  HeapArity
   slot     d  HeapDir
   slot     dh DeepHeapifyDual
@@ -169,7 +149,9 @@ component weak_heap_sort
   label    weak heap sort<dir: {d}, storage: {r}>
   provides Sort
   menu     heap sorts / weak
-  uses     heap_sort_lib::heap_sort::HeapSort weak_heap_sort_lib::weak_heap_sort::WeakHeapSort
+  # Listed rather than derived: WeakHeapSort lives in weak_heap_sort_lib, which depends
+  # on this crate, so the owning crate cannot reach it.
+  uses     heap_sort_lib::HeapSort weak_heap_sort_lib::WeakHeapSort
   slot     d HeapDir
   slot     r ReverseStorage
 end
@@ -178,7 +160,6 @@ component beap_qdh_sequential
   type     SequentialQuickDeepHeapify<{hp}, {v}>
   label    sequential<part: {hp}, pivot: {v}>
   provides BeapDeepHeapifyQuick
-  uses     heap_sort_lib::quick_deep_heapify::SequentialQuickDeepHeapify
   slot     hp HeapPart
   slot     v  BeapPiv
 end
@@ -187,7 +168,6 @@ component beap_qdh_recursive_partial
   type     RecursivePartialQuickDeepHeapify<{hp}, {v}>
   label    recursive partition<part: {hp}, pivot: {v}>
   provides BeapDeepHeapifyQuick
-  uses     heap_sort_lib::quick_deep_heapify::RecursivePartialQuickDeepHeapify
   slot     hp HeapPart
   slot     v  BeapPiv
 end
@@ -196,7 +176,6 @@ component beap_qdh_stack_partial
   type     StackPartialQuickDeepHeapify<{hp}, {v}>
   label    stack partition<part: {hp}, pivot: {v}>
   provides BeapDeepHeapifyQuick
-  uses     heap_sort_lib::quick_deep_heapify::StackPartialQuickDeepHeapify
   slot     hp HeapPart
   slot     v  BeapPiv
 end
@@ -205,6 +184,5 @@ component beap_dpqdh_stack_dual
   type     StackDualPivotPartialQuickDeepHeapify<{dps}>
   label    stack dual-pivot partition<dps: {dps}>
   provides BeapDeepHeapifyDual
-  uses     heap_sort_lib::quick_deep_heapify::StackDualPivotPartialQuickDeepHeapify
   slot     dps BeapDualPivot
 end

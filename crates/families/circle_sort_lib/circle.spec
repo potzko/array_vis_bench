@@ -17,7 +17,6 @@ component circle_recursive
   label    circle sort<recursive: {order}, finish: {finish}>
   provides Sort
   menu     circle sorts / recursive
-  uses     circle_sort_lib::CircleRecursiveOf
   slot     order  CircleOrder
   slot     finish CircleFinish
 end
@@ -28,7 +27,6 @@ component circle_bottom_up
   label    circle sort<bottom-up: {direction}, finish: {finish}>
   provides Sort
   menu     circle sorts / bottom-up
-  uses     circle_sort_lib::CircleBottomUpOf
   slot     direction CircleDirection
   slot     finish    CircleFinish
 end
@@ -39,7 +37,6 @@ component circle_shaker_recursive
   label    circle sort (recursive shaker)
   provides Sort
   menu     circle sorts / recursive
-  uses     circle_sort_lib::CircleSortShakerRecursive
 end
 
 # ── Recursive operation orders (CircleOrder) — labels match RecursiveOrder::NAME ─
@@ -47,28 +44,24 @@ component circle_pre_order
   type     PreOrder
   label    pre-order
   provides CircleOrder
-  uses     circle_sort_lib::PreOrder
 end
 
 component circle_left_mid_right
   type     LeftMidRight
   label    left-mid-right
   provides CircleOrder
-  uses     circle_sort_lib::LeftMidRight
 end
 
 component circle_right_mid_left
   type     RightMidLeft
   label    right-mid-left
   provides CircleOrder
-  uses     circle_sort_lib::RightMidLeft
 end
 
 component circle_post_order
   type     PostOrder
   label    post-order
   provides CircleOrder
-  uses     circle_sort_lib::PostOrder
 end
 
 # ── Bottom-up directions (CircleDirection) — labels match BottomUpDirection::NAME ─
@@ -76,28 +69,24 @@ component circle_decreasing
   type     Decreasing
   label    decreasing
   provides CircleDirection
-  uses     circle_sort_lib::Decreasing
 end
 
 component circle_increasing
   type     Increasing
   label    increasing
   provides CircleDirection
-  uses     circle_sort_lib::Increasing
 end
 
 component circle_shaker_dec_inc
   type     ShakerDecInc
   label    shaker dec→inc
   provides CircleDirection
-  uses     circle_sort_lib::ShakerDecInc
 end
 
 component circle_shaker_inc_dec
   type     ShakerIncDec
   label    shaker inc→dec
   provides CircleDirection
-  uses     circle_sort_lib::ShakerIncDec
 end
 
 # ── Finish strategies (CircleFinish) ─────────────────────────────────────────
@@ -105,12 +94,10 @@ component circle_converge
   type     ConvergeFinish
   label    converge
   provides CircleFinish
-  uses     circle_sort_lib::ConvergeFinish
 end
 
 component circle_sc_insertion
   type     InsertionShortCircuit
   label    short circuit: insertion
   provides CircleFinish
-  uses     circle_sort_lib::InsertionShortCircuit
 end

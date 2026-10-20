@@ -5,7 +5,6 @@ component ss_size1
   label    size: 1
   provides SmallSort SmallSortKind
   max_input 1
-  uses     small_sort_basic::Size1SmallSort
 end
 
 component ss_size2
@@ -13,5 +12,4 @@ component ss_size2
   label    size: 2
   provides SmallSort NonTrivialSmallSort SmallSortKind
   max_input 2
-  uses     small_sort_basic::Size2SmallSort
 end

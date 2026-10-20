@@ -11,7 +11,6 @@ component bubble_sort
   label    bubble sort
   provides Sort
   menu     bubble sorts
-  uses     bubble_sort_lib::BubbleSort
 end
 
 component shaker_sort
@@ -19,7 +18,6 @@ component shaker_sort
   label    shaker sort
   provides Sort
   menu     bubble sorts
-  uses     bubble_sort_lib::ShakerSort
 end
 
 component bubble_sort_recursive
@@ -27,7 +25,6 @@ component bubble_sort_recursive
   label    bubble sort recursive
   provides Sort
   menu     bubble sorts
-  uses     bubble_sort_lib::BubbleSortRecursive
 end
 
 # ── Odd-even bubble sort (single-axis over a non-trivial small sort) ──────────
@@ -36,7 +33,6 @@ component odd_even_bubble_sort
   label    odd-even bubble sort<small: {small}>
   provides Sort
   menu     bubble sorts / odd-even bubble sort
-  uses     bubble_sort_lib::OddEvenBubbleSort
   slot     small NonTrivialSmallSort
 end
 

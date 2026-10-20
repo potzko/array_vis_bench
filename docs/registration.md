@@ -29,7 +29,6 @@ component pk_single
   type     Pivoted<{scheme}, {pivot}>
   label    {scheme}<{pivot}>
   provides PartitionKind SelectPartition
-  uses     quick_sort_lib::Pivoted
   slot     scheme PartScheme
   slot     pivot  PartPivot
 end
@@ -41,13 +40,44 @@ end
 | `type <expr>` | the Rust type with a `{hole}` per slot; leaves have no holes |
 | `label <template>` | the human name, same templating; becomes `AlgorithmEntry.name` and the picker label |
 | `provides <Role> ...` | the roles slots match against; a component may provide several |
-| `uses <path> ...` | module paths spliced into the emitted `use` block |
+| `uses <path> ...` | optional override of the derived imports, see [Imports](#imports) |
 | `slot <name> <Role>` | a type parameter filled by any component of that role; a query fills every slot |
 | `const <name> [values <v>...]` | a const generic, matched by name or position; the value list is the finite set a quantified hole ranges over, and a const without one takes only a literal |
 | `menu <a / b>` | picker sub path beneath the category root |
 | `max_input <n>` | cap on input size, a contract or a time budget; becomes `max_input_size`, which the picker, the sort battery and the benchmark all honour |
 | `adaptive <bool>` | per family literal, not inherited from the type |
 | `nondeterministic <bool>` | the trace varies between runs; becomes `AlgorithmEntry.nondeterministic` |
+
+### Imports
+
+A component lists no import paths. The emitted `use` block is derived from the
+crate whose manifest points at the fragment. Every identifier in the `type`
+template that is not a `{slot}` hole, a literal or a keyword is imported from
+the crate root:
+
+- an identifier that heads another component comes from that component's crate,
+  so `CombinedSelector<FirstElement, FirstElement>` in `heap.spec` imports
+  `CombinedSelector` from `quick_sort_lib` and `FirstElement` from `pivot_first`;
+- the template's own head, and any identifier no component declares, such as
+  `AryPair` in `quick_heap.spec`, come from the owning crate.
+
+So every type a fragment names must be re-exported at the root of the crate
+that declares it. A nested filler contributes its own crate's imports to the
+entry, and a duplicate import is dropped.
+
+Two components may share a type head only when the head is imported from one
+path. Two different Rust types never share a head, which is why the heap
+partitions are `HeapLeftLeft`, `HeapLeftRight` and `HeapBlock` and the shell gap
+sequence is `ClassicGaps`. A head therefore names one type, in a query and in
+an import.
+
+`uses` is the override for a type the owning crate cannot reach. When a
+component lists it, those paths replace the derived imports for that
+component, and a comment beside the line gives the reason. `weak_heap_sort`
+names `WeakHeapSort`, which lives in a crate that depends on the owner, and
+`rdh_set` names `SequentialSet`, which lives in a sibling crate. A registry
+parsed without an owning crate, as the unit test fixtures are, must list `uses`
+on every component.
 
 Roles are strings, finer grained than Rust traits. A role names a population,
 so one trait is often sliced into several roles that queries can enumerate:
@@ -171,7 +201,9 @@ these places:
 
 | when | check | outcome |
 |---|---|---|
-| build | duplicate component name across fragments | error |
+| build | duplicate component name across fragments | error naming both crates |
+| build | two components share a type head but import different paths | error naming both |
+| build | component with neither an owning crate nor `uses` | error naming the component |
 | build | fragment declared but outside the closure | warning |
 | build | binding solves to zero rows | error |
 | build | cardinality bound unbounded or over budget | error with the count |

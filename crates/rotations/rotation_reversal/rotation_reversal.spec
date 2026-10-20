@@ -4,5 +4,4 @@ component rot_reversal
   type     ReversalRotation
   label    reversal
   provides Rotation
-  uses     rotation_reversal::ReversalRotation
 end

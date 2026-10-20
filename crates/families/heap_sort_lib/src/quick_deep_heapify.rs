@@ -238,7 +238,7 @@ impl<HP: HeapPartition, V: PivotSelector> DeepHeapify for StackPartialQuickDeepH
 ///
 /// Parametrised only over the [`DualPivotSelector`] — the partition itself
 /// is fixed to DualPivotPartition's three-region scan, since (unlike the
-/// single-pivot path) it has no LeftLeftPartition/LeftRightPartition/Block siblings to swap in.
+/// single-pivot path) it has no HeapLeftLeft/HeapLeftRight/HeapBlock siblings to swap in.
 pub struct StackDualPivotPartialQuickDeepHeapify<DPS: DualPivotSelector>(PhantomData<DPS>);
 impl<DPS: DualPivotSelector> DeepHeapify for StackDualPivotPartialQuickDeepHeapify<DPS> {
     fn deep_heapify<H: Heap, T: Ord + Copy, U: ?Sized + SortLogger<T>>(

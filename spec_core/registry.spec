@@ -7,7 +7,9 @@
 #     type     <type template>     Rust type expr with {param} holes
 #     label    <label template>
 #     provides <role> [role...]     roles this component satisfies
-#     uses     <path> [path...]     module paths to import (repeatable)
+#     uses     <path> [path...]     module paths to import (repeatable); listed on
+#                                   every component here, since this fixture has no
+#                                   owning crate to derive them from
 #     slot     <param> <role>
 #     const    <param> [values <v>...]  literal only, or a finite value set
 #   end

@@ -11,7 +11,6 @@ component comb_sort
   label    comb sort<{ratio}>
   provides Sort
   menu     comb sorts
-  uses     comb_sort_lib::CombSortOf
   slot     ratio CombRatio
 end
 
@@ -20,40 +19,34 @@ component comb_13
   type     CombSortRatio<10, 13>
   label    1.3
   provides CombRatio
-  uses     comb_sort_lib::CombSortRatio
 end
 
 component comb_sqrt2
   type     CombSortRatio<70, 99>
   label    √2 ≈ 1.414
   provides CombRatio
-  uses     comb_sort_lib::CombSortRatio
 end
 
 component comb_phi
   type     CombSortRatio<55, 89>
   label    φ ≈ 1.618
   provides CombRatio
-  uses     comb_sort_lib::CombSortRatio
 end
 
 component comb_four_thirds
   type     CombSortRatio<3, 4>
   label    4/3
   provides CombRatio
-  uses     comb_sort_lib::CombSortRatio
 end
 
 component comb_eleven_eighths
   type     CombSortRatio<8, 11>
   label    11/8
   provides CombRatio
-  uses     comb_sort_lib::CombSortRatio
 end
 
 component comb_five_fourths
   type     CombSortRatio<4, 5>
   label    5/4
   provides CombRatio
-  uses     comb_sort_lib::CombSortRatio
 end

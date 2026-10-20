@@ -4,6 +4,5 @@ component pks_hoare
   type     LeftRightPartition
   label    left-right
   provides PartScheme
-  uses     partition_hoare::LeftRightPartition
 end
 

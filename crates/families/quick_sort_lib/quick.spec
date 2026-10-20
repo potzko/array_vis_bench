@@ -24,7 +24,6 @@ component combined
   type     CombinedSelector<{a}, {b}>
   label    combined<{a}, {b}>
   provides PartPivotDual
-  uses     quick_sort_lib::CombinedSelector
   slot     a PartPivot
   slot     b PartPivot
 end
@@ -34,7 +33,6 @@ component ninther_dual
   type     NintherDualPivot
   label    ninther
   provides PartPivotDual
-  uses     quick_sort_lib::NintherDualPivot
 end
 
 # ════════════════════ FIRST-CLASS PARTITION COMPOSITES ════════════════════
@@ -51,7 +49,6 @@ component pk_single
   type     Pivoted<{scheme}, {pivot}>
   label    {scheme}<{pivot}>
   provides PartitionKind SelectPartition
-  uses     quick_sort_lib::Pivoted
   slot     scheme PartScheme
   slot     pivot  PartPivot
 end
@@ -60,7 +57,6 @@ component pk_dual
   type     DualPivoted<{pivot}>
   label    dual<{pivot}>
   provides PartitionKind SelectPartition
-  uses     quick_sort_lib::DualPivoted
   slot     pivot  PartPivotDual
 end
 
@@ -72,7 +68,6 @@ component quick_sort
   label    quick sort<part: {part}, small: {small_sort}>
   provides Sort
   menu     quick sorts
-  uses     quick_sort_lib::CanonicalQuickSort
   slot     part PartitionKind
   slot     small_sort SmallSort
 end
@@ -82,7 +77,6 @@ component deferred_quick_sort
   label    deferred quick sort<part: {part}, small: {small_sort}>
   provides Sort
   menu     deferred quick sorts
-  uses     quick_sort_lib::DeferredCanonicalQuickSort
   slot     part PartitionKind
   slot     small_sort DeferredSmallSort
 end
@@ -96,21 +90,18 @@ component beap_dps_first
   type     CombinedSelector<FirstElement, FirstElement>
   label    first
   provides BeapDualPivot
-  uses     quick_sort_lib::CombinedSelector pivot_first::FirstElement
 end
 
 component beap_dps_middle
   type     CombinedSelector<MiddleElement, MiddleElement>
   label    middle
   provides BeapDualPivot
-  uses     quick_sort_lib::CombinedSelector pivot_middle::MiddleElement
 end
 
 component beap_dps_ninther
   type     NintherDualPivot
   label    ninther 1/3 + 2/3
   provides BeapDualPivot
-  uses     quick_sort_lib::NintherDualPivot
 end
 
 # quick-select's dual selectors are no longer their own components: under the

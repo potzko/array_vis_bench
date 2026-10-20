@@ -34,7 +34,7 @@ pub use deep_heapify::{DeepHeapify, Iterative, Recursive};
 pub use direction::{Direction, MaxForward, MaxReverse, MinForward, MinReverse};
 pub use heap::{Heap, HeapLayout};
 pub use heap_algorithm::HeapAlgorithm;
-pub use heap_partition::{Block, HeapPartition, LeftRightPartition, LeftLeftPartition};
+pub use heap_partition::{HeapBlock, HeapLeftLeft, HeapLeftRight, HeapPartition};
 pub use heap_sort::{HeapSort, NaryHeapSort};
 pub use layout::{Forward, Layout, Reverse};
 pub use quick_deep_heapify::{

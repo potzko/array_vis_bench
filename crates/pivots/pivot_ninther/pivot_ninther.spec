@@ -4,5 +4,4 @@ component piv_ninther
   type     Ninther
   label    ninther
   provides PartPivot HeapPiv
-  uses     pivot_ninther::Ninther
 end

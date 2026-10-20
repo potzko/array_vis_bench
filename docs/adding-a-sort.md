@@ -10,8 +10,9 @@ This page is the short recipe for the three common cases.
 2. Implement the role trait, routing every comparison and write through the
    logger, plus `HasTimeBounds`, `HasSpace`, `HasStability` and, for a pivot,
    `PivotQuality`.
-3. Write `<name>.spec` with one component: `type`, `label`, `provides <Role>`,
-   `uses <path>`.
+3. Write `<name>.spec` with one component: `type`, `label`, `provides <Role>`.
+   The type must be a `pub` item at the crate root, since the build imports it
+   from there.
 4. Point the manifest at it with `[package.metadata.array_vis_bench] spec = "<name>.spec"`.
 5. Add the crate to the workspace members and to `spec_catalog/Cargo.toml`.
 6. `cargo build`, then `cargo test -p spec_catalog`. The golden counts will

@@ -7,5 +7,4 @@ component cycle_sort
   label    cycle sort
   provides Sort
   menu     cycle sorts
-  uses     cycle_sort_lib::CycleSort
 end

@@ -19,7 +19,6 @@ component qhs_classic
   label    quick heap sort<arity: {arity}, small: {small}>
   provides Sort
   menu     quick heap sorts / classic
-  uses     quick_heap_sort_lib::quick_heap_sort::QuickHeapSort heap_sort_lib::deep_heapify::Iterative
   slot     arity HeapArity
   slot     small SmallSort
 end
@@ -29,7 +28,6 @@ component qhs_deferred
   label    quick heap sort deferred<arity: {arity}, small: {dss}>
   provides Sort
   menu     quick heap sorts / deferred
-  uses     quick_heap_sort_lib::deferred_quick_heap_sort::DeferredQuickHeapSort
   slot     arity HeapArity
   slot     dss   DeferredSmallSort
 end
@@ -44,28 +42,24 @@ component qs_part_he_bin_it
   type     HeapExtract<AryPair<Binary>, Iterative>
   label    heap extract: binary iterative
   provides HeapExtractPart SelectPartition
-  uses     quick_heap_sort_lib::heap_extract::HeapExtract quick_heap_sort_lib::heap_pair::AryPair heap_sort_lib::Binary heap_sort_lib::Iterative
 end
 
 component qs_part_he_bin_re
   type     HeapExtract<AryPair<Binary>, Recursive>
   label    heap extract: binary recursive
   provides HeapExtractPart SelectPartition
-  uses     quick_heap_sort_lib::heap_extract::HeapExtract quick_heap_sort_lib::heap_pair::AryPair heap_sort_lib::Binary heap_sort_lib::Recursive
 end
 
 component qs_part_he_ter_it
   type     HeapExtract<AryPair<Ternary>, Iterative>
   label    heap extract: ternary iterative
   provides HeapExtractPart SelectPartition
-  uses     quick_heap_sort_lib::heap_extract::HeapExtract quick_heap_sort_lib::heap_pair::AryPair heap_sort_lib::Ternary heap_sort_lib::Iterative
 end
 
 component qs_part_he_ter_re
   type     HeapExtract<AryPair<Ternary>, Recursive>
   label    heap extract: ternary recursive
   provides HeapExtractPart SelectPartition
-  uses     quick_heap_sort_lib::heap_extract::HeapExtract quick_heap_sort_lib::heap_pair::AryPair heap_sort_lib::Ternary heap_sort_lib::Recursive
 end
 
 # ═══════════ RECURSIVE SET-QUICK-SELECT DEEP-HEAPIFY (finite() dogfood) ═══════════
@@ -83,13 +77,15 @@ component rdh_set
   type     SequentialSet<{qs}>
   label    set<{qs}>
   provides RecDeepHeapify SetDeepHeapify
-  uses     heap_sort_lib::set_quick_select::SequentialSet
+  # Listed rather than derived: SequentialSet lives in heap_sort_lib, not in the owning crate.
+  uses     heap_sort_lib::SequentialSet
   slot     qs RecSelect
 end
 component rsel
   type     SetSelect<{part}>
   label    select<{part}>
   provides RecSelect
+  # Listed rather than derived: SetSelect lives in quick_select_lib, not in the owning crate.
   uses     quick_select_lib::SetSelect
   slot     part RecSelPart
 end
@@ -97,7 +93,6 @@ component hx_open
   type     HeapExtract<AryPair<Binary>, {dh}>
   label    heap extract: binary<{dh}>
   provides RecSelPart
-  uses     quick_heap_sort_lib::heap_extract::HeapExtract quick_heap_sort_lib::heap_pair::AryPair heap_sort_lib::Binary
   slot     dh RecDeepHeapify
 end
 component set_quick_heap_sort
@@ -105,7 +100,6 @@ component set_quick_heap_sort
   label    set quick heap sort<{dh}>
   provides Sort
   menu     quick heap sorts / set
-  uses     quick_heap_sort_lib::SetQuickHeapSort
   slot     dh SetDeepHeapify
   max_input 128
 end

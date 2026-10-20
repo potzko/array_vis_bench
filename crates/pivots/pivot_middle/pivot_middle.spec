@@ -4,5 +4,4 @@ component piv_middle
   type     MiddleElement
   label    middle
   provides PartPivot HeapPiv BeapPiv
-  uses     pivot_middle::MiddleElement
 end

@@ -9,7 +9,7 @@ pub mod shell_sort;
 pub mod shell_sort_ordered;
 
 pub use sequences::{
-    Ciura, Classic, GapSequence, Hibbard, Knuth, Optimized256, Pratt, Sedgewick,
+    Ciura, ClassicGaps, GapSequence, Hibbard, Knuth, Optimized256, Pratt, Sedgewick,
     SedgewickBranching, Tokuda,
 };
 pub use shell_sort::ShellSort;
