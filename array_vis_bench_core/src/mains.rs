@@ -170,7 +170,8 @@ pub struct Benchmark {
 
 impl Default for Benchmark {
     fn default() -> Self {
-        Self { n: 1024, k: 3 }
+        // Several chaos sorts declare a cap of 1000, so none of them is skipped.
+        Self { n: 1000, k: 3 }
     }
 }
 
@@ -295,13 +296,13 @@ mod tests {
         }
     }
 
-    static FITS: AlgorithmEntry = entry("fits", Some(1024));
-    static TOO_SMALL: AlgorithmEntry = entry("too small", Some(1023));
+    static FITS: AlgorithmEntry = entry("fits", Some(1000));
+    static TOO_SMALL: AlgorithmEntry = entry("too small", Some(999));
 
     #[test]
-    fn benchmark_defaults_to_1024_and_3() {
+    fn benchmark_defaults_to_1000_and_3() {
         let defaults = Benchmark::default();
-        assert_eq!((defaults.n, defaults.k), (1024, 3));
+        assert_eq!((defaults.n, defaults.k), (1000, 3));
     }
 
     fn ms(millis: u64) -> Duration {
@@ -339,7 +340,7 @@ mod tests {
         let report = benchmark.run(&[&FITS, &TOO_SMALL]);
         assert_eq!((report.ran, report.ok), (1, 1), "the entry capped below n is skipped");
         assert_eq!(RUNS.load(Ordering::SeqCst), 3, "k runs of the one entry that ran");
-        assert_eq!(SIZE.load(Ordering::SeqCst), 1024);
+        assert_eq!(SIZE.load(Ordering::SeqCst), 1000);
         assert_eq!(report.timings.len(), 1);
         assert_eq!(report.timings[0].0, "fits");
     }

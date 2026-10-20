@@ -8,8 +8,8 @@ in the benchmark's header. The tables come out in category name order from
 the entries' own categories, so there is no category list to extend and the
 kind recipe in `docs/registration.md` lost its last step.
 `spec_catalog::run_timing` takes `Option` overrides and runs the whole
-catalog. At the default `n` of 1024 the benchmark skips 187 of the 1580
-entries, 117 of them sorts capped at 1000. The catalog golden did not move
+catalog. The default `n` is 1000, the cap 117 sorts declare, so at the default
+the benchmark skips 70 of the 1580 entries. The catalog golden did not move
 and the emitted entries are identical.
 
 ## Problem
@@ -36,7 +36,7 @@ correctness and benchmark.
 One timing consumer, named `benchmark`: the body of today's `Timing` with the
 reporting of the speed test binary. It groups by category, prints the full
 table of medians over `k` runs, skips and counts entries whose cap is below
-`n`, and has `n` and `k` fields with defaults of 1024 and 3. It is registered
+`n`, and has `n` and `k` fields with defaults of 1000 and 3. It is registered
 in `main_by_name`, so `consumers.avbs` reaches it.
 
 Today's `Benchmark` goes. The correctness consumer runs the same code under

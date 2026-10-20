@@ -101,7 +101,7 @@ afternoon each and remove concepts rather than move them.
    are gone.
    See [implementation_plans/entry_owned_navigation.md](implementation_plans/entry_owned_navigation.md).
 5. One timing consumer. Done: `benchmark` is the one consumer that times,
-   a fastest first table per category with `n` and `k` defaulting to 1024
+   a fastest first table per category with `n` and `k` defaulting to 1000
    and 3; `--timing` overrides them and the speed test binary is gone.
    See [implementation_plans/one_timing_consumer.md](implementation_plans/one_timing_consumer.md).
 6. Derive `uses` from the owning crate, after renaming the four colliding
