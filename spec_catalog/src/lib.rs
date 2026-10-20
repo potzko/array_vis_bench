@@ -49,17 +49,20 @@ pub fn run_over_catalog(
     Ok(run_all(&refs, &all))
 }
 
-/// Time every registered SORT on a random array of size `n`, `k` times each,
-/// and print the 10 fastest + 10 slowest by median run time (see
-/// [`array_vis_bench_core::mains::Timing`]). Runs over the `Category::Sort`
-/// slice of the emitted catalog — the "sorts we're looking at" — so the ranking
-/// compares like with like (a merge/rotation step isn't a full sort).
-pub fn run_timing(n: usize, k: usize) -> array_vis_bench_core::mains::MainReport {
-    use array_vis_bench_core::bench_registry::{Category, AlgorithmEntry, ALGORITHMS};
-    use array_vis_bench_core::mains::{Main, Timing};
-    let sorts: Vec<&'static AlgorithmEntry> =
-        ALGORITHMS.iter().filter(|e| e.category == Category::Sort).collect();
-    Timing { n, k }.run(&sorts)
+/// Benchmark the ENTIRE emitted catalog at array size `n`, `k` runs per entry,
+/// and print one fastest first table of median run times per category (see
+/// [`array_vis_bench_core::mains::Benchmark`]). Backs `--timing`: an `n` or `k`
+/// given overrides the benchmark's default, one left `None` keeps it.
+pub fn run_timing(
+    n: Option<usize>,
+    k: Option<usize>,
+) -> array_vis_bench_core::mains::MainReport {
+    use array_vis_bench_core::bench_registry::{AlgorithmEntry, ALGORITHMS};
+    use array_vis_bench_core::mains::{Benchmark, Main};
+    let defaults = Benchmark::default();
+    let benchmark = Benchmark { n: n.unwrap_or(defaults.n), k: k.unwrap_or(defaults.k) };
+    let all: Vec<&'static AlgorithmEntry> = ALGORITHMS.iter().collect();
+    benchmark.run(&all)
 }
 
 #[cfg(test)]
@@ -72,6 +75,7 @@ mod tests {
     use array_vis_bench_core::bench_registry::{
         primary_input, AlgorithmEntry, Category, RunConfig, ALGORITHMS,
     };
+    use array_vis_bench_core::mains::MainReport;
     use array_vis_bench_core::navigation;
     use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
     use array_vis_bench_traits::Complexity;
@@ -258,6 +262,13 @@ mod tests {
         }
     }
 
+    /// A benchmark report carries one timing per entry that ran, any other
+    /// consumer none.
+    fn assert_timings_match_ran(report: &MainReport) {
+        let expected = if report.consumer == "benchmark" { report.ran } else { 0 };
+        assert_eq!(report.timings.len(), expected, "{}: timings", report.consumer);
+    }
+
     /// Acceptance: every new first-class kind ticks cleanly through ALL THREE
     /// consumer Mains (Correctness, Visualiser, Benchmark) — the same pipeline
     /// the sorts run through. Each Main is kind-agnostic (keys off `e.category`
@@ -266,11 +277,10 @@ mod tests {
     #[test]
     fn each_new_kind_ticks_through_all_three_mains() {
         use array_vis_bench_core::mains::{Benchmark, Correctness, Main, Visualiser};
-        let mains: Vec<Box<dyn Main>> = vec![
-            Box::new(Correctness),
-            Box::new(Visualiser::default()),
-            Box::new(Benchmark::default()),
-        ];
+        // n = 16 is within the cap of most small sorts, so they run rather than skip.
+        let benchmark = Benchmark { n: 16, k: 1 };
+        let mains: Vec<Box<dyn Main>> =
+            vec![Box::new(Correctness), Box::new(Visualiser::default()), Box::new(benchmark)];
         for cat in [
             Category::Rotation,
             Category::Partition,
@@ -283,7 +293,12 @@ mod tests {
             assert!(!es.is_empty(), "no entries for {cat:?}");
             for m in &mains {
                 let r = m.run(&es);
-                assert_eq!(r.ran, es.len(), "{cat:?}/{}: ran {} of {}", m.name(), r.ran, es.len());
+                let expected = match m.name() {
+                    "benchmark" => es.iter().filter(|e| benchmark.admits(e)).count(),
+                    _ => es.len(),
+                };
+                assert_eq!(r.ran, expected, "{cat:?}/{}: ran {} of {}", m.name(), r.ran, expected);
+                assert_timings_match_ran(&r);
                 assert!(
                     r.failures.is_empty(),
                     "{cat:?}/{}: failures {:?}",
@@ -379,15 +394,30 @@ mod tests {
                 assert_eq!(rep.ran, 18, "{} ran {} of 18", rep.consumer, rep.ran);
                 assert!(rep.all_ok(), "{} had failures: {:?}", rep.consumer, rep.failures);
                 assert_eq!(rep.ok, 18, "{} ok {} of 18", rep.consumer, rep.ok);
+                assert_timings_match_ran(rep);
             }
         }
 
-        /// The timing consumer runs over the Sort category, times each survivor,
-        /// and produces a clean ranking. Small n/k so it's a smoke test, not a bench.
+        /// `run_timing` benchmarks the whole emitted catalog, every category, and
+        /// times each entry whose cap admits `n`. Small n/k so it's a smoke test,
+        /// not a bench.
         #[test]
-        fn timing_consumer_ranks_sorts() {
-            let report = crate::run_timing(64, 1);
-            assert!(report.ran > 0, "timed no sorts");
+        fn run_timing_times_the_whole_catalog() {
+            let report = crate::run_timing(Some(64), Some(1));
+            let benchmark = array_vis_bench_core::mains::Benchmark { n: 64, k: 1 };
+            let skipped = ALGORITHMS.iter().filter(|e| !benchmark.admits(e)).count();
+            assert_eq!(report.ran + skipped, ALGORITHMS.len(), "every entry ran or was skipped");
+            assert!(report.all_ok(), "timing had failures: {:?}", report.failures);
+            assert_eq!(report.timings.len(), report.ran, "one timing per entry that ran");
+        }
+
+        /// With no overrides `run_timing` runs the benchmark consumer's own defaults.
+        #[test]
+        fn run_timing_without_overrides_uses_the_benchmark_defaults() {
+            let benchmark = array_vis_bench_core::mains::Benchmark::default();
+            let report = crate::run_timing(None, None);
+            let admitted = ALGORITHMS.iter().filter(|e| benchmark.admits(e)).count();
+            assert_eq!(report.ran, admitted, "ran the entries the default n admits");
             assert!(report.all_ok(), "timing had failures: {:?}", report.failures);
         }
 
@@ -430,6 +460,7 @@ mod tests {
                 assert_eq!(rep.ran, 18, "{} ran {} of 18", rep.consumer, rep.ran);
                 assert!(rep.all_ok(), "{} had failures: {:?}", rep.consumer, rep.failures);
                 assert_eq!(rep.ok, 18, "{} ok {} of 18", rep.consumer, rep.ok);
+                assert_timings_match_ran(rep);
             }
         }
 

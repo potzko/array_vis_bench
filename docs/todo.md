@@ -50,10 +50,11 @@ category drivers plus the per category input slices fill that role, and the
 4. The set quick select heap family shipped at minimal proof scope (two
    variants). Widening the inner select's partition role or the arities is
    a curation decision, not new machinery.
-5. Benchmarking. The Criterion bench and its archive are gone; `--timing`
-   and `speed_test` are the live benchmarks and `compare_sorts` the gate.
-   A persisted timing archive would give `plot_bench.py` a producer again
-   and restore the N scaling chart.
+5. Benchmarking. The Criterion bench and its archive are gone; the
+   `benchmark` consumer (`--timing [N] [K]` and `--consumers`) is the live
+   benchmark and `compare_sorts` the gate. A persisted timing archive would
+   give `plot_bench.py` a producer again and restore the N scaling chart;
+   `MainReport::timings` holds the medians such an archive would write.
 6. Unify sorts under `CorrectnessSuite`. Full sorts bypass the suite
    because they have no role trait, only an inherent `sort`. A `DirectSort`
    role trait would close the asymmetry noted in
@@ -99,8 +100,9 @@ afternoon each and remove concepts rather than move them.
    and the second registry crate and the four self registration features
    are gone.
    See [implementation_plans/entry_owned_navigation.md](implementation_plans/entry_owned_navigation.md).
-5. One timing consumer. `--timing`, `speed_test` and the `Benchmark` and
-   `Timing` mains collapse to one `benchmark` consumer.
+5. One timing consumer. Done: `benchmark` is the one consumer that times,
+   a fastest first table per category with `n` and `k` defaulting to 1024
+   and 3; `--timing` overrides them and the speed test binary is gone.
    See [implementation_plans/one_timing_consumer.md](implementation_plans/one_timing_consumer.md).
 6. Derive `uses` from the owning crate, after renaming the four colliding
    type heads.

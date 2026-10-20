@@ -45,7 +45,7 @@ end
 | `slot <name> <Role>` | a type parameter filled by any component of that role; a query fills every slot |
 | `const <name> [values <v>...]` | a const generic, matched by name or position; the value list is the finite set a quantified hole ranges over, and a const without one takes only a literal |
 | `menu <a / b>` | picker sub path beneath the category root |
-| `max_input <n>` | cap on input size, a contract or a time budget; becomes `max_input_size`, which the picker, the sort battery, the benchmark and timing all honour |
+| `max_input <n>` | cap on input size, a contract or a time budget; becomes `max_input_size`, which the picker, the sort battery and the benchmark all honour |
 | `adaptive <bool>` | per family literal, not inherited from the type |
 | `nondeterministic <bool>` | the trace varies between runs; becomes `AlgorithmEntry.nondeterministic` |
 
@@ -166,7 +166,6 @@ these places:
 5. The wrapper name, its role and its category: one row of the `WRAPPERS`
    table in `spec_core/src/avbs.rs`.
 6. A `Kinds: <Kind>Alg = <Kind>Alg<_>` binding in `spec_catalog/kinds.avbs`.
-7. The category in `src/bin/speed_test.rs`.
 
 ## Validation summary
 

@@ -129,7 +129,7 @@ resolver = "2"
 # Binary crate: the default `array_vis_bench` binary is a spec-only link root —
 # its `ALGORITHMS` come entirely from `spec_catalog`. Keeps the `array_vis_bench`
 # name stable for the CLI entry point (`cargo run` defaults to it) and hosts the
-# auxiliary dev tools in `src/bin/` (auto-discovered: compare_sorts, speed_test,
+# auxiliary dev tools in `src/bin/` (auto-discovered: compare_sorts,
 # measure_random_shell).
 
 [package]
@@ -158,7 +158,7 @@ lto = "thin"
 # crates below and calls array_vis_bench_cli::run().
 array_vis_bench_cli = { path = "array_vis_bench_cli" }
 array_vis_bench_traits = { path = "array_vis_bench_traits" }
-# Registry/harness ABI — the `speed_test` aux tool iterates its `ALGORITHMS`.
+# Registry/harness ABI, the crate every catalog entry registers into.
 array_vis_bench_core = { path = "array_vis_bench_core" }
 # Bin-only direct deps for the CLI / harness layer and the aux tools.
 rand = "0.8"
@@ -184,4 +184,4 @@ fun_sorts_lib = { path = "crates/families/fun_sorts_lib" }
 
 # Binaries are auto-discovered: src/main.rs → `array_vis_bench` (the default
 # spec-only visualiser); src/bin/*.rs → the aux dev tools (compare_sorts,
-# speed_test, measure_random_shell).
+# measure_random_shell).

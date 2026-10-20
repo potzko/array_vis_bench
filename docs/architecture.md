@@ -125,14 +125,16 @@ of `&AlgorithmEntry`, drive every one through a pipeline and return a
 |---|---|
 | visualiser | runs the entry under `VisualizerLogger`, hands the event stream to `sort_vis::Mp4Visualizer`, which streams frames to `ffmpeg` |
 | correctness | calls the entry's `run_correctness` pointer |
-| benchmark | runs the entry under `NoOpLogger` against its category's primary input and times it |
-| timing | the same, reported as a fastest and slowest table over the sort category |
+| benchmark | runs the entry under `NoOpLogger` against its category's primary input, `k` runs at array size `n` (defaults 3 and 1024), and keeps the median; an entry whose cap is below `n` is skipped and counted |
 
 The interactive binary is the visualiser consumer behind a picker.
 `array_vis_bench_cli::run` reads the registry by name and function pointer
 only, so it does not know or care how an entry was registered. The
 `--consumers` flag runs the program in `spec_catalog/consumers.avbs` over the
-whole emitted catalog instead.
+whole emitted catalog instead. The `--timing [N] [K]` flag runs the benchmark
+consumer alone over the whole catalog, with `N` and `K` overriding its defaults,
+and prints one fastest first table of medians per category. The medians also
+come back as `MainReport::timings`.
 
 ### Inputs
 

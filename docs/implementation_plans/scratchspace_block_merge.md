@@ -53,7 +53,7 @@ Visualiser (buffer tile fills/drains on park/place, blocks shift on relocate, ra
 and Benchmark all cover park/place/relocate/block_swap/roll — not just a roll. Wiring: `Category` +
 `as_str` + `list_inputs`/`primary_input` (reuse `SORT_INPUTS`) + `run_scratchspace_with_input` +
 `scratchspace_battery` + `ScratchspaceSuite` + `spec_emit::scratchspace_entry_body` +
-`ScratchspaceAlg`→`ScratchspaceKind` in `spec_core::avbs` + `kinds.avbs` + `speed_test`. Ticks through
+`ScratchspaceAlg`->`ScratchspaceKind` in `spec_core::avbs` + `kinds.avbs`. Ticks through
 all three mains (67 catalog tests green; 13 leaf tests incl. per-op contract checks; clippy-clean).
 
 **Pivot note:** the earlier standalone design (a `Scratchspace<T>` trait with `InArray`/`ExternalFixed`/

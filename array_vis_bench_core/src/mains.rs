@@ -9,8 +9,9 @@
 //! entry emitted by the spec compiler and one registered by the legacy combo
 //! path look identical here (both are just `AlgorithmEntry` rows).
 
-use crate::bench_registry::{primary_input, AlgorithmEntry, RunConfig, ALGORITHMS};
+use crate::bench_registry::{primary_input, AlgorithmEntry, Category, RunConfig, ALGORITHMS};
 use sort_logger::{NoOpLogger, SortLogger, VisualizerLogger};
+use std::collections::BTreeMap;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::time::{Duration, Instant};
 
@@ -22,6 +23,9 @@ pub struct MainReport {
     pub ok: usize,
     /// Names of the algorithms that failed (panicked, or produced no output).
     pub failures: Vec<String>,
+    /// The median run time of each algorithm a timing consumer ran, in the
+    /// order it ran them. Empty for a consumer that does not time.
+    pub timings: Vec<(&'static str, Duration)>,
 }
 
 impl MainReport {
@@ -149,17 +153,76 @@ impl Main for Visualiser {
     }
 }
 
-/// Benchmark consumer: runs each algorithm with a [`NoOpLogger`] (so only the
-/// algorithm's work is exercised; timing is left to the caller). A panic is a
-/// failure. Included for parity with the AVBS consumer list.
+/// Benchmark consumer: times each algorithm on a random array of size `n`, `k`
+/// times (fresh seed per run, [`NoOpLogger`] so only the algorithm's work is
+/// measured), then prints one table per category of the median run times,
+/// fastest first. `k` is at least 1, `run` clamps it.
+///
+/// An algorithm whose contract cap (`max_input_size`) is below `n` cannot run
+/// at that size, so it is skipped and counted, not a failure. It is excluded
+/// rather than clamped so every timed entry ran at the same `n` and the ranking
+/// is fair.
+#[derive(Clone, Copy, Debug)]
 pub struct Benchmark {
-    pub config: RunConfig,
+    pub n: usize,
+    pub k: usize,
 }
 
 impl Default for Benchmark {
     fn default() -> Self {
-        Self { config: RunConfig { size: 256, seed: 0 } }
+        Self { n: 1024, k: 3 }
     }
+}
+
+impl Benchmark {
+    /// Whether `entry`'s cap lets it run at this benchmark's `n`.
+    pub fn admits(&self, entry: &AlgorithmEntry) -> bool {
+        entry.max_input_size.map_or(true, |cap| cap >= self.n)
+    }
+
+    // The median of `k` timed runs on seeds 0 to k - 1, `None` when one panicked.
+    fn median(&self, entry: &AlgorithmEntry, k: usize) -> Option<Duration> {
+        let input = primary_input(entry.category);
+        let mut runs = (0..k as u64)
+            .map(|seed| {
+                let config = RunConfig { size: self.n, seed };
+                let start = Instant::now();
+                catch_unwind(AssertUnwindSafe(|| {
+                    (entry.run_with_input)(input, &config, &mut NoOpLogger)
+                }))
+                .ok()
+                .map(|()| start.elapsed())
+            })
+            .collect::<Option<Vec<_>>>()?;
+        runs.sort_unstable();
+        Some(runs[k / 2])
+    }
+}
+
+// One table per category, categories in name order, each table fastest first
+// with the name column as wide as its longest name.
+fn tables(timed: &[(Category, &str, Duration)]) -> String {
+    let grouped = BTreeMap::<&str, Vec<_>>::new();
+    let by_category = timed.iter().fold(grouped, |mut acc, &(category, name, median)| {
+        acc.entry(category.as_str()).or_default().push((name, median));
+        acc
+    });
+    by_category
+        .into_iter()
+        .map(|(category, mut rows)| {
+            rows.sort_by_key(|&(_, median)| median);
+            let width = rows.iter().map(|(name, _)| name.len()).fold("algorithm".len(), usize::max);
+            let header = [
+                format!("=== {category} ({} variants) ===", rows.len()),
+                format!("{:<width$}  {:>12}", "algorithm", "median"),
+                format!("{:-<width$}  {:->12}", "", ""),
+            ];
+            let lines =
+                rows.iter().map(|(name, median)| format!("{name:<width$}  {median:>12.2?}"));
+            header.into_iter().chain(lines).collect::<Vec<_>>().join("\n")
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n")
 }
 
 impl Main for Benchmark {
@@ -167,96 +230,117 @@ impl Main for Benchmark {
         "benchmark"
     }
     fn run(&self, sorts: &[&'static AlgorithmEntry]) -> MainReport {
-        let mut r = MainReport { consumer: self.name(), ..Default::default() };
-        for e in sorts {
-            r.ran += 1;
-            let input = primary_input(e.category);
-            // Respect each algorithm's contract cap: a super-polynomial sort
-            // (e.g. slow sort) declares a small `max_input` precisely so it is
-            // never run at a size that won't return. Clamp to it.
-            let size = e.max_input_size.map_or(self.config.size, |c| self.config.size.min(c));
-            let cfg = RunConfig { size, seed: self.config.seed };
-            let res = catch_unwind(AssertUnwindSafe(|| {
-                (e.run_with_input)(input, &cfg, &mut NoOpLogger);
-            }));
-            match res {
-                Ok(()) => r.ok += 1,
-                Err(_) => r.failures.push(e.name.to_string()),
-            }
-        }
-        r
-    }
-}
-
-/// Timing consumer: times each algorithm on a random array of size `n`, `k`
-/// times (fresh seed per run, [`NoOpLogger`] so only the algorithm's work is
-/// measured), then prints the 10 fastest + 10 slowest by median run time.
-///
-/// An algorithm whose contract cap (`max_input_size`) is below `n` cannot run
-/// at that size, so it is skipped (counted, not a failure — same reasoning as
-/// [`Benchmark`]'s clamp, but here we exclude rather than clamp so every timed
-/// entry ran at the *same* `n` and the ranking is fair).
-pub struct Timing {
-    pub n: usize,
-    pub k: usize,
-}
-
-impl Main for Timing {
-    fn name(&self) -> &'static str {
-        "timing"
-    }
-    fn run(&self, sorts: &[&'static AlgorithmEntry]) -> MainReport {
-        let mut r = MainReport { consumer: self.name(), ..Default::default() };
         let k = self.k.max(1);
-        let mut timed: Vec<(&str, Duration)> = Vec::new();
-        let mut skipped = 0usize;
-        for e in sorts {
-            if e.max_input_size.map_or(false, |cap| cap < self.n) {
-                skipped += 1;
-                continue;
-            }
-            r.ran += 1;
-            let input = primary_input(e.category);
-            let mut durs: Vec<Duration> = Vec::with_capacity(k);
-            let mut failed = false;
-            for trial in 0..k {
-                let cfg = RunConfig { size: self.n, seed: trial as u64 };
-                let start = Instant::now();
-                let res = catch_unwind(AssertUnwindSafe(|| {
-                    (e.run_with_input)(input, &cfg, &mut NoOpLogger);
-                }));
-                if res.is_err() {
-                    failed = true;
-                    break;
-                }
-                durs.push(start.elapsed());
-            }
-            if failed {
-                r.failures.push(e.name.to_string());
-                continue;
-            }
-            durs.sort_unstable();
-            timed.push((e.name, durs[k / 2])); // median
-            r.ok += 1;
-        }
-
-        timed.sort_by_key(|(_, d)| *d);
-        println!(
-            "=== timing: n={}, k={} — {} timed, {} skipped (cap < n) ===",
-            self.n, self.k, timed.len(), skipped
-        );
-        let show = |label: &str, rows: &[(&str, Duration)]| {
-            println!("{label}:");
-            for (name, d) in rows {
-                println!("  {:>12}  {}", format!("{d:.3?}"), name);
-            }
+        let (runnable, skipped): (Vec<_>, Vec<_>) =
+            sorts.iter().copied().partition(|e| self.admits(e));
+        let results: Vec<_> = runnable.into_iter().map(|e| (e, self.median(e, k))).collect();
+        let timed: Vec<_> =
+            results.iter().filter_map(|&(e, median)| median.map(|m| (e, m))).collect();
+        let failed = results.iter().filter(|(_, median)| median.is_none());
+        let r = MainReport {
+            consumer: self.name(),
+            ran: results.len(),
+            ok: timed.len(),
+            failures: failed.map(|(e, _)| e.name.to_string()).collect(),
+            timings: timed.iter().map(|&(e, median)| (e.name, median)).collect(),
         };
-        let ten = 10.min(timed.len());
-        show("10 fastest", &timed[..ten]);
-        show("10 slowest", &timed[timed.len() - ten..]);
+        println!(
+            "=== benchmark: n={}, k={k}, {} timed, {} skipped (cap < n) ===",
+            self.n, r.ok, skipped.len()
+        );
+        let rows: Vec<_> = timed.iter().map(|&(e, median)| (e.category, e.name, median)).collect();
+        println!("\n{}", tables(&rows));
         if !r.failures.is_empty() {
             println!("{} panicked: {}", r.failures.len(), r.failures.join(", "));
         }
         r
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use array_vis_bench_traits::Complexity;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    static RUNS: AtomicUsize = AtomicUsize::new(0);
+    static SIZE: AtomicUsize = AtomicUsize::new(0);
+
+    // Records how often and at what size it ran, so a test can read the
+    // consumer's `k` and `n` back out of the entry it drove.
+    fn record(_input: &str, config: &RunConfig, _logger: &mut dyn SortLogger<usize>) {
+        RUNS.fetch_add(1, Ordering::SeqCst);
+        SIZE.store(config.size, Ordering::SeqCst);
+    }
+
+    fn no_battery() {}
+
+    const fn entry(name: &'static str, cap: Option<usize>) -> AlgorithmEntry {
+        AlgorithmEntry {
+            name,
+            category: Category::Sort,
+            worst: Complexity::N1,
+            best: Complexity::N1,
+            average: Complexity::N1,
+            space: Complexity::CONST,
+            stable: true,
+            adaptive: false,
+            nondeterministic: false,
+            max_input_size: cap,
+            menu: &[],
+            axes: &[],
+            label_template: "",
+            run_with_input: record,
+            run_correctness: no_battery,
+        }
+    }
+
+    static FITS: AlgorithmEntry = entry("fits", Some(1024));
+    static TOO_SMALL: AlgorithmEntry = entry("too small", Some(1023));
+
+    #[test]
+    fn benchmark_defaults_to_1024_and_3() {
+        let defaults = Benchmark::default();
+        assert_eq!((defaults.n, defaults.k), (1024, 3));
+    }
+
+    fn ms(millis: u64) -> Duration {
+        Duration::from_millis(millis)
+    }
+
+    #[test]
+    fn a_table_lists_the_fastest_first_with_right_aligned_medians() {
+        let timed = [(Category::Sort, "slow", ms(5)), (Category::Sort, "fast", ms(1))];
+        let table = tables(&timed);
+        let lines: Vec<&str> = table.lines().collect();
+        assert_eq!(lines[0], "=== sort (2 variants) ===");
+        assert!(lines[3].starts_with("fast") && lines[3].ends_with("1.00ms"), "{table}");
+        assert!(lines[4].starts_with("slow") && lines[4].ends_with("5.00ms"), "{table}");
+        assert_eq!(lines[3].len(), lines[4].len(), "the median column lines up");
+    }
+
+    #[test]
+    fn there_is_one_table_per_category_that_timed_something() {
+        let timed = [
+            (Category::Sort, "a sort", ms(2)),
+            (Category::Rotation, "a rotation", ms(1)),
+            (Category::Sort, "another sort", ms(3)),
+        ];
+        let table = tables(&timed);
+        let headers: Vec<&str> = table.lines().filter(|l| l.starts_with("===")).collect();
+        assert_eq!(headers, ["=== rotation (1 variants) ===", "=== sort (2 variants) ==="]);
+        assert!(tables(&[]).is_empty(), "no entries, no tables");
+    }
+
+    #[test]
+    fn the_benchmark_by_name_runs_at_the_defaults() {
+        let benchmark = main_by_name("benchmark").expect("benchmark is registered by name");
+        assert_eq!(benchmark.name(), "benchmark");
+        let report = benchmark.run(&[&FITS, &TOO_SMALL]);
+        assert_eq!((report.ran, report.ok), (1, 1), "the entry capped below n is skipped");
+        assert_eq!(RUNS.load(Ordering::SeqCst), 3, "k runs of the one entry that ran");
+        assert_eq!(SIZE.load(Ordering::SeqCst), 1024);
+        assert_eq!(report.timings.len(), 1);
+        assert_eq!(report.timings[0].0, "fits");
     }
 }
