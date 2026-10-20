@@ -10,9 +10,9 @@
 # O(N^2.71), cyclent → O(N^3)); the `Complexity` enum already represents them, and
 # every emitted type carries its bounds via `fun_sorts_lib::composable`.
 #
-# `max_input` caps the (slow) chaos sorts so the correctness battery stays bounded
-# — the contract-as-data form of the legacy `max_n_for_tests`. random shell sort is
-# `nondeterministic` (randomised gaps) so it opts out of the determinism check.
+# `max_input` caps the (slow) chaos sorts so the correctness battery stays bounded.
+# random shell sort is `nondeterministic` (randomised gaps), so a check that compares
+# two traces of one entry skips it.
 
 # ════════════════════════════ ZERO-AXIS SORTS ═══════════════════════════════
 component fs_slow_sort

@@ -530,12 +530,20 @@ pub struct AlgorithmEntry {
     /// (e.g. insertion sort, Tim sort). Not compositional — declared
     /// per-family as a literal.
     pub adaptive: bool,
-    /// Optional contract-defined upper bound on input size. `None` =
-    /// unbounded (every general-purpose sort/rotation/partition/merge).
-    /// `Some(n)` means inputs larger than `n` are out-of-contract —
-    /// e.g. a small-sort with `THRESHOLD = 32`. The interactive picker
-    /// uses this to cap the size prompt; `run_with_input` does its own
-    /// defensive clamp so misuse from elsewhere is still safe.
+    /// True if the `SortLog` trace is intentionally different between runs,
+    /// such as a randomised gap sequence. A check that compares two traces
+    /// of the same entry must skip it.
+    pub nondeterministic: bool,
+    /// Upper bound on input size, `None` for unbounded (every general
+    /// purpose sort, rotation, partition and merge). One field holds two
+    /// kinds of limit. For the small sorts it is a contract: the type
+    /// refuses longer input, as with `THRESHOLD = 32`. For beap, the chaos
+    /// sorts and the set quick heap sort it is a time budget: longer input
+    /// is correct but too slow to wait for. Every consumer treats the two
+    /// alike: the picker caps its size prompt, the correctness battery
+    /// skips longer patterns, the benchmark clamps its size and the timing
+    /// table skips the entry. Split the field when a consumer needs to tell
+    /// them apart.
     pub max_input_size: Option<usize>,
     /// Run the algorithm against the named input. The input must be
     /// registered in the input registry matching `category`. The
@@ -552,77 +560,6 @@ pub struct AlgorithmEntry {
 
 #[distributed_slice]
 pub static ALGORITHMS: [AlgorithmEntry] = [..];
-
-/// Opt-in cap registry: `(sort_name, max_n_for_random_inputs)` pairs.
-/// Sorts that can't handle large random inputs in reasonable time add
-/// themselves via `register_test_cap!` (or a manual `distributed_slice`
-/// entry); `max_n_for_tests` looks the cap up by name. Default is
-/// "no cap" — no change needed at the call site for fast sorts.
-#[distributed_slice]
-pub static SORT_TEST_CAPS: [(&'static str, usize)] = [..];
-
-/// Opt-out registry for algorithms whose `SortLog` trace is intentionally
-/// nondeterministic between runs. The determinism check in
-/// `crate::property_tests::determinism` skips any entry whose `name`
-/// appears here.
-///
-/// The default is "deterministic" — only algorithms that genuinely use
-/// uninitialised entropy (e.g. randomised gap sequences) opt out via
-/// `register_nondeterministic!`.
-#[distributed_slice]
-pub static NONDETERMINISTIC_ALGOS: [&'static str] = [..];
-
-/// True if `name` was registered as nondeterministic via
-/// `register_nondeterministic!`.
-pub fn is_nondeterministic(name: &str) -> bool {
-    NONDETERMINISTIC_ALGOS.iter().any(|n| *n == name)
-}
-
-/// Mark an algorithm as having a nondeterministic `SortLog` trace, so the
-/// determinism check skips it. Place next to the algorithm's `family!`
-/// invocation — one call per registered leaf name.
-///
-/// ```text
-/// register_nondeterministic!("random shell sort<uniform>");
-/// register_nondeterministic!("random shell sort<parabolic>");
-/// ```
-#[macro_export]
-macro_rules! register_nondeterministic {
-    ($name:expr) => {
-        const _: () = {
-            #[::linkme::distributed_slice($crate::bench_registry::NONDETERMINISTIC_ALGOS)]
-            #[allow(non_upper_case_globals)]
-            static ENTRY: &'static str = $name;
-        };
-    };
-}
-
-/// Return the random-input size cap declared for `sort_name`, if any.
-/// Used by `correctness::check_sort` to skip oversized random arrays
-/// for slow sorts.
-pub fn max_n_for_tests(sort_name: &str) -> Option<usize> {
-    SORT_TEST_CAPS
-        .iter()
-        .find(|(name, _)| *name == sort_name)
-        .map(|(_, cap)| *cap)
-}
-
-/// Declare a random-input size cap for a sort. Place near the sort's
-/// `family!` invocation:
-///
-/// ```text
-/// register_test_cap!("bad heap sort", 1000);
-/// ```
-#[macro_export]
-macro_rules! register_test_cap {
-    ($name:expr, $cap:expr) => {
-        const _: () = {
-            #[::linkme::distributed_slice($crate::bench_registry::SORT_TEST_CAPS)]
-            #[allow(non_upper_case_globals)]
-            static CAP: (&'static str, usize) = ($name, $cap);
-        };
-    };
-}
 
 /// All registered algorithm entries in canonical menu order — depth-first
 /// traversal of the registry's tree, which sorts each level by subtree
@@ -713,8 +650,8 @@ pub type SmallSortPropHook = fn(correctness::SmallSortFnPtr, &str, usize);
 /// per category rather than inlined per leaf.
 pub mod correctness {
     use super::{
-        max_n_for_tests, MERGE_PROP_HOOKS, PARTITION_PROP_HOOKS, QUICK_SELECT_PROP_HOOKS,
-        ROTATION_PROP_HOOKS, SMALL_SORT_PROP_HOOKS, SORT_PROP_HOOKS,
+        MERGE_PROP_HOOKS, PARTITION_PROP_HOOKS, QUICK_SELECT_PROP_HOOKS, ROTATION_PROP_HOOKS,
+        SMALL_SORT_PROP_HOOKS, SORT_PROP_HOOKS,
     };
     use crate::array_gen::{get_arr, get_rand_arr, get_rand_arr_in_range, get_reversed_arr};
     use rand::seq::SliceRandom;
@@ -767,12 +704,12 @@ pub mod correctness {
         );
     }
 
-    /// Generic sort correctness battery. Pattern bank is identical to the
-    /// pre-refactor `check_sort` — same inputs, same caps, same assertions
-    /// — just with the sort_fn passed in instead of an entry.
-    pub fn sort_battery(sort_fn: SortFnPtr, name: &str) {
+    /// Generic sort correctness battery. `cap` is the entry's
+    /// `max_input_size`: patterns longer than it are skipped, `None` skips
+    /// nothing.
+    pub fn sort_battery(sort_fn: SortFnPtr, name: &str, cap: Option<usize>) {
         let mut rng = thread_rng();
-        let cap = max_n_for_tests(name).unwrap_or(usize::MAX);
+        let cap = cap.unwrap_or(usize::MAX);
 
         macro_rules! check {
             ($arr:expr, $label:expr) => {{
@@ -1177,6 +1114,29 @@ pub mod correctness {
                 arr.swap(0, k - 1);
             }
             heap_permute(arr, k - 1, f);
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        // Panics on any input longer than 8, so a battery that feeds a pattern
+        // past the cap it was given fails the test.
+        fn refuses_over_eight(arr: &mut [usize], _logger: &mut NoOpLogger) {
+            assert!(arr.len() <= 8, "fed {} elements past the cap", arr.len());
+            arr.sort();
+        }
+
+        #[test]
+        fn sort_battery_skips_patterns_longer_than_the_cap() {
+            sort_battery(refuses_over_eight, "bounded", Some(8));
+        }
+
+        #[test]
+        #[should_panic(expected = "past the cap")]
+        fn sort_battery_without_a_cap_feeds_long_patterns() {
+            sort_battery(refuses_over_eight, "unbounded", None);
         }
     }
 }

@@ -48,9 +48,9 @@ end
 | `project <name> <Role>` | a structural parameter absent from `type`, present only so a refinement can constrain it |
 | `category <Cat>` | makes the component emittable as a first class entry; omit for pure slot fillers |
 | `menu <a / b>` | picker sub path beneath the category root |
-| `max_input <n>` | contract cap on input size; becomes `max_input_size` |
+| `max_input <n>` | cap on input size, a contract or a time budget; becomes `max_input_size`, which the picker, the sort battery, the benchmark and timing all honour |
 | `adaptive <bool>` | per family literal, not inherited from the type |
-| `nondeterministic <bool>` | the trace varies between runs; opts out of the determinism check |
+| `nondeterministic <bool>` | the trace varies between runs; becomes `AlgorithmEntry.nondeterministic` |
 
 Roles are strings, finer grained than Rust traits. A role names a population,
 so one trait is often sliced into several roles that queries can enumerate:
@@ -144,6 +144,9 @@ driver and its `run_correctness` is the category's battery:
 | SmallSort | `run_small_sort_with_input` | `SmallSortSuite` |
 | QuickSelect | `run_quick_select_with_input` | `SelectSuite` |
 | Scratchspace | `run_scratchspace_with_input` | `ScratchspaceSuite` |
+
+A sort's battery call carries the entry's `max_input` literal, so the battery
+skips patterns longer than the cap.
 
 The suites are impls of `array_vis_bench_core::suites::CorrectnessSuite`,
 one per kind, parameterised over the kind's role trait.

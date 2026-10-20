@@ -109,41 +109,10 @@ impl ArrayBackend {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
         };
-        // `max_input` is a HARD contract bound (the type cannot accept inputs
-        // larger than `n`), so it must cap BOTH independent knobs:
-        //   - `max_input_size` — the interactive picker cap (`read_size_with_cap`
-        //     in main). `sort_family!` can't set this (always `None`); only
-        //     hand-written registrations (e.g. small-sorts) do.
-        //   - `SORT_TEST_CAPS` — the correctness-battery cap, read via
-        //     `max_n_for_tests`, NOT from `max_input_size`. This is the field
-        //     `sort_family!` drives (from its separate `max_n_for_tests`).
-        // Emitting only the picker cap would leave the battery uncapped, and a
-        // bounded sort would blow up on the battery's oversized random inputs —
-        // the per-entry-cap trap the project guards against. (A "slow but
-        // unbounded" sort wanting ONLY the test cap is a separate facet, deferred
-        // — no migrated family needs it yet.)
-        let cap_static = match ctx.max_input {
-            Some(n) => format!(
-"    #[linkme::distributed_slice({core}::SORT_TEST_CAPS)]
-    #[allow(non_upper_case_globals)]
-    static TEST_CAP: (&'static str, usize) = (NAME, {n});
-"
-            ),
-            None => String::new(),
-        };
-        // A nondeterministic-trace sort (e.g. randomised gaps) registers into
-        // `NONDETERMINISTIC_ALGOS` so the determinism property-check skips it —
-        // the data-driven equivalent of `register_nondeterministic!`.
-        let nondet_static = if ctx.nondeterministic {
-            format!(
-"    #[linkme::distributed_slice({core}::NONDETERMINISTIC_ALGOS)]
-    #[allow(non_upper_case_globals)]
-    static NONDET: &'static str = NAME;
-"
-            )
-        } else {
-            String::new()
-        };
+        // `max_input` is read twice from one literal: the entry field bounds the
+        // picker and the timing runs, and `sort_battery` skips patterns longer
+        // than it. A bounded sort left uncapped under test would blow up on the
+        // battery's oversized random inputs.
         // Picker placement: nest under the category root (`"sorts"`) followed by
         // the catalog `menu` sub-path, and expose each resolved top-level slot as
         // a faceted `(role, value)` axis — the same shape `sort_family!` emits, so
@@ -173,10 +142,10 @@ impl ArrayBackend {
         {core}::run_sort_with_input(input_name, config, sort_dyn, logger);
     }}
     fn run_correct() {{
-        {core}::correctness::sort_battery(sort_noop, NAME);
+        {core}::correctness::sort_battery(sort_noop, NAME, {max_input});
         {core}::correctness::sort_stability_battery(sort_noop, NAME, <Ty as {traits}::composable::HasStability>::STABLE);
     }}
-{cap_static}{nondet_static}    #[linkme::distributed_slice({core}::ALGORITHMS)]
+    #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
     static ENTRY: {core}::AlgorithmEntry = {core}::AlgorithmEntry {{
         name: NAME,
@@ -187,6 +156,7 @@ impl ArrayBackend {
         space: <Ty as {traits}::composable::HasSpace>::SPACE,
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
+        nondeterministic: {nondeterministic},
         max_input_size: {max_input},
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -195,11 +165,12 @@ impl ArrayBackend {
     #[allow(non_snake_case)]
     fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
 ",
-            // `core`, `traits`, `nav`, `logger`, `max_input`, `cap_static`,
-            // `menu_lit`, `axes_lit`, `template_lit` are captured inline; only
-            // these two rename.
+            // `core`, `traits`, `nav`, `logger`, `max_input`, `menu_lit`,
+            // `axes_lit`, `template_lit` are captured inline; only these three
+            // rename.
             label = ctx.label,
             adaptive = ctx.adaptive,
+            nondeterministic = ctx.nondeterministic,
         )
     }
 
@@ -218,18 +189,6 @@ impl ArrayBackend {
         let max_input = match ctx.max_input {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
-        };
-        // The quick-select battery uses fixed-size shapes (it doesn't consult
-        // `max_n_for_tests`), so a cap here only bounds the interactive picker.
-        // Emitted for uniformity; inert unless a leaf declares `max_input`.
-        let cap_static = match ctx.max_input {
-            Some(n) => format!(
-"    #[linkme::distributed_slice({core}::SORT_TEST_CAPS)]
-    #[allow(non_upper_case_globals)]
-    static TEST_CAP: (&'static str, usize) = (NAME, {n});
-"
-            ),
-            None => String::new(),
         };
         let mut menu_lit = String::from("\"quick selects\"");
         for seg in ctx.menu {
@@ -254,7 +213,7 @@ impl ArrayBackend {
     fn run_correct() {{
         <{suites}::SelectSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
     }}
-{cap_static}    #[linkme::distributed_slice({core}::ALGORITHMS)]
+    #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
     static ENTRY: {core}::AlgorithmEntry = {core}::AlgorithmEntry {{
         name: NAME,
@@ -265,6 +224,7 @@ impl ArrayBackend {
         space: <Ty as {traits}::composable::HasSpace>::SPACE,
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
+        nondeterministic: false,
         max_input_size: {max_input},
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -317,6 +277,7 @@ impl ArrayBackend {
         space: {traits}::Complexity::N1,
         stable: true,
         adaptive: {adaptive},
+        nondeterministic: false,
         max_input_size: None,
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -342,15 +303,6 @@ impl ArrayBackend {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
         };
-        let cap_static = match ctx.max_input {
-            Some(n) => format!(
-"    #[linkme::distributed_slice({core}::SORT_TEST_CAPS)]
-    #[allow(non_upper_case_globals)]
-    static TEST_CAP: (&'static str, usize) = (NAME, {n});
-"
-            ),
-            None => String::new(),
-        };
         let mut menu_lit = String::from("\"merges\"");
         for seg in ctx.menu {
             menu_lit.push_str(&format!(", {seg:?}"));
@@ -375,7 +327,7 @@ impl ArrayBackend {
     fn run_correct() {{
         {core}::correctness::merge_battery(merge_noop, NAME);
     }}
-{cap_static}    #[linkme::distributed_slice({core}::ALGORITHMS)]
+    #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
     static ENTRY: {core}::AlgorithmEntry = {core}::AlgorithmEntry {{
         name: NAME,
@@ -386,6 +338,7 @@ impl ArrayBackend {
         space: <Ty as {traits}::composable::HasSpace>::SPACE,
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
+        nondeterministic: false,
         max_input_size: {max_input},
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -405,22 +358,13 @@ impl ArrayBackend {
     /// `run_small_sort_with_input`, and correctness goes through `SmallSortSuite`
     /// (which feeds the leaf's `THRESHOLD` to the battery). A small sort is only
     /// correct up to its threshold, so `max_input` (set per leaf to the
-    /// threshold) caps BOTH the interactive picker and the battery. Entries nest
+    /// threshold) caps the interactive picker. Entries nest
     /// under the `"small sorts"` picker root.
     fn small_sort_entry_body(&self, ctx: &EntryCtx) -> String {
         let AbiPaths { core, traits, nav, logger, suites } = &self.paths;
         let max_input = match ctx.max_input {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
-        };
-        let cap_static = match ctx.max_input {
-            Some(n) => format!(
-"    #[linkme::distributed_slice({core}::SORT_TEST_CAPS)]
-    #[allow(non_upper_case_globals)]
-    static TEST_CAP: (&'static str, usize) = (NAME, {n});
-"
-            ),
-            None => String::new(),
         };
         let mut menu_lit = String::from("\"small sorts\"");
         for seg in ctx.menu {
@@ -443,7 +387,7 @@ impl ArrayBackend {
     fn run_correct() {{
         <{suites}::SmallSortSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
     }}
-{cap_static}    #[linkme::distributed_slice({core}::ALGORITHMS)]
+    #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
     static ENTRY: {core}::AlgorithmEntry = {core}::AlgorithmEntry {{
         name: NAME,
@@ -458,6 +402,7 @@ impl ArrayBackend {
         space: <Ty as {traits}::composable::HasSpace>::SPACE,
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
+        nondeterministic: false,
         max_input_size: {max_input},
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -482,15 +427,6 @@ impl ArrayBackend {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
         };
-        let cap_static = match ctx.max_input {
-            Some(n) => format!(
-"    #[linkme::distributed_slice({core}::SORT_TEST_CAPS)]
-    #[allow(non_upper_case_globals)]
-    static TEST_CAP: (&'static str, usize) = (NAME, {n});
-"
-            ),
-            None => String::new(),
-        };
         let mut menu_lit = String::from("\"partitions\"");
         for seg in ctx.menu {
             menu_lit.push_str(&format!(", {seg:?}"));
@@ -512,7 +448,7 @@ impl ArrayBackend {
     fn run_correct() {{
         <{suites}::PartitionSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
     }}
-{cap_static}    #[linkme::distributed_slice({core}::ALGORITHMS)]
+    #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
     static ENTRY: {core}::AlgorithmEntry = {core}::AlgorithmEntry {{
         name: NAME,
@@ -523,6 +459,7 @@ impl ArrayBackend {
         space: <Ty as {traits}::composable::HasSpace>::SPACE,
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
+        nondeterministic: false,
         max_input_size: {max_input},
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -548,15 +485,6 @@ impl ArrayBackend {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
         };
-        let cap_static = match ctx.max_input {
-            Some(n) => format!(
-"    #[linkme::distributed_slice({core}::SORT_TEST_CAPS)]
-    #[allow(non_upper_case_globals)]
-    static TEST_CAP: (&'static str, usize) = (NAME, {n});
-"
-            ),
-            None => String::new(),
-        };
         let mut menu_lit = String::from("\"rotations\"");
         for seg in ctx.menu {
             menu_lit.push_str(&format!(", {seg:?}"));
@@ -578,7 +506,7 @@ impl ArrayBackend {
     fn run_correct() {{
         <{suites}::RotationSuite<Ty> as {suites}::CorrectnessSuite>::verify(NAME);
     }}
-{cap_static}    #[linkme::distributed_slice({core}::ALGORITHMS)]
+    #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
     static ENTRY: {core}::AlgorithmEntry = {core}::AlgorithmEntry {{
         name: NAME,
@@ -589,6 +517,7 @@ impl ArrayBackend {
         space: <Ty as {traits}::composable::HasSpace>::SPACE,
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
+        nondeterministic: false,
         max_input_size: {max_input},
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -639,7 +568,7 @@ mod tests {
     #[test]
     fn correctness_path_uses_the_real_batteries_with_the_noop_adapter() {
         let b = sort_body("x");
-        assert!(b.contains("array_vis_bench_core::bench_registry::correctness::sort_battery(sort_noop, NAME);"));
+        assert!(b.contains("array_vis_bench_core::bench_registry::correctness::sort_battery(sort_noop, NAME, None);"));
         assert!(b.contains("correctness::sort_stability_battery(sort_noop, NAME, <Ty as array_vis_bench_traits::composable::HasStability>::STABLE)"));
         // the stub's invented assert_sorts must be gone.
         assert!(!b.contains("assert_sorts"));
@@ -705,36 +634,50 @@ mod tests {
     }
 
     #[test]
-    fn declared_max_input_also_caps_the_correctness_battery() {
-        // A ceiling caps both the picker (`max_input_size`) AND the battery
-        // (a `SORT_TEST_CAPS` static) — emitting only the former would leave a
-        // bounded sort uncapped under test.
+    fn declared_max_input_is_passed_to_the_correctness_battery() {
         let capped = ArrayBackend::default()
             .entry_body(&EntryCtx { label: "slow", category: Some("Sort"), adaptive: false, nondeterministic: false, max_input: Some(64), axes: &[], menu: &[], label_template: "slow" })
             .unwrap();
         assert!(capped.contains("max_input_size: Some(64),"));
-        assert!(capped
-            .contains("#[linkme::distributed_slice(array_vis_bench_core::bench_registry::SORT_TEST_CAPS)]"));
-        assert!(capped.contains("static TEST_CAP: (&'static str, usize) = (NAME, 64);"));
+        assert!(capped.contains("correctness::sort_battery(sort_noop, NAME, Some(64));"));
 
-        // No ceiling → no test cap registered (matches `sort_family!`).
         let uncapped = sort_body("fast");
         assert!(uncapped.contains("max_input_size: None,"));
-        assert!(!uncapped.contains("SORT_TEST_CAPS"));
+        assert!(uncapped.contains("correctness::sort_battery(sort_noop, NAME, None);"));
     }
 
     #[test]
-    fn nondeterministic_flag_registers_the_determinism_opt_out() {
+    fn every_kind_registers_only_its_entry() {
+        // The cap and the flag live on the entry, so the only slice an emitted
+        // body joins is `ALGORITHMS`.
+        for cat in ["Sort", "QuickSelect", "Rotation", "SmallSort", "Partition", "Merge", "Scratchspace"] {
+            let b = ArrayBackend::default()
+                .entry_body(&EntryCtx { label: "x", category: Some(cat), adaptive: false, nondeterministic: false, max_input: Some(8), axes: &[], menu: &[], label_template: "x" })
+                .unwrap();
+            assert_eq!(b.matches("distributed_slice").count(), 1, "category `{cat}` joins a second slice");
+        }
+    }
+
+    #[test]
+    fn nondeterministic_flag_sets_the_entry_field() {
         let nd = ArrayBackend::default()
             .entry_body(&EntryCtx { label: "random shell sort<uniform>", category: Some("Sort"), adaptive: false, nondeterministic: true, max_input: Some(1000), axes: &[], menu: &[], label_template: "random shell sort<uniform>" })
             .unwrap();
-        assert!(nd.contains(
-            "#[linkme::distributed_slice(array_vis_bench_core::bench_registry::NONDETERMINISTIC_ALGOS)]"
-        ));
-        assert!(nd.contains("static NONDET: &'static str = NAME;"));
+        assert!(nd.contains("nondeterministic: true,"));
+        assert_eq!(nd.matches("distributed_slice").count(), 1, "the flag is not a side list");
 
-        // A deterministic sort emits no opt-out.
-        assert!(!sort_body("classic").contains("NONDETERMINISTIC_ALGOS"));
+        // A deterministic sort says so on the entry too.
+        assert!(sort_body("classic").contains("nondeterministic: false,"));
+    }
+
+    #[test]
+    fn every_kind_fills_the_nondeterministic_field() {
+        for cat in ["Sort", "QuickSelect", "Rotation", "SmallSort", "Partition", "Merge", "Scratchspace"] {
+            let b = ArrayBackend::default()
+                .entry_body(&EntryCtx { label: "x", category: Some(cat), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
+                .unwrap();
+            assert!(b.contains("nondeterministic: false,"), "category `{cat}` leaves the field unset");
+        }
     }
 
     #[test]

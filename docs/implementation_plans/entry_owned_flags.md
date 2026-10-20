@@ -1,23 +1,24 @@
 # Implementation plan: the entry owns its flags
 
-Status: NOT STARTED. Designed 2026-10-20 from the concept review recorded in
-`../todo.md`. Smallest of the "entry is the single source of truth" plans and
-the one to do first.
+Status: DONE (2026-10-20). Designed from the concept review recorded in
+`../todo.md`, the smallest of the "entry is the single source of truth" plans.
+Built as designed, with one choice the design left open: `sort_battery` takes
+`Option<usize>`, so the emitter passes the same literal it writes into
+`max_input_size`. The catalog golden did not move and the emitted entries and
+their types are identical.
 
 ## Problem
 
-Two facts about an entry live in side lists keyed by its name.
+Two facts about an entry lived in side lists keyed by its name.
 
-- `SORT_TEST_CAPS` holds `(name, cap)` pairs. `correctness::sort_battery`
-  looks the cap up by name through `max_n_for_tests`. The emitter writes the
-  component's `max_input` twice: into this list and into
-  `AlgorithmEntry::max_input_size`.
-- `NONDETERMINISTIC_ALGOS` holds names. `is_nondeterministic` reads it, and
-  its only caller in the tree is a catalog test. The determinism property
-  check it was written for has no reader any more.
+- A list of `(name, cap)` pairs. `correctness::sort_battery` looked the cap up
+  by name through a lookup function. The emitter wrote the component's
+  `max_input` twice: into this list and into `AlgorithmEntry::max_input_size`.
+- A list of names for the entries whose trace varies between runs. Its only
+  reader was a catalog test, because the determinism property check it was
+  written for had no reader any more.
 
-The two hand registration macros, `register_test_cap!` and
-`register_nondeterministic!`, have no callers.
+The two hand registration macros, one per list, had no callers.
 
 ## Design
 
@@ -38,10 +39,9 @@ a timing run that wants slow sorts included at a reduced size.
 ## Steps
 
 1. Tests first. In `spec_emit`: the sort body passes its cap to
-   `sort_battery` and contains no `SORT_TEST_CAPS`; a nondeterministic
-   component sets the field and emits no `NONDETERMINISTIC_ALGOS`. In
-   `spec_catalog`: `random_shell_opted_out_of_the_determinism_check` reads
-   the field.
+   `sort_battery` and no kind joins a slice other than `ALGORITHMS`; a
+   nondeterministic component sets the field. In `spec_catalog`:
+   `random_shell_opted_out_of_the_determinism_check` reads the field.
 2. Add the field and fill it in all seven arms (false outside sorts).
 3. Change the `sort_battery` signature to `(sort_fn, name, cap)`; update the
    emit and every other caller (`grep -rn 'sort_battery('` lists them).
@@ -52,6 +52,6 @@ a timing run that wants slow sorts included at a reduced size.
 ## Checks
 
 - `catalog.golden` unchanged.
-- `grep -rn 'SORT_TEST_CAPS\|NONDETERMINISTIC_ALGOS'` finds nothing.
+- A tree wide search for the removed slices, lookups and macros finds nothing.
 - The small sort battery still bounds its inputs at the threshold; the
   catalog test `each_caps_input_at_its_threshold` covers it.

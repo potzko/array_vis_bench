@@ -67,7 +67,7 @@ macro_rules! register_shell_variant {
             }
 
             fn run_correctness() {
-                array_vis_bench_core::bench_registry::correctness::sort_battery(sort_fn, SORT_NAME);
+                array_vis_bench_core::bench_registry::correctness::sort_battery(sort_fn, SORT_NAME, None);
                 array_vis_bench_core::bench_registry::correctness::sort_stability_battery(
                     sort_fn,
                     SORT_NAME,
@@ -95,6 +95,7 @@ macro_rules! register_shell_variant {
                     space:   <$sort_ty as array_vis_bench_traits::composable::HasSpace>::SPACE,
                     stable:  <$sort_ty as array_vis_bench_traits::composable::HasStability>::STABLE,
                     adaptive: false,
+                    nondeterministic: false,
                     max_input_size: None,
                     run_with_input,
                     run_correctness,

@@ -50,9 +50,7 @@ pub struct Component {
     pub adaptive: bool,
     /// Per-family literal: true if the algorithm's `SortLog` trace is
     /// intentionally nondeterministic between runs (e.g. randomised gaps). The
-    /// emit backend registers it into `NONDETERMINISTIC_ALGOS` so the
-    /// determinism property-check skips it — the contract-as-data analogue of
-    /// the hand-written `register_nondeterministic!`.
+    /// emit backend copies it into `AlgorithmEntry.nondeterministic`.
     pub nondeterministic: bool,
     /// Contract-defined upper bound on input size → `AlgorithmEntry.max_input_size`.
     pub max_input: Option<usize>,

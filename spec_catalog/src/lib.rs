@@ -1148,19 +1148,20 @@ mod tests {
 
         #[test]
         fn random_shell_opted_out_of_the_determinism_check() {
-            use array_vis_bench_core::bench_registry::is_nondeterministic;
-            // The `nondeterministic` .spec keyword → `NONDETERMINISTIC_ALGOS` for
-            // all 5 randomised-gap leaves.
+            // The `nondeterministic` .spec keyword sets the entry field on all 5
+            // randomised-gap leaves.
             let random: Vec<_> = entries()
                 .into_iter()
                 .filter(|e| e.name.starts_with("random shell sort"))
                 .collect();
             assert_eq!(random.len(), 5);
             for e in &random {
-                assert!(is_nondeterministic(e.name), "`{}` not registered nondeterministic", e.name);
+                assert!(e.nondeterministic, "`{}` not flagged nondeterministic", e.name);
             }
-            // a deterministic fun sort is NOT opted out.
-            assert!(!is_nondeterministic("slow sort"));
+            // a deterministic fun sort is NOT opted out, and nothing else is.
+            let find = |n: &str| entries().into_iter().find(|e| e.name == n).unwrap();
+            assert!(!find("slow sort").nondeterministic);
+            assert_eq!(ALGORITHMS.iter().filter(|e| e.nondeterministic).count(), 5);
         }
 
         /// All 195 pass the correctness battery — including the 168 quick-surrender

@@ -61,6 +61,6 @@ the reference implementation.
 - Auxiliary storage that grows with the input is allocated and freed through
   the logger so the renderer can show it.
 - A sort that cannot handle large random inputs declares `max_input` in its
-  spec or registers a test cap. A sort whose trace is intentionally random
-  declares `nondeterministic true`.
+  spec. A sort whose trace is intentionally random declares
+  `nondeterministic true`.
 - Nested loop indices are `i`, `ii`, `iii`.

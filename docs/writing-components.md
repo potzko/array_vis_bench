@@ -194,8 +194,9 @@ HeapPiv BeapPiv`.
 | `project <name> <Role>` | A *structural-only* parameter that does **not** appear in `type` , exists only so a query can refine on it (`Partition[pivot = ...]`). |
 | `category <Cat>` | If present, this component is emitted as a first-class catalog entry (`Sort`, `Partition`, `QuickSelect`, ...). Omit for pure slot-fillers. |
 | `menu <path>` | Picker sub-path beneath the category. |
-| `max_input <n>` | Contract cap: inputs larger than `n` are out of contract (small sorts, or expensive exotic sorts). Becomes `AlgorithmEntry.max_input_size`. |
+| `max_input <n>` | Cap: inputs larger than `n` are out of scope, either by contract (small sorts) or as a time budget (expensive exotic sorts). Becomes `AlgorithmEntry.max_input_size`. |
 | `adaptive <bool>` | Per-family literal: faster on nearly-sorted input. |
+| `nondeterministic <bool>` | Per-family literal: the trace varies between runs (randomised gaps). Becomes `AlgorithmEntry.nondeterministic`. |
 
 ### (c) The `.avbs` query , enumerate the combinations
 
@@ -279,6 +280,7 @@ pub struct AlgorithmEntry {
     pub space: Complexity,
     pub stable: bool,
     pub adaptive: bool,
+    pub nondeterministic: bool,
     pub max_input_size: Option<usize>,
     pub run_with_input: fn(&str, &RunConfig, &mut dyn sort_logger::SortLogger<usize>),
     pub run_correctness: fn(),
@@ -679,12 +681,13 @@ test suite (`cargo test`). The battery runs category-appropriate inputs under
 `NoOpLogger` and verifies the result. Two things you must respect:
 
 - **`max_input`** , if your component is only correct/feasible up to some size, declare
-  it. The correctness harness and the picker both honour `max_input_size`; a global test
-  `N` that ignores per-entry caps will OOM on an exotic sort.
-- **Slow or nondeterministic sorts** , very slow sorts register a cap via
-  `SORT_TEST_CAPS`; sorts whose trace is intentionally nondeterministic opt out of the
-  determinism check. Defaults are "no cap" and "deterministic" , you only act if your
-  sort is unusual.
+  it. The cap is a contract for a type that refuses longer input and a time budget for a
+  slow sort, and `max_input_size` serves both: the picker, the sort battery, the benchmark
+  and timing all honour it. A global test `N` that ignores per-entry caps will OOM on an
+  exotic sort.
+- **Nondeterministic sorts** , a sort whose trace is intentionally different between runs
+  declares `nondeterministic true`, which sets `AlgorithmEntry.nondeterministic`. Defaults
+  are "no cap" and "deterministic" , you only act if your sort is unusual.
 
 A leaf's own crate should carry at least one unit test that its `sort`/`select`/`rotate`
 actually sorts/selects/rotates. Keep it minimal , one property-style check is plenty.
