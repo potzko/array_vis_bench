@@ -86,8 +86,9 @@ Seven more places where one fact is stated twice, each with a plan. The
 recommended order is 1, 2, 3, then 4, 5, 6, then 7; the first three are an
 afternoon each and remove concepts rather than move them.
 
-1. The entry owns its flags. Replace the `SORT_TEST_CAPS` and
-   `NONDETERMINISTIC_ALGOS` name lists with fields on `AlgorithmEntry`.
+1. The entry owns its flags. Done: `AlgorithmEntry` carries `nondeterministic`,
+   `sort_battery` takes the cap as a parameter, and the two name keyed lists
+   are gone.
    See [implementation_plans/entry_owned_flags.md](implementation_plans/entry_owned_flags.md).
 2. Drop slot defaults and `project` from the spec grammar; no production
    query uses either.
@@ -158,8 +159,9 @@ slot, and the beap ninther dual selector has its own label.
 - Enumeration strategy names are `finite` and `affine`; no seed means a
   deterministic build, and `seed = random` is an explicit opt in whose tests
   may pin counts but not identities.
-- Per entry test caps and the nondeterminism opt out survive emission. A
-  global test size over the whole registry runs exotic sorts out of memory.
+- Per entry caps and the nondeterminism flag survive emission, as
+  `max_input_size` and `nondeterministic` on the entry. A global test size
+  over the whole registry runs exotic sorts out of memory.
 - Inputs stay separate from algorithms. The compiler selects algorithms,
   the per category input slices supply inputs, and exactly one input per
   category is primary.
