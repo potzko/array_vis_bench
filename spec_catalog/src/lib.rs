@@ -179,6 +179,32 @@ mod tests {
         assert!(dups.is_empty(), "duplicate registrations: {dups:?}");
     }
 
+    /// `kinds.avbs` names each kind only through its wrapper, so the wrapper alone
+    /// decides the category its family emits under.
+    #[test]
+    fn kinds_families_take_their_category_from_the_wrapper() {
+        let reg = spec_core::Registry::parse(include_str!(concat!(
+            env!("OUT_DIR"),
+            "/merged_catalog.spec"
+        )))
+        .expect("parse merged catalog");
+        let program =
+            spec_core::avbs::lower(include_str!(concat!(env!("OUT_DIR"), "/q_kinds.avbs")), &reg)
+                .expect("lower kinds.avbs");
+        let families: Vec<(&str, &str)> =
+            program.algos.iter().map(|a| (a.name.as_str(), a.category)).collect();
+        assert_eq!(
+            families,
+            [
+                ("Rotations", "Rotation"),
+                ("SmallSorts", "SmallSort"),
+                ("Partitions", "Partition"),
+                ("Merges", "Merge"),
+                ("Scratchspaces", "Scratchspace"),
+            ]
+        );
+    }
+
     /// Every first-class non-sort kind actually drives its VIS path (what the
     /// visualiser calls) — not just its correctness battery. Each kind pulls
     /// from a different input registry, so this catches a missing/empty registry

@@ -38,41 +38,39 @@ pub fn parse(text: &str) -> Result<Pairs<'_, Rule>, Box<pest::error::Error<Rule>
 //  shared variables and `List<…>` aggregation are a later step.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Role builtins that wrap a concrete type: `SortingAlgorithm<X>` marks `X` as an
-/// emittable sort (driver category `Sort`); `Selection<X>` marks `X` as an
-/// emittable quick-select (driver category `QuickSelect`) — the first non-sort
-/// first-class kind. `List`/`Mains` are reserved for the aggregation/consumer
-/// track and not yet lowerable on the algorithm track.
-fn is_wrapper_name(name: &str) -> bool {
-    matches!(
-        name,
-        "SortingAlgorithm"
-            | "Selection"
-            | "RotationAlg"
-            | "SmallSortAlg"
-            | "PartitionAlg"
-            | "MergeAlg"
-            | "ScratchspaceAlg"
-            | "List"
-            | "Mains"
-    )
+/// One emit wrapper: the role `_` enumerates under it and the category of every
+/// entry the binding emits.
+struct Wrapper {
+    name: &'static str,
+    role: &'static str,
+    category: &'static str,
 }
 
-/// The role a wrapper contributes to the binding it heads. A wrapper exists per
-/// first-class algorithm kind; the role string matches what the kind's driver
-/// component `provides` (and the emit backend keys its per-kind body on the
-/// driver's `category`).
-fn wrapper_role(name: &str) -> Result<String, String> {
-    match name {
-        "SortingAlgorithm" => Ok("Sort".to_string()),
-        "Selection" => Ok("QuickSelect".to_string()),
-        "RotationAlg" => Ok("Rotation".to_string()),
-        "SmallSortAlg" => Ok("SmallSortKind".to_string()),
-        "PartitionAlg" => Ok("PartitionKind".to_string()),
-        "MergeAlg" => Ok("MergeKind".to_string()),
-        "ScratchspaceAlg" => Ok("ScratchspaceKind".to_string()),
-        other => Err(format!("`{other}<…>` is not lowerable yet (lists/consumers)")),
-    }
+/// The single source of an entry's category. `SortingAlgorithm<X>` marks `X` as
+/// an emittable sort, `RotationAlg<_>` marks every `Rotation` leaf as an
+/// emittable rotation, and so on: kind is a property of where a type sits, so
+/// the component says nothing about it. A role string matches what the kind's
+/// driver or leaf components provide. `List` and `Mains` are reserved for the
+/// aggregation and consumer track and are not wrappers of an algorithm.
+const WRAPPERS: &[Wrapper] = &[
+    Wrapper { name: "SortingAlgorithm", role: "Sort", category: "Sort" },
+    Wrapper { name: "Selection", role: "QuickSelect", category: "QuickSelect" },
+    Wrapper { name: "RotationAlg", role: "Rotation", category: "Rotation" },
+    Wrapper { name: "SmallSortAlg", role: "SmallSortKind", category: "SmallSort" },
+    Wrapper { name: "PartitionAlg", role: "PartitionKind", category: "Partition" },
+    Wrapper { name: "MergeAlg", role: "MergeKind", category: "Merge" },
+    Wrapper { name: "ScratchspaceAlg", role: "ScratchspaceKind", category: "Scratchspace" },
+];
+
+fn is_wrapper_name(name: &str) -> bool {
+    WRAPPERS.iter().any(|w| w.name == name) || matches!(name, "List" | "Mains")
+}
+
+fn find_wrapper(name: &str) -> Result<&'static Wrapper, String> {
+    WRAPPERS
+        .iter()
+        .find(|w| w.name == name)
+        .ok_or_else(|| format!("`{name}<...>` is not lowerable yet (lists/consumers)"))
 }
 
 /// The leading identifier of a `type` template, e.g. `ShellSort<{seq}>` → `ShellSort`.
@@ -108,7 +106,7 @@ pub fn lower_program(text: &str, reg: &Registry) -> Result<Vec<Query>, String> {
             Rule::depth_dir => depth = int_pair(first_inner(p)?)?,
             Rule::take_dir => take = Some(lower_take(p)?),
             Rule::binding => {
-                let (binding, _emittable) = lower_binding(p, reg, &idx)?;
+                let (binding, _category) = lower_binding(p, reg, &idx)?;
                 queries.push(Query { depth, take, bindings: vec![binding] });
             }
             Rule::EOI => {}
@@ -144,10 +142,12 @@ pub struct Program {
     pub consumers: Vec<ConsumerDecl>,
 }
 
-/// An emittable algorithm family binding and the `Query` it lowers to.
+/// An emittable algorithm family binding, the category its wrapper assigns to
+/// every entry, and the `Query` it lowers to.
 #[derive(Debug, Clone, PartialEq)]
 pub struct NamedAlgo {
     pub name: String,
+    pub category: &'static str,
     pub query: Query,
 }
 
@@ -331,15 +331,16 @@ fn classify_binding(
         return Ok(());
     }
 
-    let (binding, emittable) = lower_binding(bp, reg, idx)?;
-    if emittable {
-        // Prepend the helpers declared so far so the family's slots can share
-        // their variables (the proven shared-pivot / refinement coupling).
-        let mut bindings = helpers.clone();
-        bindings.push(binding);
-        prog.algos.push(NamedAlgo { name, query: Query { depth, take, bindings } });
-    } else {
-        helpers.push(binding);
+    let (binding, category) = lower_binding(bp, reg, idx)?;
+    match category {
+        Some(category) => {
+            // Prepend the helpers declared so far so the family's slots can share
+            // their variables (the proven shared-pivot / refinement coupling).
+            let mut bindings = helpers.clone();
+            bindings.push(binding);
+            prog.algos.push(NamedAlgo { name, category, query: Query { depth, take, bindings } });
+        }
+        None => helpers.push(binding),
     }
     Ok(())
 }
@@ -426,14 +427,15 @@ fn lower_take(p: Pair<Rule>) -> Result<crate::spec::Take, String> {
     Ok(crate::spec::Take { n, seed })
 }
 
-/// Lower a binding to a [`Binding`] plus whether it is EMITTABLE (its value is a
-/// `SortingAlgorithm<…>` wrapper → it becomes its own algorithm family). A
-/// non-wrapper binding (`p: Pivot = _`) is a helper that feeds later families.
+/// Lower a binding to a [`Binding`] plus the category its wrapper assigns when it
+/// is emittable (its value is a wrapper such as `SortingAlgorithm<X>`, so it
+/// becomes its own algorithm family). A non-wrapper binding (`p: Pivot = _`) is
+/// a helper that feeds later families and has no category.
 fn lower_binding(
     p: Pair<Rule>,
     reg: &Registry,
     idx: &HashMap<String, String>,
-) -> Result<(Binding, bool), String> {
+) -> Result<(Binding, Option<&'static str>), String> {
     // binding = ident ~ ":" ~ type_ann ~ refinements? ~ "=" ~ value
     let mut it = p.into_inner();
     let name = it.next().ok_or("binding needs a name")?.as_str().to_string();
@@ -449,18 +451,18 @@ fn lower_binding(
     let raw = lower_value(value_pair, reg, idx)?;
     // Unwrap a top-level role wrapper (`SortingAlgorithm<X>`) → role + inner value
     // (and mark the binding emittable); otherwise it's a helper binding.
-    let (role, value, emittable) = match raw {
+    let (role, value, category) = match raw {
         QValue::App { name: w, args } if is_wrapper_name(&w) => {
-            let role = wrapper_role(&w)?;
+            let wrapper = find_wrapper(&w)?;
             let inner = match args.into_iter().next() {
                 Some(QArg::Pos(v)) | Some(QArg::Named { value: v, .. }) => v,
                 None => return Err(format!("`{w}<…>` takes one type argument")),
             };
-            (role, inner, true)
+            (wrapper.role.to_string(), inner, Some(wrapper.category))
         }
-        other => (role_from_type_ann(&type_ann)?, other, false),
+        other => (role_from_type_ann(&type_ann)?, other, None),
     };
-    Ok((Binding { name, role, refinements, value }, emittable))
+    Ok((Binding { name, role, refinements, value }, category))
 }
 
 /// Lower `[param = value, …]` into the solver's [`Refinement`]s. Each value is a
@@ -492,7 +494,7 @@ fn role_from_type_ann(p: &Pair<Rule>) -> Result<String, String> {
         Rule::type_app => {
             let head = first.into_inner().next().unwrap().as_str().to_string();
             if is_wrapper_name(&head) {
-                wrapper_role(&head)
+                find_wrapper(&head).map(|w| w.role.to_string())
             } else {
                 Ok(head) // a bare role name, e.g. `p: Pivot = …`
             }
@@ -1010,6 +1012,24 @@ mod tests {
                 }
             }
             other => panic!("expected App, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn each_wrapper_gives_its_family_the_matching_category() {
+        let reg = fixture();
+        let wrappers = [
+            ("SortingAlgorithm", "Sort"),
+            ("Selection", "QuickSelect"),
+            ("RotationAlg", "Rotation"),
+            ("SmallSortAlg", "SmallSort"),
+            ("PartitionAlg", "Partition"),
+            ("MergeAlg", "Merge"),
+            ("ScratchspaceAlg", "Scratchspace"),
+        ];
+        for (wrapper, category) in wrappers {
+            let prog = lower(&format!("Fam: {wrapper} = {wrapper}<_>"), &reg).unwrap();
+            assert_eq!(prog.algos[0].category, category, "wrapper `{wrapper}`");
         }
     }
 
