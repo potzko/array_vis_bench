@@ -567,10 +567,12 @@ pub mod correctness {
     /// Encodes (value, original_index) pairs where comparison is by value
     /// only (value in high bits, index in low bits). After sorting,
     /// equal-valued elements must appear in ascending original-index order.
-    pub fn sort_stability_battery(sort_fn: RunFnNoop, name: &str, stable: bool) {
+    /// Patterns longer than `cap` are skipped, as in [`sort_battery`].
+    pub fn sort_stability_battery(sort_fn: RunFnNoop, name: &str, stable: bool, cap: Option<usize>) {
         if !stable {
             return;
         }
+        let limit = cap.unwrap_or(usize::MAX);
         let value_bits = 32;
         let encode = |value: usize, index: usize| -> usize { (value << value_bits) | index };
         let decode_value = |x: usize| -> usize { x >> value_bits };
@@ -583,7 +585,7 @@ pub mod correctness {
             ("10 values, n=500", get_rand_arr_in_range(500, 0, 10)),
         ];
 
-        for (label, values) in &test_cases {
+        for (label, values) in test_cases.iter().filter(|(_, values)| values.len() <= limit) {
             let mut arr: Vec<usize> = values
                 .iter()
                 .enumerate()
@@ -1028,6 +1030,12 @@ mod tests {
         correctness::quick_select_battery(|arr, _target, _l| { within_cap(arr); arr.sort(); None }, "select", cap);
         correctness::partition_battery(partition, "partition", cap);
         correctness::scratchspace_battery(roll, "scratchspace", cap);
+        correctness::sort_stability_battery(
+            |arr, _index, _l| { within_cap(arr); arr.sort(); None },
+            "stability",
+            true,
+            cap,
+        );
     }
 
     #[test]

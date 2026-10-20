@@ -256,7 +256,7 @@ fn entry_body(kinds: &[Kind], paths: &AbiPaths, ctx: &EntryCtx) -> Result<String
             None
         }}
         {core}::correctness::sort_battery(sort_noop, NAME, {max_input});
-        {core}::correctness::sort_stability_battery(sort_noop, NAME, {stable});"
+        {core}::correctness::sort_stability_battery(sort_noop, NAME, {stable}, {max_input});"
         ),
     };
     // Flush left template (the leading spaces ARE the generated indentation).
@@ -393,7 +393,7 @@ mod tests {
         let b = sort_body("x");
         assert!(b.contains("fn sort_noop(arr: &mut [usize], _index: usize, logger: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)>"));
         assert!(b.contains(&format!("{CORE}::correctness::sort_battery(sort_noop, NAME, None);")));
-        assert!(b.contains(&format!("{CORE}::correctness::sort_stability_battery(sort_noop, NAME, <Ty as array_vis_bench_traits::composable::HasStability>::STABLE);")));
+        assert!(b.contains(&format!("{CORE}::correctness::sort_stability_battery(sort_noop, NAME, <Ty as array_vis_bench_traits::composable::HasStability>::STABLE, None);")));
     }
 
     #[test]

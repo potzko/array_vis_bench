@@ -1,37 +1,25 @@
-//! `CorrectnessSuite` — a correctness battery as a per-KIND construct.
+//! `CorrectnessSuite`, a correctness battery as a per kind construct.
 //!
 //! The spec compiler emits, for every algorithm leaf, a `run_correctness: fn()`
-//! pointer that the [`crate::mains::Correctness`] consumer calls uniformly. The
-//! question this module answers is *which* battery that pointer runs — and it
-//! answers it the way the workspace models everything else: as a **trait, one
-//! impl per kind**, parameterised over the kind's generic algorithm class.
+//! pointer that the [`crate::mains::Correctness`] consumer calls uniformly. This
+//! module answers which battery that pointer runs: a trait, one impl per kind,
+//! generic over the kind's role trait.
 //!
 //! ```text
-//! impl<Q: QuickSelect> CorrectnessSuite for SelectSuite<Q> { … quick_select_battery … }
+//! impl<Q: QuickSelect> CorrectnessSuite for SelectSuite<Q> { ... quick_select_battery ... }
 //! //   ^ the role trait        ^ the kind's suite            ^ the kind's battery
 //! ```
 //!
-//! Adding a first-class kind (rotation, merge, partition, …) is then just
-//! another `impl CorrectnessSuite for XSuite<R>` plus a thin emit arm — never a
-//! new hardcoded battery `match`. The `Correctness` main stays kind-agnostic: it
-//! only ever calls the entry's fn pointer, which the emit wires to the right
-//! suite.
-//!
-//! ASYMMETRY (deliberate, documented): full **sorts** have no `sort` role trait
-//! — the modern direct-sort shape exposes only an *inherent*
-//! `fn sort<T, U: ?Sized + SortLogger<T>>` (the workspace avoids the legacy
-//! `SortAlgo`, whose `U: Sized` can't take a `dyn` logger). A trait impl can't
-//! reach an inherent method generically, so the sort emit keeps calling
-//! `correctness::sort_battery` directly via the monomorphic adapter it already
-//! generates. Quick-select (and the other role-trait-backed kinds) *do* have a
-//! role trait, so they go through `CorrectnessSuite`. Unifying sorts too would
-//! mean introducing a `DirectSort` role trait every sort type implements — a
-//! larger, separate change.
+//! Adding a first class kind is a `<Kind>Suite` impl here, a row of `spec_emit`'s
+//! `KINDS` table and a `Category` variant. Every emitted `run_correct` is
+//! `<{Kind}Suite<Ty> as CorrectnessSuite>::verify(NAME, cap)`, so the
+//! `Correctness` main stays kind agnostic.
 
 use std::marker::PhantomData;
 
 use array_vis_bench_traits::{
-    PartitionScheme, QuickSelect, Rotation, RotationMerge, ScratchspaceRun, SmallSort,
+    DirectSort, HasStability, PartitionScheme, QuickSelect, Rotation, RotationMerge, ScratchspaceRun,
+    SmallSort,
 };
 use sort_logger::NoOpLogger;
 
@@ -46,6 +34,22 @@ pub trait CorrectnessSuite {
     /// `max_input_size` is `cap`. Panics on a verification failure (the
     /// `Correctness` main catches the panic).
     fn verify(name: &str, cap: Option<usize>);
+}
+
+/// Sort suite: drives [`correctness::sort_battery`] and
+/// [`correctness::sort_stability_battery`] through the concrete `S: DirectSort`,
+/// reading its stability off the type.
+pub struct SortSuite<S>(PhantomData<S>);
+
+impl<S: DirectSort + HasStability> CorrectnessSuite for SortSuite<S> {
+    fn verify(name: &str, cap: Option<usize>) {
+        fn run<S: DirectSort>(arr: &mut [usize], _index: usize, logger: &mut NoOpLogger) -> Option<(usize, usize)> {
+            S::sort(arr, logger);
+            None
+        }
+        correctness::sort_battery(run::<S>, name, cap);
+        correctness::sort_stability_battery(run::<S>, name, S::STABLE, cap);
+    }
 }
 
 /// Quick-select suite: drives [`correctness::quick_select_battery`] through the
@@ -173,6 +177,52 @@ mod tests {
     fn select_suite_runs_the_quick_select_battery_for_a_valid_impl() {
         // A correct selector passes the battery (no panic).
         SelectSuite::<SortingSelect>::verify("test: sorting select", None);
+    }
+
+    // A sort by `slice::sort`, and one that does nothing, so the sort suite can be
+    // exercised without pulling a family crate into core's dev-deps.
+    struct StdSort;
+    impl DirectSort for StdSort {
+        fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], _logger: &mut U) {
+            arr.sort();
+        }
+    }
+    impl HasStability for StdSort {
+        const STABLE: bool = true;
+    }
+    struct IdleSort;
+    impl DirectSort for IdleSort {
+        fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(_arr: &mut [T], _logger: &mut U) {}
+    }
+    impl HasStability for IdleSort {
+        const STABLE: bool = false;
+    }
+    // Panics on an array past eight, so a battery that ignores its cap fails.
+    struct EightSort;
+    impl DirectSort for EightSort {
+        fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], _logger: &mut U) {
+            assert!(arr.len() <= 8, "fed {} elements past the cap", arr.len());
+            arr.sort();
+        }
+    }
+    impl HasStability for EightSort {
+        const STABLE: bool = true;
+    }
+
+    #[test]
+    fn sort_suite_runs_the_sort_batteries_for_a_valid_impl() {
+        SortSuite::<StdSort>::verify("test: std sort", None);
+    }
+
+    #[test]
+    #[should_panic(expected = "failed on")]
+    fn sort_suite_fails_a_sort_that_does_nothing() {
+        SortSuite::<IdleSort>::verify("test: idle sort", None);
+    }
+
+    #[test]
+    fn sort_suite_hands_its_cap_to_the_batteries() {
+        SortSuite::<EightSort>::verify("test: eight sort", Some(8));
     }
 
     // A merge by full sort, and one that does nothing, so the suite can be
