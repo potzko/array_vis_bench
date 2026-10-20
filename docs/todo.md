@@ -103,7 +103,8 @@ afternoon each and remove concepts rather than move them.
    `Timing` mains collapse to one `benchmark` consumer.
    See [implementation_plans/one_timing_consumer.md](implementation_plans/one_timing_consumer.md).
 6. Derive `uses` from the owning crate, after renaming the four colliding
-   type heads.
+   type heads. Done: heads are unique, and three components keep a listed
+   `uses` where the owning crate cannot reach the type.
    See [implementation_plans/derive_uses_from_the_owning_crate.md](implementation_plans/derive_uses_from_the_owning_crate.md).
 7. One shape per kind. One input entry, one run driver, one emit template
    over a kinds table, sorts under `CorrectnessSuite`.
@@ -149,6 +150,10 @@ slot, and the beap ninther dual selector has its own label.
   and rustc is a backstop, never the first line of defence.
 - Recursion is bounded at solve time, declaratively. Runtime loop detection,
   per component recursion budgets and visit counters were rejected.
+- Type heads are unique workspace wide, so a head names one Rust type in a
+  query and in an import. A component's imports derive from the crate that
+  owns its fragment, and a `uses` line is the override for a type that crate
+  cannot reach.
 - One registration path. Two emitters for the same name is a startup panic,
   and the legacy self registration features stay off.
 - Curate in the query. When one composition misbehaves, subtract it; do not
