@@ -545,6 +545,18 @@ pub struct AlgorithmEntry {
     /// table skips the entry. Split the field when a consumer needs to tell
     /// them apart.
     pub max_input_size: Option<usize>,
+    /// Picker placement: the category path from the root (`"sorts"`) down to
+    /// the family, navigated in order before any axis.
+    pub menu: &'static [&'static str],
+    /// The filled slots as `(role, value, path)` in declaration order. The
+    /// `path` is the unique navigation key, so a composite filler's sub-slots
+    /// nest as `pivot/a` and `pivot/b` and stay distinct when they share a role.
+    pub axes: &'static [(&'static str, &'static str, &'static str)],
+    /// The label with one `{Role}` hole per axis, for example
+    /// `"quick sort<part: {Partition}, small: {SmallSort}>"`. The picker fills
+    /// each hole with the chosen value to show the partial type in the catalog's
+    /// own syntax. Empty means the picker shows the generic breadcrumb.
+    pub label_template: &'static str,
     /// Run the algorithm against the named input. The input must be
     /// registered in the input registry matching `category`. The
     /// algorithm emits all events (including CreateArr + N WriteData

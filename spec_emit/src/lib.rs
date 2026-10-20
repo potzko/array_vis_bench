@@ -157,6 +157,9 @@ impl ArrayBackend {
         adaptive: {adaptive},
         nondeterministic: {nondeterministic},
         max_input_size: {max_input},
+        menu: &[{menu_lit}],
+        axes: &[{axes_lit}],
+        label_template: {template_lit},
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
@@ -225,6 +228,9 @@ impl ArrayBackend {
         adaptive: {adaptive},
         nondeterministic: false,
         max_input_size: {max_input},
+        menu: &[{menu_lit}],
+        axes: &[{axes_lit}],
+        label_template: {template_lit},
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
@@ -278,6 +284,9 @@ impl ArrayBackend {
         adaptive: {adaptive},
         nondeterministic: false,
         max_input_size: None,
+        menu: &[{menu_lit}],
+        axes: &[{axes_lit}],
+        label_template: {template_lit},
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
@@ -339,6 +348,9 @@ impl ArrayBackend {
         adaptive: {adaptive},
         nondeterministic: false,
         max_input_size: {max_input},
+        menu: &[{menu_lit}],
+        axes: &[{axes_lit}],
+        label_template: {template_lit},
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
@@ -403,6 +415,9 @@ impl ArrayBackend {
         adaptive: {adaptive},
         nondeterministic: false,
         max_input_size: {max_input},
+        menu: &[{menu_lit}],
+        axes: &[{axes_lit}],
+        label_template: {template_lit},
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
@@ -460,6 +475,9 @@ impl ArrayBackend {
         adaptive: {adaptive},
         nondeterministic: false,
         max_input_size: {max_input},
+        menu: &[{menu_lit}],
+        axes: &[{axes_lit}],
+        label_template: {template_lit},
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
@@ -518,6 +536,9 @@ impl ArrayBackend {
         adaptive: {adaptive},
         nondeterministic: false,
         max_input_size: {max_input},
+        menu: &[{menu_lit}],
+        axes: &[{axes_lit}],
+        label_template: {template_lit},
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
@@ -584,13 +605,13 @@ mod tests {
     }
 
     #[test]
-    fn menu_registration_targets_sort_registry_core() {
-        // The flat default: no catalog `menu`, no slots → register at the
-        // "sorts" root with no facets (same as before menu/axes existed).
+    fn a_slotless_entry_sits_at_the_sorts_root_with_no_axes() {
+        // The flat default: no catalog `menu`, no slots, so the entry carries
+        // the "sorts" root and no facets.
         let b = sort_body("shell sort<sequence: knuth>");
-        assert!(b.contains(
-            r#"sort_registry_core::register_sort_variant_structured(NAME, &["sorts"], &[], "shell sort<sequence: knuth>")"#
-        ));
+        assert!(b.contains(r#"menu: &["sorts"],"#));
+        assert!(b.contains("axes: &[],"));
+        assert!(b.contains(r#"label_template: "shell sort<sequence: knuth>","#));
         assert!(b.contains(r#"const NAME: &str = "shell sort<sequence: knuth>";"#));
     }
 
@@ -613,12 +634,42 @@ mod tests {
                 label_template: "spec::quick sort<part: {Partition}, pivot: {Pivot}>",
             })
             .unwrap();
-        assert!(b.contains(r#"register_sort_variant_structured(NAME, &["sorts", "spec", "quick sorts"], &["#));
+        assert!(b.contains(r#"menu: &["sorts", "spec", "quick sorts"],"#));
         assert!(b.contains(r#"("Partition", "left-left", "partition")"#));
         assert!(b.contains(r#"("Pivot", "first", "pivot")"#));
-        // The role-tagged template is registered verbatim so the picker can
+        // The role-tagged template is carried verbatim so the picker can
         // render the partial type in the catalog's label syntax.
-        assert!(b.contains(r#""spec::quick sort<part: {Partition}, pivot: {Pivot}>")"#));
+        assert!(b.contains(r#"label_template: "spec::quick sort<part: {Partition}, pivot: {Pivot}>","#));
+    }
+
+    #[test]
+    fn every_kind_fills_its_navigation_fields() {
+        let roots = [
+            ("Sort", "sorts"),
+            ("QuickSelect", "quick selects"),
+            ("Rotation", "rotations"),
+            ("SmallSort", "small sorts"),
+            ("Partition", "partitions"),
+            ("Merge", "merges"),
+            ("Scratchspace", "scratchspaces"),
+        ];
+        for (cat, root) in roots {
+            let b = ArrayBackend::default()
+                .entry_body(&EntryCtx {
+                    label: "x",
+                    category: cat,
+                    adaptive: false,
+                    nondeterministic: false,
+                    max_input: None,
+                    axes: &[spec_core::AxisNode { role: "Role".into(), value: "v".into(), path: "p".into() }],
+                    menu: &["m".to_string()],
+                    label_template: "x<{Role}>",
+                })
+                .unwrap();
+            assert!(b.contains(&format!(r#"menu: &["{root}", "m"],"#)), "category `{cat}` menu");
+            assert!(b.contains(r#"axes: &[("Role", "v", "p"), ],"#), "category `{cat}` axes");
+            assert!(b.contains(r#"label_template: "x<{Role}>","#), "category `{cat}` template");
+        }
     }
 
     #[test]
@@ -737,7 +788,7 @@ mod tests {
         let b = quick_select_body("quick select: recursive<block, ninther>");
         assert!(b.contains("category: array_vis_bench_core::bench_registry::Category::QuickSelect,"));
         // nests under the "quick selects" picker root + the driver's menu sub-path.
-        assert!(b.contains(r#"register_sort_variant_structured(NAME, &["quick selects", "recursive"], "#));
+        assert!(b.contains(r#"menu: &["quick selects", "recursive"],"#));
         // complexity still inherited from the type.
         assert!(b.contains("worst: <Ty as array_vis_bench_traits::composable::HasTimeBounds>::WORST,"));
     }
