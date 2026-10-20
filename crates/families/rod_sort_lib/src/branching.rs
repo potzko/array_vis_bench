@@ -98,6 +98,7 @@ macro_rules! register_rod {
                     space: <RodSort<$strat, $merge> as array_vis_bench_traits::composable::HasSpace>::SPACE,
                     stable: <RodSort<$strat, $merge> as array_vis_bench_traits::composable::HasStability>::STABLE,
                     adaptive: false,
+                    nondeterministic: false,
                     max_input_size: None,
                     run_with_input,
                     run_correctness,

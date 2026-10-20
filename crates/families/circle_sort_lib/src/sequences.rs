@@ -94,6 +94,7 @@ macro_rules! register_circle {
                     space: array_vis_bench_traits::Complexity::CONST,
                     stable: false,
                     adaptive: false,
+                    nondeterministic: false,
                     max_input_size: None,
                     run_with_input,
                     run_correctness,

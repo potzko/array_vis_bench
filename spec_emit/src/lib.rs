@@ -131,19 +131,6 @@ impl ArrayBackend {
             ),
             None => String::new(),
         };
-        // A nondeterministic-trace sort (e.g. randomised gaps) registers into
-        // `NONDETERMINISTIC_ALGOS` so the determinism property-check skips it —
-        // the data-driven equivalent of `register_nondeterministic!`.
-        let nondet_static = if ctx.nondeterministic {
-            format!(
-"    #[linkme::distributed_slice({core}::NONDETERMINISTIC_ALGOS)]
-    #[allow(non_upper_case_globals)]
-    static NONDET: &'static str = NAME;
-"
-            )
-        } else {
-            String::new()
-        };
         // Picker placement: nest under the category root (`"sorts"`) followed by
         // the catalog `menu` sub-path, and expose each resolved top-level slot as
         // a faceted `(role, value)` axis — the same shape `sort_family!` emits, so
@@ -176,7 +163,7 @@ impl ArrayBackend {
         {core}::correctness::sort_battery(sort_noop, NAME);
         {core}::correctness::sort_stability_battery(sort_noop, NAME, <Ty as {traits}::composable::HasStability>::STABLE);
     }}
-{cap_static}{nondet_static}    #[linkme::distributed_slice({core}::ALGORITHMS)]
+{cap_static}    #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
     static ENTRY: {core}::AlgorithmEntry = {core}::AlgorithmEntry {{
         name: NAME,
@@ -187,6 +174,7 @@ impl ArrayBackend {
         space: <Ty as {traits}::composable::HasSpace>::SPACE,
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
+        nondeterministic: {nondeterministic},
         max_input_size: {max_input},
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -197,9 +185,10 @@ impl ArrayBackend {
 ",
             // `core`, `traits`, `nav`, `logger`, `max_input`, `cap_static`,
             // `menu_lit`, `axes_lit`, `template_lit` are captured inline; only
-            // these two rename.
+            // these three rename.
             label = ctx.label,
             adaptive = ctx.adaptive,
+            nondeterministic = ctx.nondeterministic,
         )
     }
 
@@ -265,6 +254,7 @@ impl ArrayBackend {
         space: <Ty as {traits}::composable::HasSpace>::SPACE,
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
+        nondeterministic: false,
         max_input_size: {max_input},
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -317,6 +307,7 @@ impl ArrayBackend {
         space: {traits}::Complexity::N1,
         stable: true,
         adaptive: {adaptive},
+        nondeterministic: false,
         max_input_size: None,
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -386,6 +377,7 @@ impl ArrayBackend {
         space: <Ty as {traits}::composable::HasSpace>::SPACE,
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
+        nondeterministic: false,
         max_input_size: {max_input},
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -458,6 +450,7 @@ impl ArrayBackend {
         space: <Ty as {traits}::composable::HasSpace>::SPACE,
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
+        nondeterministic: false,
         max_input_size: {max_input},
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -523,6 +516,7 @@ impl ArrayBackend {
         space: <Ty as {traits}::composable::HasSpace>::SPACE,
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
+        nondeterministic: false,
         max_input_size: {max_input},
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -589,6 +583,7 @@ impl ArrayBackend {
         space: <Ty as {traits}::composable::HasSpace>::SPACE,
         stable: <Ty as {traits}::composable::HasStability>::STABLE,
         adaptive: {adaptive},
+        nondeterministic: false,
         max_input_size: {max_input},
         run_with_input: run_default,
         run_correctness: run_correct,
@@ -724,17 +719,25 @@ mod tests {
     }
 
     #[test]
-    fn nondeterministic_flag_registers_the_determinism_opt_out() {
+    fn nondeterministic_flag_sets_the_entry_field() {
         let nd = ArrayBackend::default()
             .entry_body(&EntryCtx { label: "random shell sort<uniform>", category: Some("Sort"), adaptive: false, nondeterministic: true, max_input: Some(1000), axes: &[], menu: &[], label_template: "random shell sort<uniform>" })
             .unwrap();
-        assert!(nd.contains(
-            "#[linkme::distributed_slice(array_vis_bench_core::bench_registry::NONDETERMINISTIC_ALGOS)]"
-        ));
-        assert!(nd.contains("static NONDET: &'static str = NAME;"));
+        assert!(nd.contains("nondeterministic: true,"));
+        assert!(!nd.contains("NONDETERMINISTIC_ALGOS"));
 
-        // A deterministic sort emits no opt-out.
-        assert!(!sort_body("classic").contains("NONDETERMINISTIC_ALGOS"));
+        // A deterministic sort says so on the entry too.
+        assert!(sort_body("classic").contains("nondeterministic: false,"));
+    }
+
+    #[test]
+    fn every_kind_fills_the_nondeterministic_field() {
+        for cat in ["Sort", "QuickSelect", "Rotation", "SmallSort", "Partition", "Merge", "Scratchspace"] {
+            let b = ArrayBackend::default()
+                .entry_body(&EntryCtx { label: "x", category: Some(cat), adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
+                .unwrap();
+            assert!(b.contains("nondeterministic: false,"), "category `{cat}` leaves the field unset");
+        }
     }
 
     #[test]

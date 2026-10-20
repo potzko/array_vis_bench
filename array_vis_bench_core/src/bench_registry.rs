@@ -530,6 +530,10 @@ pub struct AlgorithmEntry {
     /// (e.g. insertion sort, Tim sort). Not compositional — declared
     /// per-family as a literal.
     pub adaptive: bool,
+    /// True if the `SortLog` trace is intentionally different between runs,
+    /// such as a randomised gap sequence. A check that compares two traces
+    /// of the same entry must skip it.
+    pub nondeterministic: bool,
     /// Optional contract-defined upper bound on input size. `None` =
     /// unbounded (every general-purpose sort/rotation/partition/merge).
     /// `Some(n)` means inputs larger than `n` are out-of-contract —

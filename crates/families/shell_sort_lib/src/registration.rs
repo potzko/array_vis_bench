@@ -95,6 +95,7 @@ macro_rules! register_shell_variant {
                     space:   <$sort_ty as array_vis_bench_traits::composable::HasSpace>::SPACE,
                     stable:  <$sort_ty as array_vis_bench_traits::composable::HasStability>::STABLE,
                     adaptive: false,
+                    nondeterministic: false,
                     max_input_size: None,
                     run_with_input,
                     run_correctness,
