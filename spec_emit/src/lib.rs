@@ -18,9 +18,9 @@
 //!    read off the type, the way the retired `sort_family!` macro did.
 //!
 //! LIMITATION: a sort must expose an inherent `sort<T, U: ?Sized +
-//! SortLogger<T>>`. A legacy type that implements only the `SortAlgo` trait has
-//! no such method, so the emitted `<Ty>::sort` would fail to compile (fail loud,
-//! not silent).
+//! SortLogger<T>>` and implement `DirectSort` by forwarding to it. A legacy type
+//! that implements only the `SortAlgo` trait has no such method, so the emitted
+//! `<Ty>::sort` would fail to compile (fail loud, not silent).
 
 use spec_core::{EmitBackend, EntryCtx, Wrapper};
 
@@ -69,9 +69,8 @@ struct Kind {
     /// The body of the `run_dyn(arr, index, logger)` adapter, with `{traits}` and
     /// `{logger}` holes.
     dispatch: &'static str,
-    /// The `CorrectnessSuite` impl, a generic over the entry's `Ty`. `None` runs
-    /// the sort batteries inline.
-    suite: Option<&'static str>,
+    /// The `CorrectnessSuite` impl, a generic over the entry's `Ty`.
+    suite: &'static str,
     /// A `Complexity` constant replacing the inherited worst, best and average.
     time: Option<&'static str>,
     /// A `Complexity` constant replacing the inherited space.
@@ -87,7 +86,7 @@ const KINDS: &[Kind] = &[
         category: "Sort",
         root: "sorts",
         dispatch: "<Ty>::sort(arr, logger);",
-        suite: None,
+        suite: "SortSuite",
         time: None,
         space: None,
         stable: None,
@@ -100,7 +99,7 @@ const KINDS: &[Kind] = &[
         category: "QuickSelect",
         root: "quick selects",
         dispatch: "if let Some(last) = arr.len().checked_sub(1) { <Ty as {traits}::QuickSelect>::select(arr, logger, index.min(last)); }",
-        suite: Some("SelectSuite"),
+        suite: "SelectSuite",
         time: None,
         space: None,
         stable: None,
@@ -112,7 +111,7 @@ const KINDS: &[Kind] = &[
         category: "Rotation",
         root: "rotations",
         dispatch: "{traits}::role::rotation::run_rotation::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, index, logger);",
-        suite: Some("RotationSuite"),
+        suite: "RotationSuite",
         time: None,
         space: None,
         stable: None,
@@ -127,7 +126,7 @@ const KINDS: &[Kind] = &[
         category: "SmallSort",
         root: "small sorts",
         dispatch: "let _ = <Ty as {traits}::SmallSort>::sort(arr, logger);",
-        suite: Some("SmallSortSuite"),
+        suite: "SmallSortSuite",
         time: Some("CONST"),
         space: None,
         stable: None,
@@ -140,7 +139,7 @@ const KINDS: &[Kind] = &[
         category: "Partition",
         root: "partitions",
         dispatch: "let _ = {traits}::role::partition::run_partition_bounds::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, logger);",
-        suite: Some("PartitionSuite"),
+        suite: "PartitionSuite",
         time: None,
         space: None,
         stable: None,
@@ -152,7 +151,7 @@ const KINDS: &[Kind] = &[
         category: "Merge",
         root: "merges",
         dispatch: "{traits}::role::merge::run_rotation_merge::<Ty, usize, dyn {logger}::SortLogger<usize>>(arr, index, logger);",
-        suite: Some("MergeSuite"),
+        suite: "MergeSuite",
         time: None,
         space: None,
         stable: None,
@@ -166,7 +165,7 @@ const KINDS: &[Kind] = &[
         category: "Scratchspace",
         root: "scratchspaces",
         dispatch: "<Ty as {traits}::role::ScratchspaceRun>::run::<usize, dyn {logger}::SortLogger<usize>>(arr, logger);",
-        suite: Some("ScratchspaceSuite"),
+        suite: "ScratchspaceSuite",
         time: Some("N1"),
         space: Some("N1"),
         stable: Some(true),
@@ -246,19 +245,7 @@ fn entry_body(kinds: &[Kind], paths: &AbiPaths, ctx: &EntryCtx) -> Result<String
         || format!("<Ty as {traits}::composable::HasStability>::STABLE"),
         |s| s.to_string(),
     );
-    let correct = match kind.suite {
-        Some(suite) => {
-            format!("<{suites}::{suite}<Ty> as {suites}::CorrectnessSuite>::verify(NAME, {max_input});")
-        }
-        None => format!(
-            "fn sort_noop(arr: &mut [usize], _index: usize, logger: &mut {logger}::NoOpLogger) -> Option<(usize, usize)> {{
-            <Ty>::sort(arr, logger);
-            None
-        }}
-        {core}::correctness::sort_battery(sort_noop, NAME, {max_input});
-        {core}::correctness::sort_stability_battery(sort_noop, NAME, {stable}, {max_input});"
-        ),
-    };
+    let suite = kind.suite;
     // Flush left template (the leading spaces ARE the generated indentation).
     Ok(format!(
 "    const NAME: &str = {label:?};
@@ -270,7 +257,7 @@ fn entry_body(kinds: &[Kind], paths: &AbiPaths, ctx: &EntryCtx) -> Result<String
         {core}::run_with_input({core}::Category::{category}, input_name, config, run_dyn, logger);
     }}
     fn run_correct() {{
-        {correct}
+        <{suites}::{suite}<Ty> as {suites}::CorrectnessSuite>::verify(NAME, {max_input});
     }}
     #[linkme::distributed_slice({core}::ALGORITHMS)]
     #[allow(non_upper_case_globals)]
@@ -307,14 +294,14 @@ mod tests {
     const SUITES: &str = "array_vis_bench_core::suites";
 
     // Each kind with its picker root, the call its adapter makes and its suite.
-    const EXPECTED: [(&str, &str, &str, Option<&str>); 7] = [
-        ("Sort", "sorts", "<Ty>::sort(arr, logger);", None),
-        ("QuickSelect", "quick selects", "<Ty as array_vis_bench_traits::QuickSelect>::select(arr, logger, index.min(last));", Some("SelectSuite")),
-        ("Rotation", "rotations", "array_vis_bench_traits::role::rotation::run_rotation::<Ty, usize, dyn sort_logger::SortLogger<usize>>(arr, index, logger);", Some("RotationSuite")),
-        ("SmallSort", "small sorts", "let _ = <Ty as array_vis_bench_traits::SmallSort>::sort(arr, logger);", Some("SmallSortSuite")),
-        ("Partition", "partitions", "let _ = array_vis_bench_traits::role::partition::run_partition_bounds::<Ty, usize, dyn sort_logger::SortLogger<usize>>(arr, logger);", Some("PartitionSuite")),
-        ("Merge", "merges", "array_vis_bench_traits::role::merge::run_rotation_merge::<Ty, usize, dyn sort_logger::SortLogger<usize>>(arr, index, logger);", Some("MergeSuite")),
-        ("Scratchspace", "scratchspaces", "<Ty as array_vis_bench_traits::role::ScratchspaceRun>::run::<usize, dyn sort_logger::SortLogger<usize>>(arr, logger);", Some("ScratchspaceSuite")),
+    const EXPECTED: [(&str, &str, &str, &str); 7] = [
+        ("Sort", "sorts", "<Ty>::sort(arr, logger);", "SortSuite"),
+        ("QuickSelect", "quick selects", "<Ty as array_vis_bench_traits::QuickSelect>::select(arr, logger, index.min(last));", "SelectSuite"),
+        ("Rotation", "rotations", "array_vis_bench_traits::role::rotation::run_rotation::<Ty, usize, dyn sort_logger::SortLogger<usize>>(arr, index, logger);", "RotationSuite"),
+        ("SmallSort", "small sorts", "let _ = <Ty as array_vis_bench_traits::SmallSort>::sort(arr, logger);", "SmallSortSuite"),
+        ("Partition", "partitions", "let _ = array_vis_bench_traits::role::partition::run_partition_bounds::<Ty, usize, dyn sort_logger::SortLogger<usize>>(arr, logger);", "PartitionSuite"),
+        ("Merge", "merges", "array_vis_bench_traits::role::merge::run_rotation_merge::<Ty, usize, dyn sort_logger::SortLogger<usize>>(arr, index, logger);", "MergeSuite"),
+        ("Scratchspace", "scratchspaces", "<Ty as array_vis_bench_traits::role::ScratchspaceRun>::run::<usize, dyn sort_logger::SortLogger<usize>>(arr, logger);", "ScratchspaceSuite"),
     ];
 
     // A slot-less entry with every facet at its default, so its template equals
@@ -361,11 +348,9 @@ mod tests {
         for (cat, _, call, suite) in EXPECTED {
             let b = body(plain(cat));
             assert!(b.contains(call), "category `{cat}` adapter does not make `{call}`");
-            if let Some(suite) = suite {
-                let verify = format!("<{SUITES}::{suite}<Ty> as {SUITES}::CorrectnessSuite>::verify(NAME, None);");
-                assert!(b.contains(&verify), "category `{cat}` does not verify through `{suite}`");
-                assert!(!b.contains("_battery"), "category `{cat}` inlines a battery");
-            }
+            let verify = format!("<{SUITES}::{suite}<Ty> as {SUITES}::CorrectnessSuite>::verify(NAME, None);");
+            assert!(b.contains(&verify), "category `{cat}` does not verify through `{suite}`");
+            assert!(!b.contains("_battery"), "category `{cat}` inlines a battery");
         }
     }
 
@@ -382,18 +367,19 @@ mod tests {
     #[test]
     fn a_sort_dispatches_through_the_inherent_method_not_sortalgo() {
         let b = sort_body("shell sort<sequence: ciura>");
-        // the dyn adapter and the battery adapter both call the inherent `<Ty>::sort` ...
-        assert_eq!(b.matches("<Ty>::sort(arr, logger);").count(), 2, "expected a dyn + a noop adapter");
+        // the one adapter calls the inherent `<Ty>::sort` ...
+        assert_eq!(b.matches("<Ty>::sort(arr, logger);").count(), 1, "expected the one dyn adapter");
         // ... and crucially NOT the legacy SortAlgo trait (Sized U won't take dyn).
         assert!(!b.contains("SortAlgo"), "must not route through the legacy SortAlgo trait");
     }
 
     #[test]
-    fn a_sort_runs_the_real_batteries_with_a_noop_adapter() {
-        let b = sort_body("x");
-        assert!(b.contains("fn sort_noop(arr: &mut [usize], _index: usize, logger: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)>"));
-        assert!(b.contains(&format!("{CORE}::correctness::sort_battery(sort_noop, NAME, None);")));
-        assert!(b.contains(&format!("{CORE}::correctness::sort_stability_battery(sort_noop, NAME, <Ty as array_vis_bench_traits::composable::HasStability>::STABLE, None);")));
+    fn no_kind_emits_a_correctness_adapter_of_its_own() {
+        for (cat, ..) in EXPECTED {
+            let b = body(plain(cat));
+            assert!(!b.contains("NoOpLogger"), "category `{cat}` emits a noop adapter");
+            assert_eq!(b.matches("fn run_correct() {").count(), 1);
+        }
     }
 
     #[test]
@@ -516,8 +502,9 @@ mod tests {
             paths: AbiPaths { core: "c".into(), traits: "t".into(), logger: "l".into(), suites: "s".into() },
         };
         let b = backend.entry_body(&plain("Sort")).unwrap();
-        assert!(b.contains("&mut l::NoOpLogger"));
+        assert!(b.contains("logger: &mut dyn l::SortLogger<usize>"));
         assert!(b.contains("c::run_with_input(c::Category::Sort,"));
+        assert!(b.contains("<s::SortSuite<Ty> as s::CorrectnessSuite>::verify(NAME, None);"));
         assert!(b.contains("<Ty as t::composable::HasTimeBounds>::WORST"));
         let b = backend.entry_body(&plain("Rotation")).unwrap();
         assert!(b.contains("<s::RotationSuite<Ty> as s::CorrectnessSuite>::verify(NAME, None);"));
@@ -531,7 +518,7 @@ mod tests {
             category: "Shuffle",
             root: "shuffles",
             dispatch: "<Ty as {traits}::Shuffle>::shuffle(arr, logger, index);",
-            suite: Some("ShuffleSuite"),
+            suite: "ShuffleSuite",
             time: None,
             space: None,
             stable: None,
