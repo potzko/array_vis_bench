@@ -9,7 +9,7 @@
 //! Gated behind the `pest-frontend` feature so the default engine build (the
 //! proc-macro and the codegen build scripts) stays dependency-free.
 
-use crate::registry::Registry;
+use crate::registry::{type_head, Registry};
 use crate::spec::{Binding, QArg, QValue, Quant, Query, DEFAULT_DEPTH};
 use pest::iterators::{Pair, Pairs};
 use std::collections::HashMap;
@@ -73,16 +73,10 @@ fn find_wrapper(name: &str) -> Result<&'static Wrapper, String> {
         .ok_or_else(|| format!("`{name}<...>` is not lowerable yet (lists/consumers)"))
 }
 
-/// The leading identifier of a `type` template, e.g. `ShellSort<{seq}>` → `ShellSort`.
-fn type_head(type_tmpl: &str) -> &str {
-    let t = type_tmpl.trim();
-    let end = t.find(|c: char| c == '<' || c.is_whitespace()).unwrap_or(t.len());
-    &t[..end]
-}
-
-/// Index: Rust type-head → component name. (On head collisions — e.g. baked
-/// `QuickSort<…>` entries — first-wins; that ambiguity is the deferred quicksort
-/// decomposition fork and doesn't arise for the shell slice.)
+/// Index: Rust type-head -> component name. The registry keeps a head to one
+/// Rust type, so a bare head in a query is never ambiguous between types. Among
+/// the components of one type, such as a generic `CombinedSelector<{a}, {b}>`
+/// and its baked instantiations, the first declared wins.
 fn type_head_index(reg: &Registry) -> HashMap<String, String> {
     let mut m = HashMap::new();
     for c in reg.iter() {

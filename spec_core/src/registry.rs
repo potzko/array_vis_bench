@@ -49,7 +49,25 @@ pub struct Component {
     pub menu: Vec<String>,
 }
 
+/// The leading identifier of a `type` template, e.g. `ShellSort<{seq}>` gives `ShellSort`.
+pub fn type_head(type_tmpl: &str) -> &str {
+    let t = type_tmpl.trim();
+    let end = t.find(|c: char| c == '<' || c.is_whitespace()).unwrap_or(t.len());
+    &t[..end]
+}
+
 impl Component {
+    /// The Rust type a query names this component by.
+    pub fn head(&self) -> &str {
+        type_head(&self.type_tmpl)
+    }
+
+    /// The path the head is imported from, when `uses` names it.
+    pub fn head_path(&self) -> Option<&str> {
+        let head = self.head();
+        self.uses.iter().map(String::as_str).find(|u| u.rsplit("::").next() == Some(head))
+    }
+
     /// A referenceable param by name, a type slot or a const. A refinement
     /// `[name = ...]` is only valid if this returns `Some`.
     pub fn param(&self, name: &str) -> Option<&Param> {
@@ -81,11 +99,30 @@ pub struct Registry {
 
 impl Registry {
     /// Insert a component, recording its parse position for ordered iteration.
-    fn insert_component(&mut self, c: Component) {
+    /// Two components may share a type head only when the head is imported from
+    /// one path, because a head names exactly one Rust type, in a query and in
+    /// the emitted `use` block.
+    fn insert_component(&mut self, c: Component) -> Result<(), String> {
+        let clash = self.iter().find(|o| {
+            let same_head = o.name != c.name && o.head() == c.head();
+            same_head && matches!((o.head_path(), c.head_path()), (Some(a), Some(b)) if a != b)
+        });
+        if let Some(o) = clash {
+            return Err(format!(
+                "`{}` and `{}` share the type head `{}` but import it from `{}` and `{}`; \
+                 type heads are unique workspace wide, rename one of the Rust types",
+                o.name,
+                c.name,
+                c.head(),
+                o.head_path().unwrap_or_default(),
+                c.head_path().unwrap_or_default()
+            ));
+        }
         if !self.components.contains_key(&c.name) {
             self.order.push(c.name.clone());
         }
         self.components.insert(c.name.clone(), c);
+        Ok(())
     }
 
     pub fn parse(text: &str) -> Result<Registry, String> {
@@ -101,7 +138,7 @@ impl Registry {
             match kw {
                 "component" => {
                     if let Some(c) = cur.take() {
-                        reg.insert_component(c);
+                        reg.insert_component(c).map_err(|m| err(&m))?;
                     }
                     cur = Some(Component {
                         name: rest.trim().to_string(),
@@ -118,7 +155,7 @@ impl Registry {
                 }
                 "end" => {
                     let c = cur.take().ok_or_else(|| err("`end` outside a component"))?;
-                    reg.insert_component(c);
+                    reg.insert_component(c).map_err(|m| err(&m))?;
                 }
                 _ => {
                     let c = cur.as_mut().ok_or_else(|| err("field outside a component"))?;
@@ -196,7 +233,7 @@ impl Registry {
             }
         }
         if let Some(c) = cur.take() {
-            reg.insert_component(c);
+            reg.insert_component(c).map_err(|m| format!("registry end: {m}"))?;
         }
         Ok(reg)
     }
@@ -271,6 +308,17 @@ mod tests {
     fn project_is_an_unknown_keyword() {
         let err = parse_body("  project pivot PivotSingle").unwrap_err();
         assert!(err.contains("unknown keyword `project`"), "got: {err}");
+    }
+
+    #[test]
+    fn components_sharing_a_type_head_must_import_it_from_one_path() {
+        let pair = |path_b: &str| {
+            format!("component a\n  type T\n  uses x::T\nend\ncomponent b\n  type T<{{s}}>\n  uses {path_b}\n  slot s R\nend\n")
+        };
+        assert!(Registry::parse(&pair("x::T")).is_ok());
+        let err = Registry::parse(&pair("y::T")).unwrap_err();
+        assert!(err.contains("`a` and `b` share the type head `T`"), "got: {err}");
+        assert!(err.contains("`x::T` and `y::T`"), "got: {err}");
     }
 
     #[test]
