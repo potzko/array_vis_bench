@@ -51,12 +51,18 @@ pub fn run_over_catalog(
 
 /// Benchmark the ENTIRE emitted catalog at array size `n`, `k` runs per entry,
 /// and print one fastest first table of median run times per category (see
-/// [`array_vis_bench_core::mains::Benchmark`]). Backs `--timing`.
-pub fn run_timing(n: usize, k: usize) -> array_vis_bench_core::mains::MainReport {
+/// [`array_vis_bench_core::mains::Benchmark`]). Backs `--timing`: an `n` or `k`
+/// given overrides the benchmark's default, one left `None` keeps it.
+pub fn run_timing(
+    n: Option<usize>,
+    k: Option<usize>,
+) -> array_vis_bench_core::mains::MainReport {
     use array_vis_bench_core::bench_registry::{AlgorithmEntry, ALGORITHMS};
     use array_vis_bench_core::mains::{Benchmark, Main};
+    let defaults = Benchmark::default();
+    let benchmark = Benchmark { n: n.unwrap_or(defaults.n), k: k.unwrap_or(defaults.k) };
     let all: Vec<&'static AlgorithmEntry> = ALGORITHMS.iter().collect();
-    Benchmark { n, k }.run(&all)
+    benchmark.run(&all)
 }
 
 #[cfg(test)]
@@ -368,12 +374,22 @@ mod tests {
         /// not a bench.
         #[test]
         fn run_timing_times_the_whole_catalog() {
-            let report = crate::run_timing(64, 1);
+            let report = crate::run_timing(Some(64), Some(1));
             let benchmark = array_vis_bench_core::mains::Benchmark { n: 64, k: 1 };
             let skipped = ALGORITHMS.iter().filter(|e| !benchmark.admits(e)).count();
             assert_eq!(report.ran + skipped, ALGORITHMS.len(), "every entry ran or was skipped");
             assert!(report.all_ok(), "timing had failures: {:?}", report.failures);
             assert_eq!(report.timings.len(), report.ran, "one timing per entry that ran");
+        }
+
+        /// With no overrides `run_timing` runs the benchmark consumer's own defaults.
+        #[test]
+        fn run_timing_without_overrides_uses_the_benchmark_defaults() {
+            let benchmark = array_vis_bench_core::mains::Benchmark::default();
+            let report = crate::run_timing(None, None);
+            let admitted = ALGORITHMS.iter().filter(|e| benchmark.admits(e)).count();
+            assert_eq!(report.ran, admitted, "ran the entries the default n admits");
+            assert!(report.all_ok(), "timing had failures: {:?}", report.failures);
         }
 
         /// THE CLOSED LOOP from the AVBS *language* surface: a `consumers:` program
