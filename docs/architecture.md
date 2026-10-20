@@ -48,7 +48,8 @@ tests.
    a global namespace, so a duplicate is a build error. Parse order is
    deterministic and first wins where two components share a type head.
 3. Solve. Each query is lowered independently (helper bindings stay scoped to
-   their file) and solved against the merged registry. The cardinality pass
+   their file, and the wrappers come from the backend's `KINDS` table) and
+   solved against the merged registry. The cardinality pass
    bounds the output before anything is materialised, so an unbounded
    recursive role or an astronomical cross product fails fast with a count.
    A binding that solves to zero rows is an error, not a silent drop.
@@ -99,16 +100,18 @@ the root, `axes` the filled slots as `(role, value, path)` triples, and
 on demand, and `bench_registry::sorted` orders the entries through the same
 tree.
 
-Per category the backend picks the run driver (`run_sort_with_input`,
-`run_rotation_with_input`, and so on) and the correctness battery. Kinds backed
-by a role trait go through `CorrectnessSuite`, one impl per kind; full sorts
-call `sort_battery` directly, passing the entry's cap, because a sort has no
-role trait, only an inherent `sort` method.
+The backend writes every kind through one template that reads the kind's row
+of the `KINDS` table in `spec_emit`: the one adapter `run_dyn(arr, index,
+logger)` handed to `run_with_input(category, ...)`, and a `run_correctness`
+that is `<{Kind}Suite<Ty> as CorrectnessSuite>::verify(NAME, cap)`. Every kind
+goes through `CorrectnessSuite`, one impl per kind over the kind's role trait.
+A sort has the `DirectSort` role, which each driver type joins with one
+`direct_sort!` line forwarding to its inherent `sort`.
 
 ## Startup flow
 
 1. Link time. linkme collects every `#[distributed_slice(ALGORITHMS)]` static
-   into one slice, and likewise the input slices. An entry already carries its
+   into one slice, and likewise the `INPUTS` slice. An entry already carries its
    picker menu, axes and label template, so nothing else registers it.
 2. Validation. `bench_registry::validate_registries` runs from a constructor
    before `main` and panics with a precise message on a duplicate name, a name
@@ -138,11 +141,12 @@ come back as `MainReport::timings`.
 
 ### Inputs
 
-Inputs are per category: `SORT_INPUTS`, `ROTATION_INPUTS`, `MERGE_INPUTS`,
-`SMALL_SORT_INPUTS`, `QUICK_SELECT_INPUTS`, all in
-`array_vis_bench_core/src/inputs.rs`. Exactly one entry per category is
-primary and is what the harness uses when no input is named. Partition and
-scratchspace reuse the sort inputs. The compiler selects algorithms, never
+Inputs are one slice, `INPUTS` in `array_vis_bench_core/src/bench_registry.rs`,
+populated in `array_vis_bench_core/src/inputs.rs`. Each entry carries the
+categories it serves and returns an array plus one index, so `list_inputs` and
+`primary_input` are filters over the tags. Exactly one entry per category is
+primary and is what the harness uses when no input is named. Sort, partition
+and scratchspace share the sort shapes. The compiler selects algorithms, never
 inputs.
 
 ### Correctness path
@@ -152,8 +156,8 @@ test binary again with `AVB_RUN_CHECK_SORT=<name>`. A constructor in the child
 sees the variable, calls the entry's `run_correctness` and exits before the
 test runner starts. A freshly emitted algorithm is picked up with no separate
 runner, and a hang or crash names the variant. Two per entry fields survive
-emission: `max_input_size` (the cap, from `max_input` in the spec, passed on to
-`sort_battery` so a bounded or slow sort skips longer patterns) and
+emission: `max_input_size` (the cap, from `max_input` in the spec, handed to the
+entry's suite so a bounded or slow algorithm skips longer patterns) and
 `nondeterministic` (the trace varies between runs, so a check that compares
 two traces of one entry skips it).
 
@@ -165,7 +169,8 @@ two traces of one entry skips it).
   once per run, outside the hot loop, through a monomorphic adapter the emit
   generates.
 - Sorts expose an inherent `sort` rather than a trait object method, so there
-  is no vtable in the inner loop.
+  is no vtable in the inner loop. The `DirectSort` impl forwards to it with
+  `#[inline(always)]`.
 - The release profile sets `codegen-units = 1` and thin LTO so LLVM sees every
   monomorphisation of a leaf method in one module. `.cargo/config.toml` builds
   with `target-cpu=native`.

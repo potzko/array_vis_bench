@@ -15,6 +15,12 @@ impl<P: PartitionScheme, SS: SmallSort> CanonicalQuickSort<P, SS> {
 }
 ```
 
+A driver type also joins the `DirectSort` role with one line beside the impl,
+`direct_sort!(CanonicalQuickSort<P, SS>; P: PartitionScheme, SS: SmallSort)`,
+which forwards to the inherent method. The emitted entry runs the inherent
+method, and `SortSuite` reaches it through the role to run the correctness
+batteries, like every other kind's suite.
+
 `U: ?Sized` is what lets one body serve both the monomorphic benchmark path
 (`&mut NoOpLogger`) and the visualiser path (`&mut dyn SortLogger<T>`). Drop
 it and the dyn path stops compiling. The legacy `SortAlgo<T, U>` trait in
@@ -40,13 +46,15 @@ All live in `array_vis_bench_traits/src/role/`. Every method takes the
 | `DeferredSmallSort` | `THRESHOLD`, `final_pass(arr, logger)` | one whole array cleanup after a deferred quicksort |
 | `Rotation` | `NAME`, `scratch_size(n)`, `rotate(arr, split, scratch, logger)` | rotate a slice, in place or with a declared scratch |
 | `QuickSelect` | `select(arr, logger, target)` | place the target order statistic |
+| `DirectSort` | `sort(arr, logger)` | sort a whole array; each driver type forwards to its inherent `sort` with `direct_sort!` |
+| `RotationMerge` | `scratch_size(n)`, `merge(arr, mid, scratch, logger)` | merge two adjacent sorted runs using a rotation |
 | `Auxiliary` | `NAME`, `MERGE_WORST`, `MERGE_SPACE`, `scratch_size(n)` | how much scratch a merge is handed |
 | `Scratchspace` | `NAME`, `aux_size(n)`, `acquire`, `release`, `park`, `place`, `block_swap`, `relocate`, `roll` | a bounded buffer contract whose operations all conserve the multiset |
 | `ScratchspaceRun` | `run(list, aux, logger)` | a scripted workflow over a `Scratchspace`, netting to identity |
 
 Family local traits stay with their only consumer: `GapSequence` in
 `shell_sort_lib`, `BranchingStrategy` and `RodMerge` in `rod_sort_lib`,
-`RotationMerge` in `merge_sort_lib`, `GapDistribution` in
+`GapDistribution` in
 `gap_distribution_lib` (it needs `rand`), `ReverseStorage` in
 `reverse_storage_lib` (it writes through the logger), and the heap layers
 (`Heap`, `HeapLayout`, `Arity`, `Direction`, `DeepHeapify`, `HeapPartition`)

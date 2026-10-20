@@ -116,6 +116,10 @@ property of where a type sits, not of the type: `Pivoted` is a root under
 declares nothing about its kind, and a `category` line in a fragment is a
 parse error that names the wrapper.
 
+The wrapper table is the `KINDS` table of `spec_emit`, one row per kind. The
+build hands it to `spec_core::avbs::lower` through `EmitBackend::wrappers`, so
+the compiler crate names no kind.
+
 | wrapper | category | role enumerated by `_` |
 |---|---|---|
 | `SortingAlgorithm<X>` | Sort | the driver's own slots |
@@ -163,39 +167,54 @@ or exceeds the budget before any enumeration runs.
 
 For each ground type the backend writes a module containing the `Ty` alias
 and the `AlgorithmEntry` static, which carries the picker `menu`, the facet
-`axes` and the `label_template`. The entry's `run_with_input` is the category's
-driver and its `run_correctness` is the category's battery:
+`axes` and the `label_template`. One template in `spec_emit` writes it for every
+kind, reading the kind's row of the `KINDS` table. Both entry fns are the same
+for every kind:
 
-| category | driver | battery |
-|---|---|---|
-| Sort | `run_sort_with_input` | `sort_battery` and `sort_stability_battery` |
-| Rotation | `run_rotation_with_input` | `RotationSuite` |
-| Partition | `run_partition_with_input` | `PartitionSuite` |
-| Merge | `run_merge_with_input` | `MergeSuite` |
-| SmallSort | `run_small_sort_with_input` | `SmallSortSuite` |
-| QuickSelect | `run_quick_select_with_input` | `SelectSuite` |
-| Scratchspace | `run_scratchspace_with_input` | `ScratchspaceSuite` |
+- `run_with_input` runs the one adapter `run_dyn(arr, index, logger)` through
+  `bench_registry::run_with_input(category, ...)`. The index is whatever the
+  input supplies: a sort ignores it, a rotation takes its split, a merge its
+  midpoint and a quick select its target.
+- `run_correctness` is `<{Kind}Suite<Ty> as CorrectnessSuite>::verify(NAME, cap)`,
+  with the entry's `max_input` as the cap. Every battery skips patterns longer
+  than the cap, and for a small sort the cap is its threshold.
 
-A sort's battery call carries the entry's `max_input` literal, so the battery
-skips patterns longer than the cap.
+| category | the adapter calls | suite | role trait |
+|---|---|---|---|
+| Sort | the inherent `sort` | `SortSuite` | `DirectSort` |
+| Rotation | `run_rotation` | `RotationSuite` | `Rotation` |
+| Partition | `run_partition_bounds` | `PartitionSuite` | `PartitionScheme` |
+| Merge | `run_rotation_merge` | `MergeSuite` | `RotationMerge` |
+| SmallSort | `SmallSort::sort` | `SmallSortSuite` | `SmallSort` |
+| QuickSelect | `QuickSelect::select` | `SelectSuite` | `QuickSelect` |
+| Scratchspace | `ScratchspaceRun::run` | `ScratchspaceSuite` | `ScratchspaceRun` |
 
 The suites are impls of `array_vis_bench_core::suites::CorrectnessSuite`,
-one per kind, parameterised over the kind's role trait.
+one per kind, parameterised over the kind's role trait. A sort driver type
+joins `SortSuite` with one `array_vis_bench_traits::direct_sort!` line that
+forwards the `DirectSort` role to its inherent `sort`.
 
 ## Adding a first class kind
 
-A kind is a category with its own driver, battery and wrapper. The
-scratchspace kind is the worked example on this branch and touched exactly
-these places:
+A kind is a category with its own wrapper, role and suite. It takes four
+places:
 
-1. `Category` variant, `as_str`, inputs (`list_inputs`, `primary_input`) in
+1. A `Category` variant, with its `as_str`, in
    `array_vis_bench_core/src/bench_registry.rs`.
-2. `run_<kind>_with_input` and `<kind>_battery` in the same file.
-3. A `<Kind>Suite` impl of `CorrectnessSuite` in `suites.rs`.
-4. An entry body arm in `spec_emit/src/lib.rs`.
-5. The wrapper name, its role and its category: one row of the `WRAPPERS`
-   table in `spec_core/src/avbs.rs`.
-6. A `Kinds: <Kind>Alg = <Kind>Alg<_>` binding in `spec_catalog/kinds.avbs`.
+2. A row of the `KINDS` table in `spec_emit/src/lib.rs`: the query wrapper and
+   the role `_` enumerates under it, the category, the picker root, the call
+   the adapter makes, the suite, and the complexity bounds the kind fixes
+   instead of inheriting, if any.
+3. A `<Kind>Suite` impl of `CorrectnessSuite` in
+   `array_vis_bench_core/src/suites.rs`, which drives the kind's battery (a
+   `<kind>_battery` beside the others in `bench_registry::correctness`).
+4. The input tags: every shape in `array_vis_bench_core/src/inputs.rs` that
+   serves the kind lists it in `categories`, and exactly one of them is
+   primary for it. The startup validation panics otherwise.
+
+Then a `Kinds: <Kind>Alg = <Kind>Alg<_>` binding in `spec_catalog/kinds.avbs`
+asks for the entries. A `spec_emit` test adds a toy row to a local table and
+emits a body for it, so the row is the whole of the emitter's side.
 
 ## Validation summary
 
