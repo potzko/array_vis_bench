@@ -1166,10 +1166,10 @@ mod tests {
 
     // ── STEP 5 PROBES: cross-branch capture (characterize current behaviour) ────
     //
-    // registry.spec's partitions are nullary, so it can't express "a variable
-    // captured INSIDE a union branch and referenced OUTSIDE". This minimal probe
-    // catalog can: `Box<main, echo>` references a leaf captured inside the
-    // `main` union at the sibling `echo` slot.
+    // registry.spec has no component that can express "a variable captured
+    // INSIDE a union branch and referenced OUTSIDE". This minimal probe catalog
+    // can: `Box<main, echo>` references a leaf captured inside the `main` union
+    // at the sibling `echo` slot.
     const XCAT: &str = "\
 component box
   type Box<{main}, {echo}>
@@ -1340,15 +1340,14 @@ end
     fn where_union_lowers_to_where_node() {
         let reg = fixture();
         let qs =
-            lower_program("P: Partition = _ where ( LeftLeftPartition | DualPivotPartition )", &reg)
-                .unwrap();
+            lower_program("P: Partition = _ where ( Pivoted | DualPivoted )", &reg).unwrap();
         match &qs[0].bindings[0].value {
             QValue::Where { quant, alts } => {
                 assert_eq!(*quant, Quant::Exhaustive); // from the `_` base
                 assert_eq!(alts.len(), 2);
                 // alternatives resolved by type-head to their components
-                assert_eq!(alts[0], QValue::Ident("LL_partition".into()));
-                assert_eq!(alts[1], QValue::Ident("dual_pivot_partition".into()));
+                assert_eq!(alts[0], QValue::Ident("pk_single".into()));
+                assert_eq!(alts[1], QValue::Ident("pk_dual".into()));
             }
             other => panic!("expected Where, got {other:?}"),
         }
@@ -1639,7 +1638,7 @@ end
             r#"
             p:    Pivot = _
             part: Partition[pivot = p] = _
-            QuickSorts: SortingAlgorithm = SortingAlgorithm<QuickSort<partition = part, pivot = p, small_sort = _>>
+            QuickSorts: SortingAlgorithm = SortingAlgorithm<QuickSort<partition = part, small_sort = _>>
             "#,
             &reg,
         )
@@ -1651,9 +1650,8 @@ end
         assert_eq!(q.bindings[0].name, "p");
         assert_eq!(q.bindings[1].name, "part");
         assert_eq!(q.bindings[2].name, "QuickSorts");
-        // solving reproduces the proven shared-pivot arity coupling (the fixture's
-        // `shared_pivot_makes_arity_mismatch_unrepresentable`): 7 pivots, each with
-        // its arity-matching partition, × 3 small sorts = 21.
+        // solving applies the refinement per pivot and dedups the sorts: the 7
+        // partitions x 3 small sorts = 21.
         let out = crate::solve::solve(q, &reg).unwrap();
         assert_eq!(out.sorts.len(), 21);
     }
@@ -1667,8 +1665,8 @@ end
             r#"
             p:    Pivot = _
             part: Partition[pivot = p] = _
-            A: SortingAlgorithm = SortingAlgorithm<QuickSort<partition = part, pivot = p, small_sort = _>>
-            B: SortingAlgorithm = SortingAlgorithm<QuickSort<partition = part, pivot = p, small_sort = no_small_sort>>
+            A: SortingAlgorithm = SortingAlgorithm<QuickSort<partition = part, small_sort = _>>
+            B: SortingAlgorithm = SortingAlgorithm<QuickSort<partition = part, small_sort = no_small_sort>>
             "#,
             &reg,
         )

@@ -211,37 +211,39 @@ mod tests {
 
     #[test]
     fn nested_filler_becomes_child_axes_with_prefixed_paths() {
-        // A quick_sort whose pivot is the composite `combined<first, middle>`:
-        // the pivot node carries the HEAD `combined`, then its a/b sub-slots
-        // appear as `pivot/a`, `pivot/b` — the structural nesting.
+        // A quick_sort whose partition is the dual composite over the composite
+        // pivot `combined<first, middle>`: each node carries its HEAD label, and
+        // the paths accumulate down the nesting (`partition/pivot/a`).
         let axes = axes_of(
-            "quick_sort< partition = LL_partition, \
-                         pivot = combined< a = first_element, b = middle_element >, \
+            "quick_sort< partition = pk_dual< pivot = combined< a = first_element, b = middle_element > >, \
                          small_sort = no_small_sort >",
         );
         assert_eq!(
             axes,
             vec![
-                ("Partition".into(), "LL".into(), "partition".into()),
-                ("Pivot".into(), "combined".into(), "pivot".into()),
-                ("PivotSingle".into(), "first".into(), "pivot/a".into()),
-                ("PivotSingle".into(), "mid".into(), "pivot/b".into()),
+                ("Partition".into(), "dual".into(), "partition".into()),
+                ("PivotDual".into(), "combined".into(), "partition/pivot".into()),
+                ("PivotSingle".into(), "first".into(), "partition/pivot/a".into()),
+                ("PivotSingle".into(), "mid".into(), "partition/pivot/b".into()),
                 ("SmallSort".into(), "none".into(), "small_sort".into()),
             ]
         );
     }
 
     #[test]
-    fn leaf_filler_is_a_single_flat_axis() {
-        // A single (non-composite) pivot → one `pivot` node, no children.
+    fn leaf_fillers_are_single_flat_axes() {
+        // The single composite's scheme and pivot are leaves: one node each under
+        // the partition, no children.
         let axes = axes_of(
-            "quick_sort< partition = LL_partition, pivot = first_element, small_sort = no_small_sort >",
+            "quick_sort< partition = pk_single< scheme = LL_partition, pivot = first_element >, \
+                         small_sort = no_small_sort >",
         );
         assert_eq!(
             axes,
             vec![
-                ("Partition".into(), "LL".into(), "partition".into()),
-                ("Pivot".into(), "first".into(), "pivot".into()),
+                ("Partition".into(), "single".into(), "partition".into()),
+                ("PartScheme".into(), "LL".into(), "partition/scheme".into()),
+                ("PivotSingle".into(), "first".into(), "partition/pivot".into()),
                 ("SmallSort".into(), "none".into(), "small_sort".into()),
             ]
         );

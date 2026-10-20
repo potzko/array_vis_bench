@@ -538,10 +538,10 @@ mod tests {
     #[test]
     fn take_caps_ground_but_not_peak() {
         let reg = fixture();
-        let e = est_of("3 of let s: Sort = quick_sort(partition = ., pivot = ., small_sort = .);", &reg);
+        let e = est_of("3 of let s: Sort = quick_sort(partition = ., small_sort = .);", &reg);
         assert_eq!(fin(e.ground), 3, "`N of` caps the emitted count");
-        // peak is the full pre-take cross-product (42 quick combos), unprotected.
-        assert_eq!(fin(e.peak), 42);
+        // peak is the full pre-take cross-product (21 quick combos), unprotected.
+        assert_eq!(fin(e.peak), 21);
     }
 
     #[test]

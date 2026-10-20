@@ -1,6 +1,6 @@
-# Component catalog — now mirroring the REAL sort type shapes (see survey), to
-# stress the engine: type+const components, bool consts, imports, arity-composed
-# selectors, and the sibling-arity QuickSort layout.
+# Component catalog mirroring the production shapes, to stress the engine:
+# type+const components, bool consts, imports, arity-composed selectors and
+# partition composites that nest their pivot.
 #
 # Grammar:
 #   component <name>
@@ -8,46 +8,53 @@
 #     label    <label template>
 #     provides <role> [role...]     roles this component satisfies
 #     uses     <path> [path...]     module paths to import (repeatable)
-#     slot     <param> <role> [<default-component>]
-#     const    <param> [<default>]  default may be an int or true/false
+#     slot     <param> <role>
+#     const    <param> [values <v>...]  literal only, or a finite value set
 #   end
 
-# ── QuickSort — FLAT: partition and pivot are SIBLING slots, matching the real
-#    `QuickSort<P: PartitionScheme, V: PivotInput, SS: SmallSort>`.
+# QuickSort has ONE partition slot. The pivot nests under the partition composite,
+# as in the production `CanonicalQuickSort<{part}, {small_sort}>`.
 component quick_sort
-  type     QuickSort<{partition}, {pivot}, {small_sort}>
-  label    quick[{partition}/{pivot}/{small_sort}]
+  type     QuickSort<{partition}, {small_sort}>
+  label    quick[{partition}/{small_sort}]
   provides Sort
   category Sort
   uses     crate::quick_sort_lib::quick_sort::QuickSort
   slot     partition Partition
-  slot     pivot Pivot
-  slot     small_sort SmallSort no_small_sort
+  slot     small_sort SmallSort
 end
 
-# ── partitions (real ones are unit structs; pivot is NOT a type arg here). The
-#    `project pivot <arity-role>` is a STRUCTURAL-ONLY param: it never appears in
-#    the emitted type, it exists so `Partition[pivot = p]` can thread an arity
-#    role onto the shared pivot variable. A partition WITHOUT a `project pivot`
-#    cannot satisfy that refinement at all — that exclusion is the arity filter.
+# Partition composites, as in production: each nests its pivot under itself and
+# bakes the arity into the composite. The single composite takes a `PivotSingle`
+# and the dual composite a `PivotDual`, so an arity-illegal pairing is
+# unrepresentable. `Partition[pivot = p]` refines on the composite's `pivot` slot.
+component pk_single
+  type     Pivoted<{scheme}, {pivot}>
+  label    single<{scheme}, {pivot}>
+  provides Partition
+  uses     crate::quick_sort_lib::Pivoted
+  slot     scheme PartScheme
+  slot     pivot PivotSingle
+end
+
+component pk_dual
+  type     DualPivoted<{pivot}>
+  label    dual<{pivot}>
+  provides Partition
+  uses     crate::quick_sort_lib::DualPivoted
+  slot     pivot PivotDual
+end
+
 component LL_partition
   type     LeftLeftPartition
   label    LL
-  provides Partition
+  provides PartScheme
   uses     crate::partition_lomuto::LeftLeftPartition
-  project  pivot PivotSingle
 end
 
-component dual_pivot_partition
-  type     DualPivotPartition
-  label    dual
-  provides Partition
-  uses     crate::quick_sort_lib::yaroslavskiy::DualPivotPartition
-  project  pivot PivotDual
-end
-
-# ── pivot selectors. They provide both the generic `Pivot` role (so the flat
-#    quick_sort slot accepts them) and an arity role (`PivotSingle`/`PivotDual`).
+# Pivot selectors. They provide the generic `Pivot` role, for queries that
+# enumerate every selector, and an arity role (`PivotSingle`/`PivotDual`) that the
+# partition composites slot.
 component first_element
   type     FirstElement
   label    first
@@ -75,11 +82,12 @@ component combined
   label    combined<{a},{b}>
   provides Pivot PivotDual
   uses     crate::quick_sort_lib::pivot_selectors::CombinedSelector
-  slot     a PivotSingle first_element
-  slot     b PivotSingle middle_element
+  slot     a PivotSingle
+  slot     b PivotSingle
 end
 
-# ── small sorts. `insertion` is a TYPE param (strategy) + a CONST (threshold). ─
+# Small sorts. `insertion` is a TYPE param (strategy) with its threshold baked
+# into the type, so a bare `SmallSort` hole can enumerate it.
 component no_small_sort
   type     NoSmallSort
   label    none
@@ -88,12 +96,11 @@ component no_small_sort
 end
 
 component insertion
-  type     InsertionSmallSort<{strategy}, {N}>
-  label    ins:{strategy}:{N}
+  type     InsertionSmallSort<{strategy}, 16>
+  label    ins:{strategy}:16
   provides SmallSort
   uses     crate::small_sort_insertion::InsertionSmallSort
-  slot     strategy InsertionStrategy linear
-  const    N 16
+  slot     strategy InsertionStrategy
 end
 
 component linear
@@ -118,9 +125,9 @@ component top_down_merge
   category Sort
   adaptive true
   uses     crate::merge_sort_lib::top_down::TopDownMergeSort
-  slot     small_sort SmallSort no_small_sort
-  const    ping_pong false
-  const    early_exit false
+  slot     small_sort SmallSort
+  const    ping_pong values false true
+  const    early_exit values false true
 end
 
 # ── shell sort: single type slot over a gap sequence ──────────────────────────
@@ -130,7 +137,7 @@ component shell_sort
   provides Sort
   category Sort
   uses     crate::shell_sort_lib::shell_sort::ShellSort
-  slot     seq GapSequence knuth
+  slot     seq GapSequence
 end
 
 component classic
@@ -155,18 +162,19 @@ component ciura
 end
 
 # ── heap sort: a single CONST generic (the d-ary arity) with a declared set of
-#    "neat values" and a default. `heap_sort(arity = *)` enumerates the set,
-#    `heap_sort(arity = ?2@1)` samples it, `heap_sort()` takes the default, and a
-#    shared `let k: Width = 4; heap_sort(arity = k)` threads one number to many
-#    uses. The registry only checks MEMBERSHIP in the set — `arity >= 2` (a
-#    relation between numbers) stays rustc's job, the redundant backstop.
+#    "neat values". `heap_sort(arity = *)` enumerates the set,
+#    `heap_sort(arity = ?2@1)` samples it, `heap_sort(arity = 4)` passes one value,
+#    and a shared `let k: Width = 4; heap_sort(arity = k)` threads one number to
+#    many uses. A query that omits `arity` is an error. The registry only checks
+#    MEMBERSHIP in the set, `arity >= 2` (a relation between numbers) stays
+#    rustc's job, the redundant backstop.
 component heap_sort
   type     HeapSort<{arity}>
   label    heap[d={arity}]
   provides Sort
   category Sort
   uses     crate::heap_lib::HeapSort
-  const    arity 2 values 2 3 4
+  const    arity values 2 3 4
 end
 
 # ── recursive grammar: a sort whose `inner` slot is itself a RecSort, bounded by
@@ -177,7 +185,7 @@ component recursive_sort
   label    rec[{inner}]
   provides Sort RecSort
   uses     crate::recursive_lib::RecursiveSort
-  slot     inner RecSort base_case
+  slot     inner RecSort
 end
 
 component base_case
