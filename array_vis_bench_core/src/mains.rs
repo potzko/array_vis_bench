@@ -32,6 +32,14 @@ impl MainReport {
     pub fn all_ok(&self) -> bool {
         self.failures.is_empty()
     }
+
+    /// The timings as a TSV archive, one `name<TAB>median nanoseconds` line per
+    /// timed entry, sorted by name so two archives diff cleanly.
+    pub fn timings_tsv(&self) -> String {
+        let mut rows: Vec<_> = self.timings.iter().map(|(name, d)| (*name, d.as_nanos())).collect();
+        rows.sort();
+        rows.iter().map(|(name, ns)| format!("{name}\t{ns}\n")).collect()
+    }
 }
 
 /// A consumer of a set of registered algorithms.
@@ -298,6 +306,15 @@ mod tests {
 
     static FITS: AlgorithmEntry = entry("fits", Some(1000));
     static TOO_SMALL: AlgorithmEntry = entry("too small", Some(999));
+
+    #[test]
+    fn timings_tsv_lists_each_entry_by_name_in_nanoseconds() {
+        let report = MainReport {
+            timings: vec![("zeta", Duration::from_micros(3)), ("alpha", Duration::from_nanos(1500))],
+            ..Default::default()
+        };
+        assert_eq!(report.timings_tsv(), "alpha\t1500\nzeta\t3000\n");
+    }
 
     #[test]
     fn benchmark_defaults_to_1000_and_3() {
