@@ -115,7 +115,7 @@ convenient no-op logger in unit tests.
 ## Consumer side traits
 
 `array_vis_bench_core::mains::Main` is a consumer over a set of entries
-(visualiser, correctness, benchmark, timing).
+(visualiser, correctness, benchmark).
 `array_vis_bench_core::suites::CorrectnessSuite` is the per kind correctness
 battery, one impl per role trait backed kind, and is what the emit wires each
 entry's `run_correctness` pointer to.

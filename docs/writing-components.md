@@ -682,8 +682,8 @@ test suite (`cargo test`). The battery runs category-appropriate inputs under
 
 - **`max_input`** , if your component is only correct/feasible up to some size, declare
   it. The cap is a contract for a type that refuses longer input and a time budget for a
-  slow sort, and `max_input_size` serves both: the picker, the sort battery, the benchmark
-  and timing all honour it. A global test `N` that ignores per-entry caps will OOM on an
+  slow sort, and `max_input_size` serves both: the picker, the sort battery and the
+  benchmark all honour it. A global test `N` that ignores per-entry caps will OOM on an
   exotic sort.
 - **Nondeterministic sorts** , a sort whose trace is intentionally different between runs
   declares `nondeterministic true`, which sets `AlgorithmEntry.nondeterministic`. Defaults
