@@ -1,7 +1,7 @@
 # Fun-sorts family catalog fragment — OWNED by fun_sorts_lib.
 #
-# A grab bag of pedagogical / adversarial sorts. All `category Sort` (they sort an
-# array); the interesting bit is `quick_surrender` / `quick_surrender_optimised`,
+# A grab bag of pedagogical / adversarial sorts. All are `SortingAlgorithm`
+# entries (they sort an array); the interesting bit is `quick_surrender` / `quick_surrender_optimised`,
 # which NEST the QuickSelect role (Phase 1's qs_recursive/qs_iterative) inside a
 # sort driver — the inner select's partition/pivot arity is coupled in the query
 # exactly as quick.spec couples a partition to its pivot.
@@ -19,7 +19,6 @@ component fs_slow_sort
   type      SlowSort
   label     slow sort
   provides  Sort
-  category  Sort
   menu      fun sorts / slow sort
   uses      fun_sorts_lib::slow_sort::SlowSort
   max_input 150
@@ -29,7 +28,6 @@ component fs_slow_sort_potzko
   type      SlowSortPotzko
   label     slow sort potzko
   provides  Sort
-  category  Sort
   menu      fun sorts / slow sort potzko
   uses      fun_sorts_lib::slow_sort_potzko::SlowSortPotzko
   max_input 20
@@ -39,7 +37,6 @@ component fs_bad_heap_sort
   type      BadHeapSort
   label     bad heap sort
   provides  Sort
-  category  Sort
   menu      fun sorts / bad heap sort
   uses      fun_sorts_lib::bad_heap_sort::BadHeapSort
   max_input 200
@@ -49,7 +46,6 @@ component fs_bad_heap_sort_alt
   type     BadHeapSortAlt
   label    bad heap sort alt
   provides Sort
-  category Sort
   menu     fun sorts / bad heap sort alt
   uses     fun_sorts_lib::bad_heap_sort_alt::BadHeapSortAlt
 end
@@ -63,7 +59,6 @@ component fs_cyclent_sort
   type     CyclentSort<{part}>
   label    cyclent sort<{part}>
   provides Sort
-  category Sort
   menu     fun sorts / cyclent sort
   uses     fun_sorts_lib::cyclent_sort::CyclentSort
   slot     part PartScheme
@@ -74,7 +69,6 @@ component fs_cyclent_sort_opt
   type     CyclentSortOpt<{part}>
   label    cyclent sort opt<{part}>
   provides Sort
-  category Sort
   menu     fun sorts / cyclent sort opt
   uses     fun_sorts_lib::cyclent_sort_opt::CyclentSortOpt
   slot     part PartScheme
@@ -85,7 +79,6 @@ component fs_cyclent_sort_stack
   type     CyclentSortStack<{part}>
   label    cyclent sort stack<{part}>
   provides Sort
-  category Sort
   menu     fun sorts / cyclent sort stack
   uses     fun_sorts_lib::cyclent_sort_stack::CyclentSortStack
   slot     part PartScheme
@@ -96,7 +89,6 @@ component fs_cyclent_sort_stack_optimized
   type     CyclentSortStackOptimized<{part}>
   label    cyclent sort stack optimized<{part}>
   provides Sort
-  category Sort
   menu     fun sorts / cyclent sort stack optimized
   uses     fun_sorts_lib::cyclent_sort_stack_optimized::CyclentSortStackOptimized
   slot     part PartScheme
@@ -112,7 +104,6 @@ component fs_stooge_sort
   type      StoogeSort<{small}>
   label     stooge sort<{small}>
   provides  Sort
-  category  Sort
   menu      fun sorts / stooge sort
   uses      fun_sorts_lib::stooge_sort::StoogeSort
   slot      small FunSmallSort
@@ -124,7 +115,6 @@ component fs_random_shell_sort
   type            RandomShellSort<{dist}>
   label           random shell sort<{dist}>
   provides        Sort
-  category        Sort
   menu            fun sorts / random shell sort
   uses            fun_sorts_lib::random_shell_sort::RandomShellSort
   slot            dist GapDistribution
@@ -139,7 +129,6 @@ component fs_quick_surrender
   type      QuickSurrender<{inner}>
   label     quick surrender<{inner}>
   provides  Sort
-  category  Sort
   menu      fun sorts / quick surrender
   uses      fun_sorts_lib::quick_surrender::QuickSurrender
   slot      inner QuickSelect
@@ -150,7 +139,6 @@ component fs_quick_surrender_optimised
   type      QuickSurrenderOptimised<{inner}, {small}>
   label     quick surrender optimised<{inner}, small: {small}>
   provides  Sort
-  category  Sort
   menu      fun sorts / quick surrender optimised
   uses      fun_sorts_lib::quick_surrender_optimised::QuickSurrenderOptimised
   slot      inner QuickSelect

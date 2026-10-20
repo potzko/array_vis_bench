@@ -32,7 +32,6 @@ component mk_aux
   type     AuxiliaryMerge<{aux}>
   label    auxiliary<{aux}>
   provides MergeKind
-  category Merge
   uses     scratchspace_lib::AuxiliaryMerge
   slot     aux Auxiliary
 end
@@ -69,7 +68,6 @@ component wf_exercise
   type     Exercise<{backing}>
   label    exercise<{backing}>
   provides ScratchspaceKind
-  category Scratchspace
   uses     scratchspace_lib::Exercise
   slot     backing Scratchspace
 end
@@ -78,7 +76,6 @@ component wf_park_sweep
   type     ParkSweep<{backing}>
   label    park-sweep<{backing}>
   provides ScratchspaceKind
-  category Scratchspace
   uses     scratchspace_lib::ParkSweep
   slot     backing Scratchspace
 end
@@ -87,7 +84,6 @@ component wf_park_loop
   type     ParkLoop<{backing}>
   label    park-loop<{backing}>
   provides ScratchspaceKind
-  category Scratchspace
   uses     scratchspace_lib::ParkLoop
   slot     backing Scratchspace
 end
@@ -96,7 +92,6 @@ component wf_relocate
   type     Relocations<{backing}>
   label    relocate<{backing}>
   provides ScratchspaceKind
-  category Scratchspace
   uses     scratchspace_lib::Relocations
   slot     backing Scratchspace
 end
@@ -108,7 +103,6 @@ component ss_nightmare
   type     ScratchspaceMergeSort<{backing}>
   label    scratchspace-nightmare<{backing}>
   provides Sort
-  category Sort
   adaptive true
   menu     fun / scratchspace-nightmare
   uses     scratchspace_lib::ScratchspaceMergeSort

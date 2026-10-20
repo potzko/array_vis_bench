@@ -51,7 +51,6 @@ component pk_single
   type     Pivoted<{scheme}, {pivot}>
   label    {scheme}<{pivot}>
   provides PartitionKind SelectPartition
-  category Partition
   uses     quick_sort_lib::Pivoted
   slot     scheme PartScheme
   slot     pivot  PartPivot
@@ -61,7 +60,6 @@ component pk_dual
   type     DualPivoted<{pivot}>
   label    dual<{pivot}>
   provides PartitionKind SelectPartition
-  category Partition
   uses     quick_sort_lib::DualPivoted
   slot     pivot  PartPivotDual
 end
@@ -73,7 +71,6 @@ component quick_sort
   type     CanonicalQuickSort<{part}, {small_sort}>
   label    quick sort<part: {part}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     quick sorts
   uses     quick_sort_lib::CanonicalQuickSort
   slot     part PartitionKind
@@ -84,7 +81,6 @@ component deferred_quick_sort
   type     DeferredCanonicalQuickSort<{part}, {small_sort}>
   label    deferred quick sort<part: {part}, small: {small_sort}>
   provides Sort
-  category Sort
   menu     deferred quick sorts
   uses     quick_sort_lib::DeferredCanonicalQuickSort
   slot     part PartitionKind

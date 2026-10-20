@@ -6,7 +6,6 @@ component cycle_sort
   type     CycleSort
   label    cycle sort
   provides Sort
-  category Sort
   menu     cycle sorts
   uses     cycle_sort_lib::CycleSort
 end

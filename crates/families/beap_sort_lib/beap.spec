@@ -23,7 +23,6 @@ component beap_sort_classic
   type     BeapSortClassicOf<{d}, {dh}>
   label    beap sort<dir: {d}, build: {dh}>
   provides Sort
-  category Sort
   menu     heap sorts / beap / classic
   uses     beap_sort_lib::spec_drivers::BeapSortClassicOf
   slot     d  HeapDir
@@ -34,7 +33,6 @@ component beap_sort_quick_build
   type     BeapSortQuickOf<{d}, {dh}>
   label    beap sort quick build<dir: {d}, build: {dh}>
   provides Sort
-  category Sort
   menu     heap sorts / beap / quick build / single pivot
   uses     beap_sort_lib::spec_drivers::BeapSortQuickOf
   slot     d  HeapDir
@@ -45,7 +43,6 @@ component beap_sort_dual_build
   type     BeapSortDualOf<{d}, {dh}>
   label    beap sort quick build dual pivot<dir: {d}, build: {dh}>
   provides Sort
-  category Sort
   menu     heap sorts / beap / quick build / dual pivot
   uses     beap_sort_lib::spec_drivers::BeapSortDualOf
   slot     d  HeapDir

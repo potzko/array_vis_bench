@@ -4,6 +4,5 @@ component rot_juggling
   type     JugglingRotation
   label    juggling
   provides Rotation
-  category Rotation
   uses     rotation_juggling::JugglingRotation
 end

@@ -10,7 +10,6 @@ component insertion_sort
   type     InsertionSort<{strategy}>
   label    insertion sort<strategy: {strategy}>
   provides Sort
-  category Sort
   menu     insertion sorts
   uses     insertion_sort_lib::InsertionSort
   slot     strategy InsertionStrategy

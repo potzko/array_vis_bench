@@ -17,10 +17,10 @@
 pub struct EntryCtx<'a> {
     /// The resolved label — the entry's stable, human-readable name.
     pub label: &'a str,
-    /// The catalog `category` of the root component, verbatim and **opaque** to
-    /// the compiler. `None` when the component declared none; the backend
-    /// decides what (if anything) that means.
-    pub category: Option<&'a str>,
+    /// The category the query wrapper assigned to this entry, verbatim and
+    /// **opaque** to the compiler. The backend decides what it means and which
+    /// categories it can emit.
+    pub category: &'a str,
     /// The catalog `adaptive` flag (a per-family literal, not type-inherited).
     pub adaptive: bool,
     /// The catalog `nondeterministic` flag — the backend registers the entry as

@@ -10,7 +10,6 @@ component comb_sort
   type     CombSortOf<{ratio}>
   label    comb sort<{ratio}>
   provides Sort
-  category Sort
   menu     comb sorts
   uses     comb_sort_lib::CombSortOf
   slot     ratio CombRatio

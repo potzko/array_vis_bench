@@ -1,9 +1,9 @@
 # Quick-SELECT family catalog fragment — OWNED by quick_select_lib.
 #
-# The first NON-SORT first-class kind in the catalog: `category QuickSelect`
-# drivers emit through `spec_emit`'s quick-select body (role-trait `select` ABI,
-# `run_quick_select_with_input`, `CorrectnessSuite`/`SelectSuite` battery) and the
-# `Selection<X>` AVBS wrapper marks `X` emittable at role `QuickSelect`.
+# The first NON-SORT first-class kind in the catalog: the `Selection<X>` AVBS
+# wrapper marks `X` emittable at role `QuickSelect`, and its drivers emit through
+# `spec_emit`'s quick-select body (role-trait `select` ABI,
+# `run_quick_select_with_input`, `CorrectnessSuite`/`SelectSuite` battery).
 #
 # ONE partition role-system (shared with quick): each driver slots a single
 # self-pivoting `part` — a `Pivoted<scheme, pivot>` composite (`PartitionKind`) or a
@@ -37,7 +37,6 @@ component qs_recursive
   type     RecursiveQuickSelect<{part}>
   label    quick select: recursive<{part}>
   provides QuickSelect
-  category QuickSelect
   menu     recursive
   uses     quick_select_lib::RecursiveQuickSelect
   slot     part SelectPartition
@@ -47,7 +46,6 @@ component qs_iterative
   type     IterativeQuickSelect<{part}>
   label    quick select: iterative<{part}>
   provides QuickSelect
-  category QuickSelect
   menu     iterative
   uses     quick_select_lib::IterativeQuickSelect
   slot     part SelectPartition

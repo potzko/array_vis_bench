@@ -1,7 +1,8 @@
 # Implementation plan: category from the wrapper
 
-Status: NOT STARTED. Designed 2026-10-20 from the concept review recorded in
-`../todo.md`.
+Status: DONE (2026-10-20). Designed from the concept review recorded in
+`../todo.md`. The emitted catalog is byte identical to the one before the
+change, and `catalog.golden` is untouched.
 
 ## Problem
 
@@ -56,3 +57,16 @@ if a type ever needs two placements.
 - `grep -rn '^\s*category' --include=*.spec` finds nothing.
 - A mismatch is no longer expressible: the component says nothing about
   kind, so there is nothing to disagree with.
+
+## Outcome
+
+- The table is `WRAPPERS` in `spec_core/src/avbs.rs`, one row per wrapper with
+  its name, role and category. `is_wrapper_name` reads it too.
+- The tree held 73 `category` lines in the production fragments, not the 87 the
+  design counted: 44 Sort, 11 Rotation, 7 SmallSort, 4 Scratchspace, 3 Merge, 2
+  Partition and 2 QuickSelect. The fixtures lost 9 (`registry.spec`) and 14
+  (`quick_port.spec`).
+- `slotted_decomposition_reproduces_the_baked_types` only solves and resolves,
+  it never emits, so it needed no category of its own once the lines were gone.
+- The `avbs` unit tests in `spec_core` run only with `--features
+  pest-frontend`, which a workspace test run turns on through `spec_catalog`.

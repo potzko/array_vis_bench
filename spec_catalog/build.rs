@@ -166,7 +166,7 @@ fn main() {
     let reg = spec_core::Registry::parse(&merged).expect("parse merged catalog");
 
     // ── Lower each query independently, solve, accumulate variants ──
-    let mut all_sorts = Vec::new();
+    let mut all_entries: Vec<(spec_core::SpecNode, &str)> = Vec::new();
     let mut count_consts = String::new();
     let mut total = 0usize;
     for f in &fragments {
@@ -178,16 +178,16 @@ fn main() {
         let program = spec_core::avbs::lower(text, &reg)
             .unwrap_or_else(|e| panic!("lower {}.avbs ({}): {e}", stem, f.krate));
 
-        let before = all_sorts.len();
+        let before = all_entries.len();
         for algo in &program.algos {
             let out = spec_core::solve(&algo.query, &reg)
                 .unwrap_or_else(|e| panic!("solve family `{}` ({}): {e}", algo.name, f.krate));
             for w in &out.warnings {
                 println!("cargo:warning=spec_catalog: {} — {w}", algo.name);
             }
-            all_sorts.extend(out.sorts);
+            all_entries.extend(out.sorts.into_iter().map(|node| (node, algo.category)));
         }
-        let n = all_sorts.len() - before;
+        let n = all_entries.len() - before;
         // FAIL-FAST: a query that resolves to nothing is almost always a broken
         // query or a fragment that didn't merge — not an intentionally-empty
         // family. Drop it on the floor and the loss is invisible; fail instead.
@@ -219,7 +219,7 @@ fn main() {
     assert!(total > 0, "spec_catalog: emitted ZERO AlgorithmEntry rows total — the \
         catalog is empty; the fragment gather/merge/solve pipeline is misconfigured.");
 
-    let code = spec_core::emit_entries(&reg, &all_sorts, &spec_emit::ArrayBackend::default())
+    let code = spec_core::emit_entries(&reg, &all_entries, &spec_emit::ArrayBackend::default())
         .expect("emit_entries");
     fs::write(out_dir.join("catalog_entries.rs"), code).expect("write catalog_entries.rs");
 

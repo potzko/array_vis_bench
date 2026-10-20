@@ -4,6 +4,5 @@ component rot_contrev
   type     ContrevRotation
   label    contrev
   provides Rotation
-  category Rotation
   uses     rotation_contrev::ContrevRotation
 end

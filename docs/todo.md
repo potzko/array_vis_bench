@@ -93,8 +93,8 @@ afternoon each and remove concepts rather than move them.
 2. Drop slot defaults and `project` from the spec grammar; no production
    query used either. Done.
    See [implementation_plans/drop_slot_defaults_and_project.md](implementation_plans/drop_slot_defaults_and_project.md).
-3. Category from the wrapper. The query wrapper and the component's
-   `category` line both name the kind and nothing checks they agree.
+3. Category from the wrapper. Done: the query wrapper is the one source of an
+   entry's kind and a `category` line in a fragment is a parse error.
    See [implementation_plans/category_from_the_wrapper.md](implementation_plans/category_from_the_wrapper.md).
 4. The entry owns its navigation. Every entry registers twice, once in
    `ALGORITHMS` and once through a constructor into `sort_registry_core`.
@@ -140,8 +140,9 @@ slot, and the beap ninther dual selector has its own label.
   production spec file. A crate owns its fragment and its query and points
   at them from its manifest.
 - Complexity is inherited from the type through the composable traits. The
-  catalog carries only what the type cannot: category, adaptive, max input,
-  menu, nondeterministic. No Big-O literal and no arithmetic in a spec.
+  catalog carries only what the type cannot: adaptive, max input, menu,
+  nondeterministic. The category comes from the query wrapper. No Big-O
+  literal and no arithmetic in a spec.
 - The solver knows two constraints: structural equality through a shared
   variable, and role membership. Arity coupling is baked into composites
   (`Pivoted` versus `DualPivoted`) so an illegal pairing is unrepresentable,

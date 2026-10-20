@@ -4,6 +4,5 @@ component rot_helix
   type     HelixRotation
   label    helix
   provides Rotation
-  category Rotation
   uses     rotation_helix::HelixRotation
 end

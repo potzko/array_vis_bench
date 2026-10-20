@@ -48,7 +48,9 @@ Partitions report unsorted ranges to a visitor; they never return them.
 ## Catalog hygiene
 
 - Declare each Rust type once. List every role it fills on one `provides`
-  line, and add a `category` if it is also a first class entry.
+  line. A component never names its kind: the query wrapper
+  (`SortingAlgorithm<_>`, `RotationAlg<_>` and the rest) sets the category of
+  the entries it emits.
 - Component names are a global namespace. Prefix them by what they are:
   `piv_` pivot, `pks_` partition scheme, `pk_` partition composite, `rot_`
   rotation, `mrm_` rotation merge, `ss_` small sort, `dss_` deferred small

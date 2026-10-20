@@ -18,7 +18,6 @@ component quick_sort
   type     QuickSort<{partition}, {small_sort}>
   label    quick[{partition}/{small_sort}]
   provides Sort
-  category Sort
   uses     crate::quick_sort_lib::quick_sort::QuickSort
   slot     partition Partition
   slot     small_sort SmallSort
@@ -122,7 +121,6 @@ component top_down_merge
   type     TopDownMergeSort<{small_sort}, {ping_pong}, {early_exit}>
   label    merge[{small_sort}/pp={ping_pong}/ee={early_exit}]
   provides Sort
-  category Sort
   adaptive true
   uses     crate::merge_sort_lib::top_down::TopDownMergeSort
   slot     small_sort SmallSort
@@ -135,7 +133,6 @@ component shell_sort
   type     ShellSort<{seq}>
   label    shell[{seq}]
   provides Sort
-  category Sort
   uses     crate::shell_sort_lib::shell_sort::ShellSort
   slot     seq GapSequence
 end
@@ -172,7 +169,6 @@ component heap_sort
   type     HeapSort<{arity}>
   label    heap[d={arity}]
   provides Sort
-  category Sort
   uses     crate::heap_lib::HeapSort
   const    arity values 2 3 4
 end
@@ -195,16 +191,14 @@ component base_case
   uses     crate::recursive_lib::BaseCase
 end
 
-# ── non-Sort categories. Each is a ROOT algorithm in its own category (not a
-#    slot filler), so it carries a `category` and is emitted as its own
-#    AlgorithmEntry through the matching emit driver. A bare role hole
-#    (`let pa: PartitionAlgo = .;`) enumerates every component providing it. ─────
+# ── non-Sort kinds. Each is a ROOT algorithm of its own kind (not a slot
+#    filler). A bare role hole (`let pa: PartitionAlgo = .;`) enumerates every
+#    component providing it. ─────
 
 component lomuto_partition
   type     LomutoPartition
   label    partition[lomuto]
   provides PartitionAlgo
-  category Partition
   uses     crate::partition_ops::LomutoPartition
 end
 
@@ -212,7 +206,6 @@ component hoare_partition
   type     HoarePartition
   label    partition[hoare]
   provides PartitionAlgo
-  category Partition
   uses     crate::partition_ops::HoarePartition
 end
 
@@ -220,7 +213,6 @@ component two_finger_merge
   type     TwoFingerMerge
   label    merge-op[two-finger]
   provides MergeAlgo
-  category Merge
   adaptive true
   uses     crate::merge_ops::TwoFingerMerge
 end
@@ -229,7 +221,6 @@ component reversal_rotation
   type     ReversalRotation
   label    rotation[reversal]
   provides RotationAlgo
-  category Rotation
   uses     crate::rotation_ops::ReversalRotation
 end
 
@@ -237,6 +228,5 @@ component juggling_rotation
   type     JugglingRotation
   label    rotation[juggling]
   provides RotationAlgo
-  category Rotation
   uses     crate::rotation_ops::JugglingRotation
 end
