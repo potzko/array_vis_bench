@@ -1,14 +1,11 @@
 //! Spec-system drivers for the circle-sort family.
 //!
-//! The free functions `drive_recursive` / `drive_bottom_up` in `finishing.rs`
-//! are `usize`-locked (their `FinishingStrategy` / `NearSortedSort` traits are
-//! declared over `&mut [usize]`). The spec emit backend instead calls a
-//! GENERIC inherent `sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>` on a unique
-//! type-head, and reads `<Ty as HasTimeBounds>::WORST` etc.
+//! The spec emit backend calls a GENERIC inherent
+//! `sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>` on a unique type-head, and
+//! reads `<Ty as HasTimeBounds>::WORST` etc.
 //!
 //! This module supplies:
-//!   * a generic [`CircleFinish`] trait (the spec-path replacement for the
-//!     usize-locked `FinishingStrategy`/`NearSortedSort`),
+//!   * a generic [`CircleFinish`] trait (when to stop and what to run after),
 //!   * two driver type-heads [`CircleRecursiveOf`] / [`CircleBottomUpOf`] that
 //!     pair a convergence axis (order / direction) with a finish, each with an
 //!     inherent generic `sort`, and
@@ -26,12 +23,10 @@ use crate::directions::BottomUpDirection;
 use crate::orderings::RecursiveOrder;
 
 // ---------------------------------------------------------------------------
-// Generic finishing axis (spec-path replacement for the usize-locked
-// `FinishingStrategy` / `NearSortedSort` in finishing.rs).
+// Generic finishing axis.
 // ---------------------------------------------------------------------------
 
-/// When to stop the main circle-sort loop and what to run afterwards — the
-/// generic, type-driven analogue of `finishing::FinishingStrategy`.
+/// When to stop the main circle-sort loop and what to run afterwards.
 pub trait CircleFinish {
     /// Human-readable name (e.g. `"converge"`).
     const NAME: &'static str;

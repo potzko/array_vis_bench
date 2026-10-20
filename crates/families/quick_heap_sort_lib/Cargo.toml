@@ -29,7 +29,7 @@ quick_sort_lib = { path = "../quick_sort_lib" }
 small_sort_basic = { path = "../../small_sorts/small_sort_basic" }
 
 # Spec-system catalog fragment + query (portable classic+deferred subset), OWNED
-# by this crate. No self-registration here, so no feature/gating.
+# by this crate.
 [package.metadata.array_vis_bench]
 spec  = "quick_heap.spec"
 query = "quick_heap.avbs"

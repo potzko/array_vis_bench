@@ -14,7 +14,7 @@ heap_sort_lib = { path = "../heap_sort_lib" }
 sort_logger = { path = "../../../sort_logger" }
 
 # Spec-system catalog fragment + query, OWNED by this crate (gathered by
-# `spec_catalog`). No self-registration here, so no feature/gating.
+# `spec_catalog`).
 [package.metadata.array_vis_bench]
 spec  = "beap.spec"
 query = "beap.avbs"

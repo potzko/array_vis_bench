@@ -6,7 +6,6 @@ pub mod circle_sort_recursive;
 pub mod circle_sort_shaker_recursive;
 pub mod directions;
 pub mod drivers;
-pub mod finishing;
 pub mod orderings;
 
 pub use circle_sort_bottom_up::CircleSortBottomUp;
