@@ -4,7 +4,7 @@
 
 use std::collections::HashMap;
 
-use crate::registry::{ParamKind, Registry};
+use crate::registry::{Component, ParamKind, Registry};
 use crate::spec::{Arg, SpecNode};
 
 /// One faceted navigation axis: a slot's `role`, the chosen filler's `value`
@@ -85,7 +85,7 @@ pub fn resolve(node: &SpecNode, reg: &Registry) -> Result<Resolved, String> {
     // matching values back out of the finished label) so a value that contains
     // commas or angle brackets — e.g. `combined<first,mid>` — can't corrupt it.
     let mut label_template = comp.label_tmpl.clone();
-    let mut uses = comp.uses.clone();
+    let mut uses = own_imports(comp, reg)?;
     let mut axes: Vec<AxisNode> = Vec::new();
     let mut pos_iter = pos_consts.into_iter();
 
@@ -156,6 +156,52 @@ pub fn resolve(node: &SpecNode, reg: &Registry) -> Result<Resolved, String> {
         }
     }
     Ok(Resolved { type_expr, label, uses, axes, label_template })
+}
+
+/// Words in a type template that name no importable type: literals, keywords
+/// and the primitive types.
+const NOT_IMPORTED: &[&str] = &[
+    "true", "false", "dyn", "impl", "mut", "const", "fn", "for", "Self", "bool", "char", "str",
+    "usize", "isize", "u8", "u16", "u32", "u64", "u128", "i8", "i16", "i32", "i64", "i128", "f32",
+    "f64",
+];
+
+/// The identifiers of a `type` template outside its `{hole}`s, numbers and
+/// [`NOT_IMPORTED`] words dropped.
+fn template_idents(type_tmpl: &str) -> impl Iterator<Item = &str> {
+    let outside_holes = type_tmpl.split('{').enumerate().map(|(i, text)| match i {
+        0 => text,
+        _ => text.split_once('}').map_or("", |(_, rest)| rest),
+    });
+    outside_holes
+        .flat_map(|text| text.split(|c: char| !(c.is_alphanumeric() || c == '_')))
+        .filter(|word| !word.is_empty() && !word.starts_with(|c: char| c.is_ascii_digit()))
+        .filter(|word| !NOT_IMPORTED.contains(word))
+}
+
+/// The imports a component's own `type` template needs, not counting its fillers'.
+/// An identifier that heads a component is imported from that component's path,
+/// and any other one, the template's own head and a baked helper such as `AryPair`
+/// among them, from the owning crate. A component that lists `uses` gets exactly
+/// those instead, the override for a type the owning crate cannot reach.
+fn own_imports(comp: &Component, reg: &Registry) -> Result<Vec<String>, String> {
+    if !comp.uses.is_empty() {
+        return Ok(comp.uses.clone());
+    }
+    let krate = comp.krate.as_deref().ok_or_else(|| {
+        format!("component `{}` has no owning crate and no `uses`, so no imports", comp.name)
+    })?;
+    let mut paths: Vec<String> = Vec::new();
+    for ident in template_idents(&comp.type_tmpl) {
+        let path = reg
+            .component_with_head(ident)
+            .and_then(Component::head_path)
+            .unwrap_or_else(|| format!("{krate}::{ident}"));
+        if !paths.contains(&path) {
+            paths.push(path);
+        }
+    }
+    Ok(paths)
 }
 
 /// The navigation HEAD label for a filler: a leaf (no type slots) uses its full
@@ -237,6 +283,57 @@ mod tests {
                 ("SmallSort".into(), "none".into(), "small_sort".into()),
             ]
         );
+    }
+
+    fn imports_of(fragments: &[(&str, &str)], spec: &str) -> Result<Vec<String>, String> {
+        let reg = Registry::from_fragments(fragments.iter().copied())?;
+        let mut uses = resolve(&parse_spec(spec).unwrap().1, &reg)?.uses;
+        uses.sort();
+        Ok(uses)
+    }
+
+    #[test]
+    fn a_component_without_uses_imports_its_head_from_its_crate() {
+        let leaf = [("leaf_lib", "component leaf\n  type Leaf\nend\n")];
+        assert_eq!(imports_of(&leaf, "leaf").unwrap(), ["leaf_lib::Leaf"]);
+    }
+
+    #[test]
+    fn a_nested_filler_adds_the_crate_that_declares_it() {
+        let fragments = [
+            ("driver_lib", "component driver\n  type Driver<{f}>\n  slot f Fill\nend\n"),
+            ("fill_lib", "component fill\n  type Fill\n  provides Fill\nend\n"),
+        ];
+        assert_eq!(imports_of(&fragments, "driver< f = fill >").unwrap(), ["driver_lib::Driver", "fill_lib::Fill"]);
+    }
+
+    #[test]
+    fn a_baked_type_imports_from_the_crate_that_declares_it_else_from_the_owner() {
+        let fragments = [
+            ("a_lib", "component baked\n  type Wrap<Leaf, Helper<Leaf>>\nend\n"),
+            ("b_lib", "component leaf\n  type Leaf\nend\n"),
+        ];
+        // `Leaf` is a head in `b_lib`, `Helper` is declared by nobody.
+        assert_eq!(imports_of(&fragments, "baked").unwrap(), ["a_lib::Helper", "a_lib::Wrap", "b_lib::Leaf"]);
+    }
+
+    #[test]
+    fn holes_literals_and_keywords_import_nothing() {
+        let c = [("k", "component c\n  type C<{n}, 16, true, usize>\n  const n values 1\nend\n")];
+        assert_eq!(imports_of(&c, "c< n = 1 >").unwrap(), ["k::C"]);
+    }
+
+    #[test]
+    fn a_listed_uses_replaces_the_derived_imports() {
+        let c = [("k", "component c\n  type C<Foreign>\n  uses elsewhere::C elsewhere::Foreign\nend\n")];
+        assert_eq!(imports_of(&c, "c").unwrap(), ["elsewhere::C", "elsewhere::Foreign"]);
+    }
+
+    #[test]
+    fn a_component_with_neither_an_owning_crate_nor_uses_is_an_error() {
+        let reg = Registry::parse("component c\n  type C\nend\n").unwrap();
+        let err = resolve(&parse_spec("c").unwrap().1, &reg).unwrap_err();
+        assert!(err.contains("`c` has no owning crate and no `uses`"), "got: {err}");
     }
 
     #[test]

@@ -1216,7 +1216,7 @@ end
 ";
 
     fn xcat() -> Registry {
-        Registry::parse(XCAT).expect("probe catalog parses")
+        Registry::parse_fragment(XCAT, "probe").expect("probe catalog parses")
     }
 
     // A binary-RECURSIVE role: `node` provides `R` and has TWO slots of role `R`,
@@ -1241,7 +1241,7 @@ end
     /// contain Node. This is the enumeration-strategy `finite` unblocking a cycle.
     #[test]
     fn finite_bounds_a_recursive_role_that_would_blow_up() {
-        let reg = Registry::parse(RCAT).unwrap();
+        let reg = Registry::parse_fragment(RCAT, "probe").unwrap();
 
         // Bare hole at a high depth: super-exponential → rejected by the guard.
         let bare = lower_program("depth 8\nX: R = _", &reg).unwrap();

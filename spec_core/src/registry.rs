@@ -30,8 +30,9 @@ pub struct Component {
     pub provides: Vec<String>,
     pub params: Vec<Param>,
     /// Module paths to bring into scope for `type_tmpl` to resolve, e.g.
-    /// `quick_sort_lib::quick_sort::QuickSort`. Mirrors the real `uses = [...]`
-    /// family field. Unioned with nested children's `uses` during resolve.
+    /// `quick_sort_lib::Pivoted`. Empty means the imports are derived from the
+    /// owning crate; a listed `uses` replaces that derivation. Unioned with
+    /// nested children's imports during resolve.
     pub uses: Vec<String>,
     /// The crate whose fragment declared this component, when the registry was
     /// built from fragments. Imports are derived from it unless `uses` overrides.
