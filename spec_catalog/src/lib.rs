@@ -7,9 +7,9 @@
 //! every gathered `spec` fragment into ONE `spec_core` registry, lowers + solves
 //! each `query` independently (`spec_core::avbs`), and emits one `mod __entry_N`
 //! per solved variant via `spec_emit::ArrayBackend` — registering an
-//! `AlgorithmEntry` into the real `array_vis_bench_core::bench_registry::ALGORITHMS`
-//! and a picker variant into `sort_registry_core`. Today's families: shell (18),
-//! insertion (2), quick (408 — the slotted port). These are the CANONICAL
+//! `AlgorithmEntry`, picker menu, axes and label template included, into the
+//! real `array_vis_bench_core::bench_registry::ALGORITHMS`. Today's families:
+//! shell (18), insertion (2), quick (408, the slotted port). These are the CANONICAL
 //! registrations (no `spec::` marker); leaf crates are linked for their types.
 //!
 //! This is the user's two-layer model, "B" stage: building stones are
@@ -206,24 +206,6 @@ mod tests {
         let mut visited = Vec::new();
         for_each(|e| visited.push(e.name));
         assert_eq!(visited, order);
-    }
-
-    /// The picker's constructor registration and the entry's own fields agree
-    /// for every entry, so the picker can be built from `ALGORITHMS` alone.
-    #[test]
-    fn every_entry_carries_the_navigation_its_constructor_registers() {
-        let held: std::collections::HashMap<String, sort_registry_core::VariantDesc> =
-            sort_registry_core::all_variants().into_iter().map(|v| (v.name.clone(), v)).collect();
-        assert_eq!(held.len(), ALGORITHMS.len(), "the picker holds a different set of names");
-        for e in ALGORITHMS.iter() {
-            let v = held.get(e.name).unwrap_or_else(|| panic!("`{}` is not in the picker", e.name));
-            let category: Vec<&str> = v.category.iter().map(String::as_str).collect();
-            assert_eq!(category, e.menu, "menu: {}", e.name);
-            let axes: Vec<(&str, &str, &str)> =
-                v.axes.iter().map(|a| (a.role.as_str(), a.value.as_str(), a.path.as_str())).collect();
-            assert_eq!(axes, e.axes, "axes: {}", e.name);
-            assert_eq!(v.label_template.as_deref(), Some(e.label_template), "template: {}", e.name);
-        }
     }
 
     /// `kinds.avbs` names each kind only through its wrapper, so the wrapper alone

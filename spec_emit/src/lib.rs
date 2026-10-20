@@ -15,7 +15,7 @@
 //!    correctness batteries (`sort_battery` takes `fn(&mut [usize], &mut NoOpLogger)`).
 //!  - **Real correctness.** `correctness::sort_battery` + `sort_stability_battery`
 //!    (the stub's `assert_sorts` does not exist).
-//!  - **Split ABI paths.** The live ABI lives across four crates, so the single
+//!  - **Split ABI paths.** The live ABI lives across three crates, so the single
 //!    `abi` prefix is replaced by [`AbiPaths`].
 //!
 //! Complexity is still *inherited* from the type (`<Ty as HasTimeBounds>::WORST`,
@@ -34,13 +34,12 @@
 
 use spec_core::{EmitBackend, EntryCtx};
 
-/// The crate paths the emitted code targets. The live ABI is split across four
+/// The crate paths the emitted code targets. The live ABI is split across three
 /// crates (the prototype collapsed them into one `abi` string):
 ///  - `core`   — `AlgorithmEntry`/`Category`/`RunConfig`/`ALGORITHMS`/
 ///    `run_sort_with_input`/`correctness::*` (`array_vis_bench_core::bench_registry`)
 ///  - `traits` — `composable::{HasTimeBounds, HasSpace, HasStability}` and
 ///    `Complexity` as the entry field type (`array_vis_bench_traits`)
-///  - `nav`    — `register_sort_variant` (`sort_registry_core`)
 ///  - `logger` — `SortLogger` / `NoOpLogger` (`sort_logger`)
 ///  - `suites` — `CorrectnessSuite` / `SelectSuite` (`array_vis_bench_core::suites`),
 ///    the per-kind correctness-battery seam the non-sort kinds dispatch through
@@ -48,7 +47,6 @@ use spec_core::{EmitBackend, EntryCtx};
 pub struct AbiPaths {
     pub core: String,
     pub traits: String,
-    pub nav: String,
     pub logger: String,
     pub suites: String,
 }
@@ -58,7 +56,6 @@ impl Default for AbiPaths {
         AbiPaths {
             core: "array_vis_bench_core::bench_registry".to_string(),
             traits: "array_vis_bench_traits".to_string(),
-            nav: "sort_registry_core".to_string(),
             logger: "sort_logger".to_string(),
             suites: "array_vis_bench_core::suites".to_string(),
         }
@@ -97,13 +94,13 @@ impl ArrayBackend {
     /// The `Category::Sort` registration body, spliced inside the compiler's
     /// `mod __entry_N { … pub type Ty = …; <HERE> }`. Mirrors the direct-sort
     /// arm of `sort_family!` ([sort_family.rs] lines ~759-840): two type-erased
-    /// adapters, the vis-path `run_default`, the battery-path `run_correct`, the
-    /// `ALGORITHMS` entry with inherited complexity, and the menu `#[ctor]`.
+    /// adapters, the vis-path `run_default`, the battery-path `run_correct`, and
+    /// the `ALGORITHMS` entry with inherited complexity and its picker menu.
     ///
     /// Returned source is module-interior, indented one level (4 spaces) and
     /// newline-terminated, per the [`EmitBackend`] contract.
     fn sort_entry_body(&self, ctx: &EntryCtx) -> String {
-        let AbiPaths { core, traits, nav, logger, suites: _ } = &self.paths;
+        let AbiPaths { core, traits, logger, suites: _ } = &self.paths;
         let max_input = match ctx.max_input {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
@@ -163,13 +160,9 @@ impl ArrayBackend {
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
-    #[ctor::ctor]
-    #[allow(non_snake_case)]
-    fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
 ",
-            // `core`, `traits`, `nav`, `logger`, `max_input`, `menu_lit`,
-            // `axes_lit`, `template_lit` are captured inline; only these three
-            // rename.
+            // `core`, `traits`, `logger`, `max_input`, `menu_lit`, `axes_lit` and
+            // `template_lit` are captured inline; only these three rename.
             label = ctx.label,
             adaptive = ctx.adaptive,
             nondeterministic = ctx.nondeterministic,
@@ -187,7 +180,7 @@ impl ArrayBackend {
     ///    battery trait — so no battery call is inlined here.
     /// Entries nest under the `"quick selects"` picker root.
     fn quick_select_entry_body(&self, ctx: &EntryCtx) -> String {
-        let AbiPaths { core, traits, nav, logger, suites } = &self.paths;
+        let AbiPaths { core, traits, logger, suites } = &self.paths;
         let max_input = match ctx.max_input {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
@@ -234,9 +227,6 @@ impl ArrayBackend {
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
-    #[ctor::ctor]
-    #[allow(non_snake_case)]
-    fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
 ",
             label = ctx.label,
             adaptive = ctx.adaptive,
@@ -249,7 +239,7 @@ impl ArrayBackend {
     /// trait. Correctness goes through `ScratchspaceSuite` (round-trip identity).
     /// Entries nest under the `"scratchspaces"` picker root, faceted by backing.
     fn scratchspace_entry_body(&self, ctx: &EntryCtx) -> String {
-        let AbiPaths { core, traits, nav, logger, suites } = &self.paths;
+        let AbiPaths { core, traits, logger, suites } = &self.paths;
         let mut menu_lit = String::from("\"scratchspaces\"");
         for seg in ctx.menu {
             menu_lit.push_str(&format!(", {seg:?}"));
@@ -290,9 +280,6 @@ impl ArrayBackend {
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
-    #[ctor::ctor]
-    #[allow(non_snake_case)]
-    fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
 ",
             label = ctx.label,
             adaptive = ctx.adaptive,
@@ -306,7 +293,7 @@ impl ArrayBackend {
     /// shared `run_rotation_merge` one-shot allocates/frees the merge's scratch.
     /// Entries nest under the `"merges"` picker root, faceted by the rotation.
     fn merge_entry_body(&self, ctx: &EntryCtx) -> String {
-        let AbiPaths { core, traits, nav, logger, suites: _ } = &self.paths;
+        let AbiPaths { core, traits, logger, suites: _ } = &self.paths;
         let max_input = match ctx.max_input {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
@@ -354,9 +341,6 @@ impl ArrayBackend {
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
-    #[ctor::ctor]
-    #[allow(non_snake_case)]
-    fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
 ",
             label = ctx.label,
             adaptive = ctx.adaptive,
@@ -372,7 +356,7 @@ impl ArrayBackend {
     /// threshold) caps the interactive picker. Entries nest
     /// under the `"small sorts"` picker root.
     fn small_sort_entry_body(&self, ctx: &EntryCtx) -> String {
-        let AbiPaths { core, traits, nav, logger, suites } = &self.paths;
+        let AbiPaths { core, traits, logger, suites } = &self.paths;
         let max_input = match ctx.max_input {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
@@ -421,9 +405,6 @@ impl ArrayBackend {
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
-    #[ctor::ctor]
-    #[allow(non_snake_case)]
-    fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
 ",
             label = ctx.label,
             adaptive = ctx.adaptive,
@@ -436,7 +417,7 @@ impl ArrayBackend {
     /// `PartitionSuite` battery uses them). Entries nest under the `"partitions"`
     /// picker root, faceted by the `scheme`/`pivot` slots.
     fn partition_entry_body(&self, ctx: &EntryCtx) -> String {
-        let AbiPaths { core, traits, nav, logger, suites } = &self.paths;
+        let AbiPaths { core, traits, logger, suites } = &self.paths;
         let max_input = match ctx.max_input {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
@@ -481,9 +462,6 @@ impl ArrayBackend {
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
-    #[ctor::ctor]
-    #[allow(non_snake_case)]
-    fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
 ",
             label = ctx.label,
             adaptive = ctx.adaptive,
@@ -497,7 +475,7 @@ impl ArrayBackend {
     /// through `RotationSuite` via [`CorrectnessSuite`]. Entries nest under the
     /// `"rotations"` picker root.
     fn rotation_entry_body(&self, ctx: &EntryCtx) -> String {
-        let AbiPaths { core, traits, nav, logger, suites } = &self.paths;
+        let AbiPaths { core, traits, logger, suites } = &self.paths;
         let max_input = match ctx.max_input {
             Some(n) => format!("Some({n})"),
             None => "None".to_string(),
@@ -542,9 +520,6 @@ impl ArrayBackend {
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
-    #[ctor::ctor]
-    #[allow(non_snake_case)]
-    fn register() {{ {nav}::register_sort_variant_structured(NAME, &[{menu_lit}], &[{axes_lit}], {template_lit}); }}
 ",
             label = ctx.label,
             adaptive = ctx.adaptive,
@@ -696,13 +671,15 @@ mod tests {
 
     #[test]
     fn every_kind_registers_only_its_entry() {
-        // The cap and the flag live on the entry, so the only slice an emitted
-        // body joins is `ALGORITHMS`.
+        // The cap, the flag and the picker data live on the entry, so the only
+        // slice an emitted body joins is `ALGORITHMS` and nothing runs before
+        // `main`.
         for cat in ["Sort", "QuickSelect", "Rotation", "SmallSort", "Partition", "Merge", "Scratchspace"] {
             let b = ArrayBackend::default()
                 .entry_body(&EntryCtx { label: "x", category: cat, adaptive: false, nondeterministic: false, max_input: Some(8), axes: &[], menu: &[], label_template: "x" })
                 .unwrap();
             assert_eq!(b.matches("distributed_slice").count(), 1, "category `{cat}` joins a second slice");
+            assert!(!b.contains("ctor"), "category `{cat}` runs a constructor");
         }
     }
 
@@ -796,7 +773,7 @@ mod tests {
     #[test]
     fn abi_paths_are_configurable() {
         let backend = ArrayBackend {
-            paths: AbiPaths { core: "c".into(), traits: "t".into(), nav: "n".into(), logger: "l".into(), suites: "s".into() },
+            paths: AbiPaths { core: "c".into(), traits: "t".into(), logger: "l".into(), suites: "s".into() },
         };
         let b = backend
             .entry_body(&EntryCtx { label: "x", category: "Sort", adaptive: false, nondeterministic: false, max_input: None, axes: &[], menu: &[], label_template: "x" })
@@ -804,6 +781,5 @@ mod tests {
         assert!(b.contains("&mut l::NoOpLogger"));
         assert!(b.contains("c::run_sort_with_input"));
         assert!(b.contains("<Ty as t::composable::HasTimeBounds>::WORST"));
-        assert!(b.contains("n::register_sort_variant"));
     }
 }

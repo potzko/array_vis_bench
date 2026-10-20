@@ -27,9 +27,7 @@ query = "kinds.avbs"
 array_vis_bench_core = { path = "../array_vis_bench_core" }
 array_vis_bench_traits = { path = "../array_vis_bench_traits" }
 sort_logger = { path = "../sort_logger" }
-sort_registry_core = { path = "../sort_registry_core" }
 linkme = "0.3"
-ctor = "0.2"
 
 # Building stones: shell family.
 shell_sort_lib = { path = "../crates/families/shell_sort_lib" }
