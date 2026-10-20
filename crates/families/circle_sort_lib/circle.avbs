@@ -7,7 +7,7 @@
 //   recursive  : 4 orders     × 2 finishes = 8
 //   bottom-up  : 4 directions × 2 finishes = 8
 //   shaker     : zero-axis                 = 1
-// Total = 17 entries (matches the 17 legacy register_circle! variants).
+// Total = 17 entries.
 
 f: CircleFinish = _
 

@@ -63,9 +63,9 @@ small_sort_insertion_strategy = { path = "../crates/small_sorts/small_sort_inser
 small_sort_network_16 = { path = "../crates/small_sorts/small_sort_network_16" }
 small_sort_deferred_insertion = { path = "../crates/small_sorts/small_sort_deferred_insertion" }
 
-# ── Building stones: rod + circle families (TYPES ONLY — self_register off) ────
-rod_sort_lib = { path = "../crates/families/rod_sort_lib", default-features = false }
-circle_sort_lib = { path = "../crates/families/circle_sort_lib", default-features = false }
+# Building stones: rod and circle families.
+rod_sort_lib = { path = "../crates/families/rod_sort_lib" }
+circle_sort_lib = { path = "../crates/families/circle_sort_lib" }
 
 # ── Building stones: merge family + its 11 rotation leaves (none self-register) ─
 # (rotation_reversal already linked above.)

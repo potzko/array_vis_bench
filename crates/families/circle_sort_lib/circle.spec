@@ -9,7 +9,7 @@
 # (`spec_catalog`); they add no compile-time dep from this fragment.
 #
 # Counts: recursive 4 orders × 2 finishes = 8; bottom-up 4 directions × 2 finishes
-# = 8; shaker 1. Total 17 — matches the 17 legacy `register_circle!` entries.
+# = 8; shaker 1. Total 17.
 
 # ── Recursive driver (order × finish) ────────────────────────────────────────
 component circle_recursive

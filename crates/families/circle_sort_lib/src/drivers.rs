@@ -1,8 +1,7 @@
 //! Spec-system drivers for the circle-sort family.
 //!
-//! The legacy registration path drives circle sort through the free functions
-//! `drive_recursive` / `drive_bottom_up` in `finishing.rs`, which are
-//! `usize`-locked (their `FinishingStrategy` / `NearSortedSort` traits are
+//! The free functions `drive_recursive` / `drive_bottom_up` in `finishing.rs`
+//! are `usize`-locked (their `FinishingStrategy` / `NearSortedSort` traits are
 //! declared over `&mut [usize]`). The spec emit backend instead calls a
 //! GENERIC inherent `sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>` on a unique
 //! type-head, and reads `<Ty as HasTimeBounds>::WORST` etc.
@@ -143,8 +142,8 @@ impl<Dir: BottomUpDirection, Finish: CircleFinish> CircleBottomUpOf<Dir, Finish>
 
 // ---------------------------------------------------------------------------
 // Composable annotations (spec compiler reads these). Circle sort is
-// ~Θ(N log² N) average; the legacy registration baked N_LOG_SQUARED across
-// worst/best/average with CONST space and not-stable — matched here for parity.
+// ~Theta(N log^2 N) average, so worst, best and average are all N_LOG_SQUARED,
+// with CONST space and not stable.
 // Bottom-up additionally allocates O(N) level buffers (directions.rs), so its
 // SPACE is the more honest N1.
 // ---------------------------------------------------------------------------

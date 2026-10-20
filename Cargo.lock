@@ -139,14 +139,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "circle_sort_lib"
 version = "0.1.0"
 dependencies = [
- "array_vis_bench_core",
  "array_vis_bench_traits",
- "const_format",
- "ctor",
- "linkme",
  "small_sort_insertion_strategy",
  "sort_logger",
- "sort_registry_core",
 ]
 
 [[package]]
