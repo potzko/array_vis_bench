@@ -190,21 +190,13 @@ impl Benchmark {
     }
 
     // The median of `k` timed runs on seeds 0 to k - 1, `None` when one panicked.
-    fn median(&self, entry: &AlgorithmEntry, k: usize) -> Option<Duration> {
+    fn one_run(&self, entry: &AlgorithmEntry, seed: u64) -> Option<Duration> {
         let input = primary_input(entry.category);
-        let mut runs = (0..k as u64)
-            .map(|seed| {
-                let config = RunConfig { size: self.n, seed };
-                let start = Instant::now();
-                catch_unwind(AssertUnwindSafe(|| {
-                    (entry.run_with_input)(input, &config, &mut NoOpLogger)
-                }))
-                .ok()
-                .map(|()| start.elapsed())
-            })
-            .collect::<Option<Vec<_>>>()?;
-        runs.sort_unstable();
-        Some(runs[k / 2])
+        let config = RunConfig { size: self.n, seed };
+        let start = Instant::now();
+        catch_unwind(AssertUnwindSafe(|| (entry.run_with_input)(input, &config, &mut NoOpLogger)))
+            .ok()
+            .map(|()| start.elapsed())
     }
 }
 
@@ -242,7 +234,22 @@ impl Main for Benchmark {
         let k = self.k.max(1);
         let (runnable, skipped): (Vec<_>, Vec<_>) =
             sorts.iter().copied().partition(|e| self.admits(e));
-        let results: Vec<_> = runnable.into_iter().map(|e| (e, self.median(e, k))).collect();
+        // Every entry runs once per round, so a burst of machine load lands on
+        // different entries in different rounds and the per entry median
+        // shrugs it off. Running one entry k times back to back would put a
+        // whole burst into one median.
+        let mut durations: Vec<Option<Vec<Duration>>> = vec![Some(Vec::with_capacity(k)); runnable.len()];
+        for round in 0..k as u64 {
+            for (slot, e) in durations.iter_mut().zip(&runnable) {
+                let Some(runs) = slot else { continue };
+                match self.one_run(e, round) {
+                    Some(d) => runs.push(d),
+                    None => *slot = None,
+                }
+            }
+        }
+        let median = |runs: &mut Vec<Duration>| { runs.sort_unstable(); runs[runs.len() / 2] };
+        let results: Vec<_> = runnable.iter().zip(durations).map(|(&e, runs)| (e, runs.map(|mut r| median(&mut r)))).collect();
         let timed: Vec<_> =
             results.iter().filter_map(|&(e, median)| median.map(|m| (e, m))).collect();
         let failed = results.iter().filter(|(_, median)| median.is_none());
@@ -284,6 +291,14 @@ mod tests {
 
     fn no_battery() {}
 
+    static ORDER: std::sync::Mutex<Vec<&'static str>> = std::sync::Mutex::new(Vec::new());
+    fn record_first(_input: &str, _config: &RunConfig, _logger: &mut dyn SortLogger<usize>) {
+        ORDER.lock().unwrap().push("first");
+    }
+    fn record_second(_input: &str, _config: &RunConfig, _logger: &mut dyn SortLogger<usize>) {
+        ORDER.lock().unwrap().push("second");
+    }
+
     const fn entry(name: &'static str, cap: Option<usize>) -> AlgorithmEntry {
         AlgorithmEntry {
             name,
@@ -314,6 +329,16 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(report.timings_tsv(), "alpha\t1500\nzeta\t3000\n");
+    }
+
+    #[test]
+    fn the_benchmark_runs_every_entry_once_per_round() {
+        static FIRST: AlgorithmEntry = AlgorithmEntry { run_with_input: record_first, ..entry("first", None) };
+        static SECOND: AlgorithmEntry = AlgorithmEntry { run_with_input: record_second, ..entry("second", None) };
+        ORDER.lock().unwrap().clear();
+        let report = Benchmark { n: 4, k: 3 }.run(&[&FIRST, &SECOND]);
+        assert_eq!(*ORDER.lock().unwrap(), ["first", "second", "first", "second", "first", "second"]);
+        assert_eq!((report.ran, report.ok, report.timings.len()), (2, 2, 2));
     }
 
     #[test]
