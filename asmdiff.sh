@@ -6,8 +6,8 @@
 #   ./asmdiff.sh heap
 #   ./asmdiff.sh <sym_a> <sym_b>  # any two #[no_mangle] symbols
 #
-# sys_* wrappers are 5-byte tail-jumps into the monomorphised generic; this
-# follows that single jmp automatically so you see the real function.
+# The listings come from `asm_text.sh`, which follows a `sys_*` wrapper's
+# single jmp into the monomorphised generic and strips every unstable byte.
 set -euo pipefail
 
 BIN=${BIN:-target/release/compare_sorts}
@@ -23,20 +23,7 @@ fi
 
 cargo build --release --bin compare_sorts -q
 
-# Disassemble one symbol; if its body is a lone `jmp <target>`, follow it.
-# Strip addresses / raw bytes / hash-comments and blank the differing symbol
-# name inside jump targets so the two columns line up under diff.
-dump() {
-  local sym=$1
-  local out; out=$(objdump -d -M intel --no-show-raw-insn "$BIN" --disassemble="$sym")
-  local target; target=$(grep -oP '^\s+[0-9a-f]+:\s+jmp\s+[0-9a-f]+ <\K[^>]+' <<<"$out" | head -1)
-  if [[ -n "$target" && $(grep -cE '^\s+[0-9a-f]+:' <<<"$out") -eq 1 ]]; then
-    out=$(objdump -d -M intel --no-show-raw-insn "$BIN" --disassemble="$target")
-  fi
-  sed -E 's/^\s+[0-9a-f]+:\s+//; /^[0-9a-f]+ </d; s/\s*#.*//;
-          s/[0-9a-f]+ <([^>]*)\+/<\1+/g; s/<[^>]*\+/<+/g;
-          /^$/d; /Disassembly of/d; /file format/d' <<<"$out"
-}
+dump() { BIN="$BIN" ./asm_text.sh "$1"; }
 
 OUT=${OUT:-asmdiff.txt}
 {
