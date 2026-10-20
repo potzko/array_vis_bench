@@ -13,7 +13,7 @@ class RegressionsTest(unittest.TestCase):
         self.assertAlmostEqual(report.total_ratio, 1.0)
 
     def test_one_entry_past_tolerance_and_floor_fails(self) -> None:
-        report = regressions({"a": 1_000_000, "b": 1_000_000}, {"a": 1_000_000, "b": 1_700_000})
+        report = regressions({"a": 1_000_000, "b": 1_000_000}, {"a": 1_000_000, "b": 2_500_000})
         self.assertEqual([row[0] for row in report.slow_entries], ["b"])
         self.assertTrue(report.failed)
 

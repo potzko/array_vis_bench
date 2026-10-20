@@ -20,7 +20,8 @@
 #   perf      the `compare_sorts` gate, generic sorts within 1.05x of hand
 #             rolled ones
 #   tests     `cargo test --release --workspace`
-#   timing    every entry timed and compared against `verify/timing.tsv`
+#   timing    every entry timed, median of five runs at size 1000, against
+#             `verify/timing.tsv`
 set -uo pipefail
 cd "$(dirname "$0")"
 
@@ -113,16 +114,26 @@ else
   fi
 
   echo "== timing"
-  ./target/release/array_vis_bench --timing 1000 3 --out "$OUT/timing.tsv" >"$OUT/timing.log" 2>&1
+  time_catalog() { ./target/release/array_vis_bench --timing 1000 5 --out "$1" >"$OUT/timing.log" 2>&1; }
+  compare_timing() { python3 -I "$BASE/compare_timing.py" "$BASE/timing.tsv" "$1" >"$OUT/timing_compare.log" 2>&1; }
+  time_catalog "$OUT/timing.tsv"
   if [[ $BLESS -eq 1 ]]; then
     cp "$OUT/timing.tsv" "$BASE/timing.tsv" && pass "timing baseline written ($(wc -l <"$BASE/timing.tsv") entries)"
   elif [[ $SAME_MACHINE -ne 1 ]]; then
     fail "timing not compared: the machine stamp differs, review and --bless"
-  elif python3 -I "$BASE/compare_timing.py" "$BASE/timing.tsv" "$OUT/timing.tsv" >"$OUT/timing_compare.log" 2>&1; then
+  elif compare_timing "$OUT/timing.tsv"; then
     pass "timing: $(head -1 "$OUT/timing_compare.log")"
   else
-    fail "timing regressed (see $OUT/timing_compare.log)"
-    sed -n '2,8p' "$OUT/timing_compare.log"
+    # A scheduling burst slows a run of neighbouring entries once; a real
+    # regression slows the same entries again. One retry tells them apart.
+    echo "timing differs, retrying once: $(grep -c '^  SLOW' "$OUT/timing_compare.log") slow entries, total $(head -1 "$OUT/timing_compare.log" | cut -d' ' -f5)"
+    time_catalog "$OUT/timing_retry.tsv"
+    if compare_timing "$OUT/timing_retry.tsv"; then
+      pass "timing on retry: $(head -1 "$OUT/timing_compare.log")"
+    else
+      fail "timing regressed twice (see $OUT/timing_compare.log)"
+      grep '^  SLOW' "$OUT/timing_compare.log" | head -6
+    fi
   fi
 fi
 

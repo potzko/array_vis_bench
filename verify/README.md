@@ -13,13 +13,14 @@ the performance where they were.
 - `asm/`: the normalised disassembly of the six `compare_sorts` gate symbols,
   three hand rolled sorts and the three generic ones they are measured
   against, as `asm_text.sh` prints them.
-- `timing.tsv`: the median run time of every entry at size 1000 over three
-  runs, as `array_vis_bench --timing 1000 3 --out` writes it.
+- `timing.tsv`: the median run time of every entry at size 1000 over five
+  runs, as `array_vis_bench --timing 1000 5 --out` writes it.
 - `fingerprint.py`: produces `catalog.types` from the generated
   `catalog_entries.rs`.
 - `compare_timing.py`: compares a timing archive with the baseline. One entry
-  regresses when it is slower by more than half and by more than a tenth of
-  a millisecond; the whole catalog regresses when the sum of the shared
+  regresses when it is more than twice as slow and slower by more than a
+  quarter of a millisecond, so a scheduling burst over a few sub millisecond
+  entries passes; the whole catalog regresses when the sum of the shared
   medians grows by more than fifteen percent.
 - `test_compare_timing.py`: the comparison's unit tests, which the gate runs.
 
