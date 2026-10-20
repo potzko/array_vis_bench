@@ -13,5 +13,5 @@ component insertion_sort
   category Sort
   menu     insertion sorts
   uses     insertion_sort_lib::InsertionSort
-  slot     strategy InsertionStrategy ins_linear
+  slot     strategy InsertionStrategy
 end

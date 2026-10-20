@@ -34,7 +34,7 @@ component mk_aux
   provides MergeKind
   category Merge
   uses     scratchspace_lib::AuxiliaryMerge
-  slot     aux Auxiliary aux_full
+  slot     aux Auxiliary
 end
 
 # ── Scratchspace backings — provide the `Scratchspace` role (the aux strategy);
@@ -71,7 +71,7 @@ component wf_exercise
   provides ScratchspaceKind
   category Scratchspace
   uses     scratchspace_lib::Exercise
-  slot     backing Scratchspace bk_full
+  slot     backing Scratchspace
 end
 
 component wf_park_sweep
@@ -80,7 +80,7 @@ component wf_park_sweep
   provides ScratchspaceKind
   category Scratchspace
   uses     scratchspace_lib::ParkSweep
-  slot     backing Scratchspace bk_full
+  slot     backing Scratchspace
 end
 
 component wf_park_loop
@@ -89,7 +89,7 @@ component wf_park_loop
   provides ScratchspaceKind
   category Scratchspace
   uses     scratchspace_lib::ParkLoop
-  slot     backing Scratchspace bk_full
+  slot     backing Scratchspace
 end
 
 component wf_relocate
@@ -98,7 +98,7 @@ component wf_relocate
   provides ScratchspaceKind
   category Scratchspace
   uses     scratchspace_lib::Relocations
-  slot     backing Scratchspace bk_full
+  slot     backing Scratchspace
 end
 
 # ── The nightmare: a scratchspace-backed natural merge SORT (Category::Sort),
@@ -112,5 +112,5 @@ component ss_nightmare
   adaptive true
   menu     fun / scratchspace-nightmare
   uses     scratchspace_lib::ScratchspaceMergeSort
-  slot     backing Scratchspace bk_full
+  slot     backing Scratchspace
 end

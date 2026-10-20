@@ -18,8 +18,8 @@ component rod_sort
   category Sort
   menu     rod sorts
   uses     rod_sort_lib::RodSort
-  slot     strategy RodBranching rod_classic
-  slot     merge RodMerge rod_insertion
+  slot     strategy RodBranching
+  slot     merge RodMerge
 end
 
 # ════════════════════════ BRANCHING STRATEGIES (6) ═══════════════════════
