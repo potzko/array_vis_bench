@@ -4,8 +4,8 @@
 # `[package.metadata.array_vis_bench] spec = "merge.spec"` and merges it into the
 # unified registry. Component names are prefixed `merge_` / `mrm_` for
 # global uniqueness. SmallSort role components (ss_size1/ss_size2/ss_insertion32/
-# ss_network16) are REUSED from quick.spec — do NOT redeclare them here. `uses`
-# paths resolve in the consumer (`spec_catalog`), which links the leaf crates.
+# ss_network16) are declared in the small sort leaf crates, do not redeclare them
+# here. `uses` paths resolve in the consumer (`spec_catalog`), which links the leaf crates.
 
 # ── Classic merge sorts (type head + SmallSort slot + two bool consts) ──────────
 component merge_top_down
