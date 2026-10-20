@@ -220,8 +220,8 @@ fn entry_body(kinds: &[Kind], paths: &AbiPaths, ctx: &EntryCtx) -> Result<String
     let max_input = ctx.max_input.map_or("None".to_string(), |n| format!("Some({n})"));
     // Picker placement: the kind's root, then the catalog `menu` sub-path, and each
     // resolved top level slot as a faceted `(role, value, path)` axis.
-    let menu: Vec<String> = [kind.root].into_iter().chain(ctx.menu.iter().map(String::as_str)).map(|seg| format!("{seg:?}")).collect();
-    let menu_lit = menu.join(", ");
+    let segments = [kind.root].into_iter().chain(ctx.menu.iter().map(String::as_str));
+    let menu_lit = segments.map(|seg| format!("{seg:?}")).collect::<Vec<_>>().join(", ");
     let axes_lit: String = ctx
         .axes
         .iter()
