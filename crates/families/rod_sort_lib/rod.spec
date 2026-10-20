@@ -22,7 +22,7 @@ component rod_sort
 end
 
 # ════════════════════════ BRANCHING STRATEGIES (6) ═══════════════════════
-# labels match BranchingStrategy::NAME (used in the legacy menu path).
+# labels match BranchingStrategy::NAME.
 component rod_classic
   type     Classic
   label    classic
