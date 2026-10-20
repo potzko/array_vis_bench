@@ -1,0 +1,1580 @@
+Merge	auxiliary<full>	1.0 1.0 1.0 1.0 true
+Merge	auxiliary<half>	1.0 1.0 1.0 1.0 true
+Merge	auxiliary<none>	2.0 1.0 2.0 0.0 true
+Merge	naive<auxiliary>	2.0 1.0 2.0 1.0 true
+Merge	naive<bridge>	2.0 1.0 2.0 1.0 true
+Merge	naive<contrev>	2.0 1.0 2.0 0.0 true
+Merge	naive<drill>	2.0 1.0 2.0 0.0 true
+Merge	naive<grail>	2.0 1.0 2.0 0.0 true
+Merge	naive<gries-mills>	2.0 1.0 2.0 0.0 true
+Merge	naive<helix>	2.0 1.0 2.0 0.0 true
+Merge	naive<juggling>	2.0 1.0 2.0 0.0 true
+Merge	naive<piston>	2.0 1.0 2.0 0.0 true
+Merge	naive<reversal>	2.0 1.0 2.0 0.0 true
+Merge	naive<trinity>	2.0 1.0 2.0 0.0 true
+Merge	smaller-side<auxiliary>	1.2 1.0 1.2 1.0 true
+Merge	smaller-side<bridge>	1.2 1.0 1.2 1.0 true
+Merge	smaller-side<contrev>	1.2 1.0 1.2 0.0 true
+Merge	smaller-side<drill>	1.2 1.0 1.2 0.0 true
+Merge	smaller-side<grail>	1.2 1.0 1.2 0.0 true
+Merge	smaller-side<gries-mills>	1.2 1.0 1.2 0.0 true
+Merge	smaller-side<helix>	1.2 1.0 1.2 0.0 true
+Merge	smaller-side<juggling>	1.2 1.0 1.2 0.0 true
+Merge	smaller-side<piston>	1.2 1.0 1.2 0.0 true
+Merge	smaller-side<reversal>	1.2 1.0 1.2 0.0 true
+Merge	smaller-side<trinity>	1.2 1.0 1.2 0.0 true
+Partition	block<first>	1.0 1.0 1.0 0.0 false
+Partition	block<last>	1.0 1.0 1.0 0.0 false
+Partition	block<median of 3>	1.0 1.0 1.0 0.0 false
+Partition	block<median of medians>	1.0 1.0 1.0 0.1 false
+Partition	block<middle>	1.0 1.0 1.0 0.0 false
+Partition	block<ninther>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<first, first>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<first, last>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<first, median of 3>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<first, median of medians>>	1.0 1.0 1.0 0.1 false
+Partition	dual<combined<first, middle>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<first, ninther>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<last, first>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<last, last>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<last, median of 3>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<last, median of medians>>	1.0 1.0 1.0 0.1 false
+Partition	dual<combined<last, middle>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<last, ninther>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<median of 3, first>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<median of 3, last>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<median of 3, median of 3>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<median of 3, median of medians>>	1.0 1.0 1.0 0.1 false
+Partition	dual<combined<median of 3, middle>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<median of 3, ninther>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<median of medians, first>>	1.0 1.0 1.0 0.1 false
+Partition	dual<combined<median of medians, last>>	1.0 1.0 1.0 0.1 false
+Partition	dual<combined<median of medians, median of 3>>	1.0 1.0 1.0 0.1 false
+Partition	dual<combined<median of medians, median of medians>>	1.0 1.0 1.0 0.1 false
+Partition	dual<combined<median of medians, middle>>	1.0 1.0 1.0 0.1 false
+Partition	dual<combined<median of medians, ninther>>	1.0 1.0 1.0 0.1 false
+Partition	dual<combined<middle, first>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<middle, last>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<middle, median of 3>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<middle, median of medians>>	1.0 1.0 1.0 0.1 false
+Partition	dual<combined<middle, middle>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<middle, ninther>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<ninther, first>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<ninther, last>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<ninther, median of 3>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<ninther, median of medians>>	1.0 1.0 1.0 0.1 false
+Partition	dual<combined<ninther, middle>>	1.0 1.0 1.0 0.0 false
+Partition	dual<combined<ninther, ninther>>	1.0 1.0 1.0 0.0 false
+Partition	dual<ninther>	1.0 1.0 1.0 0.0 false
+Partition	left-left<first>	1.0 1.0 1.0 0.0 false
+Partition	left-left<last>	1.0 1.0 1.0 0.0 false
+Partition	left-left<median of 3>	1.0 1.0 1.0 0.0 false
+Partition	left-left<median of medians>	1.0 1.0 1.0 0.1 false
+Partition	left-left<middle>	1.0 1.0 1.0 0.0 false
+Partition	left-left<ninther>	1.0 1.0 1.0 0.0 false
+Partition	left-right<first>	1.0 1.0 1.0 0.0 false
+Partition	left-right<last>	1.0 1.0 1.0 0.0 false
+Partition	left-right<median of 3>	1.0 1.0 1.0 0.0 false
+Partition	left-right<median of medians>	1.0 1.0 1.0 0.1 false
+Partition	left-right<middle>	1.0 1.0 1.0 0.0 false
+Partition	left-right<ninther>	1.0 1.0 1.0 0.0 false
+Partition	moving pivot<first>	1.0 1.0 1.0 0.0 false
+Partition	moving pivot<last>	1.0 1.0 1.0 0.0 false
+Partition	moving pivot<median of 3>	1.0 1.0 1.0 0.0 false
+Partition	moving pivot<median of medians>	1.0 1.0 1.0 0.1 false
+Partition	moving pivot<middle>	1.0 1.0 1.0 0.0 false
+Partition	moving pivot<ninther>	1.0 1.0 1.0 0.0 false
+Partition	three-way<first>	1.0 1.0 1.0 0.0 false
+Partition	three-way<last>	1.0 1.0 1.0 0.0 false
+Partition	three-way<median of 3>	1.0 1.0 1.0 0.0 false
+Partition	three-way<median of medians>	1.0 1.0 1.0 0.1 false
+Partition	three-way<middle>	1.0 1.0 1.0 0.0 false
+Partition	three-way<ninther>	1.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<block<first>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<block<last>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<block<median of 3>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<block<middle>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<block<ninther>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<dual<combined<first, first>>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<dual<combined<first, last>>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<dual<combined<middle, middle>>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<dual<ninther>>	1.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<heap extract: binary iterative>	1.1 1.0 1.1 0.0 false
+QuickSelect	quick select: iterative<heap extract: binary recursive>	1.1 1.0 1.1 0.0 false
+QuickSelect	quick select: iterative<heap extract: ternary iterative>	1.1 1.0 1.1 0.0 false
+QuickSelect	quick select: iterative<heap extract: ternary recursive>	1.1 1.0 1.1 0.0 false
+QuickSelect	quick select: iterative<left-left<first>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<left-left<last>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<left-left<median of 3>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<left-left<middle>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<left-left<ninther>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<left-right<first>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<left-right<last>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<left-right<median of 3>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<left-right<middle>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<left-right<ninther>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<three-way<first>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<three-way<last>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<three-way<median of 3>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<three-way<middle>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: iterative<three-way<ninther>>	2.0 1.0 1.0 0.0 false
+QuickSelect	quick select: recursive<block<first>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<block<last>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<block<median of 3>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<block<middle>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<block<ninther>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<dual<combined<first, first>>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<dual<combined<first, last>>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<dual<combined<middle, middle>>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<dual<ninther>>	1.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<heap extract: binary iterative>	1.1 1.0 1.1 0.1 false
+QuickSelect	quick select: recursive<heap extract: binary recursive>	1.1 1.0 1.1 0.1 false
+QuickSelect	quick select: recursive<heap extract: ternary iterative>	1.1 1.0 1.1 0.1 false
+QuickSelect	quick select: recursive<heap extract: ternary recursive>	1.1 1.0 1.1 0.1 false
+QuickSelect	quick select: recursive<left-left<first>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<left-left<last>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<left-left<median of 3>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<left-left<middle>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<left-left<ninther>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<left-right<first>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<left-right<last>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<left-right<median of 3>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<left-right<middle>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<left-right<ninther>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<three-way<first>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<three-way<last>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<three-way<median of 3>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<three-way<middle>>	2.0 1.0 1.0 0.1 false
+QuickSelect	quick select: recursive<three-way<ninther>>	2.0 1.0 1.0 0.1 false
+Rotation	auxiliary	1.0 1.0 1.0 1.0 false
+Rotation	bridge	1.0 1.0 1.0 1.0 false
+Rotation	contrev	1.0 1.0 1.0 0.0 false
+Rotation	drill	1.0 1.0 1.0 0.0 false
+Rotation	grail	1.0 1.0 1.0 0.0 false
+Rotation	gries-mills	1.0 1.0 1.0 0.0 false
+Rotation	helix	1.0 1.0 1.0 0.0 false
+Rotation	juggling	1.0 1.0 1.0 0.0 false
+Rotation	piston	1.0 1.0 1.0 0.0 false
+Rotation	reversal	1.0 1.0 1.0 0.0 false
+Rotation	trinity	1.0 1.0 1.0 0.0 false
+Scratchspace	exercise<full>	1.0 1.0 1.0 1.0 true
+Scratchspace	exercise<none>	1.0 1.0 1.0 1.0 true
+Scratchspace	exercise<sqrt>	1.0 1.0 1.0 1.0 true
+Scratchspace	park-loop<full>	1.0 1.0 1.0 1.0 true
+Scratchspace	park-loop<none>	1.0 1.0 1.0 1.0 true
+Scratchspace	park-loop<sqrt>	1.0 1.0 1.0 1.0 true
+Scratchspace	park-sweep<full>	1.0 1.0 1.0 1.0 true
+Scratchspace	park-sweep<none>	1.0 1.0 1.0 1.0 true
+Scratchspace	park-sweep<sqrt>	1.0 1.0 1.0 1.0 true
+Scratchspace	relocate<full>	1.0 1.0 1.0 1.0 true
+Scratchspace	relocate<none>	1.0 1.0 1.0 1.0 true
+Scratchspace	relocate<sqrt>	1.0 1.0 1.0 1.0 true
+SmallSort	binary insertion: 16	0.0 0.0 0.0 0.0 true
+SmallSort	binary insertion: 32	0.0 0.0 0.0 0.0 true
+SmallSort	insertion: 16	0.0 0.0 0.0 0.0 true
+SmallSort	insertion: 32	0.0 0.0 0.0 0.0 true
+SmallSort	network: 16	0.0 0.0 0.0 0.0 false
+SmallSort	size: 1	0.0 0.0 0.0 0.0 true
+SmallSort	size: 2	0.0 0.0 0.0 0.0 true
+Sort	bad heap sort	2.0 2.0 2.0 0.1 false
+Sort	bad heap sort alt	2.0 2.0 2.0 0.1 false
+Sort	beap sort quick build dual pivot<dir: max forward, build: stack dual-pivot partition<dps: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build dual pivot<dir: max forward, build: stack dual-pivot partition<dps: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build dual pivot<dir: max forward, build: stack dual-pivot partition<dps: ninther 1/3 + 2/3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build dual pivot<dir: min reverse, build: stack dual-pivot partition<dps: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build dual pivot<dir: min reverse, build: stack dual-pivot partition<dps: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build dual pivot<dir: min reverse, build: stack dual-pivot partition<dps: ninther 1/3 + 2/3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: recursive partition<part: block, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: recursive partition<part: block, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: recursive partition<part: block, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: recursive partition<part: block, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: recursive partition<part: left-left pointer, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: recursive partition<part: left-left pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: recursive partition<part: left-right pointer, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: recursive partition<part: left-right pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: sequential<part: block, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: sequential<part: block, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: sequential<part: block, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: sequential<part: block, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: sequential<part: left-left pointer, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: sequential<part: left-left pointer, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: sequential<part: left-left pointer, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: sequential<part: left-left pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: sequential<part: left-right pointer, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: sequential<part: left-right pointer, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: sequential<part: left-right pointer, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: sequential<part: left-right pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: stack partition<part: block, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: stack partition<part: block, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: stack partition<part: block, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: stack partition<part: block, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: stack partition<part: left-left pointer, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: stack partition<part: left-left pointer, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: stack partition<part: left-left pointer, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: stack partition<part: left-left pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: stack partition<part: left-right pointer, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: stack partition<part: left-right pointer, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: stack partition<part: left-right pointer, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: max forward, build: stack partition<part: left-right pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: recursive partition<part: block, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: recursive partition<part: block, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: recursive partition<part: block, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: recursive partition<part: block, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: recursive partition<part: left-left pointer, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: recursive partition<part: left-left pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: recursive partition<part: left-right pointer, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: recursive partition<part: left-right pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: sequential<part: block, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: sequential<part: block, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: sequential<part: block, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: sequential<part: block, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: sequential<part: left-left pointer, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: sequential<part: left-left pointer, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: sequential<part: left-left pointer, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: sequential<part: left-left pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: sequential<part: left-right pointer, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: sequential<part: left-right pointer, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: sequential<part: left-right pointer, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: sequential<part: left-right pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: stack partition<part: block, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: stack partition<part: block, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: stack partition<part: block, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: stack partition<part: block, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-left pointer, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-left pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-right pointer, pivot: first>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of 3>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of medians>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort<dir: max forward, build: iterative>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	beap sort<dir: min reverse, build: iterative>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	bottom-up merge sort<small: insertion: 32, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: insertion: 32, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: insertion: 32, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: insertion: 32, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: network: 16, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: network: 16, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: network: 16, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: network: 16, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: size: 1, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: size: 1, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: size: 1, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: size: 1, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: size: 2, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: size: 2, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: size: 2, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: size: 2, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<drill>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<grail>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<auxiliary>>	1.2 1.0 1.2 1.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<bridge>>	1.2 1.0 1.2 1.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<contrev>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<drill>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<grail>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<drill>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<grail>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<auxiliary>>	1.2 1.0 1.2 1.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<bridge>>	1.2 1.0 1.2 1.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<contrev>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<drill>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<grail>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<drill>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<grail>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<auxiliary>>	1.2 1.0 1.2 1.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<bridge>>	1.2 1.0 1.2 1.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<contrev>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<drill>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<grail>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<drill>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<grail>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<auxiliary>>	1.2 1.0 1.2 1.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<bridge>>	1.2 1.0 1.2 1.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<contrev>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<drill>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<grail>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	bubble sort	2.0 2.0 2.0 0.0 true
+Sort	bubble sort recursive	2.0 2.0 2.0 0.0 true
+Sort	circle sort (recursive shaker)	1.2 1.2 1.2 0.0 false
+Sort	circle sort<bottom-up: decreasing, finish: converge>	1.2 1.2 1.2 1.0 false
+Sort	circle sort<bottom-up: decreasing, finish: short circuit: insertion>	1.2 1.2 1.2 1.0 false
+Sort	circle sort<bottom-up: increasing, finish: converge>	1.2 1.2 1.2 1.0 false
+Sort	circle sort<bottom-up: increasing, finish: short circuit: insertion>	1.2 1.2 1.2 1.0 false
+Sort	circle sort<bottom-up: shaker dec→inc, finish: converge>	1.2 1.2 1.2 1.0 false
+Sort	circle sort<bottom-up: shaker dec→inc, finish: short circuit: insertion>	1.2 1.2 1.2 1.0 false
+Sort	circle sort<bottom-up: shaker inc→dec, finish: converge>	1.2 1.2 1.2 1.0 false
+Sort	circle sort<bottom-up: shaker inc→dec, finish: short circuit: insertion>	1.2 1.2 1.2 1.0 false
+Sort	circle sort<recursive: left-mid-right, finish: converge>	1.2 1.2 1.2 0.0 false
+Sort	circle sort<recursive: left-mid-right, finish: short circuit: insertion>	1.2 1.2 1.2 0.0 false
+Sort	circle sort<recursive: post-order, finish: converge>	1.2 1.2 1.2 0.0 false
+Sort	circle sort<recursive: post-order, finish: short circuit: insertion>	1.2 1.2 1.2 0.0 false
+Sort	circle sort<recursive: pre-order, finish: converge>	1.2 1.2 1.2 0.0 false
+Sort	circle sort<recursive: pre-order, finish: short circuit: insertion>	1.2 1.2 1.2 0.0 false
+Sort	circle sort<recursive: right-mid-left, finish: converge>	1.2 1.2 1.2 0.0 false
+Sort	circle sort<recursive: right-mid-left, finish: short circuit: insertion>	1.2 1.2 1.2 0.0 false
+Sort	comb sort<1.3>	2.0 1.1 2.0 0.0 false
+Sort	comb sort<11/8>	2.0 1.1 2.0 0.0 false
+Sort	comb sort<4/3>	2.0 1.1 2.0 0.0 false
+Sort	comb sort<5/4>	2.0 1.1 2.0 0.0 false
+Sort	comb sort<φ ≈ 1.618>	2.0 1.1 2.0 0.0 false
+Sort	comb sort<√2 ≈ 1.414>	2.0 1.1 2.0 0.0 false
+Sort	cycle sort	2.0 2.0 2.0 0.0 false
+Sort	cyclent sort opt<block>	2.0 2.0 2.0 1.0 false
+Sort	cyclent sort opt<left-left>	2.0 2.0 2.0 1.0 false
+Sort	cyclent sort opt<left-right>	2.0 2.0 2.0 1.0 false
+Sort	cyclent sort opt<three-way>	2.0 2.0 2.0 1.0 false
+Sort	cyclent sort stack optimized<block>	1.1 1.1 1.1 1.0 false
+Sort	cyclent sort stack optimized<left-left>	1.1 1.1 1.1 1.0 false
+Sort	cyclent sort stack optimized<left-right>	1.1 1.1 1.1 1.0 false
+Sort	cyclent sort stack optimized<three-way>	1.1 1.1 1.1 1.0 false
+Sort	cyclent sort stack<block>	1.1 1.1 1.1 1.0 false
+Sort	cyclent sort stack<left-left>	1.1 1.1 1.1 1.0 false
+Sort	cyclent sort stack<left-right>	1.1 1.1 1.1 1.0 false
+Sort	cyclent sort stack<three-way>	1.1 1.1 1.1 1.0 false
+Sort	cyclent sort<block>	3.0 3.0 3.0 1.0 false
+Sort	cyclent sort<left-left>	3.0 3.0 3.0 1.0 false
+Sort	cyclent sort<left-right>	3.0 3.0 3.0 1.0 false
+Sort	cyclent sort<three-way>	3.0 3.0 3.0 1.0 false
+Sort	deferred quick sort<part: block<first>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<first>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<first>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<first>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<median of 3>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<median of 3>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<median of 3>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<median of 3>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<median of medians>, small: deferred binary insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<median of medians>, small: deferred binary insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<median of medians>, small: deferred insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<median of medians>, small: deferred insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<middle>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<middle>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<middle>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<middle>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<ninther>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<ninther>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<ninther>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: block<ninther>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, first>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, first>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, first>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, first>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, median of 3>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, median of 3>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, median of 3>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, median of 3>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, median of medians>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, median of medians>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, median of medians>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, median of medians>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, middle>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, middle>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, middle>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, middle>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, ninther>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, ninther>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, ninther>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<first, ninther>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, first>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, first>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, first>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, first>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, median of 3>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, median of 3>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, median of 3>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, median of 3>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, median of medians>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, median of medians>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, median of medians>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, median of medians>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, middle>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, middle>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, middle>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, middle>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, ninther>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, ninther>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, ninther>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of 3, ninther>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, first>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, first>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, first>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, first>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, median of 3>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, median of 3>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, median of 3>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, median of 3>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, median of medians>>, small: deferred binary insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, median of medians>>, small: deferred binary insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, median of medians>>, small: deferred insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, median of medians>>, small: deferred insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, middle>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, middle>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, middle>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, middle>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, ninther>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, ninther>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, ninther>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<median of medians, ninther>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, first>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, first>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, first>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, first>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, median of 3>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, median of 3>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, median of 3>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, median of 3>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, median of medians>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, median of medians>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, median of medians>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, median of medians>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, middle>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, middle>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, middle>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, middle>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, ninther>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, ninther>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, ninther>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<middle, ninther>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, first>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, first>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, first>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, first>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, median of 3>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, median of 3>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, median of 3>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, median of 3>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, median of medians>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, median of medians>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, median of medians>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, median of medians>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, middle>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, middle>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, middle>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, middle>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, ninther>>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, ninther>>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, ninther>>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<combined<ninther, ninther>>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<ninther>, small: deferred binary insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<ninther>, small: deferred binary insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<ninther>, small: deferred insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: dual<ninther>, small: deferred insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<first>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<first>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<first>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<first>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<median of 3>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<median of 3>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<median of 3>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<median of 3>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<median of medians>, small: deferred binary insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<median of medians>, small: deferred binary insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<median of medians>, small: deferred insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<median of medians>, small: deferred insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<middle>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<middle>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<middle>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<middle>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<ninther>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<ninther>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<ninther>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-left<ninther>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<first>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<first>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<first>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<first>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<median of 3>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<median of 3>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<median of 3>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<median of 3>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<median of medians>, small: deferred binary insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<median of medians>, small: deferred binary insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<median of medians>, small: deferred insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<median of medians>, small: deferred insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<middle>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<middle>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<middle>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<middle>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<ninther>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<ninther>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<ninther>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: left-right<ninther>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<first>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<first>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<first>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<first>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<median of 3>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<median of 3>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<median of 3>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<median of 3>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<median of medians>, small: deferred binary insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<median of medians>, small: deferred binary insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<median of medians>, small: deferred insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<median of medians>, small: deferred insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<middle>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<middle>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<middle>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<middle>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<ninther>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<ninther>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<ninther>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: moving pivot<ninther>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<first>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<first>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<first>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<first>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<median of 3>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<median of 3>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<median of 3>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<median of 3>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<median of medians>, small: deferred binary insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<median of medians>, small: deferred binary insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<median of medians>, small: deferred insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<median of medians>, small: deferred insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<middle>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<middle>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<middle>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<middle>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<ninther>, small: deferred binary insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<ninther>, small: deferred binary insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<ninther>, small: deferred insertion: 16>	2.0 1.1 1.1 0.1 false
+Sort	deferred quick sort<part: three-way<ninther>, small: deferred insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: 16-ary, dir: max forward, build: stack dual-pivot partition<first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: 16-ary, dir: max forward, build: stack dual-pivot partition<middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: 16-ary, dir: max forward, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: 16-ary, dir: min reverse, build: stack dual-pivot partition<first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: 16-ary, dir: min reverse, build: stack dual-pivot partition<middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: 16-ary, dir: min reverse, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: 256-ary, dir: max forward, build: stack dual-pivot partition<first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: 256-ary, dir: max forward, build: stack dual-pivot partition<middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: 256-ary, dir: max forward, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: 256-ary, dir: min reverse, build: stack dual-pivot partition<first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: 256-ary, dir: min reverse, build: stack dual-pivot partition<middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: 256-ary, dir: min reverse, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: binary, dir: max forward, build: stack dual-pivot partition<first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: binary, dir: max forward, build: stack dual-pivot partition<middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: binary, dir: max forward, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: binary, dir: min reverse, build: stack dual-pivot partition<first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: binary, dir: min reverse, build: stack dual-pivot partition<middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: binary, dir: min reverse, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: ternary, dir: max forward, build: stack dual-pivot partition<first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: ternary, dir: max forward, build: stack dual-pivot partition<middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: ternary, dir: max forward, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: ternary, dir: min reverse, build: stack dual-pivot partition<first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: ternary, dir: min reverse, build: stack dual-pivot partition<middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build dual pivot<arity: ternary, dir: min reverse, build: stack dual-pivot partition<ninther 1/3 + 2/3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 16-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: sequential<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: max forward, build: stack partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: sequential<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: 256-ary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: sequential<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: max forward, build: stack partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: sequential<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: binary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: recursive partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: sequential<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: max forward, build: stack partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: recursive partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: sequential<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: block, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: block, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: block, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: block, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: block, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-left pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: first>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of 3>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: median of medians>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort quick build<arity: ternary, dir: min reverse, build: stack partition<part: left-right pointer, pivot: ninther>>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: 16-ary, dir: max forward, build: iterative>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: 16-ary, dir: max forward, build: recursive>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: 16-ary, dir: min reverse, build: iterative>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: 16-ary, dir: min reverse, build: recursive>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: 256-ary, dir: max forward, build: iterative>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: 256-ary, dir: max forward, build: recursive>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: 256-ary, dir: min reverse, build: iterative>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: 256-ary, dir: min reverse, build: recursive>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: binary, dir: max forward, build: iterative>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: binary, dir: max forward, build: recursive>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: binary, dir: min reverse, build: iterative>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: binary, dir: min reverse, build: recursive>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: ternary, dir: max forward, build: iterative>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: ternary, dir: max forward, build: recursive>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: ternary, dir: min reverse, build: iterative>	1.1 1.1 1.1 0.1 false
+Sort	heap sort<arity: ternary, dir: min reverse, build: recursive>	1.1 1.1 1.1 0.1 false
+Sort	insertion sort<strategy: binary>	2.0 1.0 2.0 0.0 true
+Sort	insertion sort<strategy: linear>	2.0 1.0 2.0 0.0 true
+Sort	merge sort<small: insertion: 32, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: insertion: 32, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: insertion: 32, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: insertion: 32, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: network: 16, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: network: 16, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: network: 16, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: network: 16, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: size: 1, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: size: 1, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: size: 1, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: size: 1, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: size: 2, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: size: 2, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: size: 2, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: size: 2, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	naive merge sort<small: insertion: 32>	1.1 1.1 1.1 1.1 true
+Sort	naive merge sort<small: network: 16>	1.1 1.1 1.1 1.1 true
+Sort	naive merge sort<small: size: 1>	1.1 1.1 1.1 1.1 true
+Sort	naive merge sort<small: size: 2>	1.1 1.1 1.1 1.1 true
+Sort	natural merge sort<pp=false, ee=false>	1.1 1.0 1.1 1.0 true
+Sort	natural merge sort<pp=false, ee=true>	1.1 1.0 1.1 1.0 true
+Sort	natural merge sort<pp=true, ee=false>	1.1 1.0 1.1 1.0 true
+Sort	natural merge sort<pp=true, ee=true>	1.1 1.0 1.1 1.0 true
+Sort	odd-even bubble sort<small: insertion: 32>	2.0 1.0 2.0 0.0 true
+Sort	odd-even bubble sort<small: network: 16>	2.0 1.0 2.0 0.0 true
+Sort	odd-even bubble sort<small: size: 2>	2.0 1.0 2.0 0.0 true
+Sort	quick heap sort deferred<arity: 16-ary, small: deferred binary insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: 16-ary, small: deferred binary insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: 16-ary, small: deferred insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: 16-ary, small: deferred insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: 256-ary, small: deferred binary insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: 256-ary, small: deferred binary insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: 256-ary, small: deferred insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: 256-ary, small: deferred insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: binary, small: deferred binary insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: binary, small: deferred binary insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: binary, small: deferred insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: binary, small: deferred insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: ternary, small: deferred binary insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: ternary, small: deferred binary insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: ternary, small: deferred insertion: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort deferred<arity: ternary, small: deferred insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: 16-ary, small: insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: 16-ary, small: network: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: 16-ary, small: size: 1>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: 16-ary, small: size: 2>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: 256-ary, small: insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: 256-ary, small: network: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: 256-ary, small: size: 1>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: 256-ary, small: size: 2>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: binary, small: insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: binary, small: network: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: binary, small: size: 1>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: binary, small: size: 2>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: ternary, small: insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: ternary, small: network: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: ternary, small: size: 1>	1.1 1.1 1.1 0.1 false
+Sort	quick heap sort<arity: ternary, small: size: 2>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: block<first>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<first>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<first>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<first>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<median of 3>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<median of 3>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<median of 3>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<median of 3>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<median of medians>, small: insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: block<median of medians>, small: network: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: block<median of medians>, small: size: 1>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: block<median of medians>, small: size: 2>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: block<middle>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<middle>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<middle>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<middle>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<ninther>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<ninther>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<ninther>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: block<ninther>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, first>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, first>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, first>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, first>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, median of 3>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, median of 3>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, median of 3>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, median of 3>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, median of medians>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, median of medians>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, median of medians>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, median of medians>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, middle>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, middle>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, middle>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, middle>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, ninther>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, ninther>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, ninther>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<first, ninther>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, first>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, first>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, first>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, first>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, median of 3>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, median of 3>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, median of 3>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, median of 3>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, median of medians>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, median of medians>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, median of medians>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, median of medians>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, middle>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, middle>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, middle>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, middle>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, ninther>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, ninther>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, ninther>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of 3, ninther>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, first>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, first>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, first>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, first>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, median of 3>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, median of 3>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, median of 3>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, median of 3>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, median of medians>>, small: insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, median of medians>>, small: network: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, median of medians>>, small: size: 1>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, median of medians>>, small: size: 2>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, middle>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, middle>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, middle>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, middle>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, ninther>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, ninther>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, ninther>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<median of medians, ninther>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, first>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, first>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, first>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, first>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, median of 3>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, median of 3>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, median of 3>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, median of 3>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, median of medians>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, median of medians>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, median of medians>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, median of medians>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, middle>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, middle>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, middle>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, middle>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, ninther>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, ninther>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, ninther>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<middle, ninther>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, first>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, first>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, first>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, first>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, median of 3>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, median of 3>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, median of 3>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, median of 3>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, median of medians>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, median of medians>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, median of medians>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, median of medians>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, middle>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, middle>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, middle>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, middle>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, ninther>>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, ninther>>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, ninther>>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<combined<ninther, ninther>>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<ninther>, small: insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<ninther>, small: network: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<ninther>, small: size: 1>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: dual<ninther>, small: size: 2>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<first>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<first>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<first>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<first>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<median of 3>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<median of 3>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<median of 3>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<median of 3>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<median of medians>, small: insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<median of medians>, small: network: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<median of medians>, small: size: 1>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<median of medians>, small: size: 2>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<middle>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<middle>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<middle>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<middle>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<ninther>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<ninther>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<ninther>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-left<ninther>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<first>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<first>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<first>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<first>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<median of 3>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<median of 3>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<median of 3>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<median of 3>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<median of medians>, small: insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<median of medians>, small: network: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<median of medians>, small: size: 1>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<median of medians>, small: size: 2>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<middle>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<middle>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<middle>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<middle>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<ninther>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<ninther>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<ninther>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: left-right<ninther>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<first>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<first>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<first>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<first>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<median of 3>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<median of 3>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<median of 3>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<median of 3>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<median of medians>, small: insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<median of medians>, small: network: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<median of medians>, small: size: 1>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<median of medians>, small: size: 2>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<middle>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<middle>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<middle>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<middle>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<ninther>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<ninther>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<ninther>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: moving pivot<ninther>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<first>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<first>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<first>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<first>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<median of 3>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<median of 3>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<median of 3>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<median of 3>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<median of medians>, small: insertion: 32>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<median of medians>, small: network: 16>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<median of medians>, small: size: 1>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<median of medians>, small: size: 2>	1.1 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<middle>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<middle>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<middle>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<middle>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<ninther>, small: insertion: 32>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<ninther>, small: network: 16>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<ninther>, small: size: 1>	2.0 1.1 1.1 0.1 false
+Sort	quick sort<part: three-way<ninther>, small: size: 2>	2.0 1.1 1.1 0.1 false
+Sort	quick surrender optimised<quick select: iterative<block<first>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<block<first>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<block<last>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<block<last>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<block<median of 3>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<block<median of 3>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<block<middle>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<block<middle>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<block<ninther>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<block<ninther>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<dual<combined<first, first>>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<dual<combined<first, first>>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<dual<combined<first, last>>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<dual<combined<first, last>>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<dual<combined<middle, middle>>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<dual<combined<middle, middle>>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<dual<ninther>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<dual<ninther>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<heap extract: binary iterative>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<heap extract: binary iterative>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<heap extract: binary recursive>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<heap extract: binary recursive>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<heap extract: ternary iterative>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<heap extract: ternary iterative>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<heap extract: ternary recursive>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<heap extract: ternary recursive>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-left<first>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-left<first>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-left<last>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-left<last>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-left<median of 3>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-left<median of 3>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-left<middle>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-left<middle>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-left<ninther>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-left<ninther>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-right<first>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-right<first>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-right<last>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-right<last>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-right<median of 3>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-right<median of 3>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-right<middle>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-right<middle>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-right<ninther>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<left-right<ninther>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<three-way<first>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<three-way<first>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<three-way<last>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<three-way<last>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<three-way<median of 3>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<three-way<median of 3>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<three-way<middle>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<three-way<middle>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<three-way<ninther>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: iterative<three-way<ninther>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<block<first>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<block<first>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<block<last>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<block<last>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<block<median of 3>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<block<median of 3>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<block<middle>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<block<middle>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<block<ninther>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<block<ninther>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<dual<combined<first, first>>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<dual<combined<first, first>>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<dual<combined<first, last>>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<dual<combined<first, last>>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<dual<combined<middle, middle>>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<dual<combined<middle, middle>>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<dual<ninther>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<dual<ninther>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<heap extract: binary iterative>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<heap extract: binary iterative>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<heap extract: binary recursive>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<heap extract: binary recursive>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<heap extract: ternary iterative>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<heap extract: ternary iterative>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<heap extract: ternary recursive>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<heap extract: ternary recursive>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-left<first>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-left<first>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-left<last>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-left<last>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-left<median of 3>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-left<median of 3>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-left<middle>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-left<middle>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-left<ninther>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-left<ninther>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-right<first>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-right<first>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-right<last>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-right<last>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-right<median of 3>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-right<median of 3>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-right<middle>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-right<middle>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-right<ninther>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<left-right<ninther>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<three-way<first>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<three-way<first>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<three-way<last>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<three-way<last>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<three-way<median of 3>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<three-way<median of 3>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<three-way<middle>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<three-way<middle>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<three-way<ninther>>, small: insertion: 32>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender optimised<quick select: recursive<three-way<ninther>>, small: network: 16>	1.1 1.1 1.1 1.0 false
+Sort	quick surrender<quick select: iterative<block<first>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<block<last>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<block<median of 3>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<block<middle>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<block<ninther>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<dual<combined<first, first>>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<dual<combined<first, last>>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<dual<combined<middle, middle>>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<dual<ninther>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<heap extract: binary iterative>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<heap extract: binary recursive>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<heap extract: ternary iterative>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<heap extract: ternary recursive>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<left-left<first>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<left-left<last>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<left-left<median of 3>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<left-left<middle>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<left-left<ninther>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<left-right<first>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<left-right<last>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<left-right<median of 3>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<left-right<middle>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<left-right<ninther>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<three-way<first>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<three-way<last>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<three-way<median of 3>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<three-way<middle>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: iterative<three-way<ninther>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<block<first>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<block<last>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<block<median of 3>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<block<middle>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<block<ninther>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<dual<combined<first, first>>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<dual<combined<first, last>>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<dual<combined<middle, middle>>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<dual<ninther>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<heap extract: binary iterative>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<heap extract: binary recursive>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<heap extract: ternary iterative>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<heap extract: ternary recursive>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<left-left<first>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<left-left<last>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<left-left<median of 3>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<left-left<middle>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<left-left<ninther>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<left-right<first>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<left-right<last>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<left-right<median of 3>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<left-right<middle>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<left-right<ninther>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<three-way<first>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<three-way<last>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<three-way<median of 3>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<three-way<middle>>>	2.0 2.0 2.0 1.0 false
+Sort	quick surrender<quick select: recursive<three-way<ninther>>>	2.0 2.0 2.0 1.0 false
+Sort	random shell sort<cubic>	1.0Sqrt 1.0Sqrt 1.0Sqrt 1.0 false
+Sort	random shell sort<distinct parabolic>	1.0Sqrt 1.0Sqrt 1.0Sqrt 1.0 false
+Sort	random shell sort<log uniform>	1.0Sqrt 1.0Sqrt 1.0Sqrt 1.0 false
+Sort	random shell sort<parabolic>	1.0Sqrt 1.0Sqrt 1.0Sqrt 1.0 false
+Sort	random shell sort<uniform>	1.0Sqrt 1.0Sqrt 1.0Sqrt 1.0 false
+Sort	rod sort<strategy: 3-parity, merge: aux>	1.1 1.1 1.1 1.0 true
+Sort	rod sort<strategy: 3-parity, merge: insertion>	2.0 1.0 2.0 0.1 true
+Sort	rod sort<strategy: classic, merge: aux>	1.1 1.1 1.1 1.0 true
+Sort	rod sort<strategy: classic, merge: insertion>	2.0 1.0 2.0 0.1 true
+Sort	rod sort<strategy: fibonacci, merge: aux>	1.1 1.1 1.1 1.0 true
+Sort	rod sort<strategy: fibonacci, merge: insertion>	2.0 1.0 2.0 0.1 true
+Sort	rod sort<strategy: log-parity, merge: aux>	1.1 1.1 1.1 1.0 true
+Sort	rod sort<strategy: log-parity, merge: insertion>	2.0 1.0 2.0 0.1 true
+Sort	rod sort<strategy: optimised, merge: aux>	1.1 1.1 1.1 1.0 true
+Sort	rod sort<strategy: optimised, merge: insertion>	2.0 1.0 2.0 0.1 true
+Sort	rod sort<strategy: root-parity, merge: aux>	1.1 1.1 1.1 1.0 true
+Sort	rod sort<strategy: root-parity, merge: insertion>	2.0 1.0 2.0 0.1 true
+Sort	rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: naive<drill>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: naive<grail>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<auxiliary>>	1.2 1.0 1.2 1.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<bridge>>	1.2 1.0 1.2 1.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<contrev>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<drill>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<grail>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
+Sort	rotation merge sort<small: network: 16, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
+Sort	rotation merge sort<small: network: 16, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: naive<drill>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: naive<grail>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<auxiliary>>	1.2 1.0 1.2 1.0 true
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<bridge>>	1.2 1.0 1.2 1.0 true
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<contrev>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<drill>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<grail>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
+Sort	rotation merge sort<small: size: 1, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
+Sort	rotation merge sort<small: size: 1, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: naive<drill>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: naive<grail>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: smaller-side<auxiliary>>	1.2 1.0 1.2 1.0 true
+Sort	rotation merge sort<small: size: 1, merge: smaller-side<bridge>>	1.2 1.0 1.2 1.0 true
+Sort	rotation merge sort<small: size: 1, merge: smaller-side<contrev>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: smaller-side<drill>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: smaller-side<grail>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
+Sort	rotation merge sort<small: size: 2, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
+Sort	rotation merge sort<small: size: 2, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: naive<drill>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: naive<grail>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: smaller-side<auxiliary>>	1.2 1.0 1.2 1.0 true
+Sort	rotation merge sort<small: size: 2, merge: smaller-side<bridge>>	1.2 1.0 1.2 1.0 true
+Sort	rotation merge sort<small: size: 2, merge: smaller-side<contrev>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: smaller-side<drill>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: smaller-side<grail>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	scratchspace-nightmare<full>	2.0 1.0 2.0 1.0 true
+Sort	scratchspace-nightmare<none>	2.0 1.0 2.0 1.0 true
+Sort	scratchspace-nightmare<sqrt>	2.0 1.0 2.0 1.0 true
+Sort	set quick heap sort<set<select<heap extract: binary<iterative>>>>	1.1 1.1 1.1 0.1 false
+Sort	set quick heap sort<set<select<heap extract: binary<recursive>>>>	1.1 1.1 1.1 0.1 false
+Sort	shaker sort	2.0 2.0 2.0 0.0 true
+Sort	shell sort ordered<sequence: ciura>	1.1 1.0 1.1 0.0 false
+Sort	shell sort ordered<sequence: classic>	2.0 1.0 2.0 0.0 false
+Sort	shell sort ordered<sequence: hibbard>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
+Sort	shell sort ordered<sequence: knuth>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
+Sort	shell sort ordered<sequence: optimized-256>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
+Sort	shell sort ordered<sequence: pratt>	1.2 1.0 1.2 0.0 false
+Sort	shell sort ordered<sequence: sedgewick-branching>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
+Sort	shell sort ordered<sequence: sedgewick>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
+Sort	shell sort ordered<sequence: tokuda>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
+Sort	shell sort<sequence: ciura>	1.1 1.0 1.1 0.0 false
+Sort	shell sort<sequence: classic>	2.0 1.0 2.0 0.0 false
+Sort	shell sort<sequence: hibbard>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
+Sort	shell sort<sequence: knuth>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
+Sort	shell sort<sequence: optimized-256>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
+Sort	shell sort<sequence: pratt>	1.2 1.0 1.2 0.0 false
+Sort	shell sort<sequence: sedgewick-branching>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
+Sort	shell sort<sequence: sedgewick>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
+Sort	shell sort<sequence: tokuda>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
+Sort	slow sort	0.0Exponential 0.0Exponential 0.0Exponential 0.1 false
+Sort	slow sort potzko	0.0Exponential 0.0Exponential 0.0Exponential 0.1 false
+Sort	stooge sort<insertion: 32>	2.0Sqrt 2.0Sqrt 2.0Sqrt 0.1 false
+Sort	stooge sort<network: 16>	2.0Sqrt 2.0Sqrt 2.0Sqrt 0.1 false
+Sort	weak heap sort<dir: max forward, storage: bit storage>	1.1 1.1 1.1 1.0 false
+Sort	weak heap sort<dir: max forward, storage: byte storage>	1.1 1.1 1.1 1.0 false
+Sort	weak heap sort<dir: min reverse, storage: bit storage>	1.1 1.1 1.1 1.0 false
+Sort	weak heap sort<dir: min reverse, storage: byte storage>	1.1 1.1 1.1 1.0 false

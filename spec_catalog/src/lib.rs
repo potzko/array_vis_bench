@@ -129,6 +129,43 @@ mod tests {
         );
     }
 
+    /// `n_pow.log_pow` plus the special tag, the shortest unambiguous rendering.
+    fn bound(c: Complexity) -> String {
+        format!("{}.{}{}", c.n_pow, c.log_pow, c.special.map_or(String::new(), |s| format!("{s:?}")))
+    }
+
+    /// Every entry's identity is pinned in `catalog.golden`: category, name and
+    /// the complexity its type inherits. A count can stay right while a variant
+    /// is swapped for another, so the counts alone cannot guard a restructuring
+    /// of the specs. After an intended catalog change, regenerate the file with
+    /// `AVBS_BLESS=1 cargo test -p spec_catalog catalog_identity`.
+    #[test]
+    fn catalog_identity_is_pinned() {
+        let mut lines: Vec<String> = ALGORITHMS
+            .iter()
+            .map(|e| format!(
+                "{:?}\t{}\t{} {} {} {} {}",
+                e.category, e.name, bound(e.worst), bound(e.best), bound(e.average), bound(e.space), e.stable
+            ))
+            .collect();
+        lines.sort();
+        let actual = lines.join("\n") + "\n";
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/catalog.golden");
+        if std::env::var_os("AVBS_BLESS").is_some() {
+            std::fs::write(path, &actual).expect("write catalog.golden");
+            return;
+        }
+        let expected = std::fs::read_to_string(path).expect("read catalog.golden");
+        let want: std::collections::HashSet<&str> = expected.lines().collect();
+        let got: std::collections::HashSet<&str> = actual.lines().collect();
+        let missing: Vec<_> = want.difference(&got).take(8).collect();
+        let extra: Vec<_> = got.difference(&want).take(8).collect();
+        assert!(
+            missing.is_empty() && extra.is_empty(),
+            "catalog identity drifted from catalog.golden\n  missing (first 8): {missing:#?}\n  extra (first 8): {extra:#?}"
+        );
+    }
+
     /// No entry is registered more than once — the gated-off legacy
     /// `sort_family!` self-registration must NOT coexist with the spec-emitted
     /// entry (that would duplicate cycle / bubble in the default binary).
