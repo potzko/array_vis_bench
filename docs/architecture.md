@@ -84,7 +84,7 @@ mod __entry_42 {
         nondeterministic: false,
         max_input_size: None,
         menu: &["sorts", "quick sorts"],
-        axes: &[("PartitionKind", "", "part"), ("PartScheme", "left-left", "part/scheme") /* ... */],
+        axes: &[("PartitionKind", "left-left", "part"), ("PartPivot", "first", "part/pivot") /* ... */],
         label_template: "quick sort<part: {PartitionKind}, small: {SmallSort}>",
         run_with_input: run_default,
         run_correctness: run_correct,

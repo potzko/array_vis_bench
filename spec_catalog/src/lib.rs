@@ -203,6 +203,36 @@ mod tests {
         assert!(bare.is_empty(), "entries without a label template: {bare:?}");
     }
 
+    /// Every entry's navigation data is whole: a template, no empty menu segment,
+    /// no empty axis field, and an axis with the role of each `{Role}` hole.
+    #[test]
+    fn every_entry_carries_whole_navigation_data() {
+        let holes = |template: &'static str| -> Vec<&'static str> {
+            template.split('{').skip(1).filter_map(|rest| rest.split_once('}')).map(|(role, _)| role).collect()
+        };
+        let flaws = |e: &AlgorithmEntry| -> Vec<String> {
+            let mut found = Vec::new();
+            if e.label_template.is_empty() { found.push("empty label template".to_string()); }
+            if e.menu.iter().any(|segment| segment.is_empty()) { found.push("empty menu segment".to_string()); }
+            if e.axes.iter().any(|&(role, value, path)| role.is_empty() || value.is_empty() || path.is_empty()) {
+                found.push(format!("empty axis field in {:?}", e.axes));
+            }
+            found.extend(
+                holes(e.label_template)
+                    .into_iter()
+                    .filter(|&role| !e.axes.iter().any(|&(axis_role, _, _)| axis_role == role))
+                    .map(|role| format!("hole {{{role}}} has no axis")),
+            );
+            found
+        };
+        let broken: Vec<(&str, Vec<String>)> = ALGORITHMS
+            .iter()
+            .map(|e| (e.name, flaws(e)))
+            .filter(|(_, found)| !found.is_empty())
+            .collect();
+        assert!(broken.is_empty(), "{} entries with broken navigation data, first 5: {:#?}", broken.len(), &broken[..broken.len().min(5)]);
+    }
+
     /// `sorted` lists every entry once, and `for_each` visits them in that order.
     #[test]
     fn sorted_lists_every_entry_once_and_for_each_follows_it() {
@@ -1467,12 +1497,13 @@ mod tests {
                 .find(|v| v.name == "quick sort<part: left-left<first>, small: size: 1>")
                 .expect("the variant is registered in the picker tree");
             assert_eq!(v.category, vec!["sorts", "quick sorts"], "got {:?}", v.category);
-            // The pivot now NESTS under the partition: scheme + pivot are sub-axes
-            // of the single `part` slot (`part/scheme`, `part/pivot`), not flat
-            // top-level facets.
+            // The single composite is named by its scheme, so `part` reads
+            // `left-left` and the pivot NESTS under it as `part/pivot`; the scheme
+            // is the head and has no axis of its own.
             let by_path: Vec<(&str, &str)> =
                 v.axes.iter().map(|a| (a.path.as_str(), a.value.as_str())).collect();
-            assert!(by_path.contains(&("part/scheme", "left-left")), "axes: {by_path:?}");
+            assert!(by_path.contains(&("part", "left-left")), "axes: {by_path:?}");
+            assert!(!by_path.iter().any(|&(path, _)| path == "part/scheme"), "axes: {by_path:?}");
             assert!(by_path.contains(&("part/pivot", "first")), "axes: {by_path:?}");
             assert!(by_path.contains(&("small_sort", "size: 1")), "axes: {by_path:?}");
             // a single pivot does not sub-nest further
@@ -1486,8 +1517,8 @@ mod tests {
             );
 
             // STRUCTURAL axes: the dual composite is `DualPivoted<{pivot}>` — the
-            // scheme ("dual") is baked into the type head, so there is NO `part/scheme`
-            // axis (unlike single `Pivoted<{scheme},{pivot}>`). A `combined<a, b>`
+            // scheme ("dual") is baked into the type head, so it has no `part/scheme`
+            // axis, as the single composite has none once its scheme is the head. A `combined<a, b>`
             // selector nests its sub-slots under the pivot: part/pivot → part/pivot/a,
             // part/pivot/b.
             let d = variants

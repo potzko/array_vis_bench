@@ -125,10 +125,13 @@ pub fn resolve(node: &SpecNode, reg: &Registry) -> Result<Resolved, String> {
                 // (`combined<a,b>`) navigates as its own level with sub-levels.
                 axes.push(AxisNode {
                     role: role.clone(),
-                    value: head_label(child_comp, &r.label),
+                    value: head_label(child_comp, &r.label, &r.axes),
                     path: p.name.clone(),
                 });
-                for sub in r.axes {
+                // A label that opens with a slot hole lends that slot's axis to the
+                // head above, so it is not repeated as a sub axis.
+                let lent = lent_slot(child_comp);
+                for sub in r.axes.into_iter().filter(|sub| Some(sub.path.as_str()) != lent) {
                     axes.push(AxisNode {
                         role: sub.role,
                         value: sub.value,
@@ -204,23 +207,42 @@ fn own_imports(comp: &Component, reg: &Registry) -> Result<Vec<String>, String> 
     Ok(paths)
 }
 
-/// The navigation HEAD label for a filler: a leaf (no type slots) uses its full
-/// resolved label (`first`, `insertion: 32`); a composite uses its label template
-/// up to the first type-slot hole, with a trailing bracket/space trimmed
-/// (`combined<{a}, {b}>` → `combined`). The head is constant across every nested
-/// choice, so all `combined<…>` variants group under one `combined` level.
-fn head_label(comp: &crate::registry::Component, resolved_label: &str) -> String {
-    let first_type_hole = comp
+/// The first type slot whose hole appears in the label template, with the
+/// template text before that hole minus its trailing brackets and spaces.
+fn label_opening(comp: &Component) -> Option<(&str, &str)> {
+    let (at, slot) = comp
         .params
         .iter()
         .filter(|p| matches!(p.kind, ParamKind::Type { .. }))
-        .filter_map(|p| comp.label_tmpl.find(&format!("{{{}}}", p.name)))
-        .min();
-    match first_type_hole {
-        Some(i) => comp.label_tmpl[..i]
-            .trim_end_matches(|c: char| c == '<' || c == '(' || c == '[' || c.is_whitespace())
-            .to_string(),
-        // Leaf (no type slots), or the slots aren't shown in the label → the full
+        .filter_map(|p| comp.label_tmpl.find(&format!("{{{}}}", p.name)).map(|i| (i, p.name.as_str())))
+        .min()?;
+    let head = comp.label_tmpl[..at]
+        .trim_end_matches(|c: char| c == '<' || c == '(' || c == '[' || c.is_whitespace());
+    Some((slot, head))
+}
+
+/// The slot a composite is named by when its label template opens with that
+/// slot's hole (`{scheme}<{pivot}>`), so the template text before it is empty.
+fn lent_slot(comp: &Component) -> Option<&str> {
+    label_opening(comp).filter(|(_, head)| head.is_empty()).map(|(slot, _)| slot)
+}
+
+/// The navigation HEAD label for a filler: a leaf (no type slots) uses its full
+/// resolved label (`first`, `insertion: 32`); a composite uses its label template
+/// up to the first type-slot hole, with a trailing bracket/space trimmed
+/// (`combined<{a}, {b}>` -> `combined`). The head is constant across every nested
+/// choice, so all `combined<...>` variants group under one `combined` level. A
+/// template that opens with a hole has no text to use, so the head is the head of
+/// that slot's filler, read from the filler's own `axes`.
+fn head_label(comp: &Component, resolved_label: &str, axes: &[AxisNode]) -> String {
+    match label_opening(comp) {
+        Some((slot, "")) => axes
+            .iter()
+            .find(|a| a.path == slot)
+            .map(|a| a.value.clone())
+            .expect("every type slot of a resolved composite has an axis"),
+        Some((_, head)) => head.to_string(),
+        // Leaf (no type slots), or the slots aren't shown in the label -> the full
         // resolved label is already the right node value.
         None => resolved_label.to_string(),
     }
@@ -336,12 +358,76 @@ mod tests {
         assert!(err.contains("`c` has no owning crate and no `uses`"), "got: {err}");
     }
 
+    // A composite whose label opens with a slot hole, as `pk_single` does, is
+    // grouped under its first filler's head, and that slot adds no axis of its own.
+    const HOLE_FIRST: &str = "
+component host
+  type Host<{part}>
+  label host<{part}>
+  slot part Wrapped
+end
+component wrap
+  type Wrap<{lead}, {tail}>
+  label {lead}<{tail}>
+  provides Wrapped
+  slot lead Lead
+  slot tail Tail
+end
+component pair
+  type Pair<{inner}>
+  label pair<{inner}>
+  provides Lead
+  slot inner Tail
+end
+component alpha
+  type Alpha
+  label alpha
+  provides Lead
+end
+component beta
+  type Beta
+  label beta
+  provides Tail
+end
+";
+
+    fn axes_in_hole_first(spec: &str) -> Vec<(String, String, String)> {
+        let reg = Registry::from_fragments([("lib", HOLE_FIRST)]).unwrap();
+        let resolved = resolve(&parse_spec(spec).unwrap().1, &reg).unwrap();
+        resolved.axes.into_iter().map(|a| (a.role, a.value, a.path)).collect()
+    }
+
+    #[test]
+    fn a_label_opening_with_a_hole_takes_its_head_from_that_slot() {
+        let axes = axes_in_hole_first("host< part = wrap< lead = alpha, tail = beta > >");
+        assert_eq!(
+            axes,
+            vec![
+                ("Wrapped".into(), "alpha".into(), "part".into()),
+                ("Tail".into(), "beta".into(), "part/tail".into()),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_hole_first_head_keeps_the_sub_axes_of_its_first_filler() {
+        let axes = axes_in_hole_first("host< part = wrap< lead = pair< inner = beta >, tail = beta > >");
+        assert_eq!(
+            axes,
+            vec![
+                ("Wrapped".into(), "pair".into(), "part".into()),
+                ("Tail".into(), "beta".into(), "part/lead/inner".into()),
+                ("Tail".into(), "beta".into(), "part/tail".into()),
+            ]
+        );
+    }
+
     #[test]
     fn head_label_trims_to_the_component_head() {
         let reg = Registry::parse(REG).unwrap();
         // composite → head only
-        assert_eq!(head_label(reg.get("combined").unwrap(), "combined<first, mid>"), "combined");
+        assert_eq!(head_label(reg.get("combined").unwrap(), "combined<first, mid>", &[]), "combined");
         // leaf → full resolved label
-        assert_eq!(head_label(reg.get("first_element").unwrap(), "first"), "first");
+        assert_eq!(head_label(reg.get("first_element").unwrap(), "first", &[]), "first");
     }
 }
