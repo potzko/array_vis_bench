@@ -98,7 +98,7 @@ fn stack_set_sorts_across_directions() {
     // partition from `heap_sort_lib::heap_partition`), not the flat
     // quicksort `PartitionScheme` that the `*Set<QS>` impls inherit
     // through `QuickSelect`.
-    type DH = StackSet<heap_sort_lib::heap_partition::LeftLeftPartition, FirstElement>;
+    type DH = StackSet<heap_sort_lib::heap_partition::HeapLeftLeft, FirstElement>;
 
     check_sorts("MaxForward + Binary", |a, l| {
         NaryHeapSort::<ArityHeap<Binary, MaxForward>, DH>::sort(a, l)

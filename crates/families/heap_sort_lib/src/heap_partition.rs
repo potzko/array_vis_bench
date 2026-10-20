@@ -42,9 +42,9 @@ pub trait HeapPartition {
 }
 
 /// Left-left single-pointer partition — *Lomuto*-style (rootward-on-left scan).
-pub struct LeftLeftPartition;
+pub struct HeapLeftLeft;
 
-impl HeapPartition for LeftLeftPartition {
+impl HeapPartition for HeapLeftLeft {
     fn partition<T, U, H>(
         arr: &mut [T],
         n: usize,
@@ -76,9 +76,9 @@ impl HeapPartition for LeftLeftPartition {
 }
 
 /// Left-right two-pointer partition — *Hoare*-style (scan inward from both ends).
-pub struct LeftRightPartition;
+pub struct HeapLeftRight;
 
-impl HeapPartition for LeftRightPartition {
+impl HeapPartition for HeapLeftRight {
     fn partition<T, U, H>(
         arr: &mut [T],
         n: usize,
@@ -136,11 +136,11 @@ impl HeapPartition for LeftRightPartition {
 }
 
 /// Block partition — classify-then-swap in fixed-size blocks. Reduces
-/// branch mispredictions on large slices; falls back to LeftLeftPartition-style
+/// branch mispredictions on large slices; falls back to HeapLeftLeft-style
 /// remainder loop.
-pub struct Block;
+pub struct HeapBlock;
 
-impl HeapPartition for Block {
+impl HeapPartition for HeapBlock {
     fn partition<T, U, H>(
         arr: &mut [T],
         n: usize,
@@ -208,7 +208,7 @@ impl HeapPartition for Block {
         logger.free_aux_arr(&offsets_l);
         logger.free_aux_arr(&offsets_r);
 
-        // LeftLeftPartition-style remainder.
+        // HeapLeftLeft-style remainder.
         let mut small = left;
         for i in left..right {
             let i_phys = H::phys(i, n);

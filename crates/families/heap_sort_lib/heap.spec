@@ -53,22 +53,22 @@ end
 
 # ════════════════════════ HeapPart (3, SHARED) ════════════════════════
 component heap_part_left_left
-  type     LeftLeftPartition
+  type     HeapLeftLeft
   label    left-left pointer
   provides HeapPart
-  uses     heap_sort_lib::heap_partition::LeftLeftPartition
+  uses     heap_sort_lib::heap_partition::HeapLeftLeft
 end
 component heap_part_left_right
-  type     LeftRightPartition
+  type     HeapLeftRight
   label    left-right pointer
   provides HeapPart
-  uses     heap_sort_lib::heap_partition::LeftRightPartition
+  uses     heap_sort_lib::heap_partition::HeapLeftRight
 end
 component heap_part_block
-  type     Block
+  type     HeapBlock
   label    block
   provides HeapPart
-  uses     heap_sort_lib::heap_partition::Block
+  uses     heap_sort_lib::heap_partition::HeapBlock
 end
 
 # ════════════════════════ HeapPiv (5, heap-only) ════════════════════════
