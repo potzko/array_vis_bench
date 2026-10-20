@@ -31,7 +31,6 @@ dependencies = [
  "array_vis_bench_core",
  "array_vis_bench_traits",
  "sort_logger",
- "sort_registry_core",
  "sort_vis",
 ]
 

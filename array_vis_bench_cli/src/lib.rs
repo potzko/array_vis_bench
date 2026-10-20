@@ -1,15 +1,15 @@
 //! The interactive visualiser CLI — the picker + prompts + render call, lifted
 //! verbatim out of the `array_vis_bench` binary so multiple link roots can share
-//! it. It reads the registry purely by name / fn-pointer (`ALGORITHMS`,
-//! `all_variants()`), so it neither knows nor cares whether the entries were
-//! registered by the spec compiler or by hand. A binary is just
-//! a link root that pulls in some registrations and calls [`run`].
+//! it. It reads the registry purely by name / fn-pointer (`ALGORITHMS` and the
+//! picker view `navigation::variants()` built from it), so it neither knows nor
+//! cares whether the entries were registered by the spec compiler or by hand. A
+//! binary is just a link root that pulls in some registrations and calls [`run`].
 
 use array_vis_bench_core::bench_registry::{list_inputs, Category, RunConfig};
+use array_vis_bench_core::navigation::{variants, VariantDesc};
 use array_vis_bench_core::visualise::{find, visualise};
 use array_vis_bench_traits::Complexity;
 use sort_logger::VisualizerLogger;
-use sort_registry_core::VariantDesc;
 use sort_vis::{Encoding, Mp4Config, Pacing, COMMON_FRAMERATES, COMMON_RESOLUTIONS};
 use std::collections::{HashMap, HashSet};
 use std::io::{self, Write};
@@ -184,8 +184,8 @@ struct Pick {
 type Chosen = Vec<Pick>;
 
 fn select_sort() -> String {
-    let variants = sort_registry_core::all_variants();
-    let cands: Vec<&VariantDesc> = variants.iter().collect();
+    let all = variants();
+    let cands: Vec<&VariantDesc> = all.iter().collect();
     pick(&cands, 0, &Vec::new())
 }
 
@@ -551,7 +551,7 @@ fn split_top_level(s: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sort_registry_core::{AxisBinding, VariantDesc};
+    use array_vis_bench_core::navigation::{AxisBinding, VariantDesc};
 
     fn var(name: &str, axes: &[(&str, &str, &str)]) -> VariantDesc {
         VariantDesc {
