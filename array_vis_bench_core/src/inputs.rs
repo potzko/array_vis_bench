@@ -343,3 +343,35 @@ static SS_DESCENDING: SmallSortInputEntry = SmallSortInputEntry {
     generate: <SmallDescending as SmallSortInput>::generate,
     primary: false,
 };
+
+#[cfg(test)]
+mod tests {
+    use crate::bench_registry::{list_inputs, primary_input, Category};
+
+    const SORT_LIKE: [&str; 6] =
+        ["all same", "ascending", "descending", "few unique", "nearly sorted", "shuffled"];
+
+    // linkme leaves the order of a slice unspecified, so the lists are compared sorted.
+    fn listed(category: Category) -> Vec<&'static str> {
+        let mut names = list_inputs(category);
+        names.sort_unstable();
+        names
+    }
+
+    #[test]
+    fn every_category_lists_its_inputs_and_names_one_primary() {
+        let expected: [(Category, &[&str], &str); 7] = [
+            (Category::Sort, &SORT_LIKE, "shuffled"),
+            (Category::Partition, &SORT_LIKE, "shuffled"),
+            (Category::Scratchspace, &SORT_LIKE, "shuffled"),
+            (Category::Rotation, &["mid-split", "near-start-split", "quarter-split", "three-quarter-split"], "mid-split"),
+            (Category::Merge, &["concat (already sorted)", "interleaved", "reversed-halves"], "interleaved"),
+            (Category::SmallSort, &["descending", "shuffled"], "shuffled"),
+            (Category::QuickSelect, &["target-first", "target-last", "target-mid", "target-quarter"], "target-mid"),
+        ];
+        for (category, names, primary) in expected {
+            assert_eq!(listed(category), names, "inputs of {category:?}");
+            assert_eq!(primary_input(category), primary, "primary of {category:?}");
+        }
+    }
+}
