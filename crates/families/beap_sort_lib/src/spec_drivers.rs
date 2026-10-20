@@ -45,6 +45,8 @@ macro_rules! beap_driver {
             }
         }
 
+        array_vis_bench_traits::direct_sort!($name<D, DH>; D: Direction, DH: DeepHeapify);
+
         // Forward the composable annotations from the inner chain to stay
         // honest. `NaryHeapSort<BeapHeap<D>, DH>` computes
         // WORST/BEST/AVERAGE = N_SQRT_N, SPACE = LOG_N, STABLE = false.

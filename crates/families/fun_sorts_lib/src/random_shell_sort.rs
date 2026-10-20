@@ -103,6 +103,8 @@ impl<D: GapDistribution> RandomShellSort<D> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(RandomShellSort<D>; D: GapDistribution);
+
 /// Generate `~sqrt(len)` random gap values into a fresh aux `Vec<usize>`,
 /// pinning the final slot to `1` (the correctness anchor). The vector is
 /// logged with the visualiser via the `_u` aux family before being

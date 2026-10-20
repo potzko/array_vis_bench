@@ -58,5 +58,7 @@ impl<P: PartitionScheme> CyclentSort<P> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(CyclentSort<P>; P: PartitionScheme);
+
 // MovingPivot is excluded — it returns `(high, high)` with `high < len` always,
 // so the convergence check `r == slice_len` would never fire (infinite loop).

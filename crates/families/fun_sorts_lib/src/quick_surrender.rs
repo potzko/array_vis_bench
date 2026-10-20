@@ -26,3 +26,5 @@ impl<QS: QuickSelect> QuickSurrender<QS> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(QuickSurrender<QS>; QS: QuickSelect);
+

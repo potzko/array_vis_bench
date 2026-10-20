@@ -65,4 +65,6 @@ impl<P: PartitionScheme> CyclentSortStack<P> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(CyclentSortStack<P>; P: PartitionScheme);
+
 // MovingPivot is excluded — see cyclent_sort.rs for rationale.

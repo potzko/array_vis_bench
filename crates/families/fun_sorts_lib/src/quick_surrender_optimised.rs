@@ -30,3 +30,5 @@ impl<QS: QuickSelect, SS: NonTrivialSmallSort> QuickSurrenderOptimised<QS, SS> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(QuickSurrenderOptimised<QS, SS>; QS: QuickSelect, SS: NonTrivialSmallSort);
+

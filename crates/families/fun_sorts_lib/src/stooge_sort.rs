@@ -22,6 +22,8 @@ impl<SS: SmallSort> StoogeSort<SS> {
     }
 }
 
+array_vis_bench_traits::direct_sort!(StoogeSort<SS>; SS: SmallSort);
+
 fn stooge_sort_rec<T, U, SS>(arr: &mut [T], logger: &mut U)
 where
     T: Ord + Copy,
