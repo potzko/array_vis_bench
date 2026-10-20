@@ -1,6 +1,6 @@
 # Implementation plan: drop slot defaults and project
 
-Status: NOT STARTED. Designed 2026-10-20 from the concept review recorded in
+Status: DONE 2026-10-20. Designed from the concept review recorded in
 `../todo.md`.
 
 ## Problem
