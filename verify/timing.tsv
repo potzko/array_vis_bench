@@ -3,6 +3,7 @@ auxiliary	2187
 auxiliary<full>	5049
 auxiliary<half>	3896
 auxiliary<none>	221943
+avl sort	112023
 bad heap sort alt	2485010
 beap sort quick build dual pivot<dir: max forward, build: stack dual-pivot partition<dps: first>>	373012
 beap sort quick build dual pivot<dir: max forward, build: stack dual-pivot partition<dps: middle>>	363300
