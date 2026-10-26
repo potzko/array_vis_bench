@@ -24,7 +24,7 @@ mov    rdi,r15
 mov    rsi,rbx
 mov    rdx,rax
 mov    rcx,rbx
-call   <_RNvCsdFxcksAL2oa_13compare_sorts18hand_mergesort_rec>
+call   <_RNvCs_13compare_sorts18hand_mergesort_rec>
 mov    rdi,r14
 add    rsp,0x8
 pop    rbx
