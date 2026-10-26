@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
-use array_vis_bench_traits::{Complexity, SortAlgo};
+use array_vis_bench_traits::Complexity;
 use sort_logger::SortLogger;
 
 use crate::comb_sort::CombSort;
@@ -31,24 +31,6 @@ impl<const NUM: usize, const DEN: usize> CombSortRatio<NUM, DEN> {
     }
 }
 
-impl<T: Ord + Copy, U: SortLogger<T>, const NUM: usize, const DEN: usize> SortAlgo<T, U>
-    for CombSortRatio<NUM, DEN>
-{
-    fn big_o() -> &'static str {
-        "O(N^2)"
-    }
-    fn name() -> &'static str {
-        // Overridden by the registered name in the metadata family.
-        "comb sort ratio"
-    }
-    fn sort(arr: &mut [T], logger: &mut U) {
-        CombSort::sort_with_gaps(arr, logger, Self::gaps(arr.len()));
-    }
-    fn stable() -> bool {
-        false
-    }
-}
-
 /// A rational shrink factor for comb sort — yields the gap schedule for a given
 /// input length. Implemented by every `CombSortRatio<NUM, DEN>`; lets the spec
 /// driver [`CombSortOf`] range over ratios as a single faceted slot.
@@ -62,12 +44,10 @@ impl<const NUM: usize, const DEN: usize> CombRatio for CombSortRatio<NUM, DEN> {
     }
 }
 
-/// Comb sort driven by a [`CombRatio`] shrink factor — the spec-system DRIVER.
-///
-/// Unlike the bare `CombSortRatio<NUM, DEN>` (which all share the type-head
-/// `CombSortRatio` and only impl `SortAlgo`), this wrapper has a unique head and
-/// an inherent `sort`, so the spec emit can drive it and the AVBS query can
-/// reference it (`CombSortOf<{ratio}>`).
+/// Comb sort driven by a [`CombRatio`] shrink factor, the driver the spec
+/// emits. The bare `CombSortRatio<NUM, DEN>` is a ratio, not a sort: every
+/// ratio shares its head, so the query names the sort as `CombSortOf<{ratio}>`
+/// and this wrapper carries the inherent `sort`.
 pub struct CombSortOf<R: CombRatio>(PhantomData<R>);
 
 impl<R: CombRatio> CombSortOf<R> {

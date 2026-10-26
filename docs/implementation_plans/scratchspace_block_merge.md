@@ -141,7 +141,7 @@ logger — nothing else touches the array.
    phase 4's block-rolling).
 3. **The `Keys` sibling axis.** A `KeyBuffer` type (extract distinct elements, `tag_block` /
    `find_block`, `restore` = insertion-sort). Same acquire/release *shape*, its own methods.
-4. **`block_merge_sort_lib` family.** `BlockMergeSort<Merge, Keys>` implementing `SortAlgo` +
+4. **`block_merge_sort_lib` family.** `BlockMergeSort<Merge, Keys>` with an inherent `sort` +
    `Has{TimeBounds,Space,Stability}`. WikiSort ≈ `<InArray, InArrayKeys>`; GrailSort-with-buffer ≈
    `<ExternalFixed<512>, InArrayKeys>`. Buffer-extraction failure (too few distinct elements) falls
    back down the backing ladder — log what was dropped (no silent cap).
@@ -180,6 +180,6 @@ Each stress-tests a different corner; if any won't fit, the contract is wrong:
   `gap_distribution_lib`).
 - Merge consumers land in `crates/families/merge_sort_lib/` (already has `rotation_merge.rs`,
   `auxiliary_merge.rs`) or a new `crates/families/block_merge_sort_lib/`.
-- ABI: `SortLogger` (`sort_logger`), `SortAlgo` + `Has*` traits (`array_vis_bench_traits`).
+- ABI: `SortLogger` (`sort_logger`), `DirectSort` + `Has*` traits (`array_vis_bench_traits`).
 - Research: the deep-research report (WikiSort README + Ch.3, Mrrl/GrailSort.h, Huang–Langston 1992,
   Kim–Kutzner 2008). Rotation building blocks already in-repo: `crates/rotations/*`.

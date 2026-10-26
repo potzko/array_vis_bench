@@ -8,19 +8,17 @@
 //! code targets.
 //!
 //! What the template gets right:
-//!  - Inherent dispatch. A sort is invoked as `<Ty>::sort(arr, logger)`, not
-//!    through the legacy `SortAlgo` trait, whose `U` is `Sized` and can't take a
-//!    `dyn SortLogger`.
+//!  - Inherent dispatch. A sort is invoked as `<Ty>::sort(arr, logger)`, an
+//!    inherent method whose `U: ?Sized` bound takes a `dyn SortLogger`.
 //!  - One adapter shape. `run_dyn(arr, index, logger)` is what every kind
 //!    passes to `run_with_input`; a sort ignores the index, a rotation takes its
 //!    split, a merge its midpoint, a quick select its target.
 //!  - Inherited complexity. `<Ty as HasTimeBounds>::WORST` and its siblings are
 //!    read off the type, the way the retired `sort_family!` macro did.
 //!
-//! LIMITATION: a sort must expose an inherent `sort<T, U: ?Sized +
-//! SortLogger<T>>` and implement `DirectSort` by forwarding to it. A legacy type
-//! that implements only the `SortAlgo` trait has no such method, so the emitted
-//! `<Ty>::sort` would fail to compile (fail loud, not silent).
+//! A sort must expose an inherent `sort<T, U: ?Sized + SortLogger<T>>` and
+//! implement `DirectSort` by forwarding to it; a type without the method fails
+//! to compile at `<Ty>::sort`, loud rather than silent.
 
 use spec_core::{EmitBackend, EntryCtx, Wrapper};
 
@@ -365,12 +363,10 @@ mod tests {
     }
 
     #[test]
-    fn a_sort_dispatches_through_the_inherent_method_not_sortalgo() {
+    fn a_sort_dispatches_through_the_inherent_method() {
         let b = sort_body("shell sort<sequence: ciura>");
-        // the one adapter calls the inherent `<Ty>::sort` ...
         assert_eq!(b.matches("<Ty>::sort(arr, logger);").count(), 1, "expected the one dyn adapter");
-        // ... and crucially NOT the legacy SortAlgo trait (Sized U won't take dyn).
-        assert!(!b.contains("SortAlgo"), "must not route through the legacy SortAlgo trait");
+        assert_eq!(b.matches("::sort(").count(), 1, "the inherent call is the only sort call: {b}");
     }
 
     #[test]

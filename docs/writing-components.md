@@ -606,14 +606,11 @@ where Scheme: PartitionScheme + HasTimeBounds, Sel: PivotInput + HasTimeBounds {
 `O(?)`/non-stable and pollutes every composition it enters (`UNKNOWN` dominates). Use the
 predefined constants (`Complexity::CONST`, `N_LOG_N`, `N_SQUARED`, ...).
 
-### 6.3 Dispatch wrappers and the legacy trait
+### 6.3 Dispatch wrappers
 
 - **Emit wrappers** (`SortingAlgorithm<X>`, `Selection<X>`, `RotationAlg<X>`, ...) are not
   Rust traits you implement , they're `.avbs` markers that tag a solved type for emission
   and pick its `Category`. The table of them is the `KINDS` table in `spec_emit`.
-- `SortAlgo<T, U>` in [sort_traits.rs](../array_vis_bench_traits/src/sort_traits.rs) is a
-  legacy object-style dispatch trait. New components prefer inherent `fn sort` methods and
-  the spec pipeline; you generally won't implement `SortAlgo` for new work.
 - A new kind of algorithm is a `Category` variant, a row of `spec_emit`'s `KINDS` table, a
   `<Kind>Suite` impl and the input tags, the four places listed in
   [registration.md](registration.md#adding-a-first-class-kind).

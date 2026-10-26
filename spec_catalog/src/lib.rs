@@ -745,8 +745,6 @@ mod tests {
             let es = entries();
             assert_eq!(es.len(), COUNT_COMB, "emitted-entry count drifted");
             assert_eq!(COUNT_COMB, 6);
-            // The classic 1.3 ratio is present (CombSortOf drives via the inherent
-            // sort the spec emit requires — the SortAlgo-only blocker is gone).
             assert!(es.iter().any(|e| e.name == "comb sort<1.3>"), "names: {:?}",
                 es.iter().map(|e| e.name).collect::<Vec<_>>());
             let cfg = RunConfig { size: 64, seed: 1 };

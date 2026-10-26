@@ -23,9 +23,7 @@ batteries, like every other kind's suite.
 
 `U: ?Sized` is what lets one body serve both the monomorphic benchmark path
 (`&mut NoOpLogger`) and the visualiser path (`&mut dyn SortLogger<T>`). Drop
-it and the dyn path stops compiling. The legacy `SortAlgo<T, U>` trait in
-`array_vis_bench_traits/src/sort_traits.rs` is kept for a few old callers;
-new code does not implement it.
+it and the dyn path stops compiling.
 
 ## Role traits
 

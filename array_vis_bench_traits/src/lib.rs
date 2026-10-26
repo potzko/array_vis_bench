@@ -23,7 +23,6 @@ pub use sort_logger;
 pub mod complexity;
 pub mod composable;
 pub mod role;
-pub mod sort_traits;
 
 pub use complexity::{Complexity, Special};
 pub use composable::{HasSpace, HasStability, HasTimeBounds, PivotQuality};
@@ -35,4 +34,3 @@ pub use role::{
 };
 pub use role::rotation::reverse;
 pub use role::small_sort::{insertion_sort_with, windowed_insertion_sort_with};
-pub use sort_traits::SortAlgo;
