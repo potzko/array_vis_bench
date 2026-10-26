@@ -93,15 +93,15 @@ cmp    r8,0x2
 jae    <+0xb0>
 pop    rbx
 ret
-lea    rdx,[rip+0x45e8b]
+lea    rdx,[rip+?]
 mov    rdi,rax
-call   QWORD PTR [rip+0x4833a]
-lea    rdx,[rip+0x45e7b]
+call   QWORD PTR [rip+?]
+lea    rdx,[rip+?]
 mov    rdi,rcx
-call   QWORD PTR [rip+0x4832a]
-lea    rdx,[rip+0x45e83]
+call   QWORD PTR [rip+?]
+lea    rdx,[rip+?]
 mov    rdi,rax
-call   QWORD PTR [rip+0x4831a]
-lea    rdx,[rip+0x45e73]
+call   QWORD PTR [rip+?]
+lea    rdx,[rip+?]
 mov    rdi,rcx
-call   QWORD PTR [rip+0x4830a]
+call   QWORD PTR [rip+?]

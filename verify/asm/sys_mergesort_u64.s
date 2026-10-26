@@ -15,31 +15,31 @@ mov    rbx,rsi
 mov    r12,rdi
 lea    r15,[rsi*8+0x0]
 mov    rdi,r15
-call   QWORD PTR [rip+0x48377]
+call   QWORD PTR [rip+?]
 test   rax,rax
 je     <+0x6d>
 mov    r14,rax
 mov    rdi,rax
 mov    rsi,r12
 mov    rdx,r15
-call   QWORD PTR [rip+0x482d8]
+call   QWORD PTR [rip+?]
 mov    rdi,r12
 mov    rsi,rbx
 mov    rdx,r14
 mov    rcx,rbx
-call   19880 <_RINvMNtCs720jgtLGezS_14merge_sort_lib8top_downINtB3_16TopDownMergeSortINtCs4XRIBPJ8Rcb_20small_sort_insertion18InsertionSmallSortNtCsdaKjWN7MHYN_29small_sort_insertion_strategy15LinearInsertionKj20_EKb0_KB3c_E7sort_cbyNtNtCs8KT4XwmxzGL_11sort_logger7loggers10NoOpLoggerECsdFxcksAL2oa_13compare_sorts>
+call   <_RINvMNtCs720jgtLGezS_14merge_sort_lib8top_downINtB3_16TopDownMergeSortINtCs4XRIBPJ8Rcb_20small_sort_insertion18InsertionSmallSortNtCsdaKjWN7MHYN_29small_sort_insertion_strategy15LinearInsertionKj20_EKb0_KB3c_E7sort_cbyNtNtCs8KT4XwmxzGL_11sort_logger7loggers10NoOpLoggerECsdFxcksAL2oa_13compare_sorts>
 mov    rdi,r14
 add    rsp,0x8
 pop    rbx
 pop    r12
 pop    r14
 pop    r15
-jmp    QWORD PTR [rip+0x4834b]
+jmp    QWORD PTR [rip+?]
 mov    edi,0x8
 mov    rsi,r15
-call   QWORD PTR [rip+0x4827d]
+call   QWORD PTR [rip+?]
 mov    rbx,rax
 mov    rdi,r14
-call   QWORD PTR [rip+0x48331]
+call   QWORD PTR [rip+?]
 mov    rdi,rbx
-call   65db0 <_Unwind_Resume@plt>
+call   <_Unwind_Resume@plt>

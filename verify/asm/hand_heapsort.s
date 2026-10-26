@@ -99,15 +99,15 @@ lea    r8,[rdx*2+0x1]
 cmp    r8,rax
 jb     <+0x120>
 jmp    <+0x100>
-lea    rdx,[rip+0x462b4]
+lea    rdx,[rip+?]
 mov    rdi,rcx
-call   QWORD PTR [rip+0x48793]
-lea    rdx,[rip+0x462a4]
+call   QWORD PTR [rip+?]
+lea    rdx,[rip+?]
 mov    rdi,rax
-call   QWORD PTR [rip+0x48783]
-lea    rdx,[rip+0x4627c]
+call   QWORD PTR [rip+?]
+lea    rdx,[rip+?]
 mov    rdi,rcx
-call   QWORD PTR [rip+0x48773]
-lea    rdx,[rip+0x462e4]
+call   QWORD PTR [rip+?]
+lea    rdx,[rip+?]
 mov    rdi,rax
-call   QWORD PTR [rip+0x48763]
+call   QWORD PTR [rip+?]

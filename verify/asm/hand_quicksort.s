@@ -36,7 +36,7 @@ mov    QWORD PTR [rbx+r15*8],rcx
 mov    QWORD PTR [rbx+r14*8-0x8],rax
 mov    rdi,rbx
 mov    rsi,r15
-call   20e80 <hand_quicksort>
+call   <hand_quicksort>
 lea    rbx,[rbx+r15*8]
 add    rbx,0x8
 not    r15
@@ -127,11 +127,11 @@ pop    rbx
 pop    r14
 pop    r15
 ret
-lea    rdx,[rip+0x46079]
+lea    rdx,[rip+?]
 mov    rdi,r15
 mov    rsi,r14
-call   QWORD PTR [rip+0x484c5]
-lea    rdx,[rip+0x4604e]
+call   QWORD PTR [rip+?]
+lea    rdx,[rip+?]
 mov    rdi,r15
 mov    rsi,r14
-call   QWORD PTR [rip+0x484b2]
+call   QWORD PTR [rip+?]

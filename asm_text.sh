@@ -3,7 +3,8 @@
 # `asmdiff.sh` pairs two of these side by side and `verify.sh` diffs one
 # against its committed baseline, so the text here must be stable across
 # builds that did not change the code: addresses, raw bytes, assembler
-# comments, symbol offsets and the hash suffix of mangled names are stripped.
+# comments, symbol offsets, call targets' addresses, rip relative offsets
+# and the hash suffix of mangled names are stripped.
 #
 #   ./asm_text.sh hand_quicksort
 #   BIN=target/release/compare_sorts ./asm_text.sh sys_quicksort_u64
@@ -23,4 +24,5 @@ if [[ -n "$target" && $(grep -cE '^\s+[0-9a-f]+:' <<<"$listing") -eq 1 ]]; then
 fi
 sed -E 's/^\s+[0-9a-f]+:\s+//; /^[0-9a-f]+ </d; s/\s*#.*//;
         s/[0-9a-f]+ <([^>]*)\+/<\1+/g; s/<[^>]*\+/<+/g; s/17h[0-9a-f]{16}E/E/g;
+        s/ [0-9a-f]+ </ </g; s/\[rip\+0x[0-9a-f]+\]/[rip+?]/g;
         /^$/d; /Disassembly of/d; /file format/d' <<<"$listing"

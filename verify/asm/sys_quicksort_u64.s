@@ -39,7 +39,7 @@ mov    QWORD PTR [rbx+r14*8-0x8],rax
 lea    r12,[r15+0x1]
 mov    rdi,rbx
 mov    rsi,r15
-call   19b70 <_RINvNtCs57OGpLzTEmF_14quick_sort_lib10quick_sort19pivotless_recursiveyNtNtCs8KT4XwmxzGL_11sort_logger7loggers10NoOpLoggerINtNtB4_7pivoted7PivotedNtCs1XWjPigpcaO_16partition_lomuto17LeftLeftPartitionNtCs2XStjIBSvMv_11pivot_first12FirstElementEINtCs4XRIBPJ8Rcb_20small_sort_insertion18InsertionSmallSortNtCsdaKjWN7MHYN_29small_sort_insertion_strategy15LinearInsertionKj20_EECsdFxcksAL2oa_13compare_sorts>
+call   <_RINvNtCs57OGpLzTEmF_14quick_sort_lib10quick_sort19pivotless_recursiveyNtNtCs8KT4XwmxzGL_11sort_logger7loggers10NoOpLoggerINtNtB4_7pivoted7PivotedNtCs1XWjPigpcaO_16partition_lomuto17LeftLeftPartitionNtCs2XStjIBSvMv_11pivot_first12FirstElementEINtCs4XRIBPJ8Rcb_20small_sort_insertion18InsertionSmallSortNtCsdaKjWN7MHYN_29small_sort_insertion_strategy15LinearInsertionKj20_EECsdFxcksAL2oa_13compare_sorts>
 sub    r14,r12
 lea    rbx,[rbx+r15*8]
 add    rbx,0x8
@@ -131,7 +131,7 @@ pop    r12
 pop    r14
 pop    r15
 ret
-lea    rdx,[rip+0x4d323]
+lea    rdx,[rip+?]
 mov    rdi,r15
 mov    rsi,r14
-call   QWORD PTR [rip+0x4f7cf]
+call   QWORD PTR [rip+?]
