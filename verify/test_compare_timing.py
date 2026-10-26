@@ -30,7 +30,7 @@ class RegressionsTest(unittest.TestCase):
         self.assertTrue(report.total_failed)
 
     def test_the_total_gate_has_the_same_floor(self) -> None:
-        report = regressions({"a": 10_000, "b": 10_000}, {"a": 50_000, "b": 50_000})
+        report = regressions({"a": 10_000, "b": 10_000}, {"a": 20_000, "b": 20_000})
         self.assertFalse(report.failed)
 
     def test_added_and_removed_entries_are_listed_not_failed(self) -> None:

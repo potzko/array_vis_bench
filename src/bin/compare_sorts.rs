@@ -319,6 +319,8 @@ struct PairResult {
     gate: f64,
     hand: Stats,
     sys: Stats,
+    /// Median over runs of `sys / hand`, the number the gate reads.
+    paired_ratio: f64,
 }
 
 fn run_pair<H, S>(
@@ -364,11 +366,20 @@ where
         sys_times.push(ts);
     }
 
+    // The gate reads the median of the per run ratios, not the ratio of the
+    // medians: the two sorts of one run are adjacent in time and see the same
+    // machine state, so a burst of load that lands on a few runs moves a few
+    // ratios and the median shrugs it off, where it could drag one side's
+    // median past the gate on its own.
+    let mut paired_ratios: Vec<f64> =
+        sys_times.iter().zip(&hand_times).map(|(&s, &h)| s as f64 / h as f64).collect();
+    paired_ratios.sort_by(|a, b| a.total_cmp(b));
     PairResult {
         label,
         gate,
         hand: Stats::from(&hand_times),
         sys: Stats::from(&sys_times),
+        paired_ratio: paired_ratios[paired_ratios.len() / 2],
     }
 }
 
@@ -396,15 +407,15 @@ fn print_table(results: &[PairResult]) -> bool {
         }
         let ratio_med = r.sys.median as f64 / r.hand.median as f64;
         let ratio_mean = r.sys.mean / r.hand.mean;
-        let status = if ratio_med <= r.gate {
+        let status = if r.paired_ratio <= r.gate {
             "OK"
         } else {
             all_ok = false;
             "FAIL"
         };
         println!(
-            "         ratio (sys/hand)  median: {:>5.3}×  mean: {:>5.3}×  gate: {:>5.3}×  [{}]",
-            ratio_med, ratio_mean, r.gate, status,
+            "         ratio (sys/hand)  median: {:>5.3}×  mean: {:>5.3}×  paired: {:>5.3}×  gate: {:>5.3}×  [{}]",
+            ratio_med, ratio_mean, r.paired_ratio, r.gate, status,
         );
         println!();
     }

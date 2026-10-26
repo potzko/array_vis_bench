@@ -2,8 +2,8 @@
 # `regressions` is the pure comparison over two name to nanoseconds maps;
 # `main` reads the two TSV files `--timing --out` writes and prints a report.
 # A single entry regresses when it is slower by more than the entry
-# tolerance and by more than the floor, so a scheduling burst over a few
-# sub millisecond entries does not fail the gate; the whole catalog regresses when the sum of the
+# tolerance and by more than the floor, which keeps microsecond entries out
+# of the gate; the whole catalog regresses when the sum of the
 # shared medians grows by more than the total tolerance and the same floor.
 import argparse
 import sys
@@ -31,9 +31,9 @@ def read_archive(path: Path) -> dict[str, int]:
 def regressions(
     baseline: dict[str, int],
     current: dict[str, int],
-    entry_tolerance: float = 1.0,
-    entry_floor_ns: int = 250_000,
-    total_tolerance: float = 0.15,
+    entry_tolerance: float = 0.3,
+    entry_floor_ns: int = 50_000,
+    total_tolerance: float = 0.10,
 ) -> Report:
     shared = sorted(baseline.keys() & current.keys())
     base_total = sum(baseline[name] for name in shared)
@@ -68,9 +68,9 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="fail when a timing archive regressed against its baseline")
     parser.add_argument("baseline", type=Path)
     parser.add_argument("current", type=Path)
-    parser.add_argument("--entry-tolerance", type=float, default=1.0, help="allowed slowdown of one entry, as a fraction")
-    parser.add_argument("--entry-floor-ns", type=int, default=250_000, help="an entry slower by less than this never fails")
-    parser.add_argument("--total-tolerance", type=float, default=0.15, help="allowed growth of the summed medians")
+    parser.add_argument("--entry-tolerance", type=float, default=0.3, help="allowed slowdown of one entry, as a fraction")
+    parser.add_argument("--entry-floor-ns", type=int, default=50_000, help="an entry slower by less than this never fails")
+    parser.add_argument("--total-tolerance", type=float, default=0.10, help="allowed growth of the summed medians")
     args = parser.parse_args(argv)
     report = regressions(
         read_archive(args.baseline), read_archive(args.current),

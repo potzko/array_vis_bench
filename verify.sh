@@ -17,11 +17,11 @@
 #   machine   the rustc version, target cpu and cpu model this machine's
 #             assembly and timing baselines were taken on
 #   asm       the six gate symbols of `compare_sorts` against `verify/asm/`
-#   perf      the `compare_sorts` gate, generic sorts within 1.05x of hand
-#             rolled ones
+#   perf      the `compare_sorts` gate over 61 paired runs, generic sorts
+#             within 1.05x of hand rolled ones
 #   tests     `cargo test --release --workspace`
-#   timing    every entry timed, median of five runs at size 1000, against
-#             `verify/timing.tsv`
+#   timing    every entry timed, median of fifteen interleaved rounds at
+#             size 1000, against `verify/timing.tsv`
 set -uo pipefail
 cd "$(dirname "$0")"
 
@@ -97,8 +97,8 @@ else
 fi
 
 echo "== perf"
-if ./target/release/compare_sorts >"$OUT/perf.log" 2>&1; then
-  pass "compare_sorts gate, quick merge heap medians: $(grep -oE 'median: [0-9.]+' "$OUT/perf.log" | sed 's/median: //' | tr '\n' ' ')"
+if ./target/release/compare_sorts 1000000 61 >"$OUT/perf.log" 2>&1; then
+  pass "compare_sorts gate, quick merge heap paired ratios: $(grep -oE 'paired: [0-9.]+' "$OUT/perf.log" | sed 's/paired: //' | tr '\n' ' ')"
 else
   fail "compare_sorts gate (see $OUT/perf.log)"
 fi
@@ -114,7 +114,7 @@ else
   fi
 
   echo "== timing"
-  time_catalog() { ./target/release/array_vis_bench --timing 1000 5 --out "$1" >"$OUT/timing.log" 2>&1; }
+  time_catalog() { ./target/release/array_vis_bench --timing 1000 15 --out "$1" >"$OUT/timing.log" 2>&1; }
   compare_timing() { python3 -I "$BASE/compare_timing.py" "$BASE/timing.tsv" "$1" >"$OUT/timing_compare.log" 2>&1; }
   time_catalog "$OUT/timing.tsv"
   if [[ $BLESS -eq 1 ]]; then

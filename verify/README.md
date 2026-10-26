@@ -13,15 +13,21 @@ the performance where they were.
 - `asm/`: the normalised disassembly of the six `compare_sorts` gate symbols,
   three hand rolled sorts and the three generic ones they are measured
   against, as `asm_text.sh` prints them.
-- `timing.tsv`: the median run time of every entry at size 1000 over five
-  runs, as `array_vis_bench --timing 1000 5 --out` writes it.
+- `timing.tsv`: the median run time of every entry at size 1000 over
+  fifteen interleaved rounds, as `array_vis_bench --timing 1000 15 --out`
+  writes it. Interleaving is what makes the medians stable: a burst of
+  machine load lands on different entries in different rounds.
 - `fingerprint.py`: produces `catalog.types` from the generated
   `catalog_entries.rs`.
 - `compare_timing.py`: compares a timing archive with the baseline. One entry
-  regresses when it is more than twice as slow and slower by more than a
-  quarter of a millisecond, so a scheduling burst over a few sub millisecond
-  entries passes; the whole catalog regresses when the sum of the shared
-  medians grows by more than fifteen percent.
+  regresses when it is slower by more than thirty percent and by more than
+  fifty microseconds; the whole catalog regresses when the sum of the shared
+  medians grows by more than ten percent. Measured run to run noise with
+  interleaved rounds is about four percent at the 99th percentile, and the
+  machine itself drifts by about five percent between days, which is what
+  the total gate has to leave room for. The drift free measurement is the
+  `compare_sorts` gate, which times a generic sort against a hand written one
+  in the same run.
 - `test_compare_timing.py`: the comparison's unit tests, which the gate runs.
 
 When a change is meant to move a baseline, review the diff the gate printed,
