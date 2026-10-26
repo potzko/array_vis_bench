@@ -110,6 +110,7 @@ mod tests {
         assert_eq!(COUNT_INSERTION, 2, "insertion family");
         assert_eq!(COUNT_QUICK, 408, "quick family (2 × [5×5 single + 26 dual] partitions × 4 small)");
         assert_eq!(COUNT_CYCLE, 1, "cycle family");
+        assert_eq!(COUNT_AVL, 1, "avl family");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
         assert_eq!(COUNT_ROD, 12, "rod family (6 branching x 2 merge)");
@@ -139,7 +140,8 @@ mod tests {
         // asserted in each kind's test module via a category filter.
         assert_eq!(
             COUNT_TOTAL,
-            COUNT_SHELL + COUNT_INSERTION + COUNT_QUICK + COUNT_CYCLE + COUNT_BUBBLE + COUNT_COMB
+            COUNT_SHELL + COUNT_INSERTION + COUNT_QUICK + COUNT_CYCLE + COUNT_AVL + COUNT_BUBBLE
+                + COUNT_COMB
                 + COUNT_ROD + COUNT_CIRCLE + COUNT_MERGE + COUNT_HEAP + COUNT_WEAK + COUNT_BEAP
                 + COUNT_QUICK_HEAP + COUNT_QUICK_SELECT + COUNT_FUN_SORTS + COUNT_SCRATCHSPACE
                 + COUNT_KINDS,
@@ -204,7 +206,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 1580, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 1581, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -624,6 +626,35 @@ mod tests {
                 v.label_template.as_deref(),
                 Some("insertion sort<strategy: {InsertionStrategy}>"),
             );
+        }
+    }
+
+    mod avl {
+        use super::*;
+        use avl_sort_lib::{AvlSort, MAX_NODES};
+
+        #[test]
+        fn emits_one_entry_that_runs() {
+            let es: Vec<_> = ALGORITHMS.iter().filter(|e| e.name == "avl sort").collect();
+            assert_eq!(es.len(), COUNT_AVL, "expected exactly one avl sort entry");
+            assert_eq!(COUNT_AVL, 1);
+            let e = es[0];
+            assert_eq!(e.category, Category::Sort);
+            assert_eq!(e.worst, <AvlSort as HasTimeBounds>::WORST);
+            assert_eq!(e.space, <AvlSort as HasSpace>::SPACE);
+            assert_eq!(e.stable, <AvlSort as HasStability>::STABLE);
+            assert_eq!(e.max_input_size, Some(MAX_NODES), "the cap is the packed word's reach");
+            let cfg = RunConfig { size: 64, seed: 1 };
+            (e.run_with_input)(primary_input(Category::Sort), &cfg, &mut NoOpLogger);
+            (e.run_correctness)();
+        }
+
+        #[test]
+        fn registered_as_a_leaf_under_avl_sorts() {
+            let variants = navigation::variants();
+            let v = variants.iter().find(|v| v.name == "avl sort").expect("registered");
+            assert_eq!(v.category, vec!["sorts", "avl sorts"], "got {:?}", v.category);
+            assert!(v.axes.is_empty(), "no axes, got {:?}", v.axes);
         }
     }
 

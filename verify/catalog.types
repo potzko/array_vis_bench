@@ -2,6 +2,7 @@
 "auxiliary<full>"	AuxiliaryMerge<FullBuffer>
 "auxiliary<half>"	AuxiliaryMerge<HalfBuffer>
 "auxiliary<none>"	AuxiliaryMerge<NoBuffer>
+"avl sort"	AvlSort
 "bad heap sort alt"	BadHeapSortAlt
 "bad heap sort"	BadHeapSort
 "beap sort quick build dual pivot<dir: max forward, build: stack dual-pivot partition<dps: first>>"	BeapSortDualOf<MaxForward, StackDualPivotPartialQuickDeepHeapify<CombinedSelector<FirstElement, FirstElement>>>

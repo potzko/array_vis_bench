@@ -35,6 +35,9 @@ shell_sort_lib = { path = "../crates/families/shell_sort_lib" }
 # ── Building stones: insertion family ─────────────────────────────────────────
 insertion_sort_lib = { path = "../crates/families/insertion_sort_lib" }
 
+# Building stone: avl family.
+avl_sort_lib = { path = "../crates/families/avl_sort_lib" }
+
 # Building stones: cycle, bubble and comb families.
 cycle_sort_lib = { path = "../crates/families/cycle_sort_lib" }
 bubble_sort_lib = { path = "../crates/families/bubble_sort_lib" }
