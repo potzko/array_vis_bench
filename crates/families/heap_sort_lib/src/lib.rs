@@ -8,9 +8,9 @@
 //! - `HeapSort<NaryHeapSort<ArityHeap<A, D>, QDH<HP, V>>>` — quickselect-build
 //! - `HeapSort<NaryHeapSort<ArityHeap<A, D>, DPQDH<DPS>>>` — dual-pivot build
 //!
-//! Component metadata for `Arity`, `HeapDirection`, `HeapPartition`,
-//! `DeepHeapify`, `QuickDeepHeapify`, `DualPivotQuickDeepHeapify` lives
-//! in `heap_internals_components`.
+//! The components of every axis (`Arity`, `HeapDirection`, `HeapPartition`,
+//! `DeepHeapify`, `QuickDeepHeapify`, `DualPivotQuickDeepHeapify`) are
+//! declared in `heap.spec`.
 
 pub mod arity;
 pub mod arity_heap;

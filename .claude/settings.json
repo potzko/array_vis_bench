@@ -11,9 +11,6 @@
       "Bash(cargo tree:*)",
       "Bash(nm:*)",
       "Bash(objdump:*)"
-    ],
-    "additionalDirectories": [
-      "/home/omer/Documents/dev/array_vis_bench/combo_codegen"
     ]
   }
 }

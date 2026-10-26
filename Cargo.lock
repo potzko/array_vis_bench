@@ -142,10 +142,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "comb_ratio_components"
-version = "0.1.0"
-
-[[package]]
 name = "comb_sort_lib"
 version = "0.1.0"
 dependencies = [
@@ -237,10 +233,6 @@ dependencies = [
  "libc",
  "wasi",
 ]
-
-[[package]]
-name = "heap_internals_components"
-version = "0.1.0"
 
 [[package]]
 name = "heap_sort_lib"

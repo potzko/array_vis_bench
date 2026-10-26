@@ -1,9 +1,0 @@
-[package]
-name = "heap_internals_components"
-version = "0.1.0"
-edition = "2021"
-description = "Empty crate left over from the retired cross-product generator; the heap roles are declared in heap_sort_lib. Listed for deletion in docs/todo.md."
-
-[lib]
-name = "heap_internals_components"
-path = "src/lib.rs"

@@ -1,9 +1,0 @@
-[package]
-name = "comb_ratio_components"
-version = "0.1.0"
-edition = "2021"
-description = "Empty crate left over from the retired cross-product generator; the comb ratios are declared in comb_sort_lib. Listed for deletion in docs/todo.md."
-
-[lib]
-name = "comb_ratio_components"
-path = "src/lib.rs"
