@@ -69,6 +69,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "avl_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
 name = "beap_sort_lib"
 version = "0.1.0"
 dependencies = [
@@ -776,6 +784,7 @@ version = "0.0.0"
 dependencies = [
  "array_vis_bench_core",
  "array_vis_bench_traits",
+ "avl_sort_lib",
  "beap_sort_lib",
  "bubble_sort_lib",
  "cargo_metadata",

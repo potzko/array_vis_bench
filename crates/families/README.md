@@ -4,6 +4,7 @@ Drivers and composers. A family crate holds the generic sort types, their
 annotation impls, a `.spec` fragment declaring the drivers and any family
 local fillers, and the `.avbs` query that builds the family.
 
+- `avl_sort_lib`: AVL sort with the array as node store, one packed link word per node.
 - `beap_sort_lib`: beap sort over the heap sort driver.
 - `bubble_sort_lib`: bubble, shaker, recursive and odd even bubble sorts.
 - `circle_sort_lib`: recursive and bottom up circle sorts.
