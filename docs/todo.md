@@ -59,18 +59,12 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
 6. Done: sorts join `CorrectnessSuite` through the `DirectSort` role, one
    `direct_sort!` line per driver type. See
    [implementation_plans/kind_trait.md](implementation_plans/kind_trait.md).
-7. `spec_emit` only supports sorts with an inherent `sort` and a `DirectSort`
-   impl. A type that implements only the legacy `SortAlgo` trait cannot be
-   emitted. Either port the remaining users or add a catalog facet that
-   switches the adapters.
-8. Legacy residue to delete once nothing depends on it:
-   - `crates/components/comb_ratio_components` and
-     `crates/components/heap_internals_components`, metadata only crates
-     for the retired generator with no consumer left;
-   - the `SortAlgo` trait, once item 7 is settled;
-   - `spec_catalog/quick_port.spec`, kept only as the baseline for the
-     slotted versus baked equivalence test;
-   - the `combo_codegen` directory still named in `.claude/settings.json`.
+7. Done: every sort dispatches through its inherent `sort` and the
+   `SortAlgo` trait is gone; the comb ratio was its last implementor.
+8. Done: the empty metadata crates of the retired generator and the
+   `combo_codegen` path in `.claude/settings.json` are gone.
+   `spec_catalog/quick_port.spec` is not residue, it is the fixture of the
+   slotted versus baked equivalence test and stays.
 9. Publishability split. Do not start until there is a second genuinely
    independent consumer, the ABI (`sort_logger` plus
    `array_vis_bench_traits`) is frozen and versioned, and the leaves have
