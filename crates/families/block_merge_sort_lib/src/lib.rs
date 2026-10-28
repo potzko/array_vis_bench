@@ -25,7 +25,7 @@ use stash::Stash;
 #[cfg(test)]
 mod test_util;
 
-/// `Buffer` is the `Auxiliary` that backs the local merges and `K` the `Keys`
+/// `B` is the `Auxiliary` buffer that backs the local merges and `K` the `Keys`
 /// that tag the blocks. An in array buffer with in array keys is WikiSort, a
 /// fixed external buffer with in array keys is GrailSort with a buffer.
 pub struct BlockMergeSort<B, K>(PhantomData<(B, K)>);
