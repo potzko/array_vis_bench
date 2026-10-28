@@ -45,10 +45,11 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
    fill, which needs a glyph other than the positional `_`, the splat `*TG`,
    whose operand nothing defines, and a glyph for xor.
    See [implementation_plans/enumeration_strategies.md](implementation_plans/enumeration_strategies.md).
-2. Scratchspace, the remaining phases: the keys axis, a block merge sort
-   family (WikiSort and GrailSort shapes), the buffer region logger event
-   for the renderer, and block rolling so the bufferless backing is better
-   than quadratic. See [implementation_plans/scratchspace_block_merge.md](implementation_plans/scratchspace_block_merge.md).
+2. Done: the scratchspace phases. The `Keys` axis, the block merge sort
+   family (the WikiSort and GrailSort shapes, six entries), the buffer
+   region logger event with its shading in the renderer, and a bufferless
+   merge by rotations, `O(n log n)` moves instead of quadratic. See
+   [implementation_plans/scratchspace_block_merge.md](implementation_plans/scratchspace_block_merge.md).
 3. Dropped: the sentinel quicksort. Its trigger was the canonical driver
    trailing the hand rolled Hoare baseline past the 1.05x gate, and every
    gate run reads the driver at or under the baseline.

@@ -110,7 +110,10 @@ composition it enters.
 (`cmp_lt`, `cmp_le_accross`, and friends), moves (`write`, `write_data`,
 `swap`, `cond_swap_lt`, `write_accross`), compounds (`reverse`, `block_swap`,
 `shift_insert`, `copy_range`), auxiliary arrays (`create_aux_arr_t`,
-`free_aux_arr_t`, integer width variants) and markers. Every method is non
+`free_aux_arr_t`, integer width variants), markers, and regions
+(`hold_region` and `release_region` say that a sub range of an array is the
+buffer or the key region of the sort for a while, which the renderer shades).
+Every method is non
 generic in anything but the trait's `T`, which keeps the trait dyn compatible.
 The methods that need a second element type are gated `where Self: Sized`
 and stay out of the vtable.

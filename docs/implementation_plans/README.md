@@ -13,4 +13,4 @@ priority order.
 - `full_merge_partition_roles.md`: the unification of the partition roles, done, kept as the record.
 - `kind_trait.md`: one input shape, one driver and one emit template over a kinds table, done, kept as the record.
 - `one_timing_consumer.md`: the four timing surfaces became one benchmark consumer, done, kept as the record.
-- `scratchspace_block_merge.md`: the scratchspace contract, shipped, with the block merge phases open.
+- `scratchspace_block_merge.md`: the scratchspace contract, the keys axis, the block merge sort family, the buffer region event and the bufferless rotation merge, all shipped, kept as the record.
