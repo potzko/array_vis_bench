@@ -230,6 +230,11 @@ pub enum QValue {
     /// subtree the wrapper roots, and it makes a recursive role terminate with no
     /// cycle analysis. Ordered pairs stay distinct. AVBS pest frontend only.
     Affine(Box<QValue>),
+    /// `sample( <value>, n = N [, seed = K | random] )` - N distinct random
+    /// variants of the family `inner` stands for, deduped on the canonical type
+    /// and drawn with the same seeded shuffle as a `?N` hole. AVBS pest frontend
+    /// only.
+    Sample { inner: Box<QValue>, n: usize, seed: Seed },
 }
 
 /// One argument to a component application.
@@ -240,6 +245,21 @@ pub enum QArg {
     /// A positional const literal (or shared const variable).
     Pos(QValue),
 }
+
+/// Where a `sample( ... )` takes its randomness from.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Seed {
+    /// `seed = K`, or no seed at all, which is [`DEFAULT_SEED`]: the same draw on
+    /// every build.
+    Fixed(u64),
+    /// `seed = random`: a draw from the build time RNG, so the variants differ
+    /// from one build to the next while their count stays `n`.
+    Random,
+}
+
+/// The seed a `sample( ... )` without one uses, so builds are reproducible. It is
+/// the seed a `?N` hole without `@seed` takes.
+pub const DEFAULT_SEED: u64 = 0;
 
 /// The four hole quantifiers. Every random form carries an explicit seed so
 /// builds are reproducible.

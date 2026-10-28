@@ -11,7 +11,7 @@
 
 use crate::backend::Wrapper;
 use crate::registry::{type_head, Registry};
-use crate::spec::{Binding, QArg, QValue, Quant, Query, DEFAULT_DEPTH};
+use crate::spec::{Binding, QArg, QValue, Quant, Query, Seed, DEFAULT_DEPTH, DEFAULT_SEED};
 use pest::iterators::{Pair, Pairs};
 use std::collections::HashMap;
 
@@ -609,10 +609,10 @@ fn lower_application(
     let head = it.next().ok_or("application needs a head")?.as_str().to_string();
     let gen = it.next();
 
-    // `finite( <value> )` and `affine( <value> )` are enumeration-strategy BUILTINS
-    // (neither a role wrapper nor a component): each wraps its single argument in
-    // the strategy's `QValue`.
-    if matches!(head.as_str(), "finite" | "affine") {
+    // `finite( <value> )`, `affine( <value> )` and `sample( <value>, n = N, ... )`
+    // are enumeration-strategy BUILTINS (neither a role wrapper nor a component):
+    // each wraps its positional value in the strategy's `QValue`.
+    if matches!(head.as_str(), "finite" | "affine" | "sample") {
         return lower_strategy(&head, gen, reg, idx, wrappers);
     }
 
@@ -691,7 +691,8 @@ fn lower_application(
 }
 
 /// Lower the arguments of an enumeration-strategy builtin `head( ... )` into its
-/// wrapper node. `finite` and `affine` take one positional value and nothing else.
+/// wrapper node. Every builtin takes one positional value; `sample` also takes
+/// `n = N` (required) and `seed = K` or `seed = random` (optional).
 fn lower_strategy(
     head: &str,
     gen: Option<Pair<Rule>>,
@@ -701,14 +702,29 @@ fn lower_strategy(
 ) -> Result<QValue, String> {
     let gen = gen.ok_or_else(|| format!("`{head}( ... )` needs one argument"))?;
     let mut inner: Option<QValue> = None;
+    let mut count: Option<usize> = None;
+    let mut seed: Option<Seed> = None;
     for a in gen.into_inner().flat_map(|arg_list| arg_list.into_inner()) {
         match a.as_rule() {
             Rule::value if inner.is_some() => {
-                return Err(format!("`{head}( ... )` takes exactly one argument"))
+                return Err(format!("`{head}( ... )` takes exactly one positional value"))
             }
             Rule::value => inner = Some(lower_value(a, reg, idx, wrappers)?),
+            Rule::named_arg => {
+                let mut parts = a.into_inner();
+                let name = parts.next().ok_or("named arg needs a name")?.as_str().to_string();
+                let text = parts.next().ok_or("named arg needs a value")?.as_str().trim().to_string();
+                let repeated = match (head, name.as_str()) {
+                    ("sample", "n") => count.replace(count_arg(head, &text)?).is_some(),
+                    ("sample", "seed") => seed.replace(seed_arg(head, &text)?).is_some(),
+                    _ => return Err(format!("`{head}( ... )` takes no argument named `{name}`")),
+                };
+                if repeated {
+                    return Err(format!("`{head}( ... )` repeats `{name}`"));
+                }
+            }
             other => {
-                return Err(format!("`{head}( ... )` takes a positional value, found {other:?}"))
+                return Err(format!("`{head}( ... )` takes a value or `name = value`, found {other:?}"))
             }
         }
     }
@@ -716,7 +732,27 @@ fn lower_strategy(
     match head {
         "finite" => Ok(QValue::Finite(inner)),
         "affine" => Ok(QValue::Affine(inner)),
+        "sample" => Ok(QValue::Sample {
+            inner,
+            n: count.ok_or("`sample( ... )` needs `n = N`")?,
+            seed: seed.unwrap_or(Seed::Fixed(DEFAULT_SEED)),
+        }),
         other => Err(format!("`{other}` is not an enumeration strategy")),
+    }
+}
+
+/// The `N` of `n = N`: a plain count.
+fn count_arg(head: &str, text: &str) -> Result<usize, String> {
+    text.parse().map_err(|_| format!("`{head}( ... )` takes `n = N` with N a count, found `{text}`"))
+}
+
+/// The value of `seed = ...`: an integer, or the bare word `random`.
+fn seed_arg(head: &str, text: &str) -> Result<Seed, String> {
+    match text {
+        "random" => Ok(Seed::Random),
+        _ => text.parse().map(Seed::Fixed).map_err(|_| {
+            format!("`{head}( ... )` takes `seed = K` or `seed = random`, found `{text}`")
+        }),
     }
 }
 
@@ -1417,6 +1453,112 @@ end
         assert!(err.contains("affine"), "got: {err}");
         assert!(lower_program("X: R = affine()", &reg).is_err());
         assert!(lower_program("X: R = affine(_, _)", &reg).is_err());
+    }
+
+    // ── `sample( <value>, n = N [, seed = K | random] )` ─────────────────────────
+
+    #[test]
+    fn sample_lowers_its_count_and_seed() {
+        let reg = fixture();
+        let value = |src: &str| lower_program(src, &reg).unwrap().remove(0).bindings.remove(0).value;
+        let hole = || Box::new(QValue::Hole(Quant::Exhaustive));
+        assert_eq!(
+            value("P: Pivot = sample(_, n = 3, seed = 7)"),
+            QValue::Sample { inner: hole(), n: 3, seed: Seed::Fixed(7) }
+        );
+        assert_eq!(
+            value("P: Pivot = sample(_, n = 3)"),
+            QValue::Sample { inner: hole(), n: 3, seed: Seed::Fixed(DEFAULT_SEED) }
+        );
+        assert_eq!(
+            value("P: Pivot = sample(_, n = 3, seed = random)"),
+            QValue::Sample { inner: hole(), n: 3, seed: Seed::Random }
+        );
+    }
+
+    #[test]
+    fn sample_rejects_a_missing_or_malformed_argument() {
+        let reg = fixture();
+        for bad in [
+            "sample(_)",
+            "sample(_, seed = 1)",
+            "sample(_, n = first_element)",
+            "sample(_, n = 2, seed = x)",
+            "sample(_, n = 2, n = 3)",
+            "sample(_, n = 2, seed = 1, seed = 2)",
+            "sample(_, n = 2, width = 1)",
+            "sample(_, 2)",
+            "sample(n = 2)",
+            "finite(_, n = 2)",
+            "affine(_, seed = 1)",
+        ] {
+            assert!(lower_program(&format!("P: Pivot = {bad}"), &reg).is_err(), "{bad}");
+        }
+    }
+
+    /// N distinct members of the family, every one a member of it.
+    #[test]
+    fn sample_picks_n_distinct_variants_of_the_family() {
+        let reg = fixture();
+        let family = solve_exprs("P: Pivot = _", &reg);
+        let picked = solve_exprs("P: Pivot = sample(_, n = 3)", &reg);
+        assert_eq!(picked.len(), 3);
+        assert!(picked.windows(2).all(|pair| pair[0] != pair[1]), "distinct");
+        assert!(picked.iter().all(|e| family.contains(e)));
+    }
+
+    /// No seed is the default seed, so a build is reproducible; a fixed seed is
+    /// reproducible too, and different seeds do not all draw the same set.
+    #[test]
+    fn sample_is_reproducible_and_the_seed_steers_it() {
+        let reg = fixture();
+        let draw = |tail: &str| solve_exprs(&format!("P: Pivot = sample(_, n = 3{tail})"), &reg);
+        assert_eq!(draw(""), draw(""));
+        assert_eq!(draw(""), draw(&format!(", seed = {DEFAULT_SEED}")));
+        assert_eq!(draw(", seed = 5"), draw(", seed = 5"));
+        let seeds: std::collections::HashSet<Vec<String>> = (0..16).map(|k| draw(&format!(", seed = {k}"))).collect();
+        assert!(seeds.len() > 1, "sixteen seeds drew one set");
+    }
+
+    /// `seed = random` pins the count and nothing else: the identities come from
+    /// the build time RNG.
+    #[test]
+    fn sample_with_a_random_seed_pins_only_the_count() {
+        let reg = fixture();
+        let family = solve_exprs("P: Pivot = _", &reg);
+        for _ in 0..4 {
+            let picked = solve_exprs("P: Pivot = sample(_, n = 4, seed = random)", &reg);
+            assert_eq!(picked.len(), 4);
+            assert!(picked.iter().all(|e| family.contains(e)));
+        }
+    }
+
+    /// The wrapped value is any family, not only a bare hole: a set difference,
+    /// a strategy, or a slot inside an application.
+    #[test]
+    fn sample_wraps_any_family() {
+        let reg = fixture();
+        for _ in 0..2 {
+            let diff = solve_exprs("P: Pivot = sample(_ - {first_element}, n = 2)", &reg);
+            assert_eq!(diff.len(), 2);
+            assert!(!diff.contains(&"FirstElement".to_string()));
+        }
+        let acat = Registry::parse_fragment(ACAT, "probe").unwrap();
+        let finite = solve_exprs("X: R = finite(_)", &acat);
+        let picked = solve_exprs("X: R = sample(finite(_), n = 2)", &acat);
+        assert_eq!(picked.len(), 2);
+        assert!(picked.iter().all(|e| finite.contains(e)));
+        let slot = solve_exprs("P: Pivot = CombinedSelector<a = sample(_, n = 1), b = _>", &reg);
+        assert_eq!(slot.len(), 2, "one sampled `a` against both `b`");
+    }
+
+    #[test]
+    fn sample_larger_than_the_family_is_clamped_with_a_warning() {
+        let reg = fixture();
+        let qs = lower_program("P: Pivot = sample(_, n = 10)", &reg).unwrap();
+        let out = solve(&qs[0], &reg).unwrap();
+        assert_eq!(out.sorts.len(), 7);
+        assert!(out.warnings.iter().any(|w| w.contains("clamped")), "{:?}", out.warnings);
     }
 
     /// WORKS TODAY: a variable captured inside two different union branches and

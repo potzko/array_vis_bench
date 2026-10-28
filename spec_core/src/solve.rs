@@ -18,11 +18,13 @@
 //! enumerated as opaque tokens, never reasoned about.
 
 use std::collections::{HashMap, HashSet};
+use std::sync::{Mutex, OnceLock, PoisonError};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::enumerate::{enumerate, enumerate_affine, enumerate_finite};
 use crate::registry::{ParamKind, Registry};
 use crate::resolve::resolve;
-use crate::spec::{Arg, Binding, QArg, QValue, Quant, Query, Refinement, SpecNode};
+use crate::spec::{Arg, Binding, QArg, QValue, Quant, Query, Refinement, Seed, SpecNode};
 
 /// What a bound name carries: a type subtree (a sort/partition/pivot/…) or a
 /// const literal (a shared number / bool).
@@ -181,6 +183,7 @@ fn collect_caps_value(v: &QValue, out: &mut HashSet<String>) {
         }
         QValue::Set(members) => members.iter().for_each(|m| collect_caps_value(m, out)),
         QValue::Finite(inner) | QValue::Affine(inner) => collect_caps_value(inner, out),
+        QValue::Sample { inner, .. } => collect_caps_value(inner, out),
         QValue::Hole(_) | QValue::Ident(_) | QValue::Const(_) => {}
     }
 }
@@ -262,6 +265,7 @@ fn check_order_value(
             Ok(())
         }
         QValue::Finite(inner) | QValue::Affine(inner) => check_order_value(inner, cvars, available),
+        QValue::Sample { inner, .. } => check_order_value(inner, cvars, available),
     }
 }
 
@@ -451,6 +455,18 @@ fn eval_type(
                 _ => Err("affine( ... ) wraps a bare hole `_` only".into()),
             }
         }
+        QValue::Sample { inner, n, seed } => {
+            // sample(v, n = N): whatever family `v` stands for (captures ride along
+            // with their candidates), deduped, then N distinct members drawn with
+            // the shared seeded shuffle.
+            let family = eval_type(inner, role, refinements, env, cvars, reg, depth, warnings)?;
+            let family = dedup_canonical_caps(family, reg)?;
+            let seed = match seed {
+                Seed::Fixed(seed) => *seed,
+                Seed::Random => build_seed(),
+            };
+            Ok(sample_indices(family, *n, seed, &format!("sample of `{role}`"), warnings))
+        }
         QValue::Const(c) => {
             Err(format!("const literal `{c}` cannot be used where a type ({role}) is expected"))
         }
@@ -607,6 +623,9 @@ fn eval_const(
         }
         QValue::Affine { .. } => {
             Err("affine( ... ) is only valid in type position, not for a const".into())
+        }
+        QValue::Sample { .. } => {
+            Err("sample( ... ) is only valid in type position, not for a const".into())
         }
     }
 }
@@ -826,6 +845,26 @@ fn dedup_preserving_order<T: Clone + Eq + std::hash::Hash>(items: Vec<T>) -> Vec
         }
     }
     out
+}
+
+/// The one RNG behind every `seed = random`, built on first use and seeded from
+/// the clock. A build's random draws all come from this one stream, and two
+/// builds start it differently. A fixed seed never touches it.
+static BUILD_RNG: OnceLock<Mutex<Rng>> = OnceLock::new();
+
+fn build_seed() -> u64 {
+    BUILD_RNG
+        .get_or_init(|| Mutex::new(Rng::new(clock_seed())))
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .next_u64()
+}
+
+// The process id keeps two builds that start in the same clock tick apart.
+fn clock_seed() -> u64 {
+    let since_epoch = SystemTime::now().duration_since(UNIX_EPOCH);
+    let nanos = since_epoch.map_or(0, |since| since.as_nanos() as u64);
+    nanos ^ u64::from(std::process::id()).rotate_left(32)
 }
 
 /// SplitMix64 — a tiny seeded PRNG so every random quantifier is reproducible

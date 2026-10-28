@@ -337,6 +337,11 @@ fn est_value(value: &QValue, role: &str, reg: &Registry, depth: usize, memo: &mu
             QValue::Hole(q) => est_enumerated(enumerate_finite, *q, role, reg, depth),
             _ => est_value(inner, role, reg, depth, memo),
         },
+        // `sample` keeps N of what its family yields, but builds the family first.
+        QValue::Sample { inner, n, .. } => {
+            let e = est_value(inner, role, reg, depth, memo);
+            Est { out: e.out.cap(*n as u128), peak: e.peak }
+        }
         // `affine(_)` is bounded too, each component name being spent once, so
         // it counts exactly the same way.
         QValue::Affine(inner) => match inner.as_ref() {
@@ -740,5 +745,30 @@ end
         }
         let bare = query(12, QValue::Hole(Quant::Exhaustive));
         assert!(check_size(&bare, &reg, DEFAULT_MAX_GROUND).is_err());
+    }
+
+    /// `sample` caps the output at N like `?N` does, but the wrapped family is
+    /// still materialized in full first.
+    #[test]
+    fn sample_caps_output_but_not_peak_over_a_wrapped_family() {
+        let reg = fixture();
+        let query = |value: QValue| Query {
+            depth: crate::spec::DEFAULT_DEPTH,
+            take: None,
+            bindings: vec![Binding {
+                name: "p".into(),
+                role: "Pivot".into(),
+                refinements: vec![],
+                value,
+            }],
+        };
+        let sample = QValue::Sample {
+            inner: Box::new(QValue::Hole(Quant::Exhaustive)),
+            n: 2,
+            seed: crate::spec::Seed::Fixed(1),
+        };
+        let e = estimate(&query(sample), &reg);
+        assert_eq!(fin(e.ground), 2);
+        assert_eq!(fin(e.peak), 7);
     }
 }
