@@ -76,7 +76,7 @@ end
 component rdh_set
   type     SequentialSet<{qs}>
   label    set<{qs}>
-  provides RecDeepHeapify SetDeepHeapify
+  provides SetDeepHeapify
   # Listed rather than derived: SequentialSet lives in heap_sort_lib, not in the owning crate.
   uses     heap_sort_lib::SequentialSet
   slot     qs RecSelect
@@ -89,6 +89,8 @@ component rsel
   uses     quick_select_lib::SetSelect
   slot     part RecSelPart
 end
+# The classic leaves plus the set arm, so the open heap-extract nests either.
+role RecDeepHeapify = DeepHeapifyClassic | SetDeepHeapify
 component hx_open
   type     HeapExtract<AryPair<Binary>, {dh}>
   label    heap extract: binary<{dh}>

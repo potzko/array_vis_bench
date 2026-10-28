@@ -15,6 +15,8 @@
 role BeapPiv = HeapPiv - piv_ninther
 
 # ════════════════════════ DeepHeapify — classic (1, beap-only) ════════════════════════
+# Beap sorts take the classic strategies but the recursive one.
+role BeapDeepHeapifyClassic = DeepHeapifyClassic - heap_dh_recursive
 
 # ════════════════ DeepHeapify — quick single-pivot (3 composites, hp=HeapPart shared, v=BeapPiv) ════════════════
 

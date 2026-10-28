@@ -70,12 +70,12 @@ role HeapPiv = PartPivot - piv_last
 component heap_dh_iterative
   type     Iterative
   label    iterative
-  provides DeepHeapifyClassic BeapDeepHeapifyClassic RecDeepHeapify
+  provides DeepHeapifyClassic
 end
 component heap_dh_recursive
   type     Recursive
   label    recursive
-  provides DeepHeapifyClassic RecDeepHeapify
+  provides DeepHeapifyClassic
 end
 
 # ════════════════ DeepHeapifyQuick (3 composites, each <HP, V>) ════════════════
