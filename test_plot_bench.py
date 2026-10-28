@@ -25,6 +25,15 @@ class LoadTest(unittest.TestCase):
     def test_two_archives_at_one_size_are_refused(self) -> None:
         with self.assertRaises(ValueError): load([SMALL, SMALL])
 
+    def test_a_sweep_archive_gives_each_entry_its_climbed_sizes(self) -> None:
+        sweep = "# sweep budget_ms=600000 share=5 limit_ns=1000\nheap sort\t1\t10\nheap sort\t2\t25\n# fits\theap sort\t2\n"
+        self.assertEqual(load([sweep]), {"heap sort": [(1, 10), (2, 25)]})
+
+    def test_a_sweep_and_a_timing_archive_join(self) -> None:
+        sweep = "# sweep budget_ms=1 share=5 limit_ns=1000\nheap sort\t10\t300\n"
+        series = load([sweep, LARGE])
+        self.assertEqual(series["heap sort"], [(10, 300), (1000, 45000)])
+
 
 class TreeTest(unittest.TestCase):
     def test_entries_group_under_their_type_head(self) -> None:

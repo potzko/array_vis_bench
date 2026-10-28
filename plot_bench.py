@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-# Chart how every entry scales with the input size from timing archives, one
-# archive per size. `read_setup` reads the `# n= k=` header an archive carries,
-# `load` joins the archives into one series per entry, `tree` groups the
-# entries by type head for the selector, `traces` shapes the series for the
-# chart and `page` renders a self contained Plotly page.
+# Chart how every entry scales with the input size from archives: timing
+# archives, one per size, or sweep archives, which carry a size per line.
+# `read_setup` reads the `# n= k=` header a timing archive carries, `load`
+# joins the archives into one series per entry, `tree` groups the entries by
+# type head for the selector, `traces` shapes the series for the chart and
+# `page` renders a self contained Plotly page.
 #
 #   for n in 100 1000 10000; do
 #     ./target/release/array_vis_bench --timing $n 15 --out target/timing_$n.tsv
 #   done
 #   python3 plot_bench.py target/timing_*.tsv --out target/bench_report.html
+#
+#   ./target/release/array_vis_bench --sweep 600 --out target/sweep.tsv
+#   python3 plot_bench.py target/sweep.tsv --out target/sweep_report.html
 import argparse
 import json
 import re
@@ -29,16 +33,26 @@ def read_setup(text: str) -> tuple[int, int]:
     return int(found[1]), int(found[2])
 
 
-# name -> [(n, median nanoseconds)] ascending in n, one point per archive.
+# name -> [(n, nanoseconds)] ascending in n. A timing archive gives every entry
+# one point at its header's size; a sweep archive gives each entry the sizes
+# it climbed. The same entry at the same size twice is an error.
 def load(texts: Iterable[str]) -> dict[str, list[tuple[int, int]]]:
     series: dict[str, list[tuple[int, int]]] = defaultdict(list)
-    seen: set[int] = set()
+    seen: set[tuple[str, int]] = set()
     for text in texts:
-        n, _ = read_setup(text)
-        if n in seen: raise ValueError(f"two archives at n={n}, keep one per size")
-        seen.add(n)
-        for name, ns in parse_archive(text).items(): series[name].append((n, ns))
+        for name, n, ns in points_of(text):
+            if (name, n) in seen: raise ValueError(f"`{name}` at n={n} twice, keep one archive per size")
+            seen.add((name, n))
+            series[name].append((n, ns))
     return {name: sorted(points) for name, points in series.items()}
+
+
+def points_of(text: str) -> list[tuple[str, int, int]]:
+    if text.startswith("# sweep"):
+        rows = (line.split("\t") for line in text.splitlines() if line.strip() and not line.startswith("#"))
+        return [(name, int(n), int(ns)) for name, n, ns in rows]
+    n, _ = read_setup(text)
+    return [(name, n, ns) for name, ns in parse_archive(text).items()]
 
 
 def head_of(name: str) -> str:

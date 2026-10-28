@@ -57,6 +57,21 @@ pub fn run_over_catalog(
 /// and print one fastest first table of median run times per category (see
 /// [`array_vis_bench_core::mains::Benchmark`]). Backs `--timing`: an `n` or `k`
 /// given overrides the benchmark's default, one left `None` keeps it.
+/// The scaling sweep over the catalog, or over the entries whose name starts
+/// with `only`: every entry up the size ladder until one run exceeds its share
+/// of `budget`, then a search for the largest size that fits.
+pub fn run_sweep(
+    budget: std::time::Duration,
+    share: u32,
+    only: Option<&str>,
+) -> array_vis_bench_core::sweep::SweepReport {
+    use array_vis_bench_core::bench_registry::{AlgorithmEntry, ALGORITHMS};
+    use array_vis_bench_core::sweep::Sweep;
+    let chosen: Vec<&'static AlgorithmEntry> =
+        ALGORITHMS.iter().filter(|e| only.map_or(true, |prefix| e.name.starts_with(prefix))).collect();
+    Sweep { budget, share }.run(&chosen)
+}
+
 pub fn run_timing(
     n: Option<usize>,
     k: Option<usize>,

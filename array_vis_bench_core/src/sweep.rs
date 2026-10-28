@@ -33,7 +33,8 @@ pub enum Stop {
     Failed(usize),
 }
 
-/// One entry's climb: every timed size in order and why it stopped.
+/// One entry's climb: every timed size, the search's runs included, in size
+/// order, and why the climb stopped.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Scaling {
     pub name: &'static str,
@@ -81,15 +82,18 @@ pub fn sweep(
             if spent >= budget { break; }
             let mid = (*lo + *hi) / 2;
             match time(entries[*ind], mid) {
-                Some(d) if d > limit => *hi = mid,
-                Some(d) => { *lo = mid; spent += d; continue; }
-                None => *hi = mid,
+                Some(d) => {
+                    if d > limit { *hi = mid } else { *lo = mid }
+                    spent += d;
+                    scalings[*ind].points.push((mid, d));
+                }
+                None => { *hi = mid; spent += limit; }
             }
-            spent += limit;
         }
         for &(ind, lo, _) in &searching { scalings[ind].fits = lo; }
         searching.retain(|&(_, lo, hi)| hi - lo > 1);
     }
+    for s in &mut scalings { s.points.sort_by_key(|&(n, _)| n); }
     SweepReport { budget, share, limit, scalings }
 }
 
@@ -259,6 +263,9 @@ mod tests {
         assert_eq!(s.stop, Stop::Over(600));
         assert_eq!(s.fits, 500);
         assert_eq!(searched, [550, 525, 512, 506, 503, 501]);
+        // The search's runs are points too, so the climb reads in size order.
+        let sizes_after_500: Vec<usize> = s.points.iter().map(|p| p.0).skip_while(|&n| n < 500).collect();
+        assert_eq!(sizes_after_500, [500, 501, 503, 506, 512, 525, 550, 600]);
     }
 
     #[test]
