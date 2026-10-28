@@ -3,5 +3,5 @@
 component piv_first
   type     FirstElement
   label    first
-  provides PartPivot HeapPiv BeapPiv
+  provides PartPivot
 end

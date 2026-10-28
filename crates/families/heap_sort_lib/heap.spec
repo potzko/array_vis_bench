@@ -63,6 +63,8 @@ component heap_part_block
 end
 
 # ════════════════════════ HeapPiv (5, heap-only) ════════════════════════
+# Heap sorts try every pivot but `last`.
+role HeapPiv = PartPivot - piv_last
 
 # ════════════════════════ DeepHeapifyClassic (2) ════════════════════════
 component heap_dh_iterative

@@ -11,6 +11,8 @@
 # from d-ary heap's N log N. Total: 2 + 72 + 6 = 80.
 
 # ════════════════════════ BeapPiv (4, beap-only) ════════════════════════
+# Beap sorts try the heap pivots but `ninther`.
+role BeapPiv = HeapPiv - piv_ninther
 
 # ════════════════════════ DeepHeapify — classic (1, beap-only) ════════════════════════
 

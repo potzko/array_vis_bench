@@ -3,5 +3,5 @@
 component piv_median3
   type     MedianOfThree
   label    median of 3
-  provides PartPivot HeapPiv BeapPiv
+  provides PartPivot
 end
