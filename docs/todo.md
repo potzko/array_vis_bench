@@ -111,13 +111,12 @@ afternoon each and remove concepts rather than move them.
    `DirectSort` role. A new kind is a `Category` variant, a `KINDS` row, a
    `<Kind>Suite` impl and the input tags.
    See [implementation_plans/kind_trait.md](implementation_plans/kind_trait.md).
-8. A prelude of shared bindings across query files. Not started, no plan
-   yet. Roles are named populations because queries share no bindings, so
-   the pivot population of heap sort, beap sort and quick sort each lives in
-   a role tag. A prelude that every query imports would let one binding
-   name a population once, and the role vocabulary could then shrink to the
-   roles a slot actually types. Do this before any further role work; skip
-   it if the role vocabulary is not in the way.
+8. Derived roles. Not started. A population that is another role minus or
+   plus a few members is today spelled as a tag on every member; a `role`
+   line in the fragment would state the rule once, where a slot can name it.
+   This replaces the earlier idea of a query prelude, which a slot cannot
+   reach. Do this before any further role work.
+   See [implementation_plans/derived_roles.md](implementation_plans/derived_roles.md).
 
 ## Role collapse, what held and what did not
 

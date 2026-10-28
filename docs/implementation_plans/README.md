@@ -4,6 +4,7 @@ Designed work. Each file opens with its status; `../todo.md` lists them in
 priority order.
 
 - `category_from_the_wrapper.md`: the query wrapper as the one source of an entry's kind, done.
+- `derived_roles.md`: a role defined from other roles and component names, so a population rule is written once; not started.
 - `derive_uses_from_the_owning_crate.md`: imports derived from the declaring crate after the head collisions are renamed, done, kept as the record.
 - `drop_slot_defaults_and_project.md`: three unused grammar features removed, done, kept as the record.
 - `entry_owned_flags.md`: the cap and nondeterminism lists became entry fields, done, kept as the record.
