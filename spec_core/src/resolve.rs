@@ -106,10 +106,10 @@ pub fn resolve(node: &SpecNode, reg: &Registry) -> Result<Resolved, String> {
                 let child_comp = reg
                     .get(&child.name)
                     .ok_or_else(|| format!("unknown component `{}`", child.name))?;
-                if !child_comp.provides.iter().any(|r| r == role) {
+                if !reg.has_role(child_comp, role) {
                     return Err(format!(
                         "slot `{}` of `{}` needs role `{role}`, but `{}` provides {:?}",
-                        p.name, node.name, child.name, child_comp.provides
+                        p.name, node.name, child.name, reg.roles_of(child_comp)
                     ));
                 }
                 let r = resolve(&child, reg)?;

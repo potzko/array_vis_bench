@@ -432,27 +432,21 @@ fn card_u128(c: Card) -> u128 {
 /// in the role-provider graph. These are the roles whose population is unbounded
 /// in principle and only finite because of the `depth` cap. Sorted by name.
 pub fn recursive_roles(reg: &Registry) -> Vec<String> {
-    // Build edges role → roles of the type-slots of any component providing it.
-    let mut edges: HashMap<String, HashSet<String>> = HashMap::new();
-    let mut roles: HashSet<String> = HashSet::new();
-    for comp in reg.iter() {
-        for r in &comp.provides {
-            roles.insert(r.clone());
-            let entry = edges.entry(r.clone()).or_default();
-            for p in &comp.params {
-                if let ParamKind::Type { role } = &p.kind {
-                    entry.insert(role.clone());
-                }
-            }
-        }
-    }
-    let mut out: Vec<String> = roles
-        .iter()
-        .filter(|r| reaches_self(r, &edges))
-        .cloned()
-        .collect();
-    out.sort();
-    out
+    // Build edges role -> roles of the type-slots of any component providing it,
+    // a derived role's providers included.
+    let roles = reg.roles();
+    let slot_roles = |role: &str| -> HashSet<String> {
+        let slots = reg.providing(role).into_iter().flat_map(|comp| comp.params.iter());
+        slots
+            .filter_map(|p| match &p.kind {
+                ParamKind::Type { role } => Some(role.clone()),
+                ParamKind::Const { .. } => None,
+            })
+            .collect()
+    };
+    let edges: HashMap<String, HashSet<String>> =
+        roles.iter().map(|role| (role.to_string(), slot_roles(role))).collect();
+    roles.iter().filter(|role| reaches_self(role, &edges)).map(|role| role.to_string()).collect()
 }
 
 /// DFS: can `start` reach itself by following slot-role edges?
@@ -626,6 +620,31 @@ mod tests {
         assert!(recursive_roles(&reg).contains(&"RecSort".to_string()));
         // Sort/Pivot/etc. are not.
         assert!(!recursive_roles(&reg).contains(&"Pivot".to_string()));
+    }
+
+    // `Tree` is derived from two base roles, and its branch nests a `Tree`.
+    const DERIVED_TREE: &str = "\
+component node
+  type Node<{l}>
+  provides Branch
+  slot l Tree
+end
+component leaf
+  type Leaf
+  provides Twig
+end
+role Tree = Twig | Branch
+";
+
+    #[test]
+    fn a_derived_role_that_reaches_itself_is_recursive_and_counted() {
+        let reg = Registry::parse(DERIVED_TREE).unwrap();
+        assert!(recursive_roles(&reg).contains(&"Tree".to_string()));
+        assert!(!recursive_roles(&reg).contains(&"Twig".to_string()));
+        for depth in 0..4usize {
+            let enumerated = enumerate(&reg, "Tree", depth).len() as u128;
+            assert_eq!(fin(card_role(&reg, "Tree", depth)), enumerated, "Tree @ depth {depth}");
+        }
     }
 
     #[test]

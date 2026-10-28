@@ -1244,6 +1244,40 @@ mod tests {
         assert!(!exprs.contains(&"BaseCase".to_string()));
     }
 
+    // `Pick` is a derived role, so no component lists it on a `provides` line.
+    const PCAT: &str = "\
+component box
+  type Box<{v}>
+  provides Top
+  slot v Pick
+end
+component a
+  type A
+  provides Base
+end
+component b
+  type B
+  provides Base
+end
+component c
+  type C
+  provides Base
+end
+role Pick = Base - c
+";
+
+    #[test]
+    fn a_derived_role_is_a_binding_type_a_hole_and_a_set_difference_like_a_base_one() {
+        let reg = Registry::from_fragments([("probe", PCAT)]).unwrap();
+        let exprs = |program: &str| {
+            let qs = lower_program(program, &reg).unwrap();
+            type_exprs(&solve(qs.last().unwrap(), &reg).unwrap(), &reg)
+        };
+        assert_eq!(exprs("T: Top = _"), ["Box<A>", "Box<B>"]);
+        assert_eq!(exprs("T: Top = Box<v = _ - {B}>"), ["Box<A>"]);
+        assert_eq!(exprs("P: Pick = _"), ["A", "B"]);
+    }
+
     // ── STEP 5 PROBES: cross-branch capture (characterize current behaviour) ────
     //
     // registry.spec has no component that can express "a variable captured

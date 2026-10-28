@@ -700,7 +700,7 @@ fn check_refinements(
         let val_comp = reg
             .get(&val_node.name)
             .ok_or_else(|| format!("unknown component `{}`", val_node.name))?;
-        if !val_comp.provides.contains(&role) {
+        if !reg.has_role(val_comp, &role) {
             return Ok(false); // arity mismatch → UNREPRESENTABLE
         }
     }

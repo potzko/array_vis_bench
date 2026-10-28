@@ -208,6 +208,60 @@ mod tests {
         assert!(dual.iter().all(|l| l.starts_with("quick[dual<")));
     }
 
+    // A driver whose slot is the derived role `Heap`, which is every pivot but `last`.
+    const DERIVED: &str = "
+component driver
+  type Driver<{v}>
+  label driver<{v}>
+  provides Sort
+  slot v Heap
+end
+component first
+  type First
+  label first
+  provides Pivot
+end
+component middle
+  type Middle
+  label middle
+  provides Pivot
+end
+component last
+  type Last
+  label last
+  provides Pivot
+end
+role Heap = Pivot - last
+";
+
+    #[test]
+    fn a_slot_named_by_a_derived_role_takes_its_members_only() {
+        let reg = Registry::from_fragments([("lib", DERIVED)]).unwrap();
+        let filled = |filler: &str| resolve(&parse_spec(&format!("driver< v = {filler} >")).unwrap().1, &reg);
+        assert_eq!(filled("first").unwrap().type_expr, "Driver<First>");
+        let err = filled("last").unwrap_err();
+        assert!(err.contains("slot `v` of `driver` needs role `Heap`, but `last` provides"), "got: {err}");
+        assert!(err.contains("Pivot"), "got: {err}");
+    }
+
+    #[test]
+    fn a_hole_over_a_derived_role_enumerates_its_members() {
+        let reg = Registry::from_fragments([("lib", DERIVED)]).unwrap();
+        let out = run("let s: Sort = driver(v = .);", &reg);
+        assert_eq!(ty_exprs(&out, &reg), ["Driver<First>", "Driver<Middle>"]);
+        assert_eq!(run("let v: Heap = .;", &reg).sorts.len(), 2);
+    }
+
+    #[test]
+    fn a_refinement_checks_the_value_against_a_derived_role() {
+        let reg = Registry::from_fragments([("lib", DERIVED)]).unwrap();
+        let refined = |pivot: &str| {
+            run(&format!("let p: Pivot = {pivot}; let s: Sort[v = p] = driver(v = p);"), &reg)
+        };
+        assert_eq!(ty_exprs(&refined("first"), &reg), ["Driver<First>"]);
+        assert!(refined("last").sorts.is_empty(), "`last` is a Pivot but not a Heap");
+    }
+
     #[test]
     fn quantifier_counts_and_clamp() {
         let reg = reg();

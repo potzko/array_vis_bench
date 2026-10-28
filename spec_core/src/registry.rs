@@ -28,7 +28,8 @@ pub struct Component {
     pub type_tmpl: String,
     pub label_tmpl: String,
     /// The base roles this component joins, from its `provides` line. A derived
-    /// role is defined by a `role` line, not tagged here.
+    /// role is defined by a `role` line, so ask the registry (`has_role`,
+    /// `roles_of`) rather than reading this for membership.
     pub provides: Vec<String>,
     pub params: Vec<Param>,
     /// Module paths to bring into scope for `type_tmpl` to resolve, e.g.
@@ -392,6 +393,28 @@ impl Registry {
                 v
             }
         }
+    }
+
+    /// Whether `comp` is one of the components `providing(role)` returns.
+    pub fn has_role(&self, comp: &Component, role: &str) -> bool {
+        match self.derived.get(role) {
+            Some(def) => def.members.binary_search(&comp.name).is_ok(),
+            None => comp.provides.iter().any(|r| r == role),
+        }
+    }
+
+    /// Every role `comp` joins, base roles in `provides` order then the derived
+    /// roles in name order.
+    pub fn roles_of<'a>(&'a self, comp: &'a Component) -> Vec<&'a str> {
+        let base = comp.provides.iter().map(String::as_str);
+        let derived = self.derived.iter().filter(|(_, def)| def.members.binary_search(&comp.name).is_ok());
+        base.chain(derived.map(|(name, _)| name.as_str())).collect()
+    }
+
+    /// Every role that has a member, base and derived, name-sorted.
+    pub fn roles(&self) -> BTreeSet<&str> {
+        let base = self.components.values().flat_map(|c| c.provides.iter().map(String::as_str));
+        base.chain(self.derived.keys().map(String::as_str)).collect()
     }
 
     /// Check every `role` line and fix each derived role's members, memoising a
