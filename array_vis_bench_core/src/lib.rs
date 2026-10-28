@@ -20,4 +20,5 @@ pub mod mains;
 /// first-class algorithm kind — the seam the spec emit dispatches each leaf's
 /// `run_correctness` through.
 pub mod suites;
+pub mod sweep;
 pub mod visualise;
