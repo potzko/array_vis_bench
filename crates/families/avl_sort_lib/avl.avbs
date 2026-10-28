@@ -1,4 +1,0 @@
-// AVL family, query owned by avl_sort_lib. No axes: `AvlSort` resolves to one
-// entry.
-
-AvlSorts: SortingAlgorithm = SortingAlgorithm<AvlSort>

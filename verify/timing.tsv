@@ -3,7 +3,7 @@ auxiliary	2348
 auxiliary<full>	4915
 auxiliary<half>	3597
 auxiliary<none>	226484
-avl sort	116848
+tree sort<avl>	116848
 bad heap sort alt	2053313
 beap sort<dir: max forward, build: iterative>	478273
 beap sort<dir: min reverse, build: iterative>	473498

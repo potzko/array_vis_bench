@@ -110,7 +110,7 @@ mod tests {
         assert_eq!(COUNT_INSERTION, 2, "insertion family");
         assert_eq!(COUNT_QUICK, 408, "quick family (2 × [5×5 single + 26 dual] partitions × 4 small)");
         assert_eq!(COUNT_CYCLE, 1, "cycle family");
-        assert_eq!(COUNT_AVL, 1, "avl family");
+        assert_eq!(COUNT_TREE, 1, "tree family");
         assert_eq!(COUNT_BLOCK_MERGE, 6, "block merge family (3 buffers x 2 key shapes)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
@@ -141,7 +141,7 @@ mod tests {
         // asserted in each kind's test module via a category filter.
         assert_eq!(
             COUNT_TOTAL,
-            COUNT_SHELL + COUNT_INSERTION + COUNT_QUICK + COUNT_CYCLE + COUNT_AVL + COUNT_BLOCK_MERGE
+            COUNT_SHELL + COUNT_INSERTION + COUNT_QUICK + COUNT_CYCLE + COUNT_TREE + COUNT_BLOCK_MERGE
                 + COUNT_BUBBLE + COUNT_COMB
                 + COUNT_ROD + COUNT_CIRCLE + COUNT_MERGE + COUNT_HEAP + COUNT_WEAK + COUNT_BEAP
                 + COUNT_QUICK_HEAP + COUNT_QUICK_SELECT + COUNT_FUN_SORTS + COUNT_SCRATCHSPACE
@@ -647,142 +647,51 @@ mod tests {
         }
     }
 
-    mod avl {
+    mod tree {
         use super::*;
-        use avl_sort_lib::{AvlSort, MAX_NODES};
-
-        #[test]
-        fn emits_one_entry_that_runs() {
-            let es: Vec<_> = ALGORITHMS.iter().filter(|e| e.name == "avl sort").collect();
-            assert_eq!(es.len(), COUNT_AVL, "expected exactly one avl sort entry");
-            assert_eq!(COUNT_AVL, 1);
-            let e = es[0];
-            assert_eq!(e.category, Category::Sort);
-            assert_eq!(e.worst, <AvlSort as HasTimeBounds>::WORST);
-            assert_eq!(e.space, <AvlSort as HasSpace>::SPACE);
-            assert_eq!(e.stable, <AvlSort as HasStability>::STABLE);
-            assert_eq!(e.max_input_size, Some(MAX_NODES), "the cap is the packed word's reach");
-            let cfg = RunConfig { size: 64, seed: 1 };
-            (e.run_with_input)(primary_input(Category::Sort), &cfg, &mut NoOpLogger);
-            (e.run_correctness)();
-        }
-
-        #[test]
-        fn registered_as_a_leaf_under_avl_sorts() {
-            let variants = navigation::variants();
-            let v = variants.iter().find(|v| v.name == "avl sort").expect("registered");
-            assert_eq!(v.category, vec!["sorts", "avl sorts"], "got {:?}", v.category);
-            assert!(v.axes.is_empty(), "no axes, got {:?}", v.axes);
-        }
-    }
-
-    // The block merge sorts: the WikiSort and GrailSort shapes among six buffer and keys compositions.
-    mod block_merge {
-        use super::*;
-        use block_merge_sort_lib::BlockMergeSort;
-        use scratchspace_lib::{FixedBuffer, InArrayBuffer, InArrayKeys, NoBuffer, NoKeys};
+        use tree_sort_lib::{Avl, TreeSort, MAX_NODES};
 
         fn entries() -> Vec<&'static AlgorithmEntry> {
-            ALGORITHMS.iter().filter(|e| e.name.starts_with("block sort<")).collect()
+            ALGORITHMS.iter().filter(|e| e.name.starts_with("tree sort<")).collect()
         }
 
         fn find(name: &str) -> &'static AlgorithmEntry {
-            entries().into_iter().find(|e| e.name == name).unwrap_or_else(|| panic!("no entry {name}"))
+            entries().into_iter().find(|e| e.name == name).unwrap_or_else(|| panic!("no entry `{name}`"))
         }
 
         #[test]
-        fn emits_three_buffers_by_two_key_shapes_that_run() {
+        fn emits_every_tree_and_each_runs() {
             let es = entries();
-            assert_eq!(es.len(), COUNT_BLOCK_MERGE, "count drifted");
-            assert_eq!(COUNT_BLOCK_MERGE, 6);
+            assert_eq!(es.len(), COUNT_TREE, "emitted entry count drifted from the solver");
+            assert_eq!(COUNT_TREE, 1, "avl");
             let cfg = RunConfig { size: 64, seed: 1 };
             for e in &es {
-                assert_eq!(e.category, Category::Sort);
-                assert!(e.stable, "{} is stable", e.name);
+                assert_eq!(e.category, Category::Sort, "`{}` not Sort", e.name);
+                assert_eq!(e.max_input_size, Some(MAX_NODES), "`{}`: the cap is the packed word's reach", e.name);
+                assert!(e.stable, "`{}` is stable whatever the tree", e.name);
                 (e.run_with_input)(primary_input(Category::Sort), &cfg, &mut NoOpLogger);
                 (e.run_correctness)();
             }
         }
 
         #[test]
-        fn wiki_sort_and_grail_sort_are_among_the_entries() {
-            let mut names: Vec<&str> = entries().iter().map(|e| e.name).collect();
-            names.sort();
-            assert_eq!(
-                names,
-                [
-                    "block sort<buffer: fixed 512, keys: in array>",
-                    "block sort<buffer: fixed 512, keys: none>",
-                    "block sort<buffer: in array, keys: in array>",
-                    "block sort<buffer: in array, keys: none>",
-                    "block sort<buffer: none, keys: in array>",
-                    "block sort<buffer: none, keys: none>",
-                ]
-            );
+        fn inherited_complexity_matches_the_concrete_type() {
+            let avl = find("tree sort<avl>");
+            assert_eq!(avl.worst, <TreeSort<Avl> as HasTimeBounds>::WORST);
+            assert_eq!(avl.worst, Complexity::N_LOG_N);
+            assert_eq!(avl.space, <TreeSort<Avl> as HasSpace>::SPACE);
+            assert_eq!(avl.stable, <TreeSort<Avl> as HasStability>::STABLE);
         }
 
         #[test]
-        fn inherited_complexity_matches_the_concrete_types() {
-            let wiki = find("block sort<buffer: in array, keys: in array>");
-            type Wiki = BlockMergeSort<InArrayBuffer, InArrayKeys>;
-            assert_eq!(wiki.worst, <Wiki as HasTimeBounds>::WORST);
-            assert_eq!(wiki.best, <Wiki as HasTimeBounds>::BEST);
-            assert_eq!(wiki.space, <Wiki as HasSpace>::SPACE);
-            assert_eq!(wiki.stable, <Wiki as HasStability>::STABLE);
-            assert!(wiki.adaptive);
-            let grail = find("block sort<buffer: fixed 512, keys: in array>");
-            assert_eq!(grail.worst, <BlockMergeSort<FixedBuffer, InArrayKeys> as HasTimeBounds>::WORST);
-            assert_eq!(grail.space, <BlockMergeSort<FixedBuffer, InArrayKeys> as HasSpace>::SPACE);
-            let bare = find("block sort<buffer: none, keys: none>");
-            assert_eq!(bare.worst, <BlockMergeSort<NoBuffer, NoKeys> as HasTimeBounds>::WORST);
-        }
-
-        #[test]
-        fn registered_under_merge_sorts_with_a_buffer_and_a_keys_facet() {
-            let v = navigation::variants();
-            let one = v.iter().find(|v| v.name.starts_with("block sort<")).expect("registered");
-            assert_eq!(one.category, vec!["sorts", "merge sorts", "block"], "got {:?}", one.category);
-            let roles: Vec<&str> = one.axes.iter().map(|a| a.role.as_str()).collect();
-            assert!(roles.contains(&"BlockBuffer") && roles.contains(&"Keys"), "{roles:?}");
-        }
-
-        /// A run through the logger the visualiser drives holds each region and releases it.
-        #[test]
-        fn the_wiki_sort_logs_its_regions_for_the_visualiser() {
-            use sort_logger::{RegionKind, SortLog, SortLogger, VisualizerLogger};
-            let e = find("block sort<buffer: in array, keys: in array>");
-            let mut logger =
-                VisualizerLogger::<usize> { type_ghost: std::marker::PhantomData, log: Vec::new() };
-            let cfg = RunConfig { size: 400, seed: 1 };
-            (e.run_with_input)(primary_input(Category::Sort), &cfg, &mut logger as &mut dyn SortLogger<usize>);
-            let regions: Vec<(RegionKind, bool)> = logger
-                .log
-                .iter()
-                .filter_map(|event| match event {
-                    SortLog::Region { kind, held, .. } => Some((*kind, *held)),
-                    _ => None,
-                })
-                .collect();
-            assert_eq!(
-                regions,
-                [
-                    (RegionKind::Keys, true),
-                    (RegionKind::Buffer, true),
-                    (RegionKind::Keys, false),
-                    (RegionKind::Buffer, false),
-                ]
-            );
-        }
-
-        /// The buffer fillers are not `Auxiliary` ones, so they add no `auxiliary<...>` merge kind.
-        #[test]
-        fn the_buffers_add_no_merge_kinds() {
-            let merge_kinds: Vec<&str> = ALGORITHMS
-                .iter()
-                .filter(|e| e.category == Category::Merge && e.name.starts_with("auxiliary<"))
-                .map(|e| e.name)
-                .collect();
-            assert_eq!(merge_kinds.len(), 3, "{merge_kinds:?}");
+        fn registered_under_tree_sorts_with_the_tree_facet() {
+            let variants = navigation::variants();
+            let v = variants.iter().find(|v| v.name == "tree sort<avl>").expect("registered");
+            assert_eq!(v.category, vec!["sorts", "tree sorts"], "got {:?}", v.category);
+            let axes: Vec<(&str, &str)> =
+                v.axes.iter().map(|a| (a.role.as_str(), a.value.as_str())).collect();
+            assert_eq!(axes, vec![("Tree", "avl")]);
+            assert_eq!(v.label_template.as_deref(), Some("tree sort<{Tree}>"));
         }
     }
 

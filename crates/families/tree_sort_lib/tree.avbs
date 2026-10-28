@@ -1,0 +1,3 @@
+// Tree family, query owned by tree_sort_lib. One axis: every Tree filler.
+
+TreeSorts: SortingAlgorithm = SortingAlgorithm<TreeSort<tree = _>>

@@ -64,7 +64,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 | block merge sorts | 6 | 3 buffers x 2 key shapes, the WikiSort and GrailSort shapes among them |
 | scratchspace nightmare sorts | 3 | 3 backings |
 | insertion sorts | 2 | linear and binary |
-| avl sort | 1 | the array as node store, one packed link word per node |
+| tree sort | 1 | an avl tree over one packed node store |
 | cycle sort | 1 | |
 | first class kinds | 122 | 11 rotations, 7 small sorts, 67 partitions, 25 merges, 12 scratchspace workflows |
 
