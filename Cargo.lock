@@ -95,6 +95,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "block_merge_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "rotation_reversal",
+ "scratchspace_lib",
+ "sort_logger",
+]
+
+[[package]]
 name = "bubble_sort_lib"
 version = "0.1.0"
 dependencies = [

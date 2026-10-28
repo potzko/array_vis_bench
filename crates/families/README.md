@@ -6,6 +6,7 @@ local fillers, and the `.avbs` query that builds the family.
 
 - `avl_sort_lib`: AVL sort with the array as node store, one packed link word per node.
 - `beap_sort_lib`: beap sort over the heap sort driver.
+- `block_merge_sort_lib`: block merge sort over a buffer and a key region, the WikiSort and GrailSort shapes.
 - `bubble_sort_lib`: bubble, shaker, recursive and odd even bubble sorts.
 - `circle_sort_lib`: recursive and bottom up circle sorts.
 - `comb_sort_lib`: comb sort over six shrink ratios.
