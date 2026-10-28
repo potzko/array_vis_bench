@@ -175,6 +175,7 @@ It is not emitted; later bindings in the same file use it by name.
 | `Head<x = a, .>` | a bare `.` as the last argument fills every param left unspecified with one pick each |
 | `A - {X, Y}` | set difference, matched on the resolved type string |
 | `_ where (A | B | C)` | union of curated alternatives |
+| `A \| B` | union of two families in value position, the same as `_ where (A \| B)`; `-` binds tighter, and a `where` alternative needs parentheses to hold one |
 | `value as x` | capture; a later `x` must resolve to the same filler |
 | `finite(_)` | exhaustive minus any tree in which a component nests inside itself |
 | `affine(_)` | exhaustive, each component used at most once in the subtree under the wrapper |

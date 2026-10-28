@@ -209,7 +209,8 @@ pub enum QValue {
     Capture { name: String, inner: Box<QValue> },
     /// `<hole> where ( A | B | C )` — a UNION: the population is exactly the
     /// alternatives' expansions (replacement, not "all-providers-then-filter"),
-    /// sampled by the hole's `quant`. AVBS pest frontend only.
+    /// sampled by the hole's `quant`. A bare `A | B` lowers to the same node over an
+    /// exhaustive hole. AVBS pest frontend only.
     Where { quant: Quant, alts: Vec<QValue> },
     /// `<base> - <sub> - …` — SET DIFFERENCE: `base`'s population minus every
     /// candidate whose canonical type appears in a subtrahend's expansion.

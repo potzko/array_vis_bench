@@ -624,7 +624,7 @@ fn eval_const(
             Err("capturing const values is not supported yet".into())
         }
         QValue::Where { .. } => {
-            Err("`where ( … )` unions are only valid in type position, not for a const".into())
+            Err("`where ( ... )` and `|` unions are only valid in type position, not for a const".into())
         }
         QValue::Diff { .. } | QValue::Set { .. } => {
             Err("set difference / set literals are only valid in type position, not for a const".into())

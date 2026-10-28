@@ -353,13 +353,25 @@ fn parse_type_atom(p: Pair<Rule>) -> Result<TyAnn, String> {
     }
 }
 
-/// Extract `[a, b, c]` as a list of bare identifiers (no captures, no `-`).
-fn value_as_list_idents(value: Pair<Rule>) -> Result<Vec<String>, String> {
+/// The unary a value consists of, when it is nothing else: no capture, no `where`
+/// and no union.
+fn plain_unary(value: Pair<Rule>) -> Result<Pair<Rule>, String> {
     let mut it = value.into_inner();
-    let unary = it.next().ok_or("empty value")?;
+    let union = it.next().ok_or("empty value")?;
     if it.next().is_some() {
         return Err("a list binding's value cannot carry a capture or `where`".into());
     }
+    let mut members = union.into_inner();
+    let unary = members.next().ok_or("empty value")?;
+    match members.next() {
+        Some(_) => Err("a list binding's value cannot be a union".into()),
+        None => Ok(unary),
+    }
+}
+
+/// Extract `[a, b, c]` as a list of bare identifiers (no captures, no `-`).
+fn value_as_list_idents(value: Pair<Rule>) -> Result<Vec<String>, String> {
+    let unary = plain_unary(value)?;
     let mut uit = unary.into_inner();
     let first = uit.next().ok_or("empty unary")?;
     if uit.next().is_some() {
@@ -376,7 +388,7 @@ fn value_as_list_idents(value: Pair<Rule>) -> Result<Vec<String>, String> {
 }
 
 fn value_as_single_ident(value: Pair<Rule>) -> Result<String, String> {
-    let unary = value.into_inner().next().ok_or("empty list member")?;
+    let unary = plain_unary(value).map_err(|_| "a list member must be a bare name".to_string())?;
     let term = unary.into_inner().next().ok_or("empty list member")?;
     match term.as_rule() {
         Rule::application => {
@@ -481,12 +493,13 @@ fn role_from_type_ann(p: &Pair<Rule>, wrappers: &[Wrapper]) -> Result<String, St
 }
 
 fn lower_value(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>, wrappers: &[Wrapper]) -> Result<QValue, String> {
-    // value = unary ~ capture? ~ where_clause?
+    // value = union ~ capture? ~ where_clause?, and a `where` alternative is
+    // alt = unary ~ capture? ~ where_clause?
     // Collect the (optional) capture name and where-alternatives first, then
     // apply them in semantic order: the `where` rewrites the hole's population,
     // and the capture binds the final chosen value (so capture is OUTERMOST).
     let mut inner = p.into_inner();
-    let base = lower_unary(inner.next().ok_or("empty value")?, reg, idx, wrappers)?;
+    let base = lower_union_or_unary(inner.next().ok_or("empty value")?, reg, idx, wrappers)?;
     let mut capture_name: Option<String> = None;
     let mut where_alts: Option<Vec<QValue>> = None;
     for extra in inner {
@@ -525,6 +538,19 @@ fn lower_value(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>, wra
         val = QValue::Capture { name, inner: Box::new(val) };
     }
     Ok(val)
+}
+
+/// A bare union `A | B` is the `where` union over an exhaustive hole, so it
+/// lowers to the same node; a single member is that member.
+fn lower_union_or_unary(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>, wrappers: &[Wrapper]) -> Result<QValue, String> {
+    if p.as_rule() == Rule::unary {
+        return lower_unary(p, reg, idx, wrappers);
+    }
+    let mut members = p.into_inner().map(|m| lower_unary(m, reg, idx, wrappers)).collect::<Result<Vec<_>, _>>()?;
+    match members.len() {
+        1 => Ok(members.remove(0)),
+        _ => Ok(QValue::Where { quant: Quant::Exhaustive, alts: members }),
+    }
 }
 
 fn lower_unary(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>, wrappers: &[Wrapper]) -> Result<QValue, String> {
@@ -2090,6 +2116,93 @@ end
         let err = lower_program("X: T = C<.>", &reg).unwrap_err();
         assert!(err.contains("`.` cannot fill const `n` of `c`") && err.contains("no `values`"), "got: {err}");
         assert_eq!(solve_exprs("X: T = C<n = 8, .>", &reg), ["C<8, S1>"]);
+    }
+
+    // ── a bare `|` union in value position ─────────────────────────────────────
+
+    #[test]
+    fn a_bare_union_parses_in_value_position_and_dangling_bars_do_not() {
+        ok("x: T = a | b");
+        ok("x: T = a | b | c");
+        ok("x: T = Foo<k = a | b, m = _>");
+        ok("x: T = (a | b) as p");
+        ok("x: T = _ - {a} | b");
+        assert!(has(&value_rules("a | b"), "union"));
+        err("x: T = a |");
+        err("x: T = | a");
+        err("x: T = a || b");
+    }
+
+    #[test]
+    fn a_bare_union_is_a_where_union_over_an_exhaustive_hole() {
+        let reg = fixture();
+        let lowered = |src: &str| lower_program(src, &reg).unwrap()[0].bindings[0].value.clone();
+        let bare = lowered("P: Pivot = first_element | middle_element | ninther_dual");
+        assert_eq!(bare, lowered("P: Pivot = _ where ( first_element | middle_element | ninther_dual )"));
+        match bare {
+            QValue::Where { quant, alts } => {
+                assert_eq!(quant, Quant::Exhaustive);
+                assert_eq!(alts.len(), 3);
+            }
+            other => panic!("expected Where, got {other:?}"),
+        }
+        // one member is no union at all
+        assert_eq!(lowered("P: Pivot = first_element"), QValue::Ident("first_element".into()));
+    }
+
+    #[test]
+    fn a_bare_union_is_the_deduped_union_of_its_families() {
+        let reg = fixture();
+        // first (1) and combined<a, b> (2 x 2), nothing else.
+        let exprs = solve_exprs("P: Pivot = first_element | CombinedSelector<a = _, b = _>", &reg);
+        assert_eq!(exprs.len(), 5);
+        assert!(exprs.contains(&"FirstElement".to_string()));
+        assert!(!exprs.contains(&"MiddleElement".to_string()));
+        // a member named twice counts once, and the family overlaps are removed.
+        assert_eq!(solve_exprs("P: Pivot = first_element | first_element", &reg), ["FirstElement"]);
+        assert_eq!(solve_exprs("P: Pivot = _ | first_element", &reg).len(), 7);
+    }
+
+    #[test]
+    fn a_bare_union_fills_an_argument_and_difference_binds_tighter() {
+        let reg = fixture();
+        let exprs = solve_exprs("P: Pivot = CombinedSelector<a = first_element | middle_element, b = first_element>", &reg);
+        assert_eq!(
+            exprs,
+            ["CombinedSelector<FirstElement, FirstElement>", "CombinedSelector<MiddleElement, FirstElement>"]
+        );
+        // `_ - {first_element} | first_element` is `(_ - {first_element}) | first_element`.
+        let all = solve_exprs("P: Pivot = _", &reg);
+        assert_eq!(solve_exprs("P: Pivot = _ - {first_element} | first_element", &reg), all);
+        assert_eq!(solve_exprs("P: Pivot = _ - {first_element | middle_element}", &reg).len(), 5);
+    }
+
+    #[test]
+    fn a_bare_union_composes_with_capture_and_sampling() {
+        let reg = fixture();
+        // the capture binds the whole union: the diagonal over its two members.
+        let diagonal = solve_exprs(
+            "P: Pivot = CombinedSelector<a = first_element | middle_element as x, b = x>",
+            &reg,
+        );
+        assert_eq!(
+            diagonal,
+            ["CombinedSelector<FirstElement, FirstElement>", "CombinedSelector<MiddleElement, MiddleElement>"]
+        );
+        let sampled = solve_exprs("P: Pivot = sample(first_element | middle_element | ninther_dual, n = 2)", &reg);
+        assert_eq!(sampled.len(), 2);
+    }
+
+    #[test]
+    fn a_bare_union_stays_out_of_where_bases_lists_and_consts() {
+        let reg = fixture();
+        let err = lower_program("P: Pivot = first_element | middle_element where ( ninther_dual )", &reg).unwrap_err();
+        assert!(err.contains("requires a hole base"), "got: {err}");
+        let err = lower("xs: List<Pivot> = [first_element | middle_element]", &reg).unwrap_err();
+        assert!(err.contains("must be a bare name"), "got: {err}");
+        let merge = "M: SortingAlgorithm = SortingAlgorithm<TopDownMergeSort<small_sort = no_small_sort, ping_pong = true | false, early_exit = true>>";
+        let err = solve(&lower_program(merge, &reg).unwrap()[0], &reg).unwrap_err();
+        assert!(err.contains("`|` unions are only valid in type position"), "got: {err}");
     }
 
     // ── consumers / List / Mains: whole-program lowering ───────────────────────

@@ -57,10 +57,18 @@ type_atom  = _{ underscore | type_app }
 type_app   = { ident ~ ("<" ~ type_ann ~ ("," ~ type_ann)* ~ ">")? }
 underscore = @{ "_" ~ !(ASCII_ALPHANUMERIC | "_") }
 
-// value := unary [as name] [where (alts)]
-value        = { unary ~ capture? ~ where_clause? }
+// value := union [as name] [where (alts)]
+value        = { union ~ capture? ~ where_clause? }
 capture      = { "as" ~ ident }
-where_clause = { "where" ~ "(" ~ value ~ ("|" ~ value)* ~ ")" }
+
+// a bare union, loosest of the set operators: `A | B`. The same as
+// `_ where ( A | B )`, without a hole to name.
+union        = { unary ~ ("|" ~ unary)* }
+
+// the alternatives of a `where` are split on `|`, so each is a value without a bare
+// union; a union of its own goes in parentheses
+where_clause = { "where" ~ "(" ~ alt ~ ("|" ~ alt)* ~ ")" }
+alt          = { unary ~ capture? ~ where_clause? }
 
 // set difference, left-assoc: `_ - {X} - {Y}`
 unary = { term ~ ("-" ~ term)* }
