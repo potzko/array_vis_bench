@@ -10,7 +10,7 @@
 //! proc-macro and the codegen build scripts) stays dependency-free.
 
 use crate::backend::Wrapper;
-use crate::registry::{type_head, Registry};
+use crate::registry::{type_head, ParamKind, Registry};
 use crate::spec::{Binding, QArg, QValue, Quant, Query, Seed, DEFAULT_DEPTH, DEFAULT_SEED};
 use pest::iterators::{Pair, Pairs};
 use std::collections::HashMap;
@@ -653,6 +653,7 @@ fn lower_application(
         for a in raw_args {
             match a.as_rule() {
                 Rule::value => args.push(QArg::Pos(lower_value(a, reg, idx, wrappers)?)),
+                Rule::rest_fill => return Err(not_a_component(&head)),
                 other => return Err(format!("`{head}<…>` takes a positional type arg, found {other:?}")),
             }
         }
@@ -667,8 +668,13 @@ fn lower_application(
     let mut named: Vec<String> = Vec::new();
     let mut out: Vec<QArg> = Vec::new();
     let mut positional: Vec<Pair<Rule>> = Vec::new();
+    let mut rest_fill = false;
     for a in raw_args {
+        if rest_fill {
+            return Err(format!("`{resolved}`: `.` fills the rest, so it must be the last argument"));
+        }
         match a.as_rule() {
+            Rule::rest_fill => rest_fill = true,
             Rule::named_arg => {
                 let mut ai = a.into_inner();
                 let pname = ai.next().ok_or("named arg needs a name")?.as_str().to_string();
@@ -688,7 +694,30 @@ fn lower_application(
         let pval = lower_value(a, reg, idx, wrappers)?;
         out.push(QArg::Named { name: param.name.clone(), value: pval });
     }
+    if rest_fill {
+        for param in free {
+            out.push(QArg::Named { name: param.name.clone(), value: rest_pick(&resolved, param)? });
+        }
+    }
     Ok(QValue::App { name: resolved, args: out })
+}
+
+/// What a bare `.` puts in an unspecified param: one pick with the default seed,
+/// so the same build draws the same filler. A const with no declared `values` has
+/// nothing to pick from.
+fn rest_pick(component: &str, param: &crate::registry::Param) -> Result<QValue, String> {
+    match &param.kind {
+        ParamKind::Const { values } if values.is_empty() => Err(format!(
+            "`.` cannot fill const `{}` of `{component}`: it declares no `values`, so it takes only a literal",
+            param.name
+        )),
+        _ => Ok(QValue::Hole(Quant::One { seed: DEFAULT_SEED })),
+    }
+}
+
+/// The error for a `.` in the argument list of something that is not a component.
+fn not_a_component(head: &str) -> String {
+    format!("`.` fills the arguments of a component, but `{head}( ... )` is not one")
 }
 
 /// Lower the arguments of an enumeration-strategy builtin `head( ... )` into its
@@ -712,6 +741,7 @@ fn lower_strategy(
                 return Err(format!("`{head}( ... )` takes exactly one positional value"))
             }
             Rule::value => inner = Some(lower_value(a, reg, idx, wrappers)?),
+            Rule::rest_fill => return Err(not_a_component(head)),
             Rule::named_arg => {
                 let mut parts = a.into_inner();
                 let name = parts.next().ok_or("named arg needs a name")?.as_str().to_string();
@@ -1948,6 +1978,118 @@ end
         // `shared` ranges over the 2 single pivots; y returns exactly those.
         let exprs = type_exprs(&out, &reg);
         assert_eq!(exprs, vec!["FirstElement".to_string(), "MiddleElement".to_string()]);
+    }
+
+    // ── the bare `.` rest fill ──────────────────────────────────────────────────
+
+    // A `.` is one fixed pick for every param the arguments leave unspecified: a
+    // `?` hole with the default seed, so a build repeats it.
+    fn one_pick() -> QValue {
+        QValue::Hole(Quant::One { seed: DEFAULT_SEED })
+    }
+
+    #[test]
+    fn a_bare_dot_parses_as_the_last_argument() {
+        ok("x: T = Foo<.>");
+        ok("x: T = Foo(.)");
+        ok("x: T = Foo<a = _, .>");
+        ok("x: T = Foo<_, .>");
+        ok("x: T = Foo<a = _, .,>"); // trailing comma
+        assert!(has(&value_rules("Foo<a = _, .>"), "rest_fill"));
+        err("x: T = Foo<..>"); // two dots need a comma between them
+        err("x: T = .");
+    }
+
+    #[test]
+    fn a_bare_dot_lowers_to_one_pick_per_unspecified_param() {
+        let reg = fixture();
+        let qs = lower_program(
+            "M: SortingAlgorithm = SortingAlgorithm<TopDownMergeSort<small_sort = no_small_sort, .>>",
+            &reg,
+        )
+        .unwrap();
+        match &qs[0].bindings[0].value {
+            QValue::App { name, args } => {
+                assert_eq!(name, "top_down_merge");
+                let named = |param: &str, value: QValue| QArg::Named { name: param.into(), value };
+                assert_eq!(args.len(), 3);
+                assert_eq!(args[0], named("small_sort", QValue::Ident("no_small_sort".into())));
+                assert_eq!(args[1], named("ping_pong", one_pick()));
+                assert_eq!(args[2], named("early_exit", one_pick()));
+            }
+            other => panic!("expected App, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_bare_dot_alone_gives_exactly_one_variant_and_the_same_one_every_build() {
+        let reg = fixture();
+        let draw = || solve_exprs("M: SortingAlgorithm = SortingAlgorithm<TopDownMergeSort<.>>", &reg);
+        assert_eq!(draw().len(), 1);
+        assert_eq!(draw(), draw());
+        assert_eq!(solve_exprs("Q: SortingAlgorithm = SortingAlgorithm<QuickSort<.>>", &reg).len(), 1);
+    }
+
+    #[test]
+    fn a_bare_dot_leaves_what_the_arguments_specify_alone() {
+        let reg = fixture();
+        // `partition` stays exhaustive (7 partitions), only `small_sort` is picked.
+        let exprs = solve_exprs("Q: SortingAlgorithm = SortingAlgorithm<QuickSort<partition = _, .>>", &reg);
+        assert_eq!(exprs.len(), 7);
+        // a pinned slot stays pinned, the two consts take one declared value each.
+        let exprs = solve_exprs(
+            "M: SortingAlgorithm = SortingAlgorithm<TopDownMergeSort<small_sort = no_small_sort, .>>",
+            &reg,
+        );
+        assert_eq!(exprs.len(), 1);
+        assert!(exprs[0].starts_with("TopDownMergeSort<NoSmallSort, "), "got {exprs:?}");
+        // a positional argument takes the first free param, the dot the rest.
+        let positional = solve_exprs("S: SortingAlgorithm = SortingAlgorithm<QuickSort<_, .>>", &reg);
+        assert_eq!(positional.len(), 7);
+    }
+
+    #[test]
+    fn a_bare_dot_with_nothing_left_to_fill_changes_nothing() {
+        let reg = fixture();
+        let full = "S: SortingAlgorithm = SortingAlgorithm<ShellSort<seq = _, .>>";
+        let plain = "S: SortingAlgorithm = SortingAlgorithm<ShellSort<seq = _>>";
+        assert_eq!(solve_exprs(full, &reg), solve_exprs(plain, &reg));
+    }
+
+    #[test]
+    fn a_missing_argument_is_an_error_not_a_rest_fill() {
+        let reg = fixture();
+        let qs = lower_program("Q: SortingAlgorithm = SortingAlgorithm<QuickSort<partition = _>>", &reg).unwrap();
+        let err = solve(&qs[0], &reg).unwrap_err();
+        assert!(err.contains("requires slot `small_sort` (role SmallSort)"), "got: {err}");
+    }
+
+    #[test]
+    fn a_bare_dot_must_be_last_and_appear_once() {
+        let reg = fixture();
+        for bad in ["QuickSort<., partition = _>", "QuickSort<partition = _, ., .>", "QuickSort<., _>"] {
+            let err = lower_program(&format!("Q: SortingAlgorithm = SortingAlgorithm<{bad}>"), &reg).unwrap_err();
+            assert!(err.contains("`.` fills the rest, so it must be the last argument"), "`{bad}` got: {err}");
+        }
+    }
+
+    #[test]
+    fn a_bare_dot_is_only_for_a_component_application() {
+        let reg = fixture();
+        for bad in ["SortingAlgorithm<.>", "SortingAlgorithm<finite(.)>", "SortingAlgorithm<sample(., n = 2)>"] {
+            let err = lower_program(&format!("X: SortingAlgorithm = {bad}"), &reg).unwrap_err();
+            assert!(err.contains("`.` fills the arguments of a component"), "`{bad}` got: {err}");
+        }
+    }
+
+    #[test]
+    fn a_bare_dot_cannot_fill_a_literal_only_const() {
+        let cat = "component c\n  type C<{n}, {s}>\n  provides T\n  const n\n  slot s S\nend\n\
+                   component s1\n  type S1\n  provides S\nend\n";
+        let reg = Registry::parse_fragment(cat, "probe").unwrap();
+        let err = lower_program("X: T = C<.>", &reg).unwrap_err();
+        assert!(err.contains("`.` cannot fill const `n` of `c`") && err.contains("no `values`"), "got: {err}");
+        assert_eq!(solve_exprs("X: T = C<n = 8, .>", &reg), ["C<8, S1>"]);
     }
 
     // ── consumers / List / Mains: whole-program lowering ───────────────────────

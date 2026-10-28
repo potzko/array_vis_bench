@@ -84,5 +84,9 @@ seed       = { "@" ~ integer }
 application  = { ident ~ generic_args? }
 generic_args = { "<" ~ arg_list? ~ ">" | "(" ~ arg_list? ~ ")" }
 arg_list     = { arg ~ ("," ~ arg)* ~ ","? }
-arg          = _{ named_arg | value }
+arg          = _{ named_arg | rest_fill | value }
 named_arg    = { ident ~ "=" ~ value }
+
+// a bare `.` as the last argument fills every param the arguments leave
+// unspecified with one deterministic pick each: `MergeSort<small_sort = _, .>`
+rest_fill    = { "." }

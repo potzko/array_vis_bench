@@ -172,6 +172,7 @@ It is not emitted; later bindings in the same file use it by name.
 | `?`, `?N`, `?N@seed` | one, or N, random distinct fillers, optionally seeded |
 | `name = value` | fill a named slot |
 | `Head<a, b>` or `Head<x = a>` | a concrete application, positional or named |
+| `Head<x = a, .>` | a bare `.` as the last argument fills every param left unspecified with one pick each |
 | `A - {X, Y}` | set difference, matched on the resolved type string |
 | `_ where (A | B | C)` | union of curated alternatives |
 | `value as x` | capture; a later `x` must resolve to the same filler |
@@ -182,6 +183,16 @@ It is not emitted; later bindings in the same file use it by name.
 | `[A, B]` | a list of bindings, for `List<...>` |
 | `depth N` | directive: bound the nesting depth of recursive roles |
 | `N of @seed` | directive: keep N whole results |
+
+A bare `.` is the rest fill. `MergeSort<small_sort = _, .>` enumerates the small
+sort and picks one filler for every other slot and one declared value for every
+other const, so `MergeSort<.>` is one merge sort, the same one on every build,
+because each pick is a `?` hole with the default seed. The `.` must be the last
+argument and appear once, and it cannot fill a const that declares no `values`.
+A bare positional `_` is not a rest fill: it is one exhaustive hole for the next
+free param, so `QuickSort<_, _>` fills two. A param left out is an error that
+names the slot, which means nothing fills the rest exhaustively; write `_` for
+each param or `name = _` for each slot.
 
 The solver works with two constraints only: structural equality through a
 shared variable, and role membership. There is no arithmetic and no
