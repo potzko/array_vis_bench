@@ -14,6 +14,11 @@ use sort_logger::SortLogger;
 use crate::nodes::{Nodes, MAX_NODES};
 
 pub trait Tree {
+    // The rank `attach` writes into a new leaf: the height 1 for a height
+    // balanced tree, 0 for a tree that never reads the field, so its words
+    // hold nothing but links.
+    const LEAF_RANK: usize;
+
     // Node `node` was just attached as a leaf.
     fn inserted<T: Ord + Copy, U: ?Sized + SortLogger<T>>(nodes: &mut Nodes<'_, T, U>, node: usize);
 
@@ -31,7 +36,7 @@ impl<B: Tree> TreeSort<B> {
         assert!(n <= MAX_NODES, "tree sort takes at most {MAX_NODES} elements, got {n}");
         let mut nodes = Nodes::new(arr, logger);
         for i in 0..n {
-            nodes.attach(i);
+            nodes.attach(i, B::LEAF_RANK);
             B::inserted(&mut nodes, i);
         }
         for k in 0..n {

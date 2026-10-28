@@ -13,6 +13,8 @@ use crate::tree_sort::Tree;
 pub struct Avl;
 
 impl Tree for Avl {
+    const LEAF_RANK: usize = 1;
+
     fn inserted<T: Ord + Copy, U: ?Sized + SortLogger<T>>(nodes: &mut Nodes<'_, T, U>, node: usize) {
         retrace(nodes, nodes.parent(node));
     }
@@ -109,7 +111,7 @@ mod tests {
         let mut logger = NoOpLogger;
         let mut nodes = Nodes::new(&mut arr, &mut logger);
         for i in 0..n {
-            nodes.attach(i);
+            nodes.attach(i, Avl::LEAF_RANK);
             Avl::inserted(&mut nodes, i);
             assert_avl(&nodes, nodes.root);
         }

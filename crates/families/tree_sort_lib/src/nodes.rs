@@ -66,9 +66,9 @@ impl<'a, T: Ord + Copy, U: ?Sized + SortLogger<T>> Nodes<'a, T, U> {
     }
 
     // Descend by key from the root and hang node `i` there as a new leaf of
-    // rank 1, the height of a leaf. An equal key goes right, which is what
-    // keeps the in order sequence sorted by key then by index.
-    pub fn attach(&mut self, i: usize) {
+    // the given rank. An equal key goes right, which is what keeps the in
+    // order sequence sorted by key then by index.
+    pub fn attach(&mut self, i: usize, rank: usize) {
         let (mut parent, mut side) = (self.nil, LEFT);
         let mut cur = self.root;
         while cur != self.nil {
@@ -76,7 +76,7 @@ impl<'a, T: Ord + Copy, U: ?Sized + SortLogger<T>> Nodes<'a, T, U> {
             side = if self.logger.cmp_lt(self.arr, i, cur) { LEFT } else { RIGHT };
             cur = self.link(cur, side);
         }
-        self.set_word(i, parent | (self.nil << LEFT) | (self.nil << RIGHT) | (1 << RANK));
+        self.set_word(i, parent | (self.nil << LEFT) | (self.nil << RIGHT) | (rank << RANK));
         if parent == self.nil { self.root = i; } else { self.set_link(parent, side, i); }
     }
 

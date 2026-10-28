@@ -12,6 +12,8 @@ use crate::tree_sort::Tree;
 pub struct Naive;
 
 impl Tree for Naive {
+    const LEAF_RANK: usize = 0;
+
     fn inserted<T: Ord + Copy, U: ?Sized + SortLogger<T>>(_nodes: &mut Nodes<'_, T, U>, _node: usize) {}
 
     fn removed<T: Ord + Copy, U: ?Sized + SortLogger<T>>(_nodes: &mut Nodes<'_, T, U>, _parent: usize) {}
@@ -33,18 +35,19 @@ mod tests {
     use sort_logger::NoOpLogger;
 
     #[test]
-    fn sorted_input_builds_a_right_path_that_is_never_rotated() {
+    fn sorted_input_builds_a_right_path_with_no_rotation_and_no_rank() {
         let mut arr: Vec<usize> = (0..64).collect();
         let mut logger = NoOpLogger;
         let mut nodes = Nodes::new(&mut arr, &mut logger);
         for i in 0..64 {
-            nodes.attach(i);
+            nodes.attach(i, Naive::LEAF_RANK);
             Naive::inserted(&mut nodes, i);
         }
         assert_eq!(nodes.root, 0);
         for i in 0..64 {
             assert_eq!(nodes.link(i, LEFT), nodes.nil, "node {i} has a left child");
             assert_eq!(nodes.link(i, RIGHT), if i == 63 { nodes.nil } else { i + 1 }, "node {i} right link");
+            assert_eq!(nodes.rank(i), 0, "node {i} carries a rank it never reads");
         }
     }
 }
