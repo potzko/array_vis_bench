@@ -28,7 +28,7 @@ link root. That is done:
   first class kinds with their own batteries.
 - The consumer surface exists in both languages: `Main` in Rust and
   `List<Mains<Set>>` in a query, run by `--consumers`.
-- `cargo build --release` and `cargo test --release --workspace` are green
+- `cargo build --release` and `cargo t` (nextest, release) are green
   as of this update.
 
 What the plan called the `Visualisable` trait never appeared as a trait. The

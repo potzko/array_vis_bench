@@ -19,7 +19,7 @@
 #   asm       the six gate symbols of `compare_sorts` against `verify/asm/`
 #   perf      the `compare_sorts` gate over 61 paired runs, generic sorts
 #             within 1.05x of hand rolled ones
-#   tests     `cargo test --release --workspace`
+#   tests     `cargo t`, the workspace under nextest in release
 #   timing    every entry timed, median of fifteen interleaved rounds at
 #             size 1000, against `verify/timing.tsv`
 set -uo pipefail
@@ -108,10 +108,12 @@ if [[ $QUICK -eq 1 ]]; then
   echo "== tests and timing skipped (--quick)"
 else
   echo "== tests"
-  if cargo test --release --workspace >"$OUT/tests.log" 2>&1; then
-    pass "workspace tests ($(grep -oE '^test result: ok\. [0-9]+' "$OUT/tests.log" | awk '{s+=$4} END{print s}') tests)"
+  if ! cargo nextest --version >/dev/null 2>&1; then
+    fail "cargo nextest is not installed: cargo install cargo-nextest --locked"
+  elif cargo t >"$OUT/tests.log" 2>&1; then
+    pass "workspace tests ($(grep -oE '[0-9]+ tests run' "$OUT/tests.log" | tail -1))"
   else
-    fail "workspace tests ($(grep -cE '^test .* FAILED|panicked' "$OUT/tests.log") failures, see $OUT/tests.log)"
+    fail "workspace tests ($(grep -cE '^\s*FAIL \[' "$OUT/tests.log") failures, see $OUT/tests.log)"
   fi
 
   echo "== timing"

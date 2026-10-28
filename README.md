@@ -82,10 +82,14 @@ emit regression that drops a variant fails the build's own tests.
 | `cargo run --release --bin measure_random_shell` | Complexity probe for the random shell sort variants. |
 | `cargo run -p array_vis_bench_min --release` | Minimal link root with two families and no catalog, proving a consumer can take just the leaves it wants. |
 | `./verify.sh [--quick] [--bless]` | The verification gate: release build without warnings, the compiler's golden and the emitted catalog's types, the assembly of the gate symbols, the `compare_sorts` gate, the workspace tests and a timing comparison, each against a baseline under `verify/`. |
-| `cargo test --release` | The whole workspace: compiler unit tests, per crate unit tests, and every emitted entry's correctness battery. The battery runs each entry in a subprocess so a hang or crash names the variant. |
+| `cargo t` | The whole workspace's tests under nextest in release: compiler unit tests, per crate unit tests, and every emitted entry's correctness battery. The battery runs each entry in a subprocess so a hang or crash names the variant. |
 
-`cargo-nextest` is pinned in `.config/nextest.toml` for faster test runs;
-plain `cargo test` works too.
+`cargo t` is an alias in `.cargo/config.toml` for `cargo nextest run --release
+--workspace`; nextest reports per test where `cargo test` prints one block per
+target, over a hundred here, nearly all empty. `.config/nextest.toml` pins the
+tool version, and `cargo install cargo-nextest --locked` installs it. Plain
+`cargo test --release` still works and is what a crate's own `cargo test -p`
+runs.
 
 Helper scripts:
 
