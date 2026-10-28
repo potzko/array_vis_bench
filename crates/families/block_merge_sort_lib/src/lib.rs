@@ -217,7 +217,7 @@ fn slide_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_util::{pairs, Item, Marks, Regions, Rng, Tally};
+    use crate::test_util::{pairs, Item, Marks, Regions, Replay, Rng, Tally};
     use sort_logger::RegionKind;
     use scratchspace_lib::{FixedBuffer, FullBuffer, HalfBuffer, InArrayBuffer, InArrayKeys, NoBuffer, NoKeys};
     use sort_logger::NoOpLogger;
@@ -274,6 +274,30 @@ mod tests {
         sorts_stably::<FullBuffer, NoKeys>("full, none");
         sorts_stably::<FullBuffer, InArrayKeys>("full, in array");
         sorts_stably::<HalfBuffer, InArrayKeys>("half, in array");
+    }
+
+    // Every move is logged: replaying the events on a copy gives the sorted array.
+    fn moves_are_all_logged<B: Auxiliary, K: Keys>(name: &str) {
+        let mut rng = Rng(0x10661);
+        for n in [32usize, 33, 100, 257, 600, 1500, 4000] {
+            for values in [1, 2, 5, 12, 40, 100_000] {
+                let mut arr: Vec<usize> = (0..n).map(|_| rng.next(values)).collect();
+                let mut replay = Replay::of(&arr);
+                BlockMergeSort::<B, K>::sort(&mut arr, &mut replay);
+                assert!(arr.windows(2).all(|w| w[0] <= w[1]), "{name}: not sorted, n={n} values={values}");
+                assert_eq!(replay.main(), &arr[..], "{name}: a move went unlogged, n={n} values={values}");
+            }
+        }
+    }
+
+    #[test]
+    fn no_shape_moves_an_element_without_logging_it() {
+        moves_are_all_logged::<InArrayBuffer, InArrayKeys>("in array, in array");
+        moves_are_all_logged::<FixedBuffer, InArrayKeys>("fixed, in array");
+        moves_are_all_logged::<NoBuffer, InArrayKeys>("none, in array");
+        moves_are_all_logged::<InArrayBuffer, NoKeys>("in array, none");
+        moves_are_all_logged::<FixedBuffer, NoKeys>("fixed, none");
+        moves_are_all_logged::<NoBuffer, NoKeys>("none, none");
     }
 
     // The marks a sort logged on `arr`.

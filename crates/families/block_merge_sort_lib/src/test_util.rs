@@ -87,3 +87,50 @@ impl<T: Copy + Ord> SortLogger<T> for Regions {
         if let SortLog::Region { name, start, len, kind, held } = event { self.0.push((name, start, len, kind, held)) }
     }
 }
+
+/// Replays the events onto copies of the arrays, so that comparing the copy of the
+/// array that was sorted with the array itself shows that no move went unlogged.
+/// An event finds its array by address, as the visualiser does, so a sub slice of
+/// the array and the aux arrays resolve to the right copy.
+pub struct Replay {
+    arrays: Vec<(usize, Vec<usize>)>,
+}
+impl Replay {
+    pub fn of(arr: &[usize]) -> Self { Replay { arrays: vec![(arr.as_ptr() as usize, arr.to_vec())] } }
+
+    pub fn main(&self) -> &[usize] { &self.arrays[0].1 }
+
+    fn at(&mut self, name: usize) -> (&mut Vec<usize>, usize) {
+        let size = std::mem::size_of::<usize>();
+        let (base, copy) = self
+            .arrays
+            .iter_mut()
+            .filter(|(base, copy)| *base <= name && name < *base + copy.len() * size)
+            .last()
+            .expect("an event names an array that is not live");
+        (copy, (name - *base) / size)
+    }
+}
+impl SortLogger<usize> for Replay {
+    fn log(&mut self, event: SortLog<usize>) {
+        match event {
+            SortLog::Swap { name, ind_a, ind_b } => {
+                let (copy, off) = self.at(name);
+                copy.swap(ind_a + off, ind_b + off);
+            }
+            SortLog::WriteInArr { name, ind_a, ind_b } => {
+                let (copy, off) = self.at(name);
+                copy[ind_a + off] = copy[ind_b + off];
+            }
+            SortLog::WriteData { name, ind, data } | SortLog::WriteDataU { name, ind, data } => {
+                let (copy, off) = self.at(name);
+                copy[ind + off] = data;
+            }
+            SortLog::CreateAuxArrT { name, length } | SortLog::CreateAuxArr { name, length } => {
+                self.arrays.push((name, vec![0; length]));
+            }
+            SortLog::FreeAuxArr { name } => self.arrays.retain(|(base, _)| *base != name),
+            _ => {}
+        }
+    }
+}
