@@ -23,8 +23,10 @@ use merge_sort_lib::RotationMerge;
 use sort_logger::SortLogger;
 
 pub mod bufferless;
+pub mod keys;
 pub mod workflows;
 pub use bufferless::bufferless_merge;
+pub use keys::{InArrayKeys, NoKeys};
 pub use workflows::{Exercise, ParkLoop, ParkSweep, Relocations, ScratchspaceMergeSort};
 
 // ── Scratchspace backings (the `Scratchspace` role — its own top-level kind) ──
