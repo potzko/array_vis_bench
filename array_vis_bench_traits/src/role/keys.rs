@@ -88,8 +88,9 @@ fn rotate_region<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     reverse(&mut arr[lo..hi], log);
 }
 
-/// First index of `arr[a..b]` whose element is not below `arr[at]`.
-fn first_not_below<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+/// First index of `arr[a..b]`, sorted, whose element is not below `arr[at]`.
+/// One binary search, every comparison logged.
+pub fn first_not_below<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &[T],
     a: usize,
     b: usize,

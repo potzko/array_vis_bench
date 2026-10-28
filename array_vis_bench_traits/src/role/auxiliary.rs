@@ -31,4 +31,12 @@ pub trait Auxiliary {
     /// The caller allocates this once (via the logger) and threads it into every
     /// merge, exactly like [`Rotation::scratch_size`](crate::role::Rotation::scratch_size).
     fn scratch_size(n: usize) -> usize;
+
+    /// Cells to carve out of the array itself for an `n`-element array: a buffer
+    /// of distinct elements that the merge swaps its working values through, so
+    /// the array stays whole. `0` for an external or absent buffer. The carved
+    /// cells are not part of `scratch_size`, nothing is allocated for them.
+    fn internal_size(_n: usize) -> usize {
+        0
+    }
 }

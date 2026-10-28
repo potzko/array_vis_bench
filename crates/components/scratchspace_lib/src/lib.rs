@@ -22,9 +22,11 @@ use array_vis_bench_traits::Complexity;
 use merge_sort_lib::RotationMerge;
 use sort_logger::SortLogger;
 
+pub mod buffers;
 pub mod bufferless;
 pub mod keys;
 pub mod workflows;
+pub use buffers::{FixedBuffer, InArrayBuffer};
 pub use bufferless::bufferless_merge;
 pub use keys::{InArrayKeys, NoKeys};
 pub use workflows::{Exercise, ParkLoop, ParkSweep, Relocations, ScratchspaceMergeSort};
