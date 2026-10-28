@@ -48,7 +48,7 @@ end
 component pk_single
   type     Pivoted<{scheme}, {pivot}>
   label    {scheme}<{pivot}>
-  provides PartitionKind SelectPartition
+  provides PartitionKind
   slot     scheme PartScheme
   slot     pivot  PartPivot
 end
@@ -56,7 +56,7 @@ end
 component pk_dual
   type     DualPivoted<{pivot}>
   label    dual<{pivot}>
-  provides PartitionKind SelectPartition
+  provides PartitionKind
   slot     pivot  PartPivotDual
 end
 

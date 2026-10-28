@@ -41,25 +41,25 @@ end
 component qs_part_he_bin_it
   type     HeapExtract<AryPair<Binary>, Iterative>
   label    heap extract: binary iterative
-  provides HeapExtractPart SelectPartition
+  provides HeapExtractPart
 end
 
 component qs_part_he_bin_re
   type     HeapExtract<AryPair<Binary>, Recursive>
   label    heap extract: binary recursive
-  provides HeapExtractPart SelectPartition
+  provides HeapExtractPart
 end
 
 component qs_part_he_ter_it
   type     HeapExtract<AryPair<Ternary>, Iterative>
   label    heap extract: ternary iterative
-  provides HeapExtractPart SelectPartition
+  provides HeapExtractPart
 end
 
 component qs_part_he_ter_re
   type     HeapExtract<AryPair<Ternary>, Recursive>
   label    heap extract: ternary recursive
-  provides HeapExtractPart SelectPartition
+  provides HeapExtractPart
 end
 
 # ═══════════ RECURSIVE SET-QUICK-SELECT DEEP-HEAPIFY (finite() dogfood) ═══════════

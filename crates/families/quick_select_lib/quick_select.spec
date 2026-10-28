@@ -33,6 +33,9 @@
 # ═════════════════════ HEAP-EXTRACT PARTITIONS (pivotless) ═══════════════
 
 # ════════════════════════════ SLOTTED DRIVERS ═══════════════════════════
+# The pivoted composites and the pivotless heap-extract partitions.
+role SelectPartition = HeapExtractPart | PartitionKind
+
 component qs_recursive
   type     RecursiveQuickSelect<{part}>
   label    quick select: recursive<{part}>
