@@ -92,9 +92,10 @@ Helper scripts:
   `compare_sorts`, which is how the zero cost claim is checked.
 - `verify.sh` runs every check above against the baselines in `verify/` and
   rewrites them with `--bless` after an intended change.
-- `plot_bench.py` is an early prototype that charts a benchmark archive. The
-  Criterion archive it read is gone; `--timing --out` writes a TSV of medians
-  that is the natural replacement input, not yet wired in.
+- `plot_bench.py` charts how every entry scales with the input size. Time
+  the catalog once per size with `--timing N K --out PATH`, then hand the
+  archives to the script; the page has a selector tree by type head, a
+  regex filter and a faster or slower than reference filter at one size.
 
 ## Workspace layout
 
