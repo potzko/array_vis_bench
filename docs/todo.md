@@ -70,10 +70,13 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
    `combo_codegen` path in `.claude/settings.json` are gone.
    `spec_catalog/quick_port.spec` is not residue, it is the fixture of the
    slotted versus baked equivalence test and stays.
-9. Publishability split. Do not start until there is a second genuinely
-   independent consumer, the ABI (`sort_logger` plus
-   `array_vis_bench_traits`) is frozen and versioned, and the leaves have
-   stopped churning. The split is at the `Resolved` seam (type expression, label, uses): a
+9. Publishability split. Parked by decision (2026-10-28): the workspace
+   stays one tree until either a release is wanted, which forces the split,
+   or Rust grows reflection convenient enough to replace the generated
+   catalog. Until then do not start it, and when it starts the
+   preconditions hold: a second genuinely independent consumer, the ABI
+   (`sort_logger` plus `array_vis_bench_traits`) frozen and versioned, and
+   the leaves no longer churning. The split is at the `Resolved` seam (type expression, label, uses): a
    domain agnostic solver front end, and the array domain backend that
    stays in the monorepo. Keep implementations, program and a
    consumer in one link unit so the inlining story holds.
