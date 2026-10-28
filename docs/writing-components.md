@@ -94,17 +94,21 @@ several roles**, cut as finely as the queries need:
   `SelectPartition` (composites + heap-extract), and `HeapExtractPart`.
 
 And **one component can provide several roles at once**. From
-[quick.spec](../crates/families/quick_sort_lib/quick.spec):
+[merge.spec](../crates/families/merge_sort_lib/merge.spec):
 
 ```text
-component pk_single
-  type     Pivoted<{scheme}, {pivot}>
-  label    {scheme}<{pivot}>
-  provides PartitionKind SelectPartition     # <-- two roles
-  slot     scheme PartScheme
-  slot     pivot  PartPivot
+component mrm_naive
+  type     NaiveRotationMerge<{rot}>
+  label    naive<{rot}>
+  provides RotationMerge MergeKind     # <-- two roles
+  slot     rot Rotation
 end
 ```
+
+A role can also be **derived** instead of tagged: `SelectPartition` has no
+`provides` line of its own, a `role` line in
+[quick_select.spec](../crates/families/quick_select_lib/quick_select.spec)
+defines it as `HeapExtractPart | PartitionKind`.
 
 So: **slots bind by *role*, not by trait.** When you add a component, you choose which
 role(s) it advertises; that , not its Rust trait alone , decides which slots it can
@@ -177,8 +181,9 @@ That is the entire second half of the job for a leaf. Four lines. There is no
 import line: the build imports `LastElement` from the crate that owns the
 fragment, so the type must be a `pub` item at that crate's root. A type that
 several families slot under different roles is still one component. Its
-`provides` line lists them all, as `pivot_first.spec` does with `PartPivot
-HeapPiv BeapPiv`.
+`provides` line lists the base roles. `pivot_first.spec` provides `PartPivot`
+only, and joins `HeapPiv` and `BeapPiv` through the `role` lines in `heap.spec`
+and `beap.spec`.
 
 #### `.spec` keyword reference
 
@@ -187,7 +192,8 @@ HeapPiv BeapPiv`.
 | `component <name>` ... `end` | Declares one component. `<name>` is globally unique across the whole workspace (a duplicate is a build-time panic). |
 | `type <expr>` | The Rust type, with `{hole}` placeholders for each slot. Leaves have no holes (`LastElement`); composites do (`Pivoted<{scheme}, {pivot}>`). |
 | `label <template>` | Human-readable name, same `{hole}` templating. Instantiated into the `AlgorithmEntry.name` / picker path. |
-| `provides <Role> [<Role>...]` | The role(s) this component advertises. This is what slots match against. |
+| `provides <Role> [<Role>...]` | The base role(s) this component advertises. This is what slots match against. |
+| `role <Name> = <term> ...` | Between components, a derived role: terms are role or component names, applied left to right, `\|` adds a term's members and `-` removes them. A role is base or derived, never both. |
 | `uses <rust::path> [<path>...]` | Optional override of the imports the build derives from the owning crate. Only for a type the owning crate cannot reach, with the reason in a comment beside it. |
 | `slot <name> <Role>` | A type parameter, filled by any component of `<Role>`. A query must fill every slot. |
 | `const <name> [values <v>...]` | A const generic, matched by name or position. `values` is the finite set a quantified hole ranges over; without it the const takes only a literal. A query must pass every const. |
@@ -788,8 +794,9 @@ provides `PartPivot`, it's now a legal filler for `pk_single`'s `pivot` slot and
 - every dual composite that pairs it (`combined<penultimate, ...>`),
 - quick-select and the standalone Partition-kind entries.
 
-To also offer it to the heap and beap quick builds, add `HeapPiv` and `BeapPiv`
-to the same `provides` line.
+It also joins the heap and beap quick builds, because `HeapPiv` is `PartPivot`
+minus `piv_last` and `BeapPiv` is `HeapPiv` minus `piv_ninther`. To keep it out
+of one, add a `-` term for `piv_penultimate` to that role's `role` line.
 
 You wrote one struct and five lines of spec; the compiler produced dozens of new
 catalog entries, each with correct inherited Big-O. If you *didn't* want it in some

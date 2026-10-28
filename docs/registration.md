@@ -39,7 +39,8 @@ end
 | `component <name>` to `end` | one component; the name is unique across the whole workspace |
 | `type <expr>` | the Rust type with a `{hole}` per slot; leaves have no holes |
 | `label <template>` | the human name, same templating; becomes `AlgorithmEntry.name` and the picker label |
-| `provides <Role> ...` | the roles slots match against; a component may provide several |
+| `provides <Role> ...` | the base roles slots match against; a component may provide several |
+| `role <Name> = <term> ...` | between components, a derived role: terms are role or component names, applied left to right, `\|` adds a term's members and `-` removes them; see [Derived roles](#derived-roles) |
 | `uses <path> ...` | optional override of the derived imports, see [Imports](#imports) |
 | `slot <name> <Role>` | a type parameter filled by any component of that role; a query fills every slot |
 | `const <name> [values <v>...]` | a const generic, matched by name or position; the value list is the finite set a quantified hole ranges over, and a const without one takes only a literal |
@@ -83,11 +84,39 @@ Roles are strings, finer grained than Rust traits. A role names a population,
 so one trait is often sliced into several roles that queries can enumerate:
 `PartitionScheme` backs `PartScheme`, `PartitionKind`, `SelectPartition` and
 `HeapExtractPart`. A Rust type is declared once, and its `provides` line lists
-every role it fills: `FirstElement` is one component that provides `PartPivot`,
-`HeapPiv` and `BeapPiv`. Two components share a type only when the spec data
-differs, such as a label or the role of a slot. Slots bind by role, and rustc type
-checks the emitted composition, so a role that admits a wrong type is caught
-at compile time rather than at run time.
+every base role it fills: `FirstElement` is one component that provides
+`PartPivot`, and it joins `HeapPiv` and `BeapPiv` through their `role` lines. Two
+components share a type only when the spec data differs, such as a label or the
+role of a slot. Slots bind by role, and rustc type checks the emitted
+composition, so a role that admits a wrong type is caught at compile time
+rather than at run time.
+
+### Derived roles
+
+A population that is another one with a few members removed or added is a
+`role` line between components, not a tag on every member:
+
+```text
+role HeapPiv         = PartPivot - piv_last
+role BeapPiv         = HeapPiv - piv_ninther
+role SelectPartition = HeapExtractPart | PartitionKind
+```
+
+A term is a role name or a component name. Terms apply left to right, `|` adds
+the term's members and `-` removes them, and a single term is an alias. A role
+is base or derived, never both: a base role appears on `provides` lines, and a
+derived role has exactly one `role` line in the whole workspace and never
+appears on a `provides` line. The line lives in the fragment of the family that
+consumes the role, next to the slot that names it, and may name the roles and
+components of any fragment, because the registry resolves every definition once
+all fragments are merged.
+
+`Registry::providing` answers for a derived role exactly as for a base one, so a
+slot, a hole, a refinement and a binding type take either. A new pivot that
+provides `PartPivot` joins `HeapPiv` and `BeapPiv` on its own, and a `-` term in
+that role's line keeps it out. A derived role is a list in one place, so the
+kind roles that every crate tags to join the catalog (`SmallSortKind`,
+`PartitionKind`, `MergeKind`, `Rotation`, `ScratchspaceKind`) stay base roles.
 
 ## The `.avbs` query
 
@@ -251,6 +280,8 @@ emits a body for it, so the row is the whole of the emitter's side.
 | build | duplicate component name across fragments | error naming both crates |
 | build | two components share a type head but import different paths | error naming both |
 | build | component with neither an owning crate nor `uses` | error naming the component |
+| build | a role on a `provides` line and also defined by a `role` line | error naming the role and a provider |
+| build | a derived role defined twice, an unknown term, a term that is both a role and a component, or a definition that reaches itself | error naming the role |
 | build | fragment declared but outside the closure | warning |
 | build | binding solves to zero rows | error |
 | build | cardinality bound unbounded or over budget | error with the count |
