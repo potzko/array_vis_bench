@@ -5,7 +5,7 @@
 //! [`repeated_name_errors`] backs the startup check that a name labels one entry.
 
 use crate::bench_registry::{AlgorithmEntry, ALGORITHMS};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 /// One filled generic slot of a variant's type: a humanized trait label
 /// (e.g. `"Pivot"`), the chosen value's head label (e.g. `"combined"`), and a
@@ -148,6 +148,230 @@ impl SortTree {
     fn push_entries(&self, out: &mut Vec<&'static AlgorithmEntry>) {
         self.children.iter().for_each(|(_, child)| child.push_entries(out));
         out.extend(self.leaves.iter().map(|&(_, entry)| entry));
+    }
+}
+
+/// One axis fixed on the way to a leaf: the axis `path`, its display `role`
+/// and the chosen `value`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Pick {
+    pub path: String,
+    pub role: String,
+    pub value: String,
+}
+
+/// The axes fixed so far, in the order they were picked.
+pub type Chosen = Vec<Pick>;
+
+/// One choice the picker offers: a branch narrowing the candidates, or an
+/// entry to select.
+pub enum Choice<'a> {
+    Branch { label: String, cands: Vec<&'a VariantDesc>, depth: usize, chosen: Chosen },
+    Leaf(&'a VariantDesc),
+}
+
+/// One step of the picker over its candidates: the choices to offer and what
+/// the breadcrumb needs, the axis in focus as `(path, role)`, every other
+/// unfixed axis as a `(path, role)` hole, and the label template when every
+/// candidate shares one.
+pub struct Step<'a> {
+    pub choices: Vec<Choice<'a>>,
+    pub axis: Option<(String, String)>,
+    pub pending: Vec<(String, String)>,
+    pub label_template: Option<&'a str>,
+}
+
+/// The picker's step function. `depth` is how many menu segments are consumed.
+/// While a candidate still has a segment at `depth` this is structural
+/// navigation, one branch per distinct segment. Past the menu it is faceted:
+/// one axis at a time, the next unfixed path in declaration order (the type's
+/// parameter order), never two axes in one list.
+pub fn step<'a>(cands: &[&'a VariantDesc], depth: usize, chosen: &Chosen) -> Step<'a> {
+    let mut cat_order: Vec<String> = Vec::new();
+    let mut cat_groups: HashMap<String, Vec<&VariantDesc>> = HashMap::new();
+    let mut faceted: Vec<&VariantDesc> = Vec::new();
+    for v in cands {
+        if v.category.len() > depth {
+            let key = v.category[depth].clone();
+            if !cat_groups.contains_key(&key) { cat_order.push(key.clone()); }
+            cat_groups.entry(key).or_default().push(*v);
+        } else {
+            faceted.push(*v);
+        }
+    }
+    // An axis is fixed once its path has been chosen, keyed on path, not role,
+    // so a composite's sub slots (`pivot/a`, `pivot/b`) stay distinct even
+    // though they share the role `PivotSingle`.
+    let chosen_paths: HashSet<&str> = chosen.iter().map(|p| p.path.as_str()).collect();
+    let resolved = |v: &VariantDesc| v.axes.iter().all(|a| chosen_paths.contains(a.path.as_str()));
+    let mut now = Step { choices: Vec::new(), axis: None, pending: Vec::new(), label_template: None };
+
+    if !cat_groups.is_empty() {
+        for key in &cat_order {
+            let branch = Choice::Branch { label: key.clone(), cands: cat_groups[key].clone(), depth: depth + 1, chosen: chosen.clone() };
+            now.choices.push(branch);
+        }
+        now.choices.extend(faceted.iter().copied().filter(|v| resolved(v)).map(Choice::Leaf));
+        return now;
+    }
+    now.choices.extend(faceted.iter().copied().filter(|v| resolved(v)).map(Choice::Leaf));
+    let axis_vars: Vec<&VariantDesc> = faceted.iter().copied().filter(|v| !resolved(v)).collect();
+    let Some((path, role, val_order, val_groups)) = next_facet(&axis_vars, &chosen_paths) else { return now };
+    // Every still unfixed axis other than the one in focus, in pre order, shown
+    // as holes so the partial type names all remaining parameters.
+    for v in &axis_vars {
+        for a in &v.axes {
+            if !chosen_paths.contains(a.path.as_str()) && a.path != path && !now.pending.iter().any(|(p, _)| p == &a.path) {
+                now.pending.push((a.path.clone(), a.role.clone()));
+            }
+        }
+    }
+    // The typed label rendering only fits the flat top level (its `{Role}`
+    // holes do not nest); once navigation descends into a composite (a
+    // `<slot>/...` path) the breadcrumb falls back to the generic form.
+    let nested = path.contains('/') || chosen.iter().any(|p| p.path.contains('/'));
+    if !nested {
+        if let Some(first) = cands.first().and_then(|v| v.label_template.as_deref()) {
+            if cands.iter().all(|v| v.label_template.as_deref() == Some(first)) { now.label_template = Some(first); }
+        }
+    }
+    for val in &val_order {
+        let mut sub = chosen.clone();
+        sub.push(Pick { path: path.clone(), role: role.clone(), value: val.clone() });
+        now.choices.push(Choice::Branch { label: val.clone(), cands: val_groups[val].clone(), depth, chosen: sub });
+    }
+    now.axis = Some((path, role));
+    now
+}
+
+/// Every leaf the picker can reach from `cands`, walking every branch of every
+/// step, in the order the picker would list them.
+pub fn reachable<'a>(cands: &[&'a VariantDesc]) -> Vec<&'a str> {
+    let mut out = Vec::new();
+    walk(cands, 0, &Vec::new(), &mut out);
+    out
+}
+
+fn walk<'a>(cands: &[&'a VariantDesc], depth: usize, chosen: &Chosen, out: &mut Vec<&'a str>) {
+    for choice in step(cands, depth, chosen).choices {
+        match choice {
+            Choice::Branch { cands, depth, chosen, .. } => walk(&cands, depth, &chosen, out),
+            Choice::Leaf(v) => out.push(v.name.as_str()),
+        }
+    }
+}
+
+// The next faceted step among `axis_vars` (candidates past the menu with at
+// least one unfixed axis): the axis path to present, its display role, and the
+// distinct values in pre order with the candidates carrying each. `None` once
+// every axis is fixed.
+#[allow(clippy::type_complexity)]
+fn next_facet<'a>(
+    axis_vars: &[&'a VariantDesc],
+    chosen_paths: &HashSet<&str>,
+) -> Option<(String, String, Vec<String>, HashMap<String, Vec<&'a VariantDesc>>)> {
+    let path = choose_axis_path(axis_vars, chosen_paths)?;
+    let role = axis_vars
+        .iter()
+        .find_map(|v| v.axes.iter().find(|a| a.path == path).map(|a| a.role.clone()))
+        .unwrap_or_default();
+    let mut val_order: Vec<String> = Vec::new();
+    let mut val_groups: HashMap<String, Vec<&VariantDesc>> = HashMap::new();
+    for v in axis_vars {
+        if let Some(ab) = v.axes.iter().find(|a| a.path == path) {
+            if !val_groups.contains_key(&ab.value) { val_order.push(ab.value.clone()); }
+            val_groups.entry(ab.value.clone()).or_default().push(*v);
+        }
+    }
+    Some((path, role, val_order, val_groups))
+}
+
+// The next axis to present: the first unfixed path in pre order, the order
+// axes appear in each candidate's list, which mirrors the type's parameter
+// tree (`QuickSort<Partition, Pivot, SmallSort>`: partition, pivot, a
+// composite pivot's sub slots, small sort). A path present on every candidate
+// is preferred so the list never mixes axes only some candidates have, which
+// is also what defers a composite's sub slots (`pivot/a`) until its parent
+// (`pivot`) is fixed to that composite.
+fn choose_axis_path(axis_vars: &[&VariantDesc], chosen_paths: &HashSet<&str>) -> Option<String> {
+    let n = axis_vars.len();
+    let mut order: Vec<&str> = Vec::new();
+    let mut present: HashMap<&str, usize> = HashMap::new();
+    for v in axis_vars {
+        for a in &v.axes {
+            let path = a.path.as_str();
+            if !chosen_paths.contains(path) {
+                if !present.contains_key(path) { order.push(path); }
+                *present.entry(path).or_default() += 1;
+            }
+        }
+    }
+    order.iter().find(|p| present[**p] == n).or_else(|| order.first()).map(|p| p.to_string())
+}
+
+#[cfg(test)]
+mod picker_tests {
+    use super::*;
+
+    fn var(name: &str, axes: &[(&str, &str, &str)]) -> VariantDesc {
+        VariantDesc {
+            name: name.into(),
+            category: vec!["sorts".into(), "quick sorts".into()],
+            axes: axes
+                .iter()
+                .map(|(r, v, p)| AxisBinding { role: r.to_string(), value: v.to_string(), path: p.to_string() })
+                .collect(),
+            label_template: None,
+        }
+    }
+
+    /// The structural nav: a composite filler (`combined<a,b>`) is its own level,
+    /// then its sub slots `a` and `b` drill in, keyed on path, not role (both
+    /// sub slots share role `PivotSingle`).
+    #[test]
+    fn combined_pivot_is_its_own_level_then_a_then_b() {
+        let v1 = var("c1", &[
+            ("Partition", "dual", "partition"), ("Pivot", "combined", "pivot"),
+            ("PivotSingle", "first", "pivot/a"), ("PivotSingle", "first", "pivot/b"),
+            ("SmallSort", "s", "small_sort"),
+        ]);
+        let v2 = var("c2", &[
+            ("Partition", "dual", "partition"), ("Pivot", "combined", "pivot"),
+            ("PivotSingle", "middle", "pivot/a"), ("PivotSingle", "first", "pivot/b"),
+            ("SmallSort", "s", "small_sort"),
+        ]);
+        let vn = var("n", &[
+            ("Partition", "dual", "partition"), ("Pivot", "ninther", "pivot"),
+            ("SmallSort", "s", "small_sort"),
+        ]);
+        // After partition=dual, the pivot axis groups to {combined, ninther}: all
+        // combined pairs collapse under the one head `combined`.
+        let cands = [&v1, &v2, &vn];
+        let chosen: HashSet<&str> = ["partition"].into_iter().collect();
+        let (path, role, vals, groups) = next_facet(&cands, &chosen).unwrap();
+        assert_eq!((path.as_str(), role.as_str()), ("pivot", "Pivot"));
+        assert_eq!(vals, vec!["combined".to_string(), "ninther".to_string()]);
+        assert_eq!(groups["combined"].len(), 2);
+        // Descend into combined: the `a` sub slot is next, over {first, middle}.
+        let combined = [&v1, &v2];
+        let chosen2: HashSet<&str> = ["partition", "pivot"].into_iter().collect();
+        let (path_a, _r, vals_a, _g) = next_facet(&combined, &chosen2).unwrap();
+        assert_eq!(path_a, "pivot/a");
+        assert_eq!(vals_a, vec!["first".to_string(), "middle".to_string()]);
+    }
+
+    /// A single (leaf) pivot has no sub slots, so navigation goes straight from
+    /// `pivot` to `small_sort`; `pivot/a` never appears.
+    #[test]
+    fn leaf_pivot_skips_to_small_sort() {
+        let s = var("s", &[
+            ("Partition", "left-left", "partition"), ("Pivot", "first", "pivot"),
+            ("SmallSort", "size: 1", "small_sort"),
+        ]);
+        let cands = [&s];
+        let chosen: HashSet<&str> = ["partition", "pivot"].into_iter().collect();
+        let (path, _r, _v, _g) = next_facet(&cands, &chosen).unwrap();
+        assert_eq!(path, "small_sort");
     }
 }
 
