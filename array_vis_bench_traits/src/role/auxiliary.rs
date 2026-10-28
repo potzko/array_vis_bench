@@ -20,8 +20,8 @@ pub trait Auxiliary {
     const NAME: &'static str;
 
     /// Worst-case time of a merge backed by this auxiliary: `O(n)` when the
-    /// buffer can hold a run, `O(n²)` for the in-place (`scratch_size == 0`)
-    /// insertion fallback.
+    /// buffer can hold a run, `O(n log n)` for the in-place (`scratch_size == 0`)
+    /// rotation fallback.
     const MERGE_WORST: Complexity;
 
     /// Extra space the auxiliary reserves.

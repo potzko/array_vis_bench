@@ -1,6 +1,6 @@
 Merge	auxiliary<full>	1.0 1.0 1.0 1.0 true
 Merge	auxiliary<half>	1.0 1.0 1.0 1.0 true
-Merge	auxiliary<none>	2.0 1.0 2.0 0.0 true
+Merge	auxiliary<none>	1.1 1.0 1.1 0.0 true
 Merge	naive<auxiliary>	2.0 1.0 2.0 1.0 true
 Merge	naive<bridge>	2.0 1.0 2.0 1.0 true
 Merge	naive<contrev>	2.0 1.0 2.0 0.0 true
@@ -1547,9 +1547,9 @@ Sort	rotation merge sort<small: size: 2, merge: smaller-side<juggling>>	1.2 1.0 
 Sort	rotation merge sort<small: size: 2, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
-Sort	scratchspace-nightmare<full>	2.0 1.0 2.0 1.0 true
-Sort	scratchspace-nightmare<none>	2.0 1.0 2.0 1.0 true
-Sort	scratchspace-nightmare<sqrt>	2.0 1.0 2.0 1.0 true
+Sort	scratchspace-nightmare<full>	1.2 1.0 1.2 1.0 true
+Sort	scratchspace-nightmare<none>	1.2 1.0 1.2 1.0 true
+Sort	scratchspace-nightmare<sqrt>	1.2 1.0 1.2 1.0 true
 Sort	set quick heap sort<set<select<heap extract: binary<iterative>>>>	1.1 1.1 1.1 0.1 false
 Sort	set quick heap sort<set<select<heap extract: binary<recursive>>>>	1.1 1.1 1.1 0.1 false
 Sort	shaker sort	2.0 2.0 2.0 0.0 true

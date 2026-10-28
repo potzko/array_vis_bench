@@ -94,12 +94,12 @@ impl Auxiliary for HalfBuffer {
     }
 }
 
-/// No buffer: every merge is the bufferless rotation merge, `O(1)` space.
-/// The bufferless member of the axis.
+/// No buffer: every merge is the bufferless rotation merge, `O(n log n)` moves
+/// and `O(1)` space. The bufferless member of the axis.
 pub struct NoBuffer;
 impl Auxiliary for NoBuffer {
     const NAME: &'static str = "none";
-    const MERGE_WORST: Complexity = Complexity::N_SQUARED;
+    const MERGE_WORST: Complexity = Complexity::N_LOG_N;
     const MERGE_SPACE: Complexity = Complexity::CONST;
     fn scratch_size(_n: usize) -> usize {
         0

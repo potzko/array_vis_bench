@@ -165,10 +165,13 @@ impl<S: Scratchspace> ScratchspaceMergeSort<S> {
 }
 
 array_vis_bench_traits::direct_sort!(ScratchspaceMergeSort<S>; S: Scratchspace);
+// The zero aux backing merges every pass by rotation, `O(n log n)` per pass and
+// at most `log n` passes. A backing that buffers does better, so this is the
+// bound of the worst member.
 impl<S> HasTimeBounds for ScratchspaceMergeSort<S> {
-    const WORST: Complexity = Complexity::N_SQUARED;
+    const WORST: Complexity = Complexity::N_LOG_SQUARED;
     const BEST: Complexity = Complexity::N1; // already sorted → one run, no merges
-    const AVERAGE: Complexity = Complexity::N_SQUARED;
+    const AVERAGE: Complexity = Complexity::N_LOG_SQUARED;
 }
 impl<S> HasSpace for ScratchspaceMergeSort<S> {
     const SPACE: Complexity = Complexity::N1;
