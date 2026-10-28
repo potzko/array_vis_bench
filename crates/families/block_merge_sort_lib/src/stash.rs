@@ -131,52 +131,8 @@ fn copy_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use core::cmp::Ordering;
+    use crate::test_util::{junk, merged, pairs, sorted_run, Item, Rng};
     use sort_logger::NoOpLogger;
-
-    // Ordered by `key` alone; `tag` tells equal keys apart and names the junk.
-    #[derive(Clone, Copy, Debug)]
-    pub(crate) struct Item {
-        pub key: u32,
-        pub tag: u32,
-    }
-    impl PartialEq for Item {
-        fn eq(&self, other: &Self) -> bool { self.key == other.key }
-    }
-    impl Eq for Item {}
-    impl PartialOrd for Item {
-        fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
-    }
-    impl Ord for Item {
-        fn cmp(&self, other: &Self) -> Ordering { self.key.cmp(&other.key) }
-    }
-
-    pub(crate) struct Rng(pub u64);
-    impl Rng {
-        pub fn next(&mut self, m: usize) -> usize {
-            self.0 = self.0.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-            (self.0 >> 33) as usize % m
-        }
-    }
-
-    // `n` items with sorted random keys below `values`, tags from `tag0`.
-    pub(crate) fn sorted_run(rng: &mut Rng, n: usize, values: usize, tag0: u32) -> Vec<Item> {
-        let mut keys: Vec<u32> = (0..n).map(|_| rng.next(values) as u32).collect();
-        keys.sort();
-        keys.into_iter().zip(tag0..).map(|(key, tag)| Item { key, tag }).collect()
-    }
-
-    pub(crate) fn pairs(items: &[Item]) -> Vec<(u32, u32)> { items.iter().map(|x| (x.key, x.tag)).collect() }
-
-    // A then B, merged the stable way: a sort by key that keeps the tags in order.
-    fn merged(a: &[Item], b: &[Item]) -> Vec<(u32, u32)> {
-        let mut all: Vec<Item> = a.iter().chain(b).copied().collect();
-        all.sort_by_key(|x| x.key);
-        pairs(&all)
-    }
-
-    // Junk is tagged from 5000 so it is told from data, whose tags are below.
-    fn junk(n: usize) -> Vec<Item> { (0..n).map(|i| Item { key: 7, tag: 5000 + i as u32 }).collect() }
 
     #[test]
     fn every_stash_merges_stably() {
