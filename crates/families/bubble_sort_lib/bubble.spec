@@ -38,3 +38,4 @@ end
 
 # NonTrivialSmallSort components (same types quick uses as SmallSort, declared
 # here under the NonTrivialSmallSort role for odd-even's cutoff slot).
+role NonTrivialSmallSort = SmallSort - ss_size1

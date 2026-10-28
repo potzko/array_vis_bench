@@ -61,6 +61,10 @@ component pk_dual
 end
 
 # ════════════════════════ SLOTTED DRIVERS ════════════════════════════════
+# The cutoff sorts quick, merge and quick heap take: the small sort kind without
+# the extra insertion variants, which only the first class kind enumerates.
+role SmallSort = SmallSortKind - ss_insertion16 - ss_binary_insertion16 - ss_binary_insertion32
+
 # One `part` slot (the `PartitionKind` composite) + small sort. The pivot lives
 # inside `part`, so the label/picker nest it under the partition.
 component quick_sort

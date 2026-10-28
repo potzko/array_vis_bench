@@ -90,6 +90,7 @@ end
 # ════════════════════════ NON-TRIVIAL SMALL SORTS (curated 2) ════════════════
 # Used by stooge (bound SmallSort) and quick-surrender-optimised (bound
 # NonTrivialSmallSort) — both types impl the needed trait.
+role FunSmallSort = SmallSort - ss_size1 - ss_size2
 
 # ════════════════════════════ STOOGE (×2 small sorts) ════════════════════════
 component fs_stooge_sort

@@ -3,6 +3,6 @@
 component ss_network16
   type     Network16SmallSort
   label    network: 16
-  provides SmallSort NonTrivialSmallSort FunSmallSort SmallSortKind
+  provides SmallSortKind
   max_input 16
 end

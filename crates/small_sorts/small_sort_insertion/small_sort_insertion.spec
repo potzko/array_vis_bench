@@ -3,7 +3,7 @@
 component ss_insertion32
   type     InsertionSmallSort<LinearInsertion, 32>
   label    insertion: 32
-  provides SmallSort NonTrivialSmallSort FunSmallSort SmallSortKind
+  provides SmallSortKind
   max_input 32
 end
 
