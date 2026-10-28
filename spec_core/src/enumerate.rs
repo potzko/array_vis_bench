@@ -1,6 +1,8 @@
 //! Stage 0 (mode 2 only) — a program produces the spec trees. Bounded by
 //! literal nesting depth; role filtering guarantees only legal trees are built.
 
+use std::collections::HashSet;
+
 use crate::registry::{Component, ParamKind, Registry};
 use crate::spec::{Arg, SpecNode};
 
@@ -30,6 +32,75 @@ pub fn enumerate_finite(reg: &Registry, root_role: &str, max_depth: usize) -> Ve
         out.extend(enumerate_component_occurs(reg, comp, max_depth, &mut path));
     }
     out
+}
+
+/// Like [`enumerate`], but AFFINE: each component name appears at most once in a
+/// composition, across siblings as well as along a path. The population of a
+/// recursive role is finite because every nesting spends a name, so no cycle
+/// analysis is needed. The used set belongs to the subtree rooted at `root_role`,
+/// so it starts empty for each provider of it.
+pub fn enumerate_affine(reg: &Registry, root_role: &str, max_depth: usize) -> Vec<SpecNode> {
+    let mut out = Vec::new();
+    let mut used: HashSet<String> = HashSet::new();
+    for comp in reg.providing(root_role) {
+        walk_affine(reg, comp, max_depth, &mut used, &mut |node, _| out.push(node));
+    }
+    out
+}
+
+/// What to do with each finished subtree. It runs while the subtree's names are
+/// still in the used set, so the caller can go on filling its remaining slots
+/// against them; the names are popped when the walk backtracks.
+type Emit<'a> = &'a mut dyn FnMut(SpecNode, &mut HashSet<String>);
+
+fn walk_affine(
+    reg: &Registry,
+    comp: &Component,
+    depth: usize,
+    used: &mut HashSet<String>,
+    emit: Emit,
+) {
+    if !used.insert(comp.name.clone()) {
+        return;
+    }
+    let slots: Vec<(&str, &str)> = comp
+        .params
+        .iter()
+        .filter_map(|p| match &p.kind {
+            ParamKind::Type { role } => Some((p.name.as_str(), role.as_str())),
+            ParamKind::Const { .. } => None,
+        })
+        .collect();
+    if slots.is_empty() {
+        emit(SpecNode { name: comp.name.clone(), args: vec![] }, used);
+    } else if depth > 0 {
+        walk_slots(reg, comp, &slots, depth - 1, used, &mut Vec::new(), emit);
+    }
+    used.remove(&comp.name);
+}
+
+/// Fill `slots` left to right: each slot tries every provider of its role that
+/// the used set still allows, then the rest of the slots see what it spent.
+fn walk_slots(
+    reg: &Registry,
+    comp: &Component,
+    slots: &[(&str, &str)],
+    depth: usize,
+    used: &mut HashSet<String>,
+    filled: &mut Vec<Arg>,
+    emit: Emit,
+) {
+    let Some(((slot, role), rest)) = slots.split_first() else {
+        emit(SpecNode { name: comp.name.clone(), args: filled.clone() }, used);
+        return;
+    };
+    for child in reg.providing(role) {
+        walk_affine(reg, child, depth, used, &mut |value, used| {
+            filled.push(Arg::Slot { name: slot.to_string(), value });
+            walk_slots(reg, comp, rest, depth, used, filled, emit);
+            filled.pop();
+        });
+    }
 }
 
 /// [`enumerate_component`] threading the ancestor-component path; a child whose

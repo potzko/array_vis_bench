@@ -28,8 +28,9 @@
 
 use std::collections::{HashMap, HashSet};
 
+use crate::enumerate::{enumerate_affine, enumerate_finite};
 use crate::registry::{ParamKind, Registry};
-use crate::spec::{Binding, QArg, QValue, Quant, Query};
+use crate::spec::{Binding, QArg, QValue, Quant, Query, SpecNode};
 
 /// A saturating cardinality: a finite count, or `Huge` once a saturating add /
 /// multiply would overflow `u128` (i.e. "too large to bother counting — already
@@ -333,15 +334,29 @@ fn est_value(value: &QValue, role: &str, reg: &Registry, depth: usize, memo: &mu
         // directly for an exact, guaranteed-finite count — this is precisely what
         // lets a cyclic role graph pass the budget guard under `finite()`.
         QValue::Finite(inner) => match inner.as_ref() {
-            QValue::Hole(q) => {
-                let pop = Card::Finite(
-                    crate::enumerate::enumerate_finite(reg, role, depth).len() as u128,
-                );
-                Est { out: cap_quant(pop, *q), peak: pop }
-            }
+            QValue::Hole(q) => est_enumerated(enumerate_finite, *q, role, reg, depth),
+            _ => est_value(inner, role, reg, depth, memo),
+        },
+        // `affine(_)` is bounded too, each component name being spent once, so
+        // it counts exactly the same way.
+        QValue::Affine(inner) => match inner.as_ref() {
+            QValue::Hole(q) => est_enumerated(enumerate_affine, *q, role, reg, depth),
             _ => est_value(inner, role, reg, depth, memo),
         },
     }
+}
+
+/// A bare hole over a bounded strategy's population: the exact count of what
+/// `enumerator` builds, capped by the hole's quantifier.
+fn est_enumerated(
+    enumerator: fn(&Registry, &str, usize) -> Vec<SpecNode>,
+    quant: Quant,
+    role: &str,
+    reg: &Registry,
+    depth: usize,
+) -> Est {
+    let pop = Card::Finite(enumerator(reg, role, depth).len() as u128);
+    Est { out: cap_quant(pop, quant), peak: pop }
 }
 
 fn est_app(
@@ -699,5 +714,31 @@ end
         let mut sampled = q(6);
         sampled.take = Some(crate::spec::Take { n: 5, seed: 0 });
         assert!(check_size(&sampled, &reg, DEFAULT_MAX_GROUND).is_err());
+    }
+
+    /// `affine(_)` over the binary tree is exact and depth independent: only the
+    /// leaf survives, so even a depth where the bare hole overflows passes the
+    /// guard.
+    #[test]
+    fn affine_estimate_is_exact_and_depth_independent() {
+        let reg = tree();
+        let query = |depth: usize, value: QValue| Query {
+            depth,
+            take: None,
+            bindings: vec![Binding {
+                name: "t".into(),
+                role: "Tree".into(),
+                refinements: vec![],
+                value,
+            }],
+        };
+        let affine = || QValue::Affine(Box::new(QValue::Hole(Quant::Exhaustive)));
+        for depth in [4usize, 12, 40] {
+            let e = check_size(&query(depth, affine()), &reg, DEFAULT_MAX_GROUND).unwrap();
+            assert_eq!(fin(e.ground), 1, "depth {depth}");
+            assert_eq!(fin(e.peak), 1, "depth {depth}");
+        }
+        let bare = query(12, QValue::Hole(Quant::Exhaustive));
+        assert!(check_size(&bare, &reg, DEFAULT_MAX_GROUND).is_err());
     }
 }

@@ -609,31 +609,11 @@ fn lower_application(
     let head = it.next().ok_or("application needs a head")?.as_str().to_string();
     let gen = it.next();
 
-    // `finite( <value> )` — an enumeration-strategy BUILTIN (not a role wrapper nor
-    // a component): wraps its single argument in `QValue::Finite` (occurs-check
-    // enumeration, so a recursive role's population stays finite).
-    if head == "finite" {
-        let gen = gen.ok_or("`finite( … )` needs one argument")?;
-        let mut inner: Option<QValue> = None;
-        if let Some(arg_list) = gen.into_inner().next() {
-            for a in arg_list.into_inner() {
-                match a.as_rule() {
-                    Rule::value => {
-                        if inner.is_some() {
-                            return Err("`finite( … )` takes exactly one argument".into());
-                        }
-                        inner = Some(lower_value(a, reg, idx, wrappers)?);
-                    }
-                    other => {
-                        return Err(format!(
-                            "`finite( … )` takes a positional value, found {other:?}"
-                        ))
-                    }
-                }
-            }
-        }
-        let inner = inner.ok_or("`finite( … )` needs one argument")?;
-        return Ok(QValue::Finite(Box::new(inner)));
+    // `finite( <value> )` and `affine( <value> )` are enumeration-strategy BUILTINS
+    // (neither a role wrapper nor a component): each wraps its single argument in
+    // the strategy's `QValue`.
+    if matches!(head.as_str(), "finite" | "affine") {
+        return lower_strategy(&head, gen, reg, idx, wrappers);
     }
 
     let is_wrap = is_wrapper_name(wrappers, &head);
@@ -708,6 +688,36 @@ fn lower_application(
         out.push(QArg::Named { name: param.name.clone(), value: pval });
     }
     Ok(QValue::App { name: resolved, args: out })
+}
+
+/// Lower the arguments of an enumeration-strategy builtin `head( ... )` into its
+/// wrapper node. `finite` and `affine` take one positional value and nothing else.
+fn lower_strategy(
+    head: &str,
+    gen: Option<Pair<Rule>>,
+    reg: &Registry,
+    idx: &HashMap<String, String>,
+    wrappers: &[Wrapper],
+) -> Result<QValue, String> {
+    let gen = gen.ok_or_else(|| format!("`{head}( ... )` needs one argument"))?;
+    let mut inner: Option<QValue> = None;
+    for a in gen.into_inner().flat_map(|arg_list| arg_list.into_inner()) {
+        match a.as_rule() {
+            Rule::value if inner.is_some() => {
+                return Err(format!("`{head}( ... )` takes exactly one argument"))
+            }
+            Rule::value => inner = Some(lower_value(a, reg, idx, wrappers)?),
+            other => {
+                return Err(format!("`{head}( ... )` takes a positional value, found {other:?}"))
+            }
+        }
+    }
+    let inner = Box::new(inner.ok_or_else(|| format!("`{head}( ... )` needs one argument"))?);
+    match head {
+        "finite" => Ok(QValue::Finite(inner)),
+        "affine" => Ok(QValue::Affine(inner)),
+        other => Err(format!("`{other}` is not an enumeration strategy")),
+    }
 }
 
 // ── small pair helpers ──────────────────────────────────────────────────────
@@ -1276,6 +1286,137 @@ end
                 "finite() should be depth-independent (depth {d})"
             );
         }
+    }
+
+    // Two leaves under the binary recursive role: a component can appear twice in
+    // one composition (`Node<LeafA, LeafA>`) or once each (`Node<LeafA, LeafB>`).
+    const ACAT: &str = "\
+component leaf_a
+  type LeafA
+  provides R
+end
+component leaf_b
+  type LeafB
+  provides R
+end
+component node
+  type Node<{a}, {b}>
+  provides R
+  slot a R
+  slot b R
+end
+";
+
+    fn solve_exprs(src: &str, reg: &Registry) -> Vec<String> {
+        let qs = lower_program(src, reg).unwrap();
+        type_exprs(&solve(&qs[0], reg).unwrap(), reg)
+    }
+
+    #[test]
+    fn affine_lowers_to_an_affine_node() {
+        let reg = Registry::parse_fragment(RCAT, "probe").unwrap();
+        let qs = lower_program("X: R = affine(_)", &reg).unwrap();
+        assert_eq!(
+            qs[0].bindings[0].value,
+            QValue::Affine(Box::new(QValue::Hole(Quant::Exhaustive)))
+        );
+    }
+
+    /// `affine(_)` over a recursive role needs no cycle analysis: a component
+    /// used once cannot nest in itself. In `RCAT` the only composite is
+    /// `Node<Leaf, Leaf>`, which uses `Leaf` twice, so `Leaf` alone survives, and
+    /// at any depth, where the bare hole at depth 8 is refused as too large.
+    #[test]
+    fn affine_terminates_on_a_recursive_role_at_any_depth() {
+        let reg = Registry::parse_fragment(RCAT, "probe").unwrap();
+        for d in [4usize, 8, 20] {
+            let exprs = solve_exprs(&format!("depth {d}\nX: R = affine(_)"), &reg);
+            assert_eq!(exprs, vec!["Leaf".to_string()], "depth {d}");
+        }
+    }
+
+    /// Pairs are ordered and nothing repeats: `Node<LeafA, LeafB>` and
+    /// `Node<LeafB, LeafA>` both appear, `Node<LeafA, LeafA>` does not. The
+    /// second ordered pair proves the used set pops on backtrack, since `LeafA`
+    /// was used while the first pair was built.
+    #[test]
+    fn affine_keeps_ordered_pairs_and_drops_repeats() {
+        let reg = Registry::parse_fragment(ACAT, "probe").unwrap();
+        assert_eq!(
+            solve_exprs("X: R = affine(_)", &reg),
+            vec![
+                "LeafA".to_string(),
+                "LeafB".to_string(),
+                "Node<LeafA, LeafB>".to_string(),
+                "Node<LeafB, LeafA>".to_string(),
+            ]
+        );
+    }
+
+    /// `finite` keeps `Node<LeafA, LeafA>`, where the same leaf sits in two
+    /// sibling branches, and `affine` drops it. Every affine tree is also finite.
+    #[test]
+    fn affine_and_finite_differ_where_a_component_appears_twice() {
+        let reg = Registry::parse_fragment(ACAT, "probe").unwrap();
+        let finite = solve_exprs("X: R = finite(_)", &reg);
+        let affine = solve_exprs("X: R = affine(_)", &reg);
+        assert_eq!(finite.len(), 6);
+        assert_eq!(affine.len(), 4);
+        for repeat in ["Node<LeafA, LeafA>", "Node<LeafB, LeafB>"] {
+            assert!(finite.contains(&repeat.to_string()), "finite keeps {repeat}");
+            assert!(!affine.contains(&repeat.to_string()), "affine drops {repeat}");
+        }
+        assert!(affine.iter().all(|e| finite.contains(e)));
+    }
+
+    /// The same split on the engine fixture: `CombinedSelector` pairs two single
+    /// pivots. `finite` keeps all four, `affine` keeps the two ordered pairs of
+    /// distinct pivots, so 7 pivots become 5.
+    #[test]
+    fn affine_drops_a_repeated_pivot_in_a_real_catalog() {
+        let reg = fixture();
+        assert_eq!(solve_exprs("P: Pivot = finite(_)", &reg).len(), 7);
+        assert_eq!(
+            solve_exprs("P: Pivot = affine(_)", &reg),
+            vec![
+                "CombinedSelector<FirstElement, MiddleElement>".to_string(),
+                "CombinedSelector<MiddleElement, FirstElement>".to_string(),
+                "FirstElement".to_string(),
+                "MiddleElement".to_string(),
+                "NintherDualPivot".to_string(),
+            ]
+        );
+    }
+
+    /// The scope is the subtree under the wrapper: a pivot pinned outside it does
+    /// not count as used, so the hole may still pick it.
+    #[test]
+    fn affine_scope_is_the_subtree_under_the_wrapper() {
+        let reg = fixture();
+        let exprs = solve_exprs(
+            "P: Pivot = CombinedSelector<a = first_element, b = affine(_)>",
+            &reg,
+        );
+        assert!(exprs.contains(&"CombinedSelector<FirstElement, FirstElement>".to_string()));
+    }
+
+    #[test]
+    fn affine_takes_the_hole_quantifier() {
+        let reg = Registry::parse_fragment(ACAT, "probe").unwrap();
+        let all = solve_exprs("X: R = affine(_)", &reg);
+        let two = solve_exprs("X: R = affine(?2@1)", &reg);
+        assert_eq!(two.len(), 2);
+        assert!(two.iter().all(|e| all.contains(e)));
+    }
+
+    #[test]
+    fn affine_wraps_a_bare_hole_only() {
+        let reg = Registry::parse_fragment(RCAT, "probe").unwrap();
+        let qs = lower_program("X: R = affine(Node<_, _>)", &reg).unwrap();
+        let err = solve(&qs[0], &reg).unwrap_err();
+        assert!(err.contains("affine"), "got: {err}");
+        assert!(lower_program("X: R = affine()", &reg).is_err());
+        assert!(lower_program("X: R = affine(_, _)", &reg).is_err());
     }
 
     /// WORKS TODAY: a variable captured inside two different union branches and

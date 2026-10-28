@@ -19,7 +19,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::enumerate::{enumerate, enumerate_finite};
+use crate::enumerate::{enumerate, enumerate_affine, enumerate_finite};
 use crate::registry::{ParamKind, Registry};
 use crate::resolve::resolve;
 use crate::spec::{Arg, Binding, QArg, QValue, Quant, Query, Refinement, SpecNode};
@@ -180,7 +180,7 @@ fn collect_caps_value(v: &QValue, out: &mut HashSet<String>) {
             subtrahends.iter().for_each(|s| collect_caps_value(s, out));
         }
         QValue::Set(members) => members.iter().for_each(|m| collect_caps_value(m, out)),
-        QValue::Finite(inner) => collect_caps_value(inner, out),
+        QValue::Finite(inner) | QValue::Affine(inner) => collect_caps_value(inner, out),
         QValue::Hole(_) | QValue::Ident(_) | QValue::Const(_) => {}
     }
 }
@@ -261,7 +261,7 @@ fn check_order_value(
             }
             Ok(())
         }
-        QValue::Finite(inner) => check_order_value(inner, cvars, available),
+        QValue::Finite(inner) | QValue::Affine(inner) => check_order_value(inner, cvars, available),
     }
 }
 
@@ -313,20 +313,7 @@ fn eval_type(
 ) -> Result<Vec<(SpecNode, Caps)>, String> {
     match value {
         QValue::Hole(quant) => {
-            // Population = every legal ground tree of this role (depth-bounded),
-            // restricted to components that actually declare each refined param.
-            // A component without the refined slot is excluded here; the role
-            // check on the threaded value follows in `check_refinements`.
-            let mut pop: Vec<SpecNode> = enumerate(reg, role, depth)
-                .into_iter()
-                .filter(|node| local_refine_ok(node, refinements, reg))
-                .collect();
-            pop = dedup_canonical(pop, reg)?;
-            // A bare hole introduces no captures.
-            Ok(apply_quant(pop, *quant, role, reg, warnings)?
-                .into_iter()
-                .map(|n| (n, Caps::new()))
-                .collect())
+            eval_enumerated_hole(enumerate, *quant, role, refinements, reg, depth, warnings)
         }
         QValue::Ident(name) => match env.get(name) {
             Some(Bound::Type(node)) => Ok(vec![(node.clone(), Caps::new())]),
@@ -436,24 +423,64 @@ fn eval_type(
             // role yields a FINITE population (only infinite self-nesting dropped).
             // Wraps a bare hole — the case that unblocks a cyclic role graph.
             match inner.as_ref() {
-                QValue::Hole(quant) => {
-                    let mut pop: Vec<SpecNode> = enumerate_finite(reg, role, depth)
-                        .into_iter()
-                        .filter(|node| local_refine_ok(node, refinements, reg))
-                        .collect();
-                    pop = dedup_canonical(pop, reg)?;
-                    Ok(apply_quant(pop, *quant, role, reg, warnings)?
-                        .into_iter()
-                        .map(|n| (n, Caps::new()))
-                        .collect())
-                }
+                QValue::Hole(quant) => eval_enumerated_hole(
+                    enumerate_finite,
+                    *quant,
+                    role,
+                    refinements,
+                    reg,
+                    depth,
+                    warnings,
+                ),
                 _ => Err("finite( … ) currently wraps a bare hole `_` only".into()),
+            }
+        }
+        QValue::Affine(inner) => {
+            // affine(_) at role R: each component name at most once in the
+            // composition, scoped to the subtree this wrapper roots.
+            match inner.as_ref() {
+                QValue::Hole(quant) => eval_enumerated_hole(
+                    enumerate_affine,
+                    *quant,
+                    role,
+                    refinements,
+                    reg,
+                    depth,
+                    warnings,
+                ),
+                _ => Err("affine( ... ) wraps a bare hole `_` only".into()),
             }
         }
         QValue::Const(c) => {
             Err(format!("const literal `{c}` cannot be used where a type ({role}) is expected"))
         }
     }
+}
+
+/// A bare hole filled from `enumerator`'s population of `role` (the plain
+/// enumeration or a strategy such as the occurs check or affine), restricted to
+/// components that actually declare each refined param. A component without the
+/// refined slot is excluded here; the role check on the threaded value follows in
+/// `check_refinements`. Deduped on the canonical type, then cut by the hole's
+/// quantifier. A bare hole introduces no captures.
+fn eval_enumerated_hole(
+    enumerator: fn(&Registry, &str, usize) -> Vec<SpecNode>,
+    quant: Quant,
+    role: &str,
+    refinements: &[Refinement],
+    reg: &Registry,
+    depth: usize,
+    warnings: &mut Vec<String>,
+) -> Result<Vec<(SpecNode, Caps)>, String> {
+    let pop: Vec<SpecNode> = enumerator(reg, role, depth)
+        .into_iter()
+        .filter(|node| local_refine_ok(node, refinements, reg))
+        .collect();
+    let pop = dedup_canonical(pop, reg)?;
+    Ok(apply_quant(pop, quant, role, reg, warnings)?
+        .into_iter()
+        .map(|n| (n, Caps::new()))
+        .collect())
 }
 
 /// Build the ground trees of a component application, cross-producting over any
@@ -577,6 +604,9 @@ fn eval_const(
         }
         QValue::Finite { .. } => {
             Err("finite( … ) is only valid in type position, not for a const".into())
+        }
+        QValue::Affine { .. } => {
+            Err("affine( ... ) is only valid in type position, not for a const".into())
         }
     }
 }

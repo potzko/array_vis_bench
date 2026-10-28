@@ -225,6 +225,11 @@ pub enum QValue {
     /// cyclic role graph compiles instead of tripping the cardinality guard. AVBS
     /// pest frontend only. See the enumeration-strategies plan.
     Finite(Box<QValue>),
+    /// `affine( <hole> )` - enumerate the hole's role so that each component name
+    /// appears at most once in a composition. The used set is scoped to the
+    /// subtree the wrapper roots, and it makes a recursive role terminate with no
+    /// cycle analysis. Ordered pairs stay distinct. AVBS pest frontend only.
+    Affine(Box<QValue>),
 }
 
 /// One argument to a component application.
