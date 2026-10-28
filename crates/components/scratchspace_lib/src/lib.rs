@@ -478,4 +478,29 @@ mod tests {
             assert!(large.cmps < 40 * small.cmps, "comparisons {} -> {}", small.cmps, large.cmps);
         }
     }
+
+    fn nightmare_cost<S: Scratchspace>(n: usize) -> Tally {
+        let mut state: u64 = 0x5EED_0002;
+        let mut arr: Vec<usize> = (0..n)
+            .map(|_| {
+                state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                (state >> 33) as usize % (4 * n)
+            })
+            .collect();
+        let mut expected = arr.clone();
+        expected.sort();
+        let mut tally = Tally::default();
+        ScratchspaceMergeSort::<S>::sort(&mut arr, &mut tally);
+        assert_eq!(arr, expected);
+        tally
+    }
+
+    // Every pass merges with the bufferless rotation merge, so the sort costs
+    // n log^2 n moves: 16 times the input is about 36 times the moves, where
+    // a quadratic merge made it 256 times.
+    #[test]
+    fn nightmare_without_scratch_grows_below_quadratically() {
+        let (small, large) = (nightmare_cost::<NoScratch>(256), nightmare_cost::<NoScratch>(4096));
+        assert!(large.moves < 80 * small.moves, "moves {} -> {}", small.moves, large.moves);
+    }
 }

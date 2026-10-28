@@ -12,6 +12,8 @@ use array_vis_bench_traits::role::{Scratchspace, ScratchspaceRun};
 use array_vis_bench_traits::Complexity;
 use sort_logger::SortLogger;
 
+use crate::bufferless::bufferless_merge;
+
 // ── Workflow: a guided tour of every operation, each paired with its inverse ──
 
 /// acquire → park/place → block_swap → relocate → roll → release. Net identity.
@@ -152,8 +154,8 @@ fn relocations_body<S: Scratchspace, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 /// `scratchspace-nightmare`: repeatedly detect two adjacent ascending runs, park
 /// the left one, merge them, and move on — pass after pass — until one run spans
 /// the array. A real (stable) sort built entirely on the scratchspace: buffered
-/// merges when the aux fits, an `O(n²)` in-place merge when it doesn't (so the
-/// zero-aux backing is a genuine nightmare).
+/// merges when the aux fits, the bufferless rotation merge when it doesn't (so
+/// the zero-aux backing pays `O(n log n)` moves for every merge).
 pub struct ScratchspaceMergeSort<S>(PhantomData<S>);
 
 impl<S: Scratchspace> ScratchspaceMergeSort<S> {
@@ -214,7 +216,7 @@ fn run_end<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], start: usize, lo
 }
 
 /// Stably merge the sorted runs `arr[lo..mid]` and `arr[mid..hi]`, parking the
-/// left run when it fits, else an in-place insertion merge.
+/// left run when it fits, else with the bufferless rotation merge.
 fn merge_runs<S: Scratchspace, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
@@ -243,13 +245,6 @@ fn merge_runs<S: Scratchspace, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
             k += 1;
         }
     } else {
-        // zero/undersized aux → in-place stable insertion merge (the nightmare path)
-        for jj in mid..hi {
-            let mut kk = jj;
-            while kk > lo && log.cmp_lt(arr, kk, kk - 1) {
-                log.swap(arr, kk, kk - 1);
-                kk -= 1;
-            }
-        }
+        bufferless_merge(arr, lo, mid, hi, log);
     }
 }
