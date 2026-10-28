@@ -35,7 +35,8 @@ pub trait Auxiliary {
     /// Cells to carve out of the array itself for an `n`-element array: a buffer
     /// of distinct elements that the merge swaps its working values through, so
     /// the array stays whole. `0` for an external or absent buffer. The carved
-    /// cells are not part of `scratch_size`, nothing is allocated for them.
+    /// cells are not part of `scratch_size`, nothing is allocated for them, and a
+    /// backing offers an external buffer or a carved one, not both.
     fn internal_size(_n: usize) -> usize {
         0
     }

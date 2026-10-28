@@ -218,7 +218,8 @@ The bounds compose: the weaker of the keys and the buffer axes times `log n`, so
 **The ladder.** With fewer distinct elements than the keys and the buffer want, `settle` drops the
 buffer first, then cuts the key count down to what was found, and with fewer than four keeps none.
 Every fall is one `mark` that says what was found and what is kept, and every shape that asks for
-nothing has nothing to drop.
+nothing has nothing to drop. A fixed buffer that the blocks outgrow, `isqrt(n)` past 512 with keys,
+logs one mark too, since the block merges then rotate their local merges.
 
 **The region event.** `SortLog::Region { name, start, len, kind, held }` with `RegionKind` either
 `Buffer` or `Keys`, emitted by `hold_region` and `release_region`. The sort holds the keys and the
