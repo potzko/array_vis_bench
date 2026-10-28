@@ -2,7 +2,7 @@
 
 use crate::sub_image::{Framebuffer, SubImg};
 use crate::Visualizer;
-use sort_logger::SortLog;
+use sort_logger::{RegionKind, SortLog};
 use std::collections::BTreeMap;
 use std::hash::Hash;
 use std::io::Write;
@@ -57,6 +57,7 @@ const WHITE: [u8; 3] = [0xff, 0xff, 0xff];
 const BLACK: [u8; 3] = [0x00, 0x00, 0x00];
 const GREEN: [u8; 3] = [0x00, 0xa0, 0x60];
 const BLUE:  [u8; 3] = [0x00, 0x30, 0xff];
+const AMBER: [u8; 3] = [0xe0, 0x90, 0x00];
 
 fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
     let height = view.height / amount;
@@ -431,6 +432,15 @@ impl ArrStore {
                         a.mark_color(ind_b + off);
                     }
                 }
+                SortLog::Region { name, start, len, kind, held } => {
+                    if let Some((a, off)) = self.lookup_mut(*name) {
+                        let end = (start + off + len).min(a.arr.len());
+                        for i in start + off..end {
+                            a.shade[i] = held.then_some(*kind);
+                            a.mark_dirty(i);
+                        }
+                    }
+                }
                 _ => {}
             }
         }
@@ -464,6 +474,9 @@ struct ArrActions {
     /// flag for `color_indices`.
     color: Vec<bool>,
     color_indices: Vec<usize>,
+    /// Per-index region the bar belongs to while one is held: the buffer or the
+    /// key region of the sort, painted in a shade of its own.
+    shade: Vec<Option<RegionKind>>,
     /// Indices that were colored last frame — re-marked dirty so the
     /// transition back to uncoloured is repainted.
     prev_color_indices: Vec<usize>,
@@ -490,6 +503,8 @@ struct ArrActions {
     /// exactly `y`; prefix sum gives "bars covering row y".
     diff_total: Vec<u32>,
     diff_colored: Vec<u32>,
+    diff_buffer: Vec<u32>,
+    diff_keys: Vec<u32>,
 
     view: SubImg,
     name: usize,
@@ -509,6 +524,7 @@ impl ArrActions {
             arr,
             color: vec![false; len],
             color_indices: Vec::new(),
+            shade: vec![None; len],
             prev_color_indices: Vec::new(),
             dirty: Vec::new(),
             dirty_flag: vec![false; len],
@@ -520,6 +536,8 @@ impl ArrActions {
             dirty_col_flag: Vec::new(),
             diff_total: Vec::new(),
             diff_colored: Vec::new(),
+            diff_buffer: Vec::new(),
+            diff_keys: Vec::new(),
             view: SubImg { x: 0, y: 0, width: 0, height: 0 },
             name,
             max,
@@ -545,6 +563,8 @@ impl ArrActions {
         // Per-row scratch buffers.
         self.diff_total = vec![0u32; big_h + 1];
         self.diff_colored = vec![0u32; big_h + 1];
+        self.diff_buffer = vec![0u32; big_h + 1];
+        self.diff_keys = vec![0u32; big_h + 1];
 
         // Per-index buffers.
         self.index_pixels_start = vec![0u32; n];
@@ -703,6 +723,8 @@ impl ArrActions {
         let h_plus_1 = (h + 1) as usize;
         self.diff_total[..h_plus_1].fill(0);
         self.diff_colored[..h_plus_1].fill(0);
+        self.diff_buffer[..h_plus_1].fill(0);
+        self.diff_keys[..h_plus_1].fill(0);
 
         // For each bar in this column, mark its top row in the diff buffers.
         // Walking diff_total down the column gives the running cover-count.
@@ -715,27 +737,108 @@ impl ArrActions {
                     self.diff_total[top_row] += 1;
                     if self.color[i] {
                         self.diff_colored[top_row] += 1;
+                    } else {
+                        match self.shade[i] {
+                            Some(RegionKind::Buffer) => self.diff_buffer[top_row] += 1,
+                            Some(RegionKind::Keys) => self.diff_keys[top_row] += 1,
+                            None => {}
+                        }
                     }
                 }
             }
         }
 
         // Walk rows top to bottom, blending each pixel from the running counts.
-        // Pixel = (white_count * WHITE + colored_count * GREEN) / k.
+        // Pixel = (white_count * WHITE + colored_count * GREEN + buffer_count *
+        // BLUE + keys_count * AMBER) / k. A compared bar is green even inside a region.
         let k_u32 = k as u32;
-        let mut total: u32 = 0;
-        let mut colored: u32 = 0;
+        let (mut total, mut colored, mut buffer, mut keys) = (0u32, 0u32, 0u32, 0u32);
         for y in 0..h as usize {
             total += self.diff_total[y];
             colored += self.diff_colored[y];
-            let white = total - colored;
-            let r = (WHITE[0] as u32 * white + GREEN[0] as u32 * colored) / k_u32;
-            let g = (WHITE[1] as u32 * white + GREEN[1] as u32 * colored) / k_u32;
-            let b = (WHITE[2] as u32 * white + GREEN[2] as u32 * colored) / k_u32;
+            buffer += self.diff_buffer[y];
+            keys += self.diff_keys[y];
+            let white = total - colored - buffer - keys;
+            let blend = |c: usize| {
+                (WHITE[c] as u32 * white + GREEN[c] as u32 * colored + BLUE[c] as u32 * buffer + AMBER[c] as u32 * keys) / k_u32
+            };
+            let (r, g, b) = (blend(0), blend(1), blend(2));
             let off = off_base + y * stride;
             fb.data[off] = r as u8;
             fb.data[off + 1] = g as u8;
             fb.data[off + 2] = b as u8;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sort_logger::RegionKind;
+
+    // Eight equal bars in an 8 by 8 view: every index is one full height pixel
+    // column, so a column's colour is that of its bar.
+    fn eight_bars() -> (ArrStore, Framebuffer) {
+        let view = SubImg { x: 0, y: 0, width: 8, height: 8 };
+        let mut store = ArrStore::new();
+        store.insert(ArrActions::new(vec![4; 8], view, 0x1000, 4.0));
+        let mut fb = Framebuffer::new(8, 8);
+        store.arrs.values_mut().for_each(|a| a.force_full_redraw(&mut fb));
+        (store, fb)
+    }
+
+    fn pixel(fb: &Framebuffer, x: u32, y: u32) -> [u8; 3] {
+        let at = ((y * fb.width + x) * 3) as usize;
+        [fb.data[at], fb.data[at + 1], fb.data[at + 2]]
+    }
+
+    fn region(start: usize, len: usize, kind: RegionKind, held: bool) -> SortLog<usize> {
+        SortLog::Region { name: 0x1000, start, len, kind, held }
+    }
+
+    #[test]
+    fn a_held_region_is_shaded_until_it_is_released() {
+        let (mut store, mut fb) = eight_bars();
+        assert_eq!(pixel(&fb, 3, 7), WHITE);
+        store.update(&[region(2, 3, RegionKind::Buffer, true)], &mut fb);
+        assert_eq!(pixel(&fb, 1, 7), WHITE);
+        assert!((2..5).all(|x| pixel(&fb, x, 7) == BLUE), "the region is not shaded");
+        assert_eq!(pixel(&fb, 5, 7), WHITE);
+        store.update(&[region(2, 3, RegionKind::Buffer, false)], &mut fb);
+        assert!((0..8).all(|x| pixel(&fb, x, 7) == WHITE), "the release left a shade");
+    }
+
+    #[test]
+    fn the_key_region_has_a_shade_of_its_own() {
+        let (mut store, mut fb) = eight_bars();
+        store.update(&[region(0, 2, RegionKind::Keys, true), region(2, 2, RegionKind::Buffer, true)], &mut fb);
+        assert_eq!(pixel(&fb, 0, 7), AMBER);
+        assert_eq!(pixel(&fb, 1, 7), AMBER);
+        assert_eq!(pixel(&fb, 2, 7), BLUE);
+        assert_ne!(AMBER, BLUE);
+    }
+
+    #[test]
+    fn a_compared_bar_in_a_region_still_shows_the_comparison() {
+        let (mut store, mut fb) = eight_bars();
+        store.update(&[region(0, 8, RegionKind::Buffer, true)], &mut fb);
+        let compare = SortLog::CmpInArr { name: 0x1000, ind_a: 1, ind_b: 2, result: true };
+        store.update(&[compare], &mut fb);
+        assert_eq!(pixel(&fb, 1, 7), GREEN);
+        assert_eq!(pixel(&fb, 2, 7), GREEN);
+        assert_eq!(pixel(&fb, 3, 7), BLUE);
+        // the next frame, with no comparison, is shaded again
+        store.update(&[], &mut fb);
+        assert_eq!(pixel(&fb, 1, 7), BLUE);
+    }
+
+    #[test]
+    fn a_region_reaches_the_array_it_names_by_address_and_clips_to_it() {
+        let (mut store, mut fb) = eight_bars();
+        // an event for the sub slice that starts at index 4 of the array
+        let tail = SortLog::Region { name: 0x1000 + 4 * 8, start: 1, len: 100, kind: RegionKind::Buffer, held: true };
+        store.update(&[tail], &mut fb);
+        assert_eq!(pixel(&fb, 4, 7), WHITE);
+        assert!((5..8).all(|x| pixel(&fb, x, 7) == BLUE));
     }
 }
