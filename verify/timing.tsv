@@ -3,7 +3,6 @@ auxiliary	2348
 auxiliary<full>	4915
 auxiliary<half>	3597
 auxiliary<none>	226484
-tree sort<avl>	116848
 bad heap sort alt	2053313
 beap sort<dir: max forward, build: iterative>	478273
 beap sort<dir: min reverse, build: iterative>	473498
@@ -1511,6 +1510,8 @@ three-way<median of 3>	9831
 three-way<median of medians>	9209
 three-way<middle>	9179
 three-way<ninther>	9146
+tree sort<avl>	116848
+tree sort<naive>	74923
 trinity	1378
 weak heap sort<dir: max forward, storage: bit storage>	77403
 weak heap sort<dir: max forward, storage: byte storage>	70974
