@@ -7,5 +7,17 @@
 # Side effect: the resulting binary is not portable to CPUs without the
 # features the build machine has. That's fine for a local benchmarking
 # / visualisation project.
+#
+# Every function and every loop header is aligned to 64 bytes. Without it
+# a relink, such as one more crate in the workspace, moves hot loops across
+# cache line boundaries and whole families change speed by up to a third
+# with their code untouched; `verify.sh` could not tell that from a
+# regression. Measured on the 256-ary heap sorts: two binaries that differed
+# by one unrelated crate ran them at 389us and 426us unaligned, and at 407us
+# both once aligned. The padding costs binary size, not speed.
 [build]
-rustflags = ["-C", "target-cpu=native"]
+rustflags = [
+  "-C", "target-cpu=native",
+  "-C", "llvm-args=-align-all-functions=6",
+  "-C", "llvm-args=-align-all-nofallthru-blocks=6",
+]

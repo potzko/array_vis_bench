@@ -14,8 +14,8 @@
 #   catalog   the spec compiler's own tests and golden, then the emitted
 #             catalog's names and types against `verify/catalog.types`
 #   scripts   the unit tests of the comparison and plot scripts
-#   machine   the rustc version, target cpu and cpu model this machine's
-#             assembly and timing baselines were taken on
+#   machine   the rustc version, the rustc flags and the cpu model this
+#             machine's assembly and timing baselines were taken on
 #   asm       the six gate symbols of `compare_sorts` against `verify/asm/`
 #   perf      the `compare_sorts` gate over 61 paired runs, generic sorts
 #             within 1.05x of hand rolled ones
@@ -81,7 +81,7 @@ fi
 echo "== machine"
 {
   rustc -V
-  grep -o 'target-cpu=[a-z0-9-]*' .cargo/config.toml
+  grep -oE '"-C", "[^"]+"' .cargo/config.toml | tr -d '",' | tr '\n' ' '; echo
   lscpu | grep 'Model name' | sed 's/.*: *//'
 } >"$OUT/machine"
 bless_or_diff "toolchain and cpu stamp" "$BASE/machine" "$OUT/machine"

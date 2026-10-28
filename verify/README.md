@@ -7,12 +7,13 @@ the performance where they were.
 - `catalog.types`: every emitted entry's display name and concrete Rust type,
   the companion of `spec_catalog/catalog.golden`, which pins category, name
   and complexity but cannot see a swapped type.
-- `machine`: the rustc version, target cpu and cpu model the assembly and
-  timing baselines were taken on. The two comparisons below are skipped with
+- `machine`: the rustc version, the rustc flags from `.cargo/config.toml`
+  and the cpu model the assembly and timing baselines were taken on. The two comparisons below are skipped with
   a failure when it differs, because both are machine specific.
 - `asm/`: the normalised disassembly of the six `compare_sorts` gate symbols,
   three hand rolled sorts and the three generic ones they are measured
-  against, as `asm_text.sh` prints them.
+  against, as `asm_text.sh` prints them, with the alignment padding
+  stripped.
 - `timing.tsv`: the median run time of every entry at size 1000 over
   fifteen interleaved rounds, as `array_vis_bench --timing 1000 15 --out`
   writes it, under a `# n=1000 k=15` header that names that setup. Interleaving is what makes the medians stable: a burst of

@@ -4,7 +4,7 @@ push   r12
 push   rbx
 push   rax
 cmp    rsi,0x2
-jae    <+0x1a>
+jae    <+0x40>
 add    rsp,0x8
 pop    rbx
 pop    r12
@@ -17,7 +17,7 @@ lea    r15,[rsi*8+0x0]
 mov    rdi,r15
 call   QWORD PTR [rip+?]
 test   rax,rax
-je     <+0x6d>
+je     <+0xc0>
 mov    r14,rax
 mov    rdi,rax
 mov    rsi,r12
