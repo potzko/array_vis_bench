@@ -44,7 +44,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 
 ## Current catalog
 
-1581 entries are emitted from the build at the tip of this branch.
+1587 entries are emitted from the build at the tip of this branch.
 
 | family | entries | notes |
 |---|---|---|
@@ -61,6 +61,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 | bubble sorts | 6 | 3 base + 3 odd even |
 | comb sorts | 6 | 6 shrink ratios |
 | weak heap sorts | 4 | 2 directions x 2 bit storages |
+| block merge sorts | 6 | 3 buffers x 2 key shapes, the WikiSort and GrailSort shapes among them |
 | scratchspace nightmare sorts | 3 | 3 backings |
 | insertion sorts | 2 | linear and binary |
 | avl sort | 1 | the array as node store, one packed link word per node |
@@ -106,7 +107,7 @@ array_vis_bench_cli      the interactive picker, prompts and render call
 array_vis_bench_core     the ABI: AlgorithmEntry, ALGORITHMS, inputs, per kind
                          run drivers and correctness batteries, Main consumers
 array_vis_bench_traits   role traits (PartitionScheme, PivotSelector, SmallSort,
-                         Rotation, QuickSelect, Auxiliary, Scratchspace), the
+                         Rotation, QuickSelect, Auxiliary, Keys, Scratchspace), the
                          composable annotations and the Complexity algebra
 array_vis_bench_min      minimal link root demo
 sort_logger              SortLog<T> events, SortLogger<T> trait, NoOpLogger,

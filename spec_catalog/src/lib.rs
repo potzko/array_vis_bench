@@ -111,6 +111,7 @@ mod tests {
         assert_eq!(COUNT_QUICK, 408, "quick family (2 × [5×5 single + 26 dual] partitions × 4 small)");
         assert_eq!(COUNT_CYCLE, 1, "cycle family");
         assert_eq!(COUNT_AVL, 1, "avl family");
+        assert_eq!(COUNT_BLOCK_MERGE, 6, "block merge family (3 buffers x 2 key shapes)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
         assert_eq!(COUNT_ROD, 12, "rod family (6 branching x 2 merge)");
@@ -140,8 +141,8 @@ mod tests {
         // asserted in each kind's test module via a category filter.
         assert_eq!(
             COUNT_TOTAL,
-            COUNT_SHELL + COUNT_INSERTION + COUNT_QUICK + COUNT_CYCLE + COUNT_AVL + COUNT_BUBBLE
-                + COUNT_COMB
+            COUNT_SHELL + COUNT_INSERTION + COUNT_QUICK + COUNT_CYCLE + COUNT_AVL + COUNT_BLOCK_MERGE
+                + COUNT_BUBBLE + COUNT_COMB
                 + COUNT_ROD + COUNT_CIRCLE + COUNT_MERGE + COUNT_HEAP + COUNT_WEAK + COUNT_BEAP
                 + COUNT_QUICK_HEAP + COUNT_QUICK_SELECT + COUNT_FUN_SORTS + COUNT_SCRATCHSPACE
                 + COUNT_KINDS,
@@ -206,7 +207,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 1581, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 1587, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -655,6 +656,88 @@ mod tests {
             let v = variants.iter().find(|v| v.name == "avl sort").expect("registered");
             assert_eq!(v.category, vec!["sorts", "avl sorts"], "got {:?}", v.category);
             assert!(v.axes.is_empty(), "no axes, got {:?}", v.axes);
+        }
+    }
+
+    // The block merge sorts: the WikiSort and GrailSort shapes among six buffer and keys compositions.
+    mod block_merge {
+        use super::*;
+        use block_merge_sort_lib::BlockMergeSort;
+        use scratchspace_lib::{FixedBuffer, InArrayBuffer, InArrayKeys, NoBuffer, NoKeys};
+
+        fn entries() -> Vec<&'static AlgorithmEntry> {
+            ALGORITHMS.iter().filter(|e| e.name.starts_with("block sort<")).collect()
+        }
+
+        fn find(name: &str) -> &'static AlgorithmEntry {
+            entries().into_iter().find(|e| e.name == name).unwrap_or_else(|| panic!("no entry {name}"))
+        }
+
+        #[test]
+        fn emits_three_buffers_by_two_key_shapes_that_run() {
+            let es = entries();
+            assert_eq!(es.len(), COUNT_BLOCK_MERGE, "count drifted");
+            assert_eq!(COUNT_BLOCK_MERGE, 6);
+            let cfg = RunConfig { size: 64, seed: 1 };
+            for e in &es {
+                assert_eq!(e.category, Category::Sort);
+                assert!(e.stable, "{} is stable", e.name);
+                (e.run_with_input)(primary_input(Category::Sort), &cfg, &mut NoOpLogger);
+                (e.run_correctness)();
+            }
+        }
+
+        #[test]
+        fn wiki_sort_and_grail_sort_are_among_the_entries() {
+            let mut names: Vec<&str> = entries().iter().map(|e| e.name).collect();
+            names.sort();
+            assert_eq!(
+                names,
+                [
+                    "block sort<buffer: fixed 512, keys: in array>",
+                    "block sort<buffer: fixed 512, keys: none>",
+                    "block sort<buffer: in array, keys: in array>",
+                    "block sort<buffer: in array, keys: none>",
+                    "block sort<buffer: none, keys: in array>",
+                    "block sort<buffer: none, keys: none>",
+                ]
+            );
+        }
+
+        #[test]
+        fn inherited_complexity_matches_the_concrete_types() {
+            let wiki = find("block sort<buffer: in array, keys: in array>");
+            type Wiki = BlockMergeSort<InArrayBuffer, InArrayKeys>;
+            assert_eq!(wiki.worst, <Wiki as HasTimeBounds>::WORST);
+            assert_eq!(wiki.best, <Wiki as HasTimeBounds>::BEST);
+            assert_eq!(wiki.space, <Wiki as HasSpace>::SPACE);
+            assert_eq!(wiki.stable, <Wiki as HasStability>::STABLE);
+            assert!(wiki.adaptive);
+            let grail = find("block sort<buffer: fixed 512, keys: in array>");
+            assert_eq!(grail.worst, <BlockMergeSort<FixedBuffer, InArrayKeys> as HasTimeBounds>::WORST);
+            assert_eq!(grail.space, <BlockMergeSort<FixedBuffer, InArrayKeys> as HasSpace>::SPACE);
+            let bare = find("block sort<buffer: none, keys: none>");
+            assert_eq!(bare.worst, <BlockMergeSort<NoBuffer, NoKeys> as HasTimeBounds>::WORST);
+        }
+
+        #[test]
+        fn registered_under_merge_sorts_with_a_buffer_and_a_keys_facet() {
+            let v = navigation::variants();
+            let one = v.iter().find(|v| v.name.starts_with("block sort<")).expect("registered");
+            assert_eq!(one.category, vec!["sorts", "merge sorts", "block"], "got {:?}", one.category);
+            let roles: Vec<&str> = one.axes.iter().map(|a| a.role.as_str()).collect();
+            assert!(roles.contains(&"BlockBuffer") && roles.contains(&"Keys"), "{roles:?}");
+        }
+
+        /// The buffer fillers are not `Auxiliary` ones, so they add no `auxiliary<...>` merge kind.
+        #[test]
+        fn the_buffers_add_no_merge_kinds() {
+            let merge_kinds: Vec<&str> = ALGORITHMS
+                .iter()
+                .filter(|e| e.category == Category::Merge && e.name.starts_with("auxiliary<"))
+                .map(|e| e.name)
+                .collect();
+            assert_eq!(merge_kinds.len(), 3, "{merge_kinds:?}");
         }
     }
 

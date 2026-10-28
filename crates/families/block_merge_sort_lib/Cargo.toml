@@ -14,3 +14,9 @@ array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 sort_logger = { path = "../../../sort_logger" }
 scratchspace_lib = { path = "../../components/scratchspace_lib" }
 rotation_reversal = { path = "../../rotations/rotation_reversal" }
+
+# Catalog fragment and query, owned by this crate and gathered by
+# `spec_catalog` through the dependency graph.
+[package.metadata.array_vis_bench]
+spec  = "block_merge.spec"
+query = "block_merge.avbs"

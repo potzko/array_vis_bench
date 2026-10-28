@@ -579,7 +579,8 @@ Every method is generic over `<T: Ord + Copy, U: ?Sized + SortLogger<T>>`.
 | `DirectSort` | `fn sort(arr, logger)` | Sort a whole array; every driver type joins it with one `direct_sort!` line forwarding to its inherent `sort`. |
 | `RotationMerge` | `fn scratch_size(n)`, `fn merge(arr, mid, scratch, logger)` | Merge two adjacent sorted runs in place using a rotation. |
 | `Scratchspace` | `const NAME`, `fn aux_size(n)`, `acquire`/`release`/`park`/`place`/`block_swap`/`relocate`/`roll` | Bounded-buffer contract for block-merge sorts (WikiSort/GrailSort). |
-| `Auxiliary` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn scratch_size(n)` | How much scratch a merge is handed (-> in-place vs buffered). |
+| `Auxiliary` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn scratch_size(n)`, `fn internal_size(n)` | How much scratch a merge is handed (-> in-place vs buffered), external and carved from the array. |
+| `Keys` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn key_count(blocks)`, `extract`/`tag_block`/`find_block`/`restore` | The key region that tags the blocks of a block merge (the movement imitation buffer). |
 
 ### 6.2 Annotation traits , the Big-O that composes itself
 

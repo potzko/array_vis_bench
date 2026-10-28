@@ -259,6 +259,12 @@ Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-r
 Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
 Sort	beap sort<dir: max forward, build: iterative>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
 Sort	beap sort<dir: min reverse, build: iterative>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	block sort<buffer: fixed 512, keys: in array>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: fixed 512, keys: none>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array, keys: in array>	1.1 1.0 1.1 0.0 true
+Sort	block sort<buffer: in array, keys: none>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: none, keys: in array>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: none, keys: none>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up merge sort<small: insertion: 32, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
 Sort	bottom-up merge sort<small: insertion: 32, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
 Sort	bottom-up merge sort<small: insertion: 32, pp=true, ee=false>	1.1 1.1 1.1 1.0 true

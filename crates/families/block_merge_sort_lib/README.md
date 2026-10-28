@@ -16,3 +16,8 @@ WikiSort, the fixed buffer with in array keys is GrailSort with a buffer.
 When the array has too few distinct elements for the buffer or the keys the
 sort falls down the ladder (buffer dropped, key count cut, keys dropped,
 rotation merges only) and logs each fall with a `mark`.
+
+Its catalog component is declared in `block_merge.spec`, the buffer and keys fillers in
+`scratchspace_lib`'s fragment.
+
+Query `block_merge.avbs` builds: `BlockMergeSorts`, six entries.

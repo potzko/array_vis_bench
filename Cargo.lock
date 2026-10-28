@@ -797,6 +797,7 @@ dependencies = [
  "array_vis_bench_traits",
  "avl_sort_lib",
  "beap_sort_lib",
+ "block_merge_sort_lib",
  "bubble_sort_lib",
  "cargo_metadata",
  "circle_sort_lib",

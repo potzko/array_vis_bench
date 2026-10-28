@@ -46,7 +46,8 @@ All live in `array_vis_bench_traits/src/role/`. Every method takes the
 | `QuickSelect` | `select(arr, logger, target)` | place the target order statistic |
 | `DirectSort` | `sort(arr, logger)` | sort a whole array; each driver type forwards to its inherent `sort` with `direct_sort!` |
 | `RotationMerge` | `scratch_size(n)`, `merge(arr, mid, scratch, logger)` | merge two adjacent sorted runs using a rotation |
-| `Auxiliary` | `NAME`, `MERGE_WORST`, `MERGE_SPACE`, `scratch_size(n)` | how much scratch a merge is handed |
+| `Auxiliary` | `NAME`, `MERGE_WORST`, `MERGE_SPACE`, `scratch_size(n)`, `internal_size(n)` | how much scratch a merge is handed, external and carved from the array |
+| `Keys` | `NAME`, `MERGE_WORST`, `MERGE_SPACE`, `key_count(blocks)`, `extract`, `tag_block`, `find_block`, `restore` | the key region that tags the blocks of a block merge, the movement imitation buffer |
 | `Scratchspace` | `NAME`, `aux_size(n)`, `acquire`, `release`, `park`, `place`, `block_swap`, `relocate`, `roll` | a bounded buffer contract whose operations all conserve the multiset |
 | `ScratchspaceRun` | `run(list, aux, logger)` | a scripted workflow over a `Scratchspace`, netting to identity |
 

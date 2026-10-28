@@ -96,3 +96,38 @@ component ss_nightmare
   menu     fun / scratchspace-nightmare
   slot     backing Scratchspace
 end
+
+# The slots of the block merge sort, declared in block_merge_sort_lib's fragment.
+# The buffer slot has its own role, `BlockBuffer`, so that these backings are
+# not also `Auxiliary` fillers of the `auxiliary<...>` merge kinds. `bb_none` is
+# `NoBuffer` again under that role, the bottom rung of the ladder.
+
+component bb_in_array
+  type     InArrayBuffer
+  label    in array
+  provides BlockBuffer
+end
+
+component bb_fixed
+  type     FixedBuffer
+  label    fixed 512
+  provides BlockBuffer
+end
+
+component bb_none
+  type     NoBuffer
+  label    none
+  provides BlockBuffer
+end
+
+component keys_in_array
+  type     InArrayKeys
+  label    in array
+  provides Keys
+end
+
+component keys_none
+  type     NoKeys
+  label    none
+  provides Keys
+end

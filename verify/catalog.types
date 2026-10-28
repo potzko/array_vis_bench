@@ -87,6 +87,12 @@
 "beap sort<dir: min reverse, build: iterative>"	BeapSortClassicOf<MinReverse, Iterative>
 "binary insertion: 16"	InsertionSmallSort<BinaryInsertion, 16>
 "binary insertion: 32"	InsertionSmallSort<BinaryInsertion, 32>
+"block sort<buffer: fixed 512, keys: in array>"	BlockMergeSort<FixedBuffer, InArrayKeys>
+"block sort<buffer: fixed 512, keys: none>"	BlockMergeSort<FixedBuffer, NoKeys>
+"block sort<buffer: in array, keys: in array>"	BlockMergeSort<InArrayBuffer, InArrayKeys>
+"block sort<buffer: in array, keys: none>"	BlockMergeSort<InArrayBuffer, NoKeys>
+"block sort<buffer: none, keys: in array>"	BlockMergeSort<NoBuffer, InArrayKeys>
+"block sort<buffer: none, keys: none>"	BlockMergeSort<NoBuffer, NoKeys>
 "block<first>"	Pivoted<Block, FirstElement>
 "block<last>"	Pivoted<Block, LastElement>
 "block<median of 3>"	Pivoted<Block, MedianOfThree>

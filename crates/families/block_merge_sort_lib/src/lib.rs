@@ -3,7 +3,8 @@
 //! scratch array. `sort` carves distinct elements out of the array, sorts the
 //! rest by merging runs with `roll_merge`, then sorts the carved elements back in.
 //! `stash` is where a local merge parks its left run and `rolling` is the block
-//! merge.
+//! merge. The family is declared in `block_merge.spec` and built by
+//! `block_merge.avbs`.
 
 use core::marker::PhantomData;
 
