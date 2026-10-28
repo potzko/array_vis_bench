@@ -1,8 +1,10 @@
 //! Test helpers shared by the module tests: `Item`, ordered by `key` alone so
-//! the `tag` shows which of several equal keys is which, a small generator and
-//! the run and comparison helpers.
+//! the `tag` shows which of several equal keys is which, a small generator, the
+//! run and comparison helpers, and two loggers that count and collect.
 
 use core::cmp::Ordering;
+
+use sort_logger::{SortLog, SortLogger};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Item {
@@ -46,3 +48,33 @@ pub fn merged(a: &[Item], b: &[Item]) -> Vec<(u32, u32)> {
 
 /// `n` cells of scratch, tagged from 5000 so they are told from data.
 pub fn junk(n: usize) -> Vec<Item> { (0..n).map(|i| Item { key: 7, tag: 5000 + i as u32 }).collect() }
+
+/// Counts the logged moves and comparisons, to read a growth rate off a run.
+#[derive(Default)]
+pub struct Tally {
+    pub moves: usize,
+    pub cmps: usize,
+}
+impl<T: Copy + Ord> SortLogger<T> for Tally {
+    fn log(&mut self, event: SortLog<T>) {
+        match event {
+            SortLog::Swap { .. } | SortLog::WriteInArr { .. } | SortLog::WriteData { .. } | SortLog::WriteDataU { .. } => {
+                self.moves += 1
+            }
+            SortLog::CmpInArr { .. }
+            | SortLog::CmpData { .. }
+            | SortLog::CmpDataU { .. }
+            | SortLog::CmpAcrossArrs { .. } => self.cmps += 1,
+            _ => {}
+        }
+    }
+}
+
+/// Keeps the marks and drops the rest.
+#[derive(Default)]
+pub struct Marks(pub Vec<String>);
+impl<T: Copy + Ord> SortLogger<T> for Marks {
+    fn log(&mut self, event: SortLog<T>) {
+        if let SortLog::Mark(text) = event { self.0.push(text) }
+    }
+}
