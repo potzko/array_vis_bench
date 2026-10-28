@@ -37,8 +37,11 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
 
 ## Open work, in rough priority
 
-1. Enumeration strategies. `finite` shipped; `affine`, `sample`, `spread`,
-   the bare `.` rest fill and the set operator polish are not started.
+1. Enumeration strategies. `finite`, `affine`, `sample` and `spread` shipped:
+   `finite` and `affine` wrap a bare hole, `sample` and `spread` wrap any
+   value in type position, and `seed = random` is seeded once per build from
+   the clock. The set operator polish (phase 4) and the bare `.` rest fill
+   are not started, and the grammar has no `.` token yet.
    See [implementation_plans/enumeration_strategies.md](implementation_plans/enumeration_strategies.md).
 2. Scratchspace, the remaining phases: the keys axis, a block merge sort
    family (WikiSort and GrailSort shapes), the buffer region logger event
@@ -166,9 +169,9 @@ slot, and the beap ninther dual selector has its own label.
 - A Rust type is one component. Its roles are the populations it joins.
 - Standard and deferred quicksort are two families differing only in driver
   and small sort role.
-- Enumeration strategy names are `finite` and `affine`; no seed means a
-  deterministic build, and `seed = random` is an explicit opt in whose tests
-  may pin counts but not identities.
+- Enumeration strategy names are `finite`, `affine`, `sample` and `spread`;
+  no seed means a deterministic build, and `seed = random` is an explicit opt
+  in whose tests may pin counts but not identities.
 - Per entry caps and the nondeterminism flag survive emission, as
   `max_input_size` and `nondeterministic` on the entry. A global test size
   over the whole registry runs exotic sorts out of memory.

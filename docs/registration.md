@@ -147,6 +147,9 @@ It is not emitted; later bindings in the same file use it by name.
 | `_ where (A | B | C)` | union of curated alternatives |
 | `value as x` | capture; a later `x` must resolve to the same filler |
 | `finite(_)` | exhaustive minus any tree in which a component nests inside itself |
+| `affine(_)` | exhaustive, each component used at most once in the subtree under the wrapper |
+| `sample(V, n = N)` | N random distinct variants of `V`; `seed = K` fixes the draw, `seed = random` redraws each build |
+| `spread(V, n = N)` | N variants evenly spaced through the list of `V`, with no randomness |
 | `[A, B]` | a list of bindings, for `List<...>` |
 | `depth N` | directive: bound the nesting depth of recursive roles |
 | `N of @seed` | directive: keep N whole results |
@@ -162,6 +165,31 @@ A role whose fillers contain a slot of the same role would unfold forever.
 role enumerates to a finite set. `depth N` is the backstop for deep but
 finite nesting. The cardinality pass refuses a query whose bound is unbounded
 or exceeds the budget before any enumeration runs.
+
+`affine(_)` bounds it another way. Each component name may appear once in the
+subtree under the wrapper, siblings included, so a recursive role terminates
+with no cycle analysis and a composition that repeats a component is dropped.
+`Combined<first, middle>` and `Combined<middle, first>` both stay, since pairs
+are ordered, and `Combined<first, first>` goes. A component pinned outside the
+wrapper does not count as used. `finite` and `affine` wrap a bare hole `_`, with
+its quantifier if it has one.
+
+### Cutting a family down
+
+`sample(V, n = N)` keeps N distinct variants of the family `V` stands for,
+drawn with the same seeded shuffle as a `?N` hole. Without a `seed` the draw is
+fixed, so a build is reproducible. `seed = K` picks another fixed draw.
+`seed = random` draws from one RNG that is seeded from the clock once per
+build, so the variants change from build to build while the count stays N. A
+test over a family that uses it may pin the count and never the variants.
+
+`spread(V, n = N)` keeps the variants at positions `i * len / n` of the
+family's list, which is the pre order walk of its trees, so they are evenly
+spaced and the same on every build.
+
+`n` is required for both. `V` is any value in type position, so
+`sample(finite(_), n = 8)` and `spread(_ - {X}, n = 4)` work. An `n` past the
+size of the family keeps all of it and warns.
 
 ## What the emit does per entry
 

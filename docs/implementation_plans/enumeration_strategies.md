@@ -2,8 +2,9 @@
 
 Status: PARTLY BUILT. Names and semantics locked 2026-06-17. `finite` shipped 2026-07-01
 (commit e6edd80, `enumerate_finite` in `spec_core/src/enumerate.rs`) and is load bearing in
-`quick_heap.avbs`. `affine`, `sample`, `spread`, the `.` rest fill sugar and the set operator
-polish are not started. This is a `spec_core` language extension, not a runtime feature.
+`quick_heap.avbs`. `affine`, `sample` and `spread` shipped 2026-10-28. The `.` rest fill sugar
+and the set operator polish are not started. This is a `spec_core` language extension, not a
+runtime feature.
 
 ## Problem
 
@@ -85,12 +86,14 @@ acyclic set without a graph module. Revisit only if `affine` needs shared infras
   `finite` and the enumerator disagree. Unit-test on a hand-built recursive fragment
   (`A` has slot of role `R`; `B: R` has slot of role `A`'s role → cycle).
 
-### Phase 1 — `affine` (self-terminating; no Phase 0 needed) NOT STARTED
+### Phase 1, `affine` (self-terminating, no Phase 0 needed) DONE 2026-10-28
 - `spec.rs`: add a strategy tag to `Query` (or a `QValue` wrapper).
 - `avbs.rs`: recognize `affine(<value>)` at lowering, set the tag.
 - `solve.rs` / `enumerate.rs`: thread a subtree-scoped `used: HashSet<canonical-component>`;
   prune already-used candidates; pop on backtrack.
 - **Risk: low.** Terminates because each component is used ≤ once.
+- Built as `QValue::Affine`, lowered like `Finite`, with `enumerate_affine` threading the
+  used set through siblings as well as ancestors. It wraps a bare hole `_` only, like `finite`.
 
 ### Phase 2 — `finite` DONE 2026-07-01
 - Uses Phase 0: at a `finite` family, the candidate set at each hole = providers-of-T MINUS
@@ -98,12 +101,16 @@ acyclic set without a graph module. Revisit only if `affine` needs shared infras
 - Keep the existing `depth N` directive as an optional backstop for deep-but-finite families.
 - **Risk: low once Phase 0 lands.**
 
-### Phase 3 — `sample` (optional seed) + `spread` NOT STARTED
+### Phase 3, `sample` (optional seed) + `spread` DONE 2026-10-28
 - `sample`: reuse `Take` distinct+dedup; seed optional → when `random`, draw from the global
   build RNG; when omitted, deterministic default seed.
 - `spread`: stratified pick across the variant tree (round-robin over pre-order DFS).
 - **Risk: low.** Wrinkle: `seed = random` ⇒ nondeterministic codegen for that family (count
   stable, identities vary; only fires on actual recompiles).
+- Built as `QValue::Sample` and `QValue::Spread`, lowered from the `n` and `seed` named
+  arguments of the application, over any value in type position. `seed = random` draws from
+  a `OnceLock` RNG in `solve.rs`, seeded once per process from the clock and the process id.
+  `spread` takes positions `i * len / n` of the deduped variant list.
 
 ### Phase 4 — set-op polish (lowest priority, partly exists) NOT STARTED
 - Bare `|` union in value position; splat `*TG`; xor / intersection. Small `.pest` additions +
