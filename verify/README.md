@@ -15,7 +15,7 @@ the performance where they were.
   against, as `asm_text.sh` prints them.
 - `timing.tsv`: the median run time of every entry at size 1000 over
   fifteen interleaved rounds, as `array_vis_bench --timing 1000 15 --out`
-  writes it. Interleaving is what makes the medians stable: a burst of
+  writes it, under a `# n=1000 k=15` header that names that setup. Interleaving is what makes the medians stable: a burst of
   machine load lands on different entries in different rounds.
 - `fingerprint.py`: produces `catalog.types` from the generated
   `catalog_entries.rs`.

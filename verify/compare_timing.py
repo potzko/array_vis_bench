@@ -1,6 +1,7 @@
 # Compare a timing archive against its baseline and fail on a regression.
 # `regressions` is the pure comparison over two name to nanoseconds maps;
-# `main` reads the two TSV files `--timing --out` writes and prints a report.
+# `main` reads the two TSV files `--timing --out` writes, skipping the `# n=
+# k=` header that names the setup, and prints a report.
 # A single entry regresses when it is slower by more than the entry
 # tolerance and by more than the floor, which keeps microsecond entries out
 # of the gate; the whole catalog regresses when the sum of the
@@ -24,7 +25,11 @@ class Report(NamedTuple):
 
 
 def read_archive(path: Path) -> dict[str, int]:
-    rows = (line.rstrip("\n").split("\t") for line in path.read_text().splitlines() if line.strip())
+    return parse_archive(path.read_text())
+
+
+def parse_archive(text: str) -> dict[str, int]:
+    rows = (line.split("\t") for line in text.splitlines() if line.strip() and not line.startswith("#"))
     return {name: int(ns) for name, ns in rows}
 
 

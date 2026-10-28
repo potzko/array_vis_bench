@@ -26,6 +26,9 @@ pub struct MainReport {
     /// The median run time of each algorithm a timing consumer ran, in the
     /// order it ran them. Empty for a consumer that does not time.
     pub timings: Vec<(&'static str, Duration)>,
+    /// The input size and run count the timings were taken at; `None` for a
+    /// consumer that does not time.
+    pub setup: Option<Benchmark>,
 }
 
 impl MainReport {
@@ -33,12 +36,14 @@ impl MainReport {
         self.failures.is_empty()
     }
 
-    /// The timings as a TSV archive, one `name<TAB>median nanoseconds` line per
-    /// timed entry, sorted by name so two archives diff cleanly.
+    /// The timings as a TSV archive: a `# n=N k=K` header naming the setup,
+    /// then one `name<TAB>median nanoseconds` line per timed entry, sorted by
+    /// name so two archives diff cleanly.
     pub fn timings_tsv(&self) -> String {
+        let header = self.setup.map(|b| format!("# n={} k={}\n", b.n, b.k)).unwrap_or_default();
         let mut rows: Vec<_> = self.timings.iter().map(|(name, d)| (*name, d.as_nanos())).collect();
         rows.sort();
-        rows.iter().map(|(name, ns)| format!("{name}\t{ns}\n")).collect()
+        header + &rows.iter().map(|(name, ns)| format!("{name}\t{ns}\n")).collect::<String>()
     }
 }
 
@@ -259,6 +264,7 @@ impl Main for Benchmark {
             ok: timed.len(),
             failures: failed.map(|(e, _)| e.name.to_string()).collect(),
             timings: timed.iter().map(|&(e, median)| (e.name, median)).collect(),
+            setup: Some(*self),
         };
         println!(
             "=== benchmark: n={}, k={k}, {} timed, {} skipped (cap < n) ===",
@@ -323,12 +329,13 @@ mod tests {
     static TOO_SMALL: AlgorithmEntry = entry("too small", Some(999));
 
     #[test]
-    fn timings_tsv_lists_each_entry_by_name_in_nanoseconds() {
+    fn timings_tsv_names_the_setup_then_each_entry_by_name_in_nanoseconds() {
         let report = MainReport {
             timings: vec![("zeta", Duration::from_micros(3)), ("alpha", Duration::from_nanos(1500))],
+            setup: Some(Benchmark { n: 1000, k: 15 }),
             ..Default::default()
         };
-        assert_eq!(report.timings_tsv(), "alpha\t1500\nzeta\t3000\n");
+        assert_eq!(report.timings_tsv(), "# n=1000 k=15\nalpha\t1500\nzeta\t3000\n");
     }
 
     #[test]

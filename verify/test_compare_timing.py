@@ -2,7 +2,12 @@
 # total gate and the bookkeeping of added and removed entries.
 import unittest
 
-from compare_timing import regressions
+from compare_timing import parse_archive, regressions
+
+
+class ParseArchiveTest(unittest.TestCase):
+    def test_the_setup_header_and_blank_lines_are_skipped(self) -> None:
+        self.assertEqual(parse_archive("# n=1000 k=15\na\t10\n\nb\t20\n"), {"a": 10, "b": 20})
 
 
 class RegressionsTest(unittest.TestCase):
