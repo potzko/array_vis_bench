@@ -185,7 +185,10 @@ pub struct Step<'a> {
 /// While a candidate still has a segment at `depth` this is structural
 /// navigation, one branch per distinct segment. Past the menu it is faceted:
 /// one axis at a time, the next unfixed path in declaration order (the type's
-/// parameter order), never two axes in one list.
+/// parameter order), never two axes in one list. Candidates with different
+/// heads branch by head first, because one axis list cannot hold two heads:
+/// the merge kinds share a menu, and the buffer axis of the auxiliary merges
+/// would hide the rotation merges, which have no such axis.
 pub fn step<'a>(cands: &[&'a VariantDesc], depth: usize, chosen: &Chosen) -> Step<'a> {
     let mut cat_order: Vec<String> = Vec::new();
     let mut cat_groups: HashMap<String, Vec<&VariantDesc>> = HashMap::new();
@@ -216,6 +219,13 @@ pub fn step<'a>(cands: &[&'a VariantDesc], depth: usize, chosen: &Chosen) -> Ste
     }
     now.choices.extend(faceted.iter().copied().filter(|v| resolved(v)).map(Choice::Leaf));
     let axis_vars: Vec<&VariantDesc> = faceted.iter().copied().filter(|v| !resolved(v)).collect();
+    let heads = head_groups(&axis_vars);
+    if heads.len() > 1 {
+        for (head, group) in heads {
+            now.choices.push(Choice::Branch { label: head, cands: group, depth, chosen: chosen.clone() });
+        }
+        return now;
+    }
     let Some((path, role, val_order, val_groups)) = next_facet(&axis_vars, &chosen_paths) else { return now };
     // Every still unfixed axis other than the one in focus, in pre order, shown
     // as holes so the partial type names all remaining parameters.
@@ -242,6 +252,24 @@ pub fn step<'a>(cands: &[&'a VariantDesc], depth: usize, chosen: &Chosen) -> Ste
     }
     now.axis = Some((path, role));
     now
+}
+
+// The candidates grouped by head, the text of the label template before its
+// `<`, in first appearance order. Candidates without a template form one group.
+fn head_groups<'a>(axis_vars: &[&'a VariantDesc]) -> Vec<(String, Vec<&'a VariantDesc>)> {
+    let head_of = |v: &VariantDesc| -> String {
+        let template = v.label_template.as_deref().unwrap_or_default();
+        template.split('<').next().unwrap_or(template).trim().to_string()
+    };
+    let mut groups: Vec<(String, Vec<&VariantDesc>)> = Vec::new();
+    for v in axis_vars {
+        let head = head_of(v);
+        match groups.iter_mut().find(|(h, _)| *h == head) {
+            Some((_, group)) => group.push(*v),
+            None => groups.push((head, vec![*v])),
+        }
+    }
+    groups
 }
 
 /// Every leaf the picker can reach from `cands`, walking every branch of every
@@ -358,6 +386,37 @@ mod picker_tests {
         let (path_a, _r, vals_a, _g) = next_facet(&combined, &chosen2).unwrap();
         assert_eq!(path_a, "pivot/a");
         assert_eq!(vals_a, vec!["first".to_string(), "middle".to_string()]);
+    }
+
+    fn kind(name: &str, template: &str, axis: (&str, &str, &str)) -> VariantDesc {
+        VariantDesc { category: vec!["merges".into()], label_template: Some(template.into()), ..var(name, &[axis]) }
+    }
+
+    /// Two heads under one menu with different axes, the shape of the merge
+    /// kinds: three auxiliary merges over a buffer and two rotation merges over
+    /// a rotation. Every one of them must be reachable, and the first choice is
+    /// the head, because one axis list cannot hold both.
+    #[test]
+    fn heads_with_different_axes_under_one_menu_are_all_reachable() {
+        let kinds = [
+            kind("auxiliary<full>", "auxiliary<{Auxiliary}>", ("Auxiliary", "full", "aux")),
+            kind("auxiliary<none>", "auxiliary<{Auxiliary}>", ("Auxiliary", "none", "aux")),
+            kind("naive<bridge>", "naive<{Rotation}>", ("Rotation", "bridge", "rot")),
+            kind("naive<drill>", "naive<{Rotation}>", ("Rotation", "drill", "rot")),
+            kind("smaller-side<drill>", "smaller-side<{Rotation}>", ("Rotation", "drill", "rot")),
+        ];
+        let cands: Vec<&VariantDesc> = kinds.iter().collect();
+        let mut reached = reachable(&cands);
+        reached.sort_unstable();
+        let mut names: Vec<&str> = kinds.iter().map(|k| k.name.as_str()).collect();
+        names.sort_unstable();
+        assert_eq!(reached, names);
+        let heads: Vec<String> = step(&cands, 1, &Vec::new())
+            .choices
+            .iter()
+            .map(|c| match c { Choice::Branch { label, .. } => label.clone(), Choice::Leaf(v) => v.name.clone() })
+            .collect();
+        assert_eq!(heads, ["auxiliary", "naive", "smaller-side"]);
     }
 
     /// A single (leaf) pivot has no sub slots, so navigation goes straight from

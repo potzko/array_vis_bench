@@ -217,6 +217,23 @@ mod tests {
 
     /// Every entry's navigation data is whole: a template, no empty menu segment,
     /// no empty axis field, and an axis with the role of each `{Role}` hole.
+    /// The picker reaches every entry exactly once. A family whose heads
+    /// share a menu but not an axis set, or whose axes hide behind another's,
+    /// shows up here as an entry no sequence of choices leads to.
+    #[test]
+    fn every_entry_is_reachable_through_the_picker() {
+        let all = navigation::variants();
+        let cands: Vec<&navigation::VariantDesc> = all.iter().collect();
+        let mut reached = navigation::reachable(&cands);
+        reached.sort_unstable();
+        let twice: Vec<_> = reached.windows(2).filter(|w| w[0] == w[1]).map(|w| w[0]).collect();
+        assert!(twice.is_empty(), "{} entries reached twice, first: {:?}", twice.len(), twice.first());
+        let missing: Vec<&str> =
+            all.iter().map(|v| v.name.as_str()).filter(|n| reached.binary_search(n).is_err()).collect();
+        assert!(missing.is_empty(), "{} entries the picker cannot reach, first: {:?}", missing.len(), missing.first());
+        assert_eq!(reached.len(), all.len());
+    }
+
     #[test]
     fn every_entry_carries_whole_navigation_data() {
         let holes = |template: &'static str| -> Vec<&'static str> {
