@@ -173,6 +173,7 @@ It is not emitted; later bindings in the same file use it by name.
 | `name = value` | fill a named slot |
 | `Head<a, b>` or `Head<x = a>` | a concrete application, positional or named |
 | `Head<x = a, .>` | a bare `.` as the last argument fills every param left unspecified with one pick each |
+| `Head<x = a, ..>` | a bare `..` as the last argument fills every param left unspecified with an exhaustive hole |
 | `A - {X, Y}` | set difference, matched on the resolved type string |
 | `_ where (A | B | C)` | union of curated alternatives |
 | `A \| B` | union of two families in value position, the same as `_ where (A \| B)`; `-` binds tighter, and a `where` alternative needs parentheses to hold one |
@@ -186,15 +187,19 @@ It is not emitted; later bindings in the same file use it by name.
 | `depth N` | directive: bound the nesting depth of recursive roles |
 | `N of @seed` | directive: keep N whole results |
 
-A bare `.` is the rest fill. `MergeSort<small_sort = _, .>` enumerates the small
-sort and picks one filler for every other slot and one declared value for every
-other const, so `MergeSort<.>` is one merge sort, the same one on every build,
-because each pick is a `?` hole with the default seed. The `.` must be the last
-argument and appear once, and it cannot fill a const that declares no `values`.
-A bare positional `_` is not a rest fill: it is one exhaustive hole for the next
-free param, so `QuickSort<_, _>` fills two. A param left out is an error that
-names the slot, which means nothing fills the rest exhaustively; write `_` for
-each param or `name = _` for each slot.
+The two rest fills stand last in an argument list and fill every param the
+arguments leave unspecified. A bare `..` fills each with an exhaustive hole, so
+`MergeSort<..>` is every merge sort and `QuickSort<part = Hoare, ..>` is every
+quick sort over Hoare, the same sets as writing `name = _` for each param. A
+bare `.` fills each with one pick: `MergeSort<small_sort = _, .>` enumerates
+the small sort and takes one filler for every other slot and one declared value
+for every other const, so `MergeSort<.>` is one merge sort, the same one on
+every build, because each pick is a `?` hole with the default seed. A rest fill
+must be the last argument and appear once, the two cannot be combined, and
+neither can fill a const that declares no `values`. A bare positional `_` is
+not a rest fill: it is one exhaustive hole for the next free param, so
+`QuickSort<_, _>` fills two, and a param left out is an error that names the
+slot.
 
 Families combine with three set operators, loosest first: `|` union, `/\`
 intersection and `-` difference, so `A | B /\ C - D` is `A | (B /\ (C - D))`.

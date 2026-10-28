@@ -689,7 +689,7 @@ fn lower_application(
         for a in raw_args {
             match a.as_rule() {
                 Rule::value => args.push(QArg::Pos(lower_value(a, reg, idx, wrappers)?)),
-                Rule::rest_fill => return Err(not_a_component(&head)),
+                Rule::rest_fill | Rule::rest_all => return Err(not_a_component(&head)),
                 other => return Err(format!("`{head}<…>` takes a positional type arg, found {other:?}")),
             }
         }
@@ -704,13 +704,14 @@ fn lower_application(
     let mut named: Vec<String> = Vec::new();
     let mut out: Vec<QArg> = Vec::new();
     let mut positional: Vec<Pair<Rule>> = Vec::new();
-    let mut rest_fill = false;
+    let mut rest: Option<Quant> = None;
     for a in raw_args {
-        if rest_fill {
-            return Err(format!("`{resolved}`: `.` fills the rest, so it must be the last argument"));
+        if rest.is_some() {
+            return Err(format!("`{resolved}`: a rest fill fills the rest, so it must be the last argument"));
         }
         match a.as_rule() {
-            Rule::rest_fill => rest_fill = true,
+            Rule::rest_fill => rest = Some(Quant::One { seed: DEFAULT_SEED }),
+            Rule::rest_all => rest = Some(Quant::Exhaustive),
             Rule::named_arg => {
                 let mut ai = a.into_inner();
                 let pname = ai.next().ok_or("named arg needs a name")?.as_str().to_string();
@@ -730,30 +731,31 @@ fn lower_application(
         let pval = lower_value(a, reg, idx, wrappers)?;
         out.push(QArg::Named { name: param.name.clone(), value: pval });
     }
-    if rest_fill {
+    if let Some(quant) = rest {
         for param in free {
-            out.push(QArg::Named { name: param.name.clone(), value: rest_pick(&resolved, param)? });
+            out.push(QArg::Named { name: param.name.clone(), value: rest_hole(&resolved, param, quant)? });
         }
     }
     Ok(QValue::App { name: resolved, args: out })
 }
 
-/// What a bare `.` puts in an unspecified param: one pick with the default seed,
-/// so the same build draws the same filler. A const with no declared `values` has
-/// nothing to pick from.
-fn rest_pick(component: &str, param: &crate::registry::Param) -> Result<QValue, String> {
+/// What a rest fill puts in an unspecified param: a hole with the fill's
+/// quantifier, one pick with the default seed for `.` so the same build draws
+/// the same filler, exhaustive for `..`. A const with no declared `values` has
+/// nothing to range over.
+fn rest_hole(component: &str, param: &crate::registry::Param, quant: Quant) -> Result<QValue, String> {
     match &param.kind {
         ParamKind::Const { values } if values.is_empty() => Err(format!(
-            "`.` cannot fill const `{}` of `{component}`: it declares no `values`, so it takes only a literal",
+            "a rest fill cannot fill const `{}` of `{component}`: it declares no `values`, so it takes only a literal",
             param.name
         )),
-        _ => Ok(QValue::Hole(Quant::One { seed: DEFAULT_SEED })),
+        _ => Ok(QValue::Hole(quant)),
     }
 }
 
-/// The error for a `.` in the argument list of something that is not a component.
+/// The error for a rest fill in the argument list of something that is not a component.
 fn not_a_component(head: &str) -> String {
-    format!("`.` fills the arguments of a component, but `{head}( ... )` is not one")
+    format!("a rest fill fills the arguments of a component, but `{head}( ... )` is not one")
 }
 
 /// Lower the arguments of an enumeration-strategy builtin `head( ... )` into its
@@ -777,7 +779,7 @@ fn lower_strategy(
                 return Err(format!("`{head}( ... )` takes exactly one positional value"))
             }
             Rule::value => inner = Some(lower_value(a, reg, idx, wrappers)?),
-            Rule::rest_fill => return Err(not_a_component(head)),
+            Rule::rest_fill | Rule::rest_all => return Err(not_a_component(head)),
             Rule::named_arg => {
                 let mut parts = a.into_inner();
                 let name = parts.next().ok_or("named arg needs a name")?.as_str().to_string();
@@ -2032,8 +2034,69 @@ end
         ok("x: T = Foo<_, .>");
         ok("x: T = Foo<a = _, .,>"); // trailing comma
         assert!(has(&value_rules("Foo<a = _, .>"), "rest_fill"));
-        err("x: T = Foo<..>"); // two dots need a comma between them
         err("x: T = .");
+    }
+
+    #[test]
+    fn two_dots_parse_as_the_exhaustive_rest_fill() {
+        ok("x: T = Foo<..>");
+        ok("x: T = Foo(..)");
+        ok("x: T = Foo<a = _, ..>");
+        ok("x: T = Foo<_, ..,>");
+        assert!(has(&value_rules("Foo<a = _, ..>"), "rest_all"));
+        assert!(!has(&value_rules("Foo<a = _, ..>"), "rest_fill"));
+        err("x: T = ..");
+        err("x: T = Foo<...>");
+    }
+
+    #[test]
+    fn two_dots_lower_to_an_exhaustive_hole_per_unspecified_param() {
+        let reg = fixture();
+        let qs = lower_program(
+            "M: SortingAlgorithm = SortingAlgorithm<TopDownMergeSort<small_sort = no_small_sort, ..>>",
+            &reg,
+        )
+        .unwrap();
+        match &qs[0].bindings[0].value {
+            QValue::App { name, args } => {
+                assert_eq!(name, "top_down_merge");
+                let named = |param: &str, value: QValue| QArg::Named { name: param.into(), value };
+                assert_eq!(args.len(), 3);
+                assert_eq!(args[0], named("small_sort", QValue::Ident("no_small_sort".into())));
+                assert_eq!(args[1], named("ping_pong", QValue::Hole(Quant::Exhaustive)));
+                assert_eq!(args[2], named("early_exit", QValue::Hole(Quant::Exhaustive)));
+            }
+            other => panic!("expected App, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn two_dots_solve_to_the_same_set_as_a_hole_per_param() {
+        let reg = fixture();
+        let pairs = [
+            ("QuickSort<..>", "QuickSort<partition = _, small_sort = _>"),
+            ("QuickSort<partition = _, ..>", "QuickSort<partition = _, small_sort = _>"),
+            ("TopDownMergeSort<small_sort = no_small_sort, ..>", "TopDownMergeSort<small_sort = no_small_sort, ping_pong = _, early_exit = _>"),
+        ];
+        for (short, long) in pairs {
+            let short = solve_exprs(&format!("S: SortingAlgorithm = SortingAlgorithm<{short}>"), &reg);
+            let long = solve_exprs(&format!("S: SortingAlgorithm = SortingAlgorithm<{long}>"), &reg);
+            assert_eq!(short, long);
+            assert!(short.len() > 1, "{short:?}");
+        }
+    }
+
+    #[test]
+    fn the_two_rest_fills_share_the_placement_rules_and_exclude_each_other() {
+        let reg = fixture();
+        for bad in ["QuickSort<.., partition = _>", "QuickSort<partition = _, .., ..>", "QuickSort<., ..>", "QuickSort<.., .>"] {
+            let err = lower_program(&format!("Q: SortingAlgorithm = SortingAlgorithm<{bad}>"), &reg).unwrap_err();
+            assert!(err.contains("fills the rest, so it must be the last argument"), "`{bad}` got: {err}");
+        }
+        for bad in ["SortingAlgorithm<..>", "SortingAlgorithm<finite(..)>"] {
+            let err = lower_program(&format!("Q: SortingAlgorithm = {bad}"), &reg).unwrap_err();
+            assert!(err.contains("fills the arguments of a component"), "`{bad}` got: {err}");
+        }
     }
 
     #[test]
@@ -2105,7 +2168,7 @@ end
         let reg = fixture();
         for bad in ["QuickSort<., partition = _>", "QuickSort<partition = _, ., .>", "QuickSort<., _>"] {
             let err = lower_program(&format!("Q: SortingAlgorithm = SortingAlgorithm<{bad}>"), &reg).unwrap_err();
-            assert!(err.contains("`.` fills the rest, so it must be the last argument"), "`{bad}` got: {err}");
+            assert!(err.contains("fills the rest, so it must be the last argument"), "`{bad}` got: {err}");
         }
     }
 
@@ -2114,7 +2177,7 @@ end
         let reg = fixture();
         for bad in ["SortingAlgorithm<.>", "SortingAlgorithm<finite(.)>", "SortingAlgorithm<sample(., n = 2)>"] {
             let err = lower_program(&format!("X: SortingAlgorithm = {bad}"), &reg).unwrap_err();
-            assert!(err.contains("`.` fills the arguments of a component"), "`{bad}` got: {err}");
+            assert!(err.contains("fills the arguments of a component"), "`{bad}` got: {err}");
         }
     }
 
@@ -2124,7 +2187,7 @@ end
                    component s1\n  type S1\n  provides S\nend\n";
         let reg = Registry::parse_fragment(cat, "probe").unwrap();
         let err = lower_program("X: T = C<.>", &reg).unwrap_err();
-        assert!(err.contains("`.` cannot fill const `n` of `c`") && err.contains("no `values`"), "got: {err}");
+        assert!(err.contains("cannot fill const `n` of `c`") && err.contains("no `values`"), "got: {err}");
         assert_eq!(solve_exprs("X: T = C<n = 8, .>", &reg), ["C<8, S1>"]);
     }
 

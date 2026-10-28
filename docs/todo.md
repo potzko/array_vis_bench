@@ -40,10 +40,10 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
 1. Enumeration strategies. `finite`, `affine`, `sample` and `spread` shipped:
    `finite` and `affine` wrap a bare hole, `sample` and `spread` wrap any
    value in type position, and `seed = random` is seeded once per build from
-   the clock. The bare `.` rest fill (one pick for every unspecified param) and
-   the set operators `|` and `/\` shipped too. Not built: an exhaustive rest
-   fill, which needs a glyph other than the positional `_`, the splat `*TG`,
-   whose operand nothing defines, and a glyph for xor.
+   the clock. The rest fills `.` (one pick for every unspecified param) and
+   `..` (an exhaustive hole for each) and the set operators `|` and `/\`
+   shipped too. Not built, by decision: the splat `*TG`, whose operand nothing
+   defines, and a glyph for xor, which `(A | B) - (A /\ B)` already writes.
    See [implementation_plans/enumeration_strategies.md](implementation_plans/enumeration_strategies.md).
 2. Done: the scratchspace phases. The `Keys` axis, the block merge sort
    family (the WikiSort and GrailSort shapes, six entries), the buffer

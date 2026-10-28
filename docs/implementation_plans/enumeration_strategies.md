@@ -1,11 +1,11 @@
 # Implementation plan: enumeration strategies (`finite` / `affine` / `sample` / `spread`)
 
-Status: BUILT, with three items left out. Names and semantics locked 2026-06-17. `finite`
+Status: BUILT, with two items left out. Names and semantics locked 2026-06-17. `finite`
 shipped 2026-07-01 (commit e6edd80, `enumerate_finite` in `spec_core/src/enumerate.rs`) and is
-load bearing in `quick_heap.avbs`. `affine`, `sample`, `spread`, the `.` rest fill and the set
-operators `|` and `/\` shipped 2026-10-28. Left out: the exhaustive rest fill, the splat `*TG`
-and a glyph for xor, each for a reason given below. This is a `spec_core` language extension,
-not a runtime feature.
+load bearing in `quick_heap.avbs`. `affine`, `sample`, `spread`, the `.` and `..` rest fills
+and the set operators `|` and `/\` shipped 2026-10-28. Left out: the splat `*TG` and a glyph
+for xor, each for a reason given below. This is a `spec_core` language extension, not a
+runtime feature.
 
 ## Problem
 
@@ -61,13 +61,14 @@ A bare wildcard in a slot list means "fill every *unspecified* hole":
 - bare `.` → fill the rest with **one concrete pick each** (a singleton). `merge_sort<.>` = one
   (random) merge sort.
 
-Built 2026-10-28: the `.` only. As the last argument it expands at lowering into a `?` hole with
-the default seed for every param the arguments leave unspecified, a declared value for a const
-and a filler for a slot, so `merge_sort<.>` is one merge sort and the same one every build. A
-bare `_` stays what it was, one exhaustive hole for the next free param, so `quick_sort<_>`
-fills `partition` and nothing else; and a param left out entirely is an error naming the slot,
-not an exhaustive fill. The exhaustive rest fill is therefore not built: `_` is taken, and it
-needs a glyph that is not.
+Built 2026-10-28, with the exhaustive fill under its own glyph. As the last argument `.`
+expands at lowering into a `?` hole with the default seed for every param the arguments leave
+unspecified, a declared value for a const and a filler for a slot, so `merge_sort<.>` is one
+merge sort and the same one every build; `..` expands the same way into an exhaustive hole, so
+`merge_sort<..>` is every merge sort. A bare `_` stays what it was, one exhaustive hole for the
+next free param, so `quick_sort<_>` fills `partition` and nothing else, and a param left out
+entirely is an error naming the slot. The exhaustive fill could not take `_` as the plan said,
+because `_` was taken, and `..` reads as "the rest" the way Rust spells it.
 
 (NB: the legacy `spec.rs` parser reads `.` as the EXHAUSTIVE hole and `?` as the one pick, the
 opposite of what this section first said. The AVBS grammar only reads a `.` as an argument of
