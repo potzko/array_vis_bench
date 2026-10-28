@@ -6,6 +6,7 @@
 
 pub mod auxiliary;
 pub mod direct_sort;
+pub mod keys;
 pub mod merge;
 pub mod partition;
 pub mod pivot;
@@ -16,6 +17,7 @@ pub mod small_sort;
 
 pub use auxiliary::Auxiliary;
 pub use direct_sort::DirectSort;
+pub use keys::Keys;
 pub use merge::{run_rotation_merge, RotationMerge};
 pub use partition::{with_partition_scratch, PartitionScheme, PartitionVisitor};
 pub use scratchspace::{Scratchspace, ScratchspaceRun};

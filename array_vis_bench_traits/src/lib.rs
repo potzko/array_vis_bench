@@ -10,7 +10,7 @@
 //!
 //! - [`role`], the role traits (`PartitionScheme`, `PivotSelector`,
 //!   `SmallSort`, `Rotation`, `RotationMerge`, `DirectSort`, `QuickSelect`, `Auxiliary`,
-//!   `Scratchspace`).
+//!   `Keys`, `Scratchspace`).
 //!
 //! Family-local traits such as `GapSequence` and `BranchingStrategy` stay in
 //! the crate of their only consumer.
@@ -29,7 +29,7 @@ pub use composable::{HasSpace, HasStability, HasTimeBounds, PivotQuality};
 pub use role::{
     with_partition_scratch, DeferredSmallSort, DirectSort, DualPivotSelector, InsertionStrategy, NoPivot,
     NonTrivialSmallSort, PartitionScheme, PartitionVisitor, PivotInput, PivotSelector, QuickSelect,
-    Rotation, RotationMerge, Scratchspace, ScratchspaceRun, SetSizeSmallSort, SmallSort,
+    Keys, Rotation, RotationMerge, Scratchspace, ScratchspaceRun, SetSizeSmallSort, SmallSort,
     SmallSortAdapter,
 };
 pub use role::rotation::reverse;
