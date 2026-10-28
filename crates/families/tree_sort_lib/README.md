@@ -7,7 +7,7 @@ leftmost node is deleted again and again, the node occupying the next output
 slot moves into the freed slot, and the minimum is written there, so the
 sorted prefix grows from the left the way heap sort's sorted suffix grows
 from the right. The tree decides what happens to the shape after each attach
-and each deletion: `avl` retraces and rotates. One word
+and each deletion: `avl` retraces and rotates, `naive` does nothing. One word
 of extra space per element, stable.
 
 Its catalog components are declared in `tree.spec`.

@@ -18,3 +18,9 @@ component tree_avl
   label    avl
   provides Tree
 end
+
+component tree_naive
+  type     Naive
+  label    naive
+  provides Tree
+end

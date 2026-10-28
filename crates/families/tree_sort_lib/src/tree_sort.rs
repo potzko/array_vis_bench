@@ -66,7 +66,7 @@ impl<B: Tree> HasStability for TreeSort<B> {
 mod tests {
     use super::*;
     use crate::test_input::pseudo_random;
-    use crate::Avl;
+    use crate::{Avl, Naive};
     use sort_logger::NoOpLogger;
 
     fn assert_sorts<B: Tree>(mut arr: Vec<usize>) {
@@ -86,6 +86,9 @@ mod tests {
 
     #[test]
     fn the_avl_tree_sorts() { assert_sorts_everything::<Avl>(); }
+
+    #[test]
+    fn the_naive_tree_sorts() { assert_sorts_everything::<Naive>(); }
 
     // Ordered by key alone, so the index records where an element started.
     #[derive(Clone, Copy, Debug)]
@@ -109,11 +112,16 @@ mod tests {
     }
 
     #[test]
-    fn keeps_equal_keys_in_input_order() { assert_stable::<Avl>(); }
+    fn both_trees_keep_equal_keys_in_input_order() {
+        assert_stable::<Avl>();
+        assert_stable::<Naive>();
+    }
 
     #[test]
     fn annotations_come_from_the_tree() {
         assert_eq!(<TreeSort<Avl> as HasTimeBounds>::WORST, Complexity::N_LOG_N);
+        assert_eq!(<TreeSort<Naive> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
+        assert_eq!(<TreeSort<Naive> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
         assert!(!<TreeSort<Avl> as HasSpace>::SPACE.is_in_place());
     }
 }

@@ -1580,6 +1580,7 @@
 "three-way<middle>"	Pivoted<ThreeWay, MiddleElement>
 "three-way<ninther>"	Pivoted<ThreeWay, Ninther>
 "tree sort<avl>"	TreeSort<Avl>
+"tree sort<naive>"	TreeSort<Naive>
 "trinity"	TrinityRotation
 "weak heap sort<dir: max forward, storage: bit storage>"	HeapSort<WeakHeapSort<MaxForward, BitStorage>>
 "weak heap sort<dir: max forward, storage: byte storage>"	HeapSort<WeakHeapSort<MaxForward, ByteStorage>>

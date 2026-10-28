@@ -1581,6 +1581,7 @@ Sort	slow sort potzko	0.0Exponential 0.0Exponential 0.0Exponential 0.1 false
 Sort	stooge sort<insertion: 32>	2.0Sqrt 2.0Sqrt 2.0Sqrt 0.1 false
 Sort	stooge sort<network: 16>	2.0Sqrt 2.0Sqrt 2.0Sqrt 0.1 false
 Sort	tree sort<avl>	1.1 1.1 1.1 1.0 true
+Sort	tree sort<naive>	2.0 1.1 1.1 1.0 true
 Sort	weak heap sort<dir: max forward, storage: bit storage>	1.1 1.1 1.1 1.0 false
 Sort	weak heap sort<dir: max forward, storage: byte storage>	1.1 1.1 1.1 1.0 false
 Sort	weak heap sort<dir: min reverse, storage: bit storage>	1.1 1.1 1.1 1.0 false

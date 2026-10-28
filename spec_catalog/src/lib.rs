@@ -110,7 +110,7 @@ mod tests {
         assert_eq!(COUNT_INSERTION, 2, "insertion family");
         assert_eq!(COUNT_QUICK, 408, "quick family (2 × [5×5 single + 26 dual] partitions × 4 small)");
         assert_eq!(COUNT_CYCLE, 1, "cycle family");
-        assert_eq!(COUNT_TREE, 1, "tree family");
+        assert_eq!(COUNT_TREE, 2, "tree family (avl + naive)");
         assert_eq!(COUNT_BLOCK_MERGE, 6, "block merge family (3 buffers x 2 key shapes)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
@@ -207,7 +207,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 1587, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 1588, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -649,7 +649,7 @@ mod tests {
 
     mod tree {
         use super::*;
-        use tree_sort_lib::{Avl, TreeSort, MAX_NODES};
+        use tree_sort_lib::{Avl, Naive, TreeSort, MAX_NODES};
 
         fn entries() -> Vec<&'static AlgorithmEntry> {
             ALGORITHMS.iter().filter(|e| e.name.starts_with("tree sort<")).collect()
@@ -663,7 +663,7 @@ mod tests {
         fn emits_every_tree_and_each_runs() {
             let es = entries();
             assert_eq!(es.len(), COUNT_TREE, "emitted entry count drifted from the solver");
-            assert_eq!(COUNT_TREE, 1, "avl");
+            assert_eq!(COUNT_TREE, 2, "avl + naive");
             let cfg = RunConfig { size: 64, seed: 1 };
             for e in &es {
                 assert_eq!(e.category, Category::Sort, "`{}` not Sort", e.name);
@@ -681,6 +681,11 @@ mod tests {
             assert_eq!(avl.worst, Complexity::N_LOG_N);
             assert_eq!(avl.space, <TreeSort<Avl> as HasSpace>::SPACE);
             assert_eq!(avl.stable, <TreeSort<Avl> as HasStability>::STABLE);
+            let naive = find("tree sort<naive>");
+            assert_eq!(naive.worst, <TreeSort<Naive> as HasTimeBounds>::WORST);
+            assert_eq!(naive.worst, Complexity::N_SQUARED);
+            assert_eq!(naive.average, Complexity::N_LOG_N);
+            assert_eq!(naive.space, avl.space);
         }
 
         #[test]
