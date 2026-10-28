@@ -337,8 +337,9 @@ fn est_value(value: &QValue, role: &str, reg: &Registry, depth: usize, memo: &mu
             QValue::Hole(q) => est_enumerated(enumerate_finite, *q, role, reg, depth),
             _ => est_value(inner, role, reg, depth, memo),
         },
-        // `sample` keeps N of what its family yields, but builds the family first.
-        QValue::Sample { inner, n, .. } => {
+        // `sample` and `spread` keep N of what their family yields, but build the
+        // family first.
+        QValue::Sample { inner, n, .. } | QValue::Spread { inner, n } => {
             let e = est_value(inner, role, reg, depth, memo);
             Est { out: e.out.cap(*n as u128), peak: e.peak }
         }
@@ -769,6 +770,24 @@ end
         };
         let e = estimate(&query(sample), &reg);
         assert_eq!(fin(e.ground), 2);
+        assert_eq!(fin(e.peak), 7);
+    }
+
+    #[test]
+    fn spread_caps_output_but_not_peak_over_a_wrapped_family() {
+        let reg = fixture();
+        let query = Query {
+            depth: crate::spec::DEFAULT_DEPTH,
+            take: None,
+            bindings: vec![Binding {
+                name: "p".into(),
+                role: "Pivot".into(),
+                refinements: vec![],
+                value: QValue::Spread { inner: Box::new(QValue::Hole(Quant::Exhaustive)), n: 3 },
+            }],
+        };
+        let e = estimate(&query, &reg);
+        assert_eq!(fin(e.ground), 3);
         assert_eq!(fin(e.peak), 7);
     }
 }

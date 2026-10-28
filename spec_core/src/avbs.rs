@@ -609,10 +609,11 @@ fn lower_application(
     let head = it.next().ok_or("application needs a head")?.as_str().to_string();
     let gen = it.next();
 
-    // `finite( <value> )`, `affine( <value> )` and `sample( <value>, n = N, ... )`
-    // are enumeration-strategy BUILTINS (neither a role wrapper nor a component):
-    // each wraps its positional value in the strategy's `QValue`.
-    if matches!(head.as_str(), "finite" | "affine" | "sample") {
+    // `finite( <value> )`, `affine( <value> )`, `sample( <value>, n = N, ... )` and
+    // `spread( <value>, n = N )` are enumeration-strategy BUILTINS (neither a role
+    // wrapper nor a component): each wraps its positional value in the strategy's
+    // `QValue`.
+    if matches!(head.as_str(), "finite" | "affine" | "sample" | "spread") {
         return lower_strategy(&head, gen, reg, idx, wrappers);
     }
 
@@ -691,8 +692,9 @@ fn lower_application(
 }
 
 /// Lower the arguments of an enumeration-strategy builtin `head( ... )` into its
-/// wrapper node. Every builtin takes one positional value; `sample` also takes
-/// `n = N` (required) and `seed = K` or `seed = random` (optional).
+/// wrapper node. Every builtin takes one positional value; `sample` and `spread`
+/// also take `n = N` (required), and `sample` takes `seed = K` or `seed = random`
+/// (optional).
 fn lower_strategy(
     head: &str,
     gen: Option<Pair<Rule>>,
@@ -715,7 +717,7 @@ fn lower_strategy(
                 let name = parts.next().ok_or("named arg needs a name")?.as_str().to_string();
                 let text = parts.next().ok_or("named arg needs a value")?.as_str().trim().to_string();
                 let repeated = match (head, name.as_str()) {
-                    ("sample", "n") => count.replace(count_arg(head, &text)?).is_some(),
+                    ("sample" | "spread", "n") => count.replace(count_arg(head, &text)?).is_some(),
                     ("sample", "seed") => seed.replace(seed_arg(head, &text)?).is_some(),
                     _ => return Err(format!("`{head}( ... )` takes no argument named `{name}`")),
                 };
@@ -729,14 +731,16 @@ fn lower_strategy(
         }
     }
     let inner = Box::new(inner.ok_or_else(|| format!("`{head}( ... )` needs one argument"))?);
+    let need_count = || count.ok_or_else(|| format!("`{head}( ... )` needs `n = N`"));
     match head {
         "finite" => Ok(QValue::Finite(inner)),
         "affine" => Ok(QValue::Affine(inner)),
         "sample" => Ok(QValue::Sample {
             inner,
-            n: count.ok_or("`sample( ... )` needs `n = N`")?,
+            n: need_count()?,
             seed: seed.unwrap_or(Seed::Fixed(DEFAULT_SEED)),
         }),
+        "spread" => Ok(QValue::Spread { inner, n: need_count()? }),
         other => Err(format!("`{other}` is not an enumeration strategy")),
     }
 }
@@ -1559,6 +1563,84 @@ end
         let out = solve(&qs[0], &reg).unwrap();
         assert_eq!(out.sorts.len(), 7);
         assert!(out.warnings.iter().any(|w| w.contains("clamped")), "{:?}", out.warnings);
+    }
+
+    // ── `spread( <value>, n = N )` ───────────────────────────────────────────────
+
+    /// The variants in the order the solver lists them, which is the pre order
+    /// walk of the family.
+    fn solve_listed(src: &str, reg: &Registry) -> Vec<String> {
+        let qs = lower_program(src, reg).unwrap();
+        let out = solve(&qs[0], reg).unwrap();
+        out.sorts.iter().map(|node| resolve(node, reg).unwrap().type_expr).collect()
+    }
+
+    #[test]
+    fn spread_lowers_its_count() {
+        let reg = fixture();
+        let qs = lower_program("P: Pivot = spread(_, n = 3)", &reg).unwrap();
+        assert_eq!(
+            qs[0].bindings[0].value,
+            QValue::Spread { inner: Box::new(QValue::Hole(Quant::Exhaustive)), n: 3 }
+        );
+    }
+
+    #[test]
+    fn spread_rejects_a_missing_or_foreign_argument() {
+        let reg = fixture();
+        for bad in ["spread(_)", "spread(_, seed = 1)", "spread(_, n = 2, seed = random)", "spread(_, n = x)"] {
+            assert!(lower_program(&format!("P: Pivot = {bad}"), &reg).is_err(), "{bad}");
+        }
+    }
+
+    /// Positions `i * len / n` of the variant list: 7 pivots, n = 3 gives the
+    /// entries at 0, 2 and 4.
+    #[test]
+    fn spread_takes_evenly_spaced_positions_of_the_variant_list() {
+        let reg = fixture();
+        let all = solve_listed("P: Pivot = _", &reg);
+        assert_eq!(all.len(), 7);
+        let picked = solve_listed("P: Pivot = spread(_, n = 3)", &reg);
+        assert_eq!(picked, vec![all[0].clone(), all[2].clone(), all[4].clone()]);
+        let first = solve_listed("P: Pivot = spread(_, n = 1)", &reg);
+        assert_eq!(first, vec![all[0].clone()]);
+        assert!(solve_listed("P: Pivot = spread(_, n = 0)", &reg).is_empty());
+    }
+
+    #[test]
+    fn spread_is_deterministic() {
+        let reg = fixture();
+        let draw = || solve_listed("P: Pivot = spread(_, n = 4)", &reg);
+        assert_eq!(draw(), draw());
+        assert_eq!(draw().len(), 4);
+    }
+
+    /// Asking for the whole family or more gives each variant once, in order,
+    /// with a warning when it asked for more.
+    #[test]
+    fn spread_of_at_least_the_family_gives_each_variant_once() {
+        let reg = fixture();
+        let all = solve_listed("P: Pivot = _", &reg);
+        assert_eq!(solve_listed("P: Pivot = spread(_, n = 7)", &reg), all);
+        let qs = lower_program("P: Pivot = spread(_, n = 20)", &reg).unwrap();
+        let out = solve(&qs[0], &reg).unwrap();
+        assert_eq!(out.sorts.len(), 7);
+        assert!(out.warnings.iter().any(|w| w.contains("clamped")), "{:?}", out.warnings);
+    }
+
+    /// Any family can be spread: positions are taken over the deduped list of
+    /// what the wrapped value stands for.
+    #[test]
+    fn spread_wraps_any_family() {
+        let acat = Registry::parse_fragment(ACAT, "probe").unwrap();
+        let finite = solve_listed("X: R = finite(_)", &acat);
+        assert_eq!(finite.len(), 6);
+        let picked = solve_listed("X: R = spread(finite(_), n = 2)", &acat);
+        assert_eq!(picked, vec![finite[0].clone(), finite[3].clone()]);
+        let reg = fixture();
+        let kept = solve_listed("P: Pivot = _ - {first_element}", &reg);
+        let picked = solve_listed("P: Pivot = spread(_ - {first_element}, n = 2)", &reg);
+        assert_eq!(picked, vec![kept[0].clone(), kept[3].clone()]);
     }
 
     /// WORKS TODAY: a variable captured inside two different union branches and

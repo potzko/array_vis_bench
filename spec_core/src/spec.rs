@@ -235,6 +235,11 @@ pub enum QValue {
     /// and drawn with the same seeded shuffle as a `?N` hole. AVBS pest frontend
     /// only.
     Sample { inner: Box<QValue>, n: usize, seed: Seed },
+    /// `spread( <value>, n = N )` - N variants evenly spaced through the pre order
+    /// list of the family `inner` stands for, at positions `i * len / n`. There is
+    /// no seed: the same query picks the same variants every build. AVBS pest
+    /// frontend only.
+    Spread { inner: Box<QValue>, n: usize },
 }
 
 /// One argument to a component application.

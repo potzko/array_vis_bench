@@ -183,7 +183,9 @@ fn collect_caps_value(v: &QValue, out: &mut HashSet<String>) {
         }
         QValue::Set(members) => members.iter().for_each(|m| collect_caps_value(m, out)),
         QValue::Finite(inner) | QValue::Affine(inner) => collect_caps_value(inner, out),
-        QValue::Sample { inner, .. } => collect_caps_value(inner, out),
+        QValue::Sample { inner, .. } | QValue::Spread { inner, .. } => {
+            collect_caps_value(inner, out)
+        }
         QValue::Hole(_) | QValue::Ident(_) | QValue::Const(_) => {}
     }
 }
@@ -265,7 +267,9 @@ fn check_order_value(
             Ok(())
         }
         QValue::Finite(inner) | QValue::Affine(inner) => check_order_value(inner, cvars, available),
-        QValue::Sample { inner, .. } => check_order_value(inner, cvars, available),
+        QValue::Sample { inner, .. } | QValue::Spread { inner, .. } => {
+            check_order_value(inner, cvars, available)
+        }
     }
 }
 
@@ -467,6 +471,13 @@ fn eval_type(
             };
             Ok(sample_indices(family, *n, seed, &format!("sample of `{role}`"), warnings))
         }
+        QValue::Spread { inner, n } => {
+            // spread(v, n = N): the same deduped family as `sample`, then N evenly
+            // spaced positions of its list, with no randomness.
+            let family = eval_type(inner, role, refinements, env, cvars, reg, depth, warnings)?;
+            let family = dedup_canonical_caps(family, reg)?;
+            Ok(spread_indices(family, *n, &format!("spread of `{role}`"), warnings))
+        }
         QValue::Const(c) => {
             Err(format!("const literal `{c}` cannot be used where a type ({role}) is expected"))
         }
@@ -627,6 +638,9 @@ fn eval_const(
         QValue::Sample { .. } => {
             Err("sample( ... ) is only valid in type position, not for a const".into())
         }
+        QValue::Spread { .. } => {
+            Err("spread( ... ) is only valid in type position, not for a const".into())
+        }
     }
 }
 
@@ -785,6 +799,24 @@ fn sample_indices<T: Clone>(
         idx.swap(i, j);
     }
     idx[..n].iter().map(|&i| pop[i].clone()).collect()
+}
+
+/// Evenly spaced picks over an already-deduped population: positions `i * len / n`
+/// for `i` in `0..n`. Below the population size consecutive positions are more
+/// than one apart, so they are distinct and none needs dropping. At or above it
+/// the whole population is kept, with the clamp warning `sample_indices` gives
+/// (its seed is not read on that path).
+fn spread_indices<T: Clone>(
+    pop: Vec<T>,
+    n: usize,
+    label: &str,
+    warnings: &mut Vec<String>,
+) -> Vec<T> {
+    if n >= pop.len() {
+        return sample_indices(pop, n, 0, label, warnings);
+    }
+    let len = pop.len();
+    (0..n).map(|i| pop[i * len / n].clone()).collect()
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
