@@ -76,6 +76,14 @@ impl<B: Auxiliary, K: Keys> BlockMergeSort<B, K> {
         if buffer > 0 { log.hold_region(arr, keys, buffer, RegionKind::Buffer); }
 
         let external = B::scratch_size(n);
+        // A buffer the array's blocks outgrow still serves the runs that fit it, and
+        // the block merges past that rotate their local merges.
+        if keys > 0 && external > 0 && external < n.isqrt() {
+            log.mark(format!(
+                "block sort: the buffer of {external} cannot hold a block of {}, the block merges rotate",
+                n.isqrt()
+            ));
+        }
         let mut ext = if external > 0 { log.create_aux_arr_t(external) } else { Vec::new() };
         if external > 0 { log.hold_region(&ext, 0, external, RegionKind::Buffer); }
         let mut stash = match (external > 0, buffer > 0) {
@@ -316,6 +324,19 @@ mod tests {
         assert!(marks::<InArrayBuffer, InArrayKeys>(&arr).is_empty());
         assert!(marks::<FixedBuffer, InArrayKeys>(&arr).is_empty());
         assert!(marks::<NoBuffer, NoKeys>(&arr).is_empty());
+    }
+
+    // The blocks of an array of 270000 are 519 elements, more than a fixed buffer holds.
+    #[test]
+    fn blocks_that_outgrow_the_fixed_buffer_are_logged() {
+        let arr = input(0, 270_000, &mut Rng(5));
+        let marked = marks::<FixedBuffer, InArrayKeys>(&arr);
+        assert_eq!(marked.len(), 1, "{marked:?}");
+        assert!(marked[0].contains("the buffer of 512 cannot hold a block of 519"), "{marked:?}");
+        // blocks that fit it, or no blocks, or a buffer of the array's own, are not
+        assert!(marks::<FixedBuffer, InArrayKeys>(&input(0, 100_000, &mut Rng(6))).is_empty());
+        assert!(marks::<FixedBuffer, NoKeys>(&arr).is_empty());
+        assert!(marks::<InArrayBuffer, InArrayKeys>(&arr).is_empty());
     }
 
     #[test]
