@@ -60,7 +60,11 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
    is the live benchmark and `compare_sorts` the gate. `--timing --out PATH`
    writes the medians as a TSV archive under a header naming its setup,
    `verify.sh` compares one against its baseline, and `plot_bench.py` charts
-   several of them, one per size, as the scaling page.
+   several of them, one per size, as the scaling page. `--sweep SECONDS`
+   climbs every entry up the size ladder within a time budget and finds the
+   largest size each fits, which is what makes a time budget `max_input`
+   unnecessary for the benchmark; the caps that remain are contracts or
+   serve the picker and the batteries.
 6. Done: sorts join `CorrectnessSuite` through the `DirectSort` role, one
    `direct_sort!` line per driver type. See
    [implementation_plans/kind_trait.md](implementation_plans/kind_trait.md).

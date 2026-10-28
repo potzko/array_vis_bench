@@ -78,6 +78,7 @@ emit regression that drops a variant fails the build's own tests.
 | `cargo run --release` | Interactive visualiser. Walks category, family and facets, asks for an input shape, size and render settings, writes `output.mp4`. Needs `ffmpeg` on the path. |
 | `cargo run --release -- --consumers` | Runs the consumer program declared in `spec_catalog/consumers.avbs` (correctness and benchmark) over the whole emitted catalog, the benchmark at its defaults, and prints one report per consumer. |
 | `cargo run --release -- --timing [N] [K]` | Runs the benchmark consumer over the whole catalog on a random array of size N (default 1000), K runs each (default 3), and prints one fastest first table of medians per category. An entry whose cap is below N is skipped and counted. |
+| `cargo run --release -- --sweep SECONDS [--share K] [--only PREFIX] [--out PATH]` | The scaling sweep: every entry, or those whose name starts with PREFIX, climbs the size ladder (every size to 100, tens to 200, hundreds to 1000, then powers of two) until one run takes more than SECONDS / (entries * K), K defaulting to 5, and the time left binary searches each entry's largest size that fits. Prints one table ranked by that size; `--out` writes the archive `plot_bench.py` charts. |
 | `cargo run --release --bin compare_sorts` | Performance regression gate. Pits the generic quick, merge and heap sorts against hand rolled u64 baselines and asserts each pair stays within 1.05x. |
 | `cargo run --release --bin measure_random_shell` | Complexity probe for the random shell sort variants. |
 | `cargo run -p array_vis_bench_min --release` | Minimal link root with two families and no catalog, proving a consumer can take just the leaves it wants. |
@@ -99,8 +100,8 @@ Helper scripts:
 - `verify.sh` runs every check above against the baselines in `verify/` and
   rewrites them with `--bless` after an intended change.
 - `plot_bench.py` charts how every entry scales with the input size. Time
-  the catalog once per size with `--timing N K --out PATH`, then hand the
-  archives to the script; the page has a selector tree by type head, a
+  the catalog once per size with `--timing N K --out PATH`, or once with
+  `--sweep SECONDS --out PATH`, then hand the archives to the script; the page has a selector tree by type head, a
   regex filter and a faster or slower than reference filter at one size.
 
 ## Workspace layout
