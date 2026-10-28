@@ -47,9 +47,9 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
    family (WikiSort and GrailSort shapes), the buffer region logger event
    for the renderer, and block rolling so the bufferless backing is better
    than quadratic. See [implementation_plans/scratchspace_block_merge.md](implementation_plans/scratchspace_block_merge.md).
-3. Sentinel quicksort. Parked until `compare_sorts` shows the canonical
-   driver trailing the hand rolled Hoare baseline past the 1.05x gate.
-   See [implementation_plans/sentinel_quicksort.md](implementation_plans/sentinel_quicksort.md).
+3. Dropped: the sentinel quicksort. Its trigger was the canonical driver
+   trailing the hand rolled Hoare baseline past the 1.05x gate, and every
+   gate run reads the driver at or under the baseline.
 4. The set quick select heap family shipped at minimal proof scope (two
    variants). Widening the inner select's partition role or the arities is
    a curation decision, not new machinery.

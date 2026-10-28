@@ -13,4 +13,3 @@ priority order.
 - `kind_trait.md`: one input shape, one driver and one emit template over a kinds table, done, kept as the record.
 - `one_timing_consumer.md`: the four timing surfaces became one benchmark consumer, done, kept as the record.
 - `scratchspace_block_merge.md`: the scratchspace contract, shipped, with the block merge phases open.
-- `sentinel_quicksort.md`: a guard eliding quicksort driver, parked behind a benchmark gate.
