@@ -1,10 +1,11 @@
 # Implementation plan: enumeration strategies (`finite` / `affine` / `sample` / `spread`)
 
-Status: PARTLY BUILT. Names and semantics locked 2026-06-17. `finite` shipped 2026-07-01
-(commit e6edd80, `enumerate_finite` in `spec_core/src/enumerate.rs`) and is load bearing in
-`quick_heap.avbs`. `affine`, `sample` and `spread` shipped 2026-10-28. The `.` rest fill sugar
-and the set operator polish are not started. This is a `spec_core` language extension, not a
-runtime feature.
+Status: BUILT, with three items left out. Names and semantics locked 2026-06-17. `finite`
+shipped 2026-07-01 (commit e6edd80, `enumerate_finite` in `spec_core/src/enumerate.rs`) and is
+load bearing in `quick_heap.avbs`. `affine`, `sample`, `spread`, the `.` rest fill and the set
+operators `|` and `/\` shipped 2026-10-28. Left out: the exhaustive rest fill, the splat `*TG`
+and a glyph for xor, each for a reason given below. This is a `spec_core` language extension,
+not a runtime feature.
 
 ## Problem
 
@@ -60,15 +61,25 @@ A bare wildcard in a slot list means "fill every *unspecified* hole":
 - bare `.` → fill the rest with **one concrete pick each** (a singleton). `merge_sort<.>` = one
   (random) merge sort.
 
-(NB: `.` already exists as a per-hole "one" quantifier in `spec.rs`'s Quant parser — this lifts the
-same idea to a positional rest-fill in the arg list.)
+Built 2026-10-28: the `.` only. As the last argument it expands at lowering into a `?` hole with
+the default seed for every param the arguments leave unspecified, a declared value for a const
+and a filler for a slot, so `merge_sort<.>` is one merge sort and the same one every build. A
+bare `_` stays what it was, one exhaustive hole for the next free param, so `quick_sort<_>`
+fills `partition` and nothing else; and a param left out entirely is an error naming the slot,
+not an exhaustive fill. The exhaustive rest fill is therefore not built: `_` is taken, and it
+needs a glyph that is not.
+
+(NB: the legacy `spec.rs` parser reads `.` as the EXHAUSTIVE hole and `?` as the one pick, the
+opposite of what this section first said. The AVBS grammar only reads a `.` as an argument of
+its own, so the two never meet.)
 
 ### Fill-set algebra (context; mostly already in the grammar)
 Already in `avbs.pest`: `_` / `*` = maximal (`!{T}`), `|` union (today only inside `where(…)`),
 `-` difference (`_ - {X}`), `{…}` set literals, `?N@seed` per-hole sample.
 New gaps (Phase 4, low priority): bare `|` in value position, splat `*TG`, xor / intersection.
 **Glyph collisions to resolve:** `*` already = exhaustive hole; `&` already = type-intersection
-in `type_ann`.
+in `type_ann`. Resolved 2026-10-28: the value intersection is `/\`, `&` stays the role
+intersection of a type annotation, and `*` stays the hole, with no splat spending it.
 
 ## Phased implementation
 
@@ -112,9 +123,13 @@ acyclic set without a graph module. Revisit only if `affine` needs shared infras
   a `OnceLock` RNG in `solve.rs`, seeded once per process from the clock and the process id.
   `spread` takes positions `i * len / n` of the deduped variant list.
 
-### Phase 4 — set-op polish (lowest priority, partly exists) NOT STARTED
-- Bare `|` union in value position; splat `*TG`; xor / intersection. Small `.pest` additions +
-  glyph-collision resolution. Defer until 0–3 are solid.
+### Phase 4, set-op polish (lowest priority, partly exists) DONE 2026-10-28, in part
+- Built: the bare `|` union (lowered to the `where` union over an exhaustive hole) and the
+  intersection `/\` (`QValue::Inter`, matched on the canonical type, counted in the size guard).
+  Precedence, loosest first: `|`, `/\`, `-`. A `where` alternative splits on `|`, so one that
+  holds a union is parenthesised.
+- Left out: the splat `*TG`, because `TG` is not defined by this plan or the grammar and the
+  operator has no meaning to implement. Xor, because `(A | B) - (A /\ B)` already writes it.
 
 ## Open questions (defaults above unless changed)
 1. `affine` scope: subtree (default) vs always-global?
