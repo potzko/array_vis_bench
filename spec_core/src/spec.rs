@@ -212,6 +212,9 @@ pub enum QValue {
     /// sampled by the hole's `quant`. A bare `A | B` lowers to the same node over an
     /// exhaustive hole. AVBS pest frontend only.
     Where { quant: Quant, alts: Vec<QValue> },
+    /// `A /\ B` - INTERSECTION: the members every operand stands for, matched on
+    /// the canonical type, in the first operand's order. AVBS pest frontend only.
+    Inter(Vec<QValue>),
     /// `<base> - <sub> - …` — SET DIFFERENCE: `base`'s population minus every
     /// candidate whose canonical type appears in a subtrahend's expansion.
     /// `_ - _` is the empty set. AVBS pest frontend only.

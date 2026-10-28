@@ -353,19 +353,23 @@ fn parse_type_atom(p: Pair<Rule>) -> Result<TyAnn, String> {
     }
 }
 
-/// The unary a value consists of, when it is nothing else: no capture, no `where`
-/// and no union.
+/// The unary a value consists of, when it is nothing else: no capture, no `where`,
+/// no union and no intersection.
 fn plain_unary(value: Pair<Rule>) -> Result<Pair<Rule>, String> {
     let mut it = value.into_inner();
     let union = it.next().ok_or("empty value")?;
     if it.next().is_some() {
         return Err("a list binding's value cannot carry a capture or `where`".into());
     }
-    let mut members = union.into_inner();
-    let unary = members.next().ok_or("empty value")?;
-    match members.next() {
-        Some(_) => Err("a list binding's value cannot be a union".into()),
-        None => Ok(unary),
+    sole_member(sole_member(union)?)
+}
+
+/// The one member of a union or intersection node.
+fn sole_member(pair: Pair<'_, Rule>) -> Result<Pair<'_, Rule>, String> {
+    let mut members = pair.into_inner();
+    match (members.next(), members.next()) {
+        (Some(member), None) => Ok(member),
+        _ => Err("a list binding's value cannot be a union or an intersection".to_string()),
     }
 }
 
@@ -494,12 +498,12 @@ fn role_from_type_ann(p: &Pair<Rule>, wrappers: &[Wrapper]) -> Result<String, St
 
 fn lower_value(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>, wrappers: &[Wrapper]) -> Result<QValue, String> {
     // value = union ~ capture? ~ where_clause?, and a `where` alternative is
-    // alt = unary ~ capture? ~ where_clause?
+    // alt = inter ~ capture? ~ where_clause?
     // Collect the (optional) capture name and where-alternatives first, then
     // apply them in semantic order: the `where` rewrites the hole's population,
     // and the capture binds the final chosen value (so capture is OUTERMOST).
     let mut inner = p.into_inner();
-    let base = lower_union_or_unary(inner.next().ok_or("empty value")?, reg, idx, wrappers)?;
+    let base = lower_union_or_inter(inner.next().ok_or("empty value")?, reg, idx, wrappers)?;
     let mut capture_name: Option<String> = None;
     let mut where_alts: Option<Vec<QValue>> = None;
     for extra in inner {
@@ -540,16 +544,22 @@ fn lower_value(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>, wra
     Ok(val)
 }
 
-/// A bare union `A | B` is the `where` union over an exhaustive hole, so it
-/// lowers to the same node; a single member is that member.
-fn lower_union_or_unary(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>, wrappers: &[Wrapper]) -> Result<QValue, String> {
-    if p.as_rule() == Rule::unary {
-        return lower_unary(p, reg, idx, wrappers);
-    }
-    let mut members = p.into_inner().map(|m| lower_unary(m, reg, idx, wrappers)).collect::<Result<Vec<_>, _>>()?;
-    match members.len() {
-        1 => Ok(members.remove(0)),
-        _ => Ok(QValue::Where { quant: Quant::Exhaustive, alts: members }),
+/// The base of a value (a union) or of a `where` alternative (an intersection). A
+/// bare union `A | B` is the `where` union over an exhaustive hole, so it lowers
+/// to the same node, and `A /\ B` to an `Inter`; a single member is that member.
+fn lower_union_or_inter(p: Pair<Rule>, reg: &Registry, idx: &HashMap<String, String>, wrappers: &[Wrapper]) -> Result<QValue, String> {
+    let rule = p.as_rule();
+    let mut members = p
+        .into_inner()
+        .map(|m| match rule {
+            Rule::union => lower_union_or_inter(m, reg, idx, wrappers),
+            _ => lower_unary(m, reg, idx, wrappers),
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    match (rule, members.len()) {
+        (_, 1) => Ok(members.remove(0)),
+        (Rule::union, _) => Ok(QValue::Where { quant: Quant::Exhaustive, alts: members }),
+        _ => Ok(QValue::Inter(members)),
     }
 }
 
@@ -2203,6 +2213,102 @@ end
         let merge = "M: SortingAlgorithm = SortingAlgorithm<TopDownMergeSort<small_sort = no_small_sort, ping_pong = true | false, early_exit = true>>";
         let err = solve(&lower_program(merge, &reg).unwrap()[0], &reg).unwrap_err();
         assert!(err.contains("`|` unions are only valid in type position"), "got: {err}");
+    }
+
+    // ── intersection, `A /\ B` ──────────────────────────────────────────────────
+
+    #[test]
+    fn an_intersection_parses_between_difference_and_union() {
+        ok(r"x: T = a /\ b");
+        ok(r"x: T = a /\ b /\ c");
+        ok(r"x: T = a /\ b | c /\ d");
+        ok(r"x: T = (a | b) /\ c");
+        ok(r"x: T = _ where ( a /\ b | c )");
+        ok(r"x: T = Foo<k = a /\ b as p, m = p>");
+        assert!(has(&value_rules(r"a /\ b"), "inter"));
+        err(r"x: T = a /\");
+        err(r"x: T = /\ a");
+        err("x: T = a & b"); // `&` is the role intersection of a type annotation only
+        ok("x: Sort & HasTimeBounds = a");
+    }
+
+    #[test]
+    fn an_intersection_lowers_to_an_inter_node_and_one_operand_is_no_intersection() {
+        let reg = fixture();
+        let lowered = |src: &str| lower_program(src, &reg).unwrap()[0].bindings[0].value.clone();
+        assert_eq!(
+            lowered(r"P: Pivot = _ /\ first_element"),
+            QValue::Inter(vec![QValue::Hole(Quant::Exhaustive), QValue::Ident("first_element".into())])
+        );
+        assert_eq!(lowered("P: Pivot = (first_element)"), QValue::Ident("first_element".into()));
+    }
+
+    #[test]
+    fn an_intersection_keeps_what_every_operand_holds() {
+        let reg = fixture();
+        assert_eq!(solve_exprs(r"P: Pivot = _ /\ first_element", &reg), ["FirstElement"]);
+        let both = solve_exprs(r"P: Pivot = (first_element | middle_element) /\ (middle_element | ninther_dual)", &reg);
+        assert_eq!(both, ["MiddleElement"]);
+        assert!(solve_exprs(r"P: Pivot = first_element /\ middle_element", &reg).is_empty());
+        assert_eq!(solve_exprs(r"P: Pivot = _ /\ _", &reg), solve_exprs("P: Pivot = _", &reg));
+        // the composites that fix `a` are among those that fix nothing: 2 of the 4.
+        let pairs = solve_exprs(
+            r"P: Pivot = CombinedSelector<a = _, b = _> /\ CombinedSelector<a = first_element, b = _>",
+            &reg,
+        );
+        assert_eq!(pairs, ["CombinedSelector<FirstElement, FirstElement>", "CombinedSelector<FirstElement, MiddleElement>"]);
+    }
+
+    #[test]
+    fn an_intersection_binds_looser_than_difference_and_tighter_than_union() {
+        let reg = fixture();
+        // `_ /\ _ - {first_element}` is `_ /\ (_ - {first_element})`: 6 of the 7.
+        assert_eq!(solve_exprs(r"P: Pivot = _ /\ _ - {first_element}", &reg).len(), 6);
+        // `a | b /\ c` is `a | (b /\ c)`, and the parentheses move it.
+        let loose = solve_exprs(r"P: Pivot = first_element | middle_element /\ ninther_dual", &reg);
+        assert_eq!(loose, ["FirstElement"]);
+        let grouped = solve_exprs(r"P: Pivot = (first_element | middle_element) /\ ninther_dual", &reg);
+        assert!(grouped.is_empty());
+    }
+
+    #[test]
+    fn symmetric_difference_is_written_from_the_three_operators() {
+        let reg = fixture();
+        let xor = solve_exprs(
+            r"P: Pivot = (first_element | middle_element | ninther_dual) - ((first_element | middle_element) /\ (middle_element | ninther_dual))",
+            &reg,
+        );
+        assert_eq!(xor, ["FirstElement", "NintherDualPivot"]);
+    }
+
+    #[test]
+    fn an_intersection_fills_an_argument_and_carries_captures_and_samples() {
+        let reg = fixture();
+        let alt = solve_exprs(r"P: Pivot = _ where ( first_element /\ _ | middle_element )", &reg);
+        assert_eq!(alt, ["FirstElement", "MiddleElement"]);
+        let pinned = solve_exprs(r"P: Pivot = CombinedSelector<a = (_ /\ first_element) as x, b = x>", &reg);
+        assert_eq!(pinned, ["CombinedSelector<FirstElement, FirstElement>"]);
+        // a capture inside one operand rides out with the members that survive.
+        let diagonal = solve_exprs(
+            r"P: Pivot = CombinedSelector<a = ((_ as x) /\ (first_element | middle_element)), b = x>",
+            &reg,
+        );
+        assert_eq!(diagonal.len(), 2);
+        assert_eq!(solve_exprs(r"P: Pivot = sample(_ /\ _, n = 3)", &reg).len(), 3);
+    }
+
+    #[test]
+    fn an_intersection_is_only_for_types_and_counts_in_the_size_guard() {
+        let reg = fixture();
+        let merge = r"M: SortingAlgorithm = SortingAlgorithm<TopDownMergeSort<small_sort = no_small_sort, ping_pong = true /\ true, early_exit = true>>";
+        let err = solve(&lower_program(merge, &reg).unwrap()[0], &reg).unwrap_err();
+        assert!(err.contains("set operators are only valid in type position"), "got: {err}");
+        let estimate = |src: &str| crate::cardinality::estimate(&lower_program(src, &reg).unwrap()[0], &reg);
+        let both = estimate(r"P: Pivot = _ /\ _");
+        assert_eq!(both.ground, crate::cardinality::Card::Finite(7));
+        let one = estimate(r"P: Pivot = _ /\ first_element");
+        assert_eq!(one.ground, crate::cardinality::Card::Finite(1));
+        assert_eq!(one.peak, crate::cardinality::Card::Finite(8), "both operands are built first");
     }
 
     // ── consumers / List / Mains: whole-program lowering ───────────────────────

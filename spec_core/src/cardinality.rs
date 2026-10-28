@@ -301,6 +301,14 @@ fn est_value(value: &QValue, role: &str, reg: &Registry, depth: usize, memo: &mu
             }
             Est { out: cap_quant(sum, *quant), peak: peak.max(sum) }
         }
+        // An intersection builds every operand and keeps at most the smallest of
+        // them, so the peak is their sum and the output the least of their outputs.
+        QValue::Inter(operands) => {
+            let ests: Vec<Est> = operands.iter().map(|o| est_value(o, role, reg, depth, memo)).collect();
+            let sum = ests.iter().fold(Card::Finite(0), |acc, e| acc.add(e.out));
+            let out = ests.iter().map(|e| e.out).min_by_key(|c| card_u128(*c)).unwrap_or(Card::Finite(0));
+            Est { out, peak: ests.iter().fold(sum, |acc, e| acc.max(e.peak)) }
+        }
         // A set literal (a subtrahend): the sum of its members' populations.
         QValue::Set(members) => {
             let mut sum = Card::Finite(0);

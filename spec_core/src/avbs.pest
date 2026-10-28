@@ -61,14 +61,16 @@ underscore = @{ "_" ~ !(ASCII_ALPHANUMERIC | "_") }
 value        = { union ~ capture? ~ where_clause? }
 capture      = { "as" ~ ident }
 
-// a bare union, loosest of the set operators: `A | B`. The same as
-// `_ where ( A | B )`, without a hole to name.
-union        = { unary ~ ("|" ~ unary)* }
+// the set operators, loosest first: a bare union `A | B` (the same as
+// `_ where ( A | B )`, without a hole to name), an intersection `A /\ B`, and the
+// set difference `A - B` below. `&` is not an operator here, it belongs to `type_ann`.
+union        = { inter ~ ("|" ~ inter)* }
+inter        = { unary ~ ("/\\" ~ unary)* }
 
 // the alternatives of a `where` are split on `|`, so each is a value without a bare
 // union; a union of its own goes in parentheses
 where_clause = { "where" ~ "(" ~ alt ~ ("|" ~ alt)* ~ ")" }
-alt          = { unary ~ capture? ~ where_clause? }
+alt          = { inter ~ capture? ~ where_clause? }
 
 // set difference, left-assoc: `_ - {X} - {Y}`
 unary = { term ~ ("-" ~ term)* }

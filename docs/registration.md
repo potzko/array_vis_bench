@@ -176,6 +176,7 @@ It is not emitted; later bindings in the same file use it by name.
 | `A - {X, Y}` | set difference, matched on the resolved type string |
 | `_ where (A | B | C)` | union of curated alternatives |
 | `A \| B` | union of two families in value position, the same as `_ where (A \| B)`; `-` binds tighter, and a `where` alternative needs parentheses to hold one |
+| `A /\ B` | intersection: the members both families hold, matched on the resolved type |
 | `value as x` | capture; a later `x` must resolve to the same filler |
 | `finite(_)` | exhaustive minus any tree in which a component nests inside itself |
 | `affine(_)` | exhaustive, each component used at most once in the subtree under the wrapper |
@@ -194,6 +195,17 @@ A bare positional `_` is not a rest fill: it is one exhaustive hole for the next
 free param, so `QuickSort<_, _>` fills two. A param left out is an error that
 names the slot, which means nothing fills the rest exhaustively; write `_` for
 each param or `name = _` for each slot.
+
+Families combine with three set operators, loosest first: `|` union, `/\`
+intersection and `-` difference, so `A | B /\ C - D` is `A | (B /\ (C - D))`.
+An operand is any value in type position, and the members are compared on the
+resolved type, so `(A | B) /\ (B | C)` is `B`. An intersection keeps the first
+operand's order, and a capture inside an operand rides out with the members that
+survive. Symmetric difference needs no glyph of its own: `(A | B) - (A /\ B)`.
+The glyphs are chosen to collide with nothing the language already spends. `&`
+is the role intersection of a type annotation (`x: Sort & HasTimeBounds = ...`),
+so the value intersection is `/\`. `*` is the exhaustive hole, and no splat
+operator is defined: neither the plan nor the grammar says what its operand is.
 
 The solver works with two constraints only: structural equality through a
 shared variable, and role membership. There is no arithmetic and no

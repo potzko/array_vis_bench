@@ -176,7 +176,9 @@ fn collect_caps_value(v: &QValue, out: &mut HashSet<String>) {
                 }
             }
         }
-        QValue::Where { alts, .. } => alts.iter().for_each(|a| collect_caps_value(a, out)),
+        QValue::Where { alts: operands, .. } | QValue::Inter(operands) => {
+            operands.iter().for_each(|a| collect_caps_value(a, out))
+        }
         QValue::Diff { base, subtrahends } => {
             collect_caps_value(base, out);
             subtrahends.iter().for_each(|s| collect_caps_value(s, out));
@@ -239,11 +241,12 @@ fn check_order_value(
             }
             Ok(())
         }
-        QValue::Where { alts, .. } => {
+        QValue::Where { alts: operands, .. } | QValue::Inter(operands) => {
             // Each branch is checked against the SAME incoming scope; a var
-            // captured in ANY branch becomes available after the union.
+            // captured in ANY branch becomes available after the union. The
+            // operands of an intersection are evaluated apart the same way.
             let mut after = available.clone();
-            for alt in alts {
+            for alt in operands {
                 let mut branch = available.clone();
                 check_order_value(alt, cvars, &mut branch)?;
                 for v in branch {
@@ -369,6 +372,32 @@ fn eval_type(
             }
             let cands = dedup_canonical_caps(cands, reg)?;
             apply_quant_caps(cands, *quant, role, reg, warnings)
+        }
+        QValue::Inter(operands) => {
+            // What every operand stands for, matched on the canonical type, in the
+            // first operand's order. A member keeps the captures of the operands
+            // that produced it, unified: two that disagree on a variable prune it.
+            let mut families = Vec::new();
+            for operand in operands {
+                let family = eval_type(operand, role, refinements, env, cvars, reg, depth, warnings)?;
+                families.push(dedup_canonical_caps(family, reg)?.into_iter());
+            }
+            let first = families.remove(0);
+            let mut others = Vec::new();
+            for family in families {
+                let mut by_type: HashMap<String, Caps> = HashMap::new();
+                for (node, caps) in family {
+                    by_type.insert(resolve(&node, reg)?.type_expr, caps);
+                }
+                others.push(by_type);
+            }
+            let mut out = Vec::new();
+            for (node, caps) in first {
+                let ty = resolve(&node, reg)?.type_expr;
+                let kept = others.iter().try_fold(caps, |acc, by_type| unify_caps(&acc, by_type.get(&ty)?));
+                out.extend(kept.map(|caps| (node, caps)));
+            }
+            Ok(out)
         }
         QValue::Set(members) => {
             // The union of the members' expansions (used as a subtrahend).
@@ -626,9 +655,9 @@ fn eval_const(
         QValue::Where { .. } => {
             Err("`where ( ... )` and `|` unions are only valid in type position, not for a const".into())
         }
-        QValue::Diff { .. } | QValue::Set { .. } => {
-            Err("set difference / set literals are only valid in type position, not for a const".into())
-        }
+        QValue::Diff { .. } | QValue::Set { .. } | QValue::Inter(_) => Err(
+            "set operators are only valid in type position, not for a const".into(),
+        ),
         QValue::Finite { .. } => {
             Err("finite( … ) is only valid in type position, not for a const".into())
         }
