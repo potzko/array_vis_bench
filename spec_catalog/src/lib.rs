@@ -729,6 +729,34 @@ mod tests {
             assert!(roles.contains(&"BlockBuffer") && roles.contains(&"Keys"), "{roles:?}");
         }
 
+        /// A run through the logger the visualiser drives holds each region and releases it.
+        #[test]
+        fn the_wiki_sort_logs_its_regions_for_the_visualiser() {
+            use sort_logger::{RegionKind, SortLog, SortLogger, VisualizerLogger};
+            let e = find("block sort<buffer: in array, keys: in array>");
+            let mut logger =
+                VisualizerLogger::<usize> { type_ghost: std::marker::PhantomData, log: Vec::new() };
+            let cfg = RunConfig { size: 400, seed: 1 };
+            (e.run_with_input)(primary_input(Category::Sort), &cfg, &mut logger as &mut dyn SortLogger<usize>);
+            let regions: Vec<(RegionKind, bool)> = logger
+                .log
+                .iter()
+                .filter_map(|event| match event {
+                    SortLog::Region { kind, held, .. } => Some((*kind, *held)),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(
+                regions,
+                [
+                    (RegionKind::Keys, true),
+                    (RegionKind::Buffer, true),
+                    (RegionKind::Keys, false),
+                    (RegionKind::Buffer, false),
+                ]
+            );
+        }
+
         /// The buffer fillers are not `Auxiliary` ones, so they add no `auxiliary<...>` merge kind.
         #[test]
         fn the_buffers_add_no_merge_kinds() {

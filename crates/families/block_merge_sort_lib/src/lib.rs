@@ -14,7 +14,7 @@ use array_vis_bench_traits::role::{Auxiliary, Keys, Rotation};
 use array_vis_bench_traits::Complexity;
 use rotation_reversal::ReversalRotation;
 use scratchspace_lib::bufferless_merge;
-use sort_logger::SortLogger;
+use sort_logger::{RegionKind, SortLogger};
 
 pub mod rolling;
 pub mod stash;
@@ -72,9 +72,12 @@ impl<B: Auxiliary, K: Keys> BlockMergeSort<B, K> {
         let (want_keys, want_buffer) = (K::key_count(n / n.isqrt() + 2), B::internal_size(n));
         let found = K::extract(arr, 0, n, want_keys + want_buffer, log);
         let (keys, buffer) = settle(found, want_keys, want_buffer, log);
+        if keys > 0 { log.hold_region(arr, 0, keys, RegionKind::Keys); }
+        if buffer > 0 { log.hold_region(arr, keys, buffer, RegionKind::Buffer); }
 
         let external = B::scratch_size(n);
         let mut ext = if external > 0 { log.create_aux_arr_t(external) } else { Vec::new() };
+        if external > 0 { log.hold_region(&ext, 0, external, RegionKind::Buffer); }
         let mut stash = match (external > 0, buffer > 0) {
             (true, _) => Stash::External(&mut ext),
             (false, true) => Stash::Internal { at: keys, cap: buffer },
@@ -82,12 +85,17 @@ impl<B: Auxiliary, K: Keys> BlockMergeSort<B, K> {
         };
         merge_levels::<K, T, U>(arr, found, &mut stash, keys, log);
         drop(stash);
-        if external > 0 { log.free_aux_arr_t(&ext); }
+        if external > 0 {
+            log.release_region(&ext, 0, external, RegionKind::Buffer);
+            log.free_aux_arr_t(&ext);
+        }
 
         // The keys come back in order, the buffer is scrambled by the swaps, and
         // the carved elements are one sorted run, which is slid into the rest.
         K::restore(arr, 0, keys, log);
+        if keys > 0 { log.release_region(arr, 0, keys, RegionKind::Keys); }
         sort_region(arr, keys, keys + buffer, log);
+        if buffer > 0 { log.release_region(arr, keys, buffer, RegionKind::Buffer); }
         slide_merge(arr, 0, found, n, log);
     }
 }
@@ -209,7 +217,8 @@ fn slide_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_util::{pairs, Item, Marks, Rng, Tally};
+    use crate::test_util::{pairs, Item, Marks, Regions, Rng, Tally};
+    use sort_logger::RegionKind;
     use scratchspace_lib::{FixedBuffer, FullBuffer, HalfBuffer, InArrayBuffer, InArrayKeys, NoBuffer, NoKeys};
     use sort_logger::NoOpLogger;
 
@@ -306,6 +315,44 @@ mod tests {
         // the shapes that ask for nothing have nothing to drop
         assert!(marks::<NoBuffer, NoKeys>(&input(3, 600, &mut rng)).is_empty());
         assert!(marks::<FixedBuffer, NoKeys>(&input(3, 600, &mut rng)).is_empty());
+    }
+
+    // The region events of a sort of `arr`, without the array names but told apart
+    // by whether they name the array being sorted.
+    fn regions<B: Auxiliary, K: Keys>(arr: &[Item]) -> Vec<(bool, usize, usize, RegionKind, bool)> {
+        let mut arr = arr.to_vec();
+        let mut log = Regions::default();
+        let name = arr.as_ptr() as usize;
+        BlockMergeSort::<B, K>::sort(&mut arr, &mut log);
+        log.0.into_iter().map(|(n, start, len, kind, held)| (n == name, start, len, kind, held)).collect()
+    }
+
+    #[test]
+    fn the_keys_and_the_buffer_are_held_while_they_work_and_released_after() {
+        use RegionKind::{Buffer, Keys};
+        let arr = input(0, 600, &mut Rng(21));
+        // 600 elements carve 27 keys and 24 buffer cells, the keys first
+        assert_eq!(
+            regions::<InArrayBuffer, InArrayKeys>(&arr),
+            [(true, 0, 27, Keys, true), (true, 27, 24, Buffer, true), (true, 0, 27, Keys, false), (true, 27, 24, Buffer, false)]
+        );
+        // an external buffer is its own array, held around the merges
+        assert_eq!(
+            regions::<FixedBuffer, InArrayKeys>(&arr),
+            [(true, 0, 27, Keys, true), (false, 0, 512, Buffer, true), (false, 0, 512, Buffer, false), (true, 0, 27, Keys, false)]
+        );
+        assert_eq!(regions::<InArrayBuffer, NoKeys>(&arr), [(true, 0, 24, Buffer, true), (true, 0, 24, Buffer, false)]);
+        assert!(regions::<NoBuffer, NoKeys>(&arr).is_empty());
+    }
+
+    #[test]
+    fn only_the_regions_that_survive_the_ladder_are_held() {
+        use RegionKind::Keys;
+        // ten distinct values keep ten keys and no buffer, one value keeps nothing
+        let few = input(9, 600, &mut Rng(22));
+        assert_eq!(regions::<InArrayBuffer, InArrayKeys>(&few), [(true, 0, 10, Keys, true), (true, 0, 10, Keys, false)]);
+        let one = input(3, 600, &mut Rng(23));
+        assert!(regions::<InArrayBuffer, InArrayKeys>(&one).is_empty());
     }
 
     // A merge sort that costs `n log n` moves grows 22 times for 16 times the input.

@@ -4,7 +4,7 @@
 
 use core::cmp::Ordering;
 
-use sort_logger::{SortLog, SortLogger};
+use sort_logger::{RegionKind, SortLog, SortLogger};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Item {
@@ -76,5 +76,14 @@ pub struct Marks(pub Vec<String>);
 impl<T: Copy + Ord> SortLogger<T> for Marks {
     fn log(&mut self, event: SortLog<T>) {
         if let SortLog::Mark(text) = event { self.0.push(text) }
+    }
+}
+
+/// Keeps the region events as (array name, start, len, kind, held) and drops the rest.
+#[derive(Default)]
+pub struct Regions(pub Vec<(usize, usize, usize, RegionKind, bool)>);
+impl<T: Copy + Ord> SortLogger<T> for Regions {
+    fn log(&mut self, event: SortLog<T>) {
+        if let SortLog::Region { name, start, len, kind, held } = event { self.0.push((name, start, len, kind, held)) }
     }
 }
