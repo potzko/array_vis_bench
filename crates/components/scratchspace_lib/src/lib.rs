@@ -9,7 +9,7 @@
 //! existing merge pipeline, bench, and visualiser.
 //!
 //! **Every element move goes through the logger** — `copy_range` / `write` /
-//! `write_accross` for the buffered path, `swap` for the in-place path — so the
+//! `write_accross` for the buffered path, rotations for the in-place path, so the
 //! array (and the external buffer) animate in the visualiser with no bespoke
 //! wiring. The buffer itself is allocated by the pipeline via the logger
 //! (`create_aux_arr_t`), exactly like [`Rotation`](array_vis_bench_traits::role::Rotation).
@@ -22,7 +22,9 @@ use array_vis_bench_traits::Complexity;
 use merge_sort_lib::RotationMerge;
 use sort_logger::SortLogger;
 
+pub mod bufferless;
 pub mod workflows;
+pub use bufferless::bufferless_merge;
 pub use workflows::{Exercise, ParkLoop, ParkSweep, Relocations, ScratchspaceMergeSort};
 
 // ── Scratchspace backings (the `Scratchspace` role — its own top-level kind) ──
@@ -92,8 +94,8 @@ impl Auxiliary for HalfBuffer {
     }
 }
 
-/// No buffer: every merge is the in-place stable insertion merge (`O(n²)`,
-/// `O(1)` space). The bufferless member of the axis.
+/// No buffer: every merge is the bufferless rotation merge, `O(1)` space.
+/// The bufferless member of the axis.
 pub struct NoBuffer;
 impl Auxiliary for NoBuffer {
     const NAME: &'static str = "none";
@@ -106,8 +108,8 @@ impl Auxiliary for NoBuffer {
 
 /// A [`RotationMerge`] whose working buffer is chosen by the [`Auxiliary`] `A`.
 /// The pipeline allocates `A::scratch_size(n)` cells; if that can hold the left
-/// run the merge is the logged copy-merge, otherwise it degrades to a logged
-/// in-place insertion merge.
+/// run the merge is the logged copy-merge, otherwise it degrades to the logged
+/// bufferless rotation merge.
 pub struct AuxiliaryMerge<A> {
     _phantom: PhantomData<A>,
 }
@@ -131,7 +133,7 @@ impl<A: Auxiliary> RotationMerge for AuxiliaryMerge<A> {
         if scratch.len() >= mid {
             half_copy_merge(arr, mid, scratch, logger);
         } else {
-            insertion_merge(arr, mid, logger);
+            bufferless_merge(arr, 0, mid, n, logger);
         }
     }
 }
@@ -181,28 +183,11 @@ fn half_copy_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     // Remaining arr[j..n] already in place.
 }
 
-/// In-place stable merge with no buffer: bubble each right-run element left into
-/// the sorted-left region. Strict `<` keeps equal keys stable. `O(n²)`.
-fn insertion_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-    arr: &mut [T],
-    mid: usize,
-    logger: &mut U,
-) {
-    let n = arr.len();
-    for j in mid..n {
-        let mut k = j;
-        while k > 0 && logger.cmp_lt(arr, k, k - 1) {
-            logger.swap(arr, k, k - 1);
-            k -= 1;
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use core::cmp::Ordering;
-    use sort_logger::NoOpLogger;
+    use sort_logger::{NoOpLogger, SortLog};
 
     /// Ordered by `key` only — equal keys are real ties a stable merge must
     /// preserve. `tag` is a globally-unique original-position marker.
@@ -434,5 +419,63 @@ mod tests {
         let mut arr = vec![0, 1, 2, 3, 4, 5];
         FullScratch::roll(&mut arr, 1, 5, 2, &mut [], &mut NoOpLogger); // rotate [1..5) left by 2
         assert_eq!(arr, vec![0, 3, 4, 1, 2, 5]);
+    }
+
+    // Counts the logged moves and comparisons, so a test can read a growth rate.
+    #[derive(Default)]
+    struct Tally {
+        moves: usize,
+        cmps: usize,
+    }
+    impl SortLogger<usize> for Tally {
+        fn log(&mut self, event: SortLog<usize>) {
+            match event {
+                SortLog::Swap { .. }
+                | SortLog::WriteInArr { .. }
+                | SortLog::WriteData { .. }
+                | SortLog::WriteDataU { .. } => self.moves += 1,
+                SortLog::CmpInArr { .. }
+                | SortLog::CmpData { .. }
+                | SortLog::CmpDataU { .. }
+                | SortLog::CmpAcrossArrs { .. } => self.cmps += 1,
+                _ => {}
+            }
+        }
+    }
+
+    // Two sorted runs of `n / 2` each, interleaved evenly (`even`) or shuffled by a
+    // fixed generator.
+    fn two_runs(n: usize, even: bool) -> Vec<usize> {
+        let mut state: u64 = 0x5EED_0001;
+        let mut next = |m: usize| {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            ((state >> 33) as usize) % m
+        };
+        let mut left: Vec<usize> = (0..n / 2).map(|i| if even { 2 * i } else { next(4 * n) }).collect();
+        let mut right: Vec<usize> = (0..n / 2).map(|i| if even { 2 * i + 1 } else { next(4 * n) }).collect();
+        left.sort();
+        right.sort();
+        left.into_iter().chain(right).collect()
+    }
+
+    fn no_buffer_cost(n: usize, even: bool) -> Tally {
+        let mut arr = two_runs(n, even);
+        let mut expected = arr.clone();
+        expected.sort();
+        let mut tally = Tally::default();
+        <AuxiliaryMerge<NoBuffer> as RotationMerge>::merge(&mut arr, n / 2, &mut [], &mut tally);
+        assert_eq!(arr, expected);
+        tally
+    }
+
+    // Growing the input 16 times grows an n log n cost about 24 times and a
+    // quadratic one 256 times; the line sits between with room for the constant.
+    #[test]
+    fn no_buffer_merge_grows_as_n_log_n() {
+        for even in [true, false] {
+            let (small, large) = (no_buffer_cost(256, even), no_buffer_cost(4096, even));
+            assert!(large.moves < 40 * small.moves, "moves {} -> {}", small.moves, large.moves);
+            assert!(large.cmps < 40 * small.cmps, "comparisons {} -> {}", small.cmps, large.cmps);
+        }
     }
 }

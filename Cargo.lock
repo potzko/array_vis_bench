@@ -641,6 +641,7 @@ version = "0.1.0"
 dependencies = [
  "array_vis_bench_traits",
  "merge_sort_lib",
+ "rotation_reversal",
  "sort_logger",
 ]
 
