@@ -142,7 +142,7 @@ mod tests {
     #[test]
     fn rolling_merges_stably_under_every_stash() {
         let mut rng = Rng(0xFACADE);
-        for round in 0..3000 {
+        for _ in 0..3000 {
             let s = 2 + rng.next(6);
             let la = s + rng.next(45);
             let lb = 1 + rng.next(45);
@@ -150,7 +150,6 @@ mod tests {
             for shape in [Shape::Internal, Shape::External, Shape::Nowhere] {
                 case(shape, &mut rng, la, lb, s, values);
             }
-            let _ = round;
         }
     }
 
