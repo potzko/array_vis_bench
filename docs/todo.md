@@ -1,6 +1,6 @@
 # Status and roadmap
 
-The one place that says what is built and what is open. Updated 2026-10-15
+The one place that says what is built and what is open. Updated 2026-10-28
 at the tip of `try_add_new_compiler_arch`. Design notes that used to live in
 assistant memory files are no longer on this machine; the decision record
 below is reconstructed from the docs, the plans and the commit history, and
@@ -111,11 +111,14 @@ afternoon each and remove concepts rather than move them.
    `DirectSort` role. A new kind is a `Category` variant, a `KINDS` row, a
    `<Kind>Suite` impl and the input tags.
    See [implementation_plans/kind_trait.md](implementation_plans/kind_trait.md).
-8. Derived roles. Not started. A population that is another role minus or
-   plus a few members is today spelled as a tag on every member; a `role`
-   line in the fragment would state the rule once, where a slot can name it.
-   This replaces the earlier idea of a query prelude, which a slot cannot
-   reach. Do this before any further role work.
+8. Derived roles. Done: a `role` line in a fragment defines a population as
+   other roles and components added and removed, where a slot can name it.
+   Eight roles are derived (`HeapPiv`, `BeapPiv`, `BeapDeepHeapifyClassic`,
+   `RecDeepHeapify`, `SmallSort`, `NonTrivialSmallSort`, `FunSmallSort`,
+   `SelectPartition`), leaving 37 base roles of the 45 in the crate
+   fragments. The kind roles stay base, since every crate tags one to join the
+   catalog. This replaced the earlier idea of a query prelude, which a slot
+   cannot reach.
    See [implementation_plans/derived_roles.md](implementation_plans/derived_roles.md).
 
 ## Role collapse, what held and what did not
@@ -133,8 +136,8 @@ dropped:
   populations: heap sorts try five pivots, beap sorts four and quick sort
   six, all implementing one trait. Expressing that in queries needs the
   same subtraction in every consuming query, and queries share no
-  bindings across files. A prelude of shared bindings is the missing
-  piece, and it should come first if the role tags are ever to go.
+  bindings across files. A derived role states the subtraction once in the
+  registry, where every slot can name it.
 - Attributes on the Rust types cannot replace the spec. Slot roles,
   labels, menus and role tags are not derivable from generics and
   bounds, so the attribute would restate the spec line for line.
@@ -165,7 +168,9 @@ slot, and the beap ninther dual selector has its own label.
 - One registration path. Two emitters for the same name is a startup panic.
 - Curate in the query. When one composition misbehaves, subtract it; do not
   patch the driver.
-- A Rust type is one component. Its roles are the populations it joins.
+- A Rust type is one component. Its roles are the populations it joins. A
+  population that is other populations plus or minus a few members is a
+  `role` line, not a tag on each member.
 - Standard and deferred quicksort are two families differing only in driver
   and small sort role.
 - Enumeration strategy names are `finite`, `affine`, `sample` and `spread`;

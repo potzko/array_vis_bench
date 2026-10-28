@@ -1,7 +1,7 @@
 # Implementation plan: derived roles
 
-Status: NOT STARTED. Written 2026-10-28 as the eighth concept cleanup; it
-replaces the "prelude of shared query bindings" idea in `../todo.md`.
+Status: DONE 2026-10-28. Written as the eighth concept cleanup; it replaced the
+"prelude of shared query bindings" idea in `../todo.md`.
 
 ## Problem
 
@@ -55,9 +55,12 @@ role SelectPartition = HeapExtractPart | PartitionKind
 - An unknown name in a definition and a definition that reaches itself are
   registry errors.
 - `Registry::providing(role)` returns the same sorted component list for a
-  derived role as it does for a base one, so the enumerator, the solver, the
-  cardinality guard and the resolver need no change. Slots, queries and
-  wrappers name derived roles exactly as they name base ones.
+  derived role as it does for a base one, so the enumerator and the
+  cardinality guard need no change. `Registry::has_role(component, role)`
+  answers membership for the slot check and the refinement check, and
+  `Registry::roles()` lists every role for the recursion detector; none of
+  them reads a `provides` line directly. Slots, queries and wrappers name
+  derived roles exactly as they name base ones.
 - A derived role lives in the fragment of the family that consumes it, next to
   the slot that names it: `HeapPiv` in `heap.spec`, `BeapPiv` in `beap.spec`.
 
