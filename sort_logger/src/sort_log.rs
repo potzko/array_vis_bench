@@ -14,6 +14,15 @@ macro_rules! arr_name {
     };
 }
 
+/// What a held region of an array is for, so a renderer can tell the two apart.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RegionKind {
+    /// The merge buffer: swap space whose values are real elements.
+    Buffer,
+    /// The key region: distinct elements that tag blocks while they roll.
+    Keys,
+}
+
 /// One observable operation in a sort run.
 ///
 /// Each variant carries enough state for a downstream consumer (the
@@ -80,5 +89,15 @@ pub enum SortLog<T: Copy + PartialEq + Eq> {
         name: usize,
         ind: usize,
         data: usize,
+    },
+    /// `start..start + len` of the array `name` is the buffer or the key region of
+    /// the sort, not data, while it is held. The same event with `held` false
+    /// releases it.
+    Region {
+        name: usize,
+        start: usize,
+        len: usize,
+        kind: RegionKind,
+        held: bool,
     },
 }

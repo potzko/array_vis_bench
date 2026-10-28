@@ -12,7 +12,7 @@
 //! any width uniformly.
 
 use crate::arr_name;
-use crate::sort_log::SortLog;
+use crate::sort_log::{RegionKind, SortLog};
 
 /// Generate the four-method int-typed aux-array family
 /// (`$log` / `$create` / `$free` / `$write_data`) for one concrete integer
@@ -68,6 +68,16 @@ pub trait SortLogger<T: Copy + Ord> {
     #[inline(always)]
     fn mark_mssg(&mut self, mssg: &str) {
         self.log(SortLog::Mark(mssg.to_string()))
+    }
+    /// `arr[start..start + len]` is now the buffer or the key region of the sort,
+    /// not data, until [`release_region`](SortLogger::release_region).
+    #[inline(always)]
+    fn hold_region(&mut self, arr: &[T], start: usize, len: usize, kind: RegionKind) {
+        self.log(SortLog::Region { name: arr_name!(arr), start, len, kind, held: true })
+    }
+    #[inline(always)]
+    fn release_region(&mut self, arr: &[T], start: usize, len: usize, kind: RegionKind) {
+        self.log(SortLog::Region { name: arr_name!(arr), start, len, kind, held: false })
     }
     #[inline(always)]
     fn log_aux_arr_t(&mut self, arr: &[T]) {
@@ -484,5 +494,36 @@ pub trait SortLogger<T: Copy + Ord> {
         for i in 0..len {
             self.write_accross(src, src_start + i, dst, dst_start + i);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::VisualizerLogger;
+    use std::marker::PhantomData;
+
+    #[test]
+    fn a_region_is_held_and_released_by_one_event_each() {
+        let arr = vec![0usize; 10];
+        let name = arr.as_ptr() as usize;
+        let mut log = VisualizerLogger::<usize> { type_ghost: PhantomData, log: Vec::new() };
+        log.hold_region(&arr, 2, 3, RegionKind::Keys);
+        log.release_region(&arr, 2, 3, RegionKind::Keys);
+        assert_eq!(
+            log.log,
+            [
+                SortLog::Region { name, start: 2, len: 3, kind: RegionKind::Keys, held: true },
+                SortLog::Region { name, start: 2, len: 3, kind: RegionKind::Keys, held: false },
+            ]
+        );
+    }
+
+    #[test]
+    fn a_region_costs_nothing_to_a_logger_that_drops_events() {
+        let arr = vec![0usize; 4];
+        let mut quiet = crate::NoOpLogger;
+        quiet.hold_region(&arr, 0, 4, RegionKind::Buffer);
+        quiet.release_region(&arr, 0, 4, RegionKind::Buffer);
     }
 }

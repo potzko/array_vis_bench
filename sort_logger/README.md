@@ -4,7 +4,7 @@ Instrumentation layer for sort algorithms. This crate is the only dependency tha
 
 ## What it contains
 
-- **`SortLog<T>`** — an enum of every observable event a sort can emit: comparisons, swaps, writes, auxiliary array allocations/frees, and free-form marks.
+- **`SortLog<T>`**, an enum of every observable event a sort can emit: comparisons, swaps, writes, auxiliary array allocations/frees, held and released buffer and key regions, and free-form marks.
 - **`SortLogger<T>`** — the trait all sort algorithms are generic over. Provides default-implemented helpers (`cond_swap_lt`, `write_data`, `cmp_gt_accross`, etc.) built on top of a single required method: `fn log(&mut self, SortLog<T>)`.
 - **`NoOpLogger`** — zero-cost logger for benchmarking. All `log` calls compile away entirely.
 - **`VisualizerLogger<T>`** — accumulates every `SortLog` into a `Vec` for later playback by the visualiser.
