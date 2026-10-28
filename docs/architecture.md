@@ -98,7 +98,11 @@ the root, `axes` the filled slots as `(role, value, path)` triples, and
 `label_template` the label with one `{Role}` hole per axis.
 `array_vis_bench_core::navigation` builds the picker's view from `ALGORITHMS`
 on demand, and `bench_registry::sorted` orders the entries through the same
-tree.
+tree. The picker's step function lives there too: menu segments first, then
+one axis at a time, and candidates with different heads branch by head before
+any axis, so kinds that share a menu but not an axis set, the auxiliary and
+rotation merges, all stay reachable. A catalog test walks every branch of
+every step and fails on any entry the picker cannot reach or reaches twice.
 
 The backend writes every kind through one template that reads the kind's row
 of the `KINDS` table in `spec_emit`: the one adapter `run_dyn(arr, index,
