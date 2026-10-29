@@ -1509,15 +1509,25 @@ mod tests {
             assert_eq!(ALGORITHMS.iter().filter(|e| e.nondeterministic).count(), 5);
         }
 
-        /// All 195 pass the correctness battery — including the 168 quick-surrender
-        /// variants that nest a QuickSelect. Caps keep the O(2^N) / O(N²) ones bounded.
+        /// All 195 pass the correctness battery, including the 168 quick
+        /// surrender variants that nest a QuickSelect. A cap only bounds what
+        /// runs over half a second, so the slow variants test long patterns;
+        /// the batteries share the cores rather than run one after another.
         #[test]
         fn all_pass_correctness() {
             let es = entries();
             assert_eq!(es.len(), 195);
-            for e in &es {
-                (e.run_correctness)();
-            }
+            let next = std::sync::atomic::AtomicUsize::new(0);
+            let workers = std::thread::available_parallelism().map_or(4, |n| n.get());
+            std::thread::scope(|scope| {
+                for _ in 0..workers {
+                    scope.spawn(|| {
+                        while let Some(e) = es.get(next.fetch_add(1, std::sync::atomic::Ordering::Relaxed)) {
+                            (e.run_correctness)();
+                        }
+                    });
+                }
+            });
         }
     }
 
