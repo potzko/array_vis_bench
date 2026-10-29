@@ -25,7 +25,10 @@ pub trait BranchingStrategy {
     /// True → skip recursion, insertion-sort this virtual sub-array directly.
     fn should_cut(virtual_len: usize) -> bool;
 
-    /// How many interleaved sub-arrays to split into at this level.
+    /// How many interleaved sub-arrays to split into at this level. Every
+    /// strategy here is non decreasing in the length, so the top level's
+    /// branch is the widest a sort meets, which sizes the merges' index
+    /// scratch; see `RodMerge::index_size`.
     fn branch(virtual_len: usize) -> usize;
 
     /// Factor for an optional extra insertion-sort pass after recursive sorting,
