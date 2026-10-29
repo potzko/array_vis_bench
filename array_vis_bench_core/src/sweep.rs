@@ -2,10 +2,12 @@
 //! is the size ladder, `sweep` runs every entry up the ladder until one run
 //! exceeds its share of the budget, then spends what is left binary searching
 //! each entry's largest size that fits the share, and `Sweep` is the runner
-//! that times real entries. `SweepReport::table` and `archive` print it.
+//! that times real entries. The budget pays for everything a measurement
+//! costs, the inputs built included, not only the timed runs.
+//! `SweepReport::table` and `archive` print it.
 
 use std::collections::{BTreeMap, HashMap};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::bench_registry::{list_inputs, primary_input, AlgorithmEntry};
 use crate::clock::{batch_size, time_runs};
@@ -43,28 +45,40 @@ pub struct Scaling {
     pub fits: usize,
 }
 
-/// The sweep's outcome: the share one run may take and every entry's climb.
+/// One measurement at a size: the time of one run, which the limit judges,
+/// and what taking it cost, the inputs built and every run of the batch,
+/// which the budget pays.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Measure {
+    pub run: Duration,
+    pub cost: Duration,
+}
+
+/// The sweep's outcome: the share one run may take, what the measurements
+/// cost in all, and every entry's climb.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SweepReport {
     pub budget: Duration,
+    pub spent: Duration,
     pub share: u32,
     pub input: &'static str,
     pub limit: Duration,
     pub scalings: Vec<Scaling>,
 }
 
-/// Run the sweep over `entries` with `time` as the clock: `time(entry, n)` is
-/// one run at size `n`, `None` when it panicked. One run may take at most
+/// Run the sweep over `entries` with `time` as the clock: `time(entry, n)`
+/// measures one run at size `n`, `None` when it panicked. One run may take at most
 /// `budget / (entries * share)`, the limit. Every entry climbs the ladder in
 /// turn until a run exceeds the limit, its cap stops it or a run fails; then
 /// the time the climbs left over goes round robin, one run per entry per
 /// round, to binary search between the last size that fit and the first that
-/// did not, until every search converges or the budget is spent.
+/// did not, until every search converges or the budget is spent. A failed
+/// run costs the limit.
 pub fn sweep(
     entries: &[&'static AlgorithmEntry],
     budget: Duration,
     share: u32,
-    time: &mut dyn FnMut(&AlgorithmEntry, usize) -> Option<Duration>,
+    time: &mut dyn FnMut(&AlgorithmEntry, usize) -> Option<Measure>,
 ) -> SweepReport {
     let runs = (entries.len() as u32 * share).max(1);
     let limit = budget / runs;
@@ -81,10 +95,10 @@ pub fn sweep(
             if spent >= budget { break; }
             let mid = (*lo + *hi) / 2;
             match time(entries[*ind], mid) {
-                Some(d) => {
-                    if d > limit { *hi = mid } else { *lo = mid }
-                    spent += d;
-                    scalings[*ind].points.push((mid, d));
+                Some(m) => {
+                    if m.run > limit { *hi = mid } else { *lo = mid }
+                    spent += m.cost;
+                    scalings[*ind].points.push((mid, m.run));
                 }
                 None => { *hi = mid; spent += limit; }
             }
@@ -93,14 +107,14 @@ pub fn sweep(
         searching.retain(|&(_, lo, hi)| hi - lo > 1);
     }
     for s in &mut scalings { s.points.sort_by_key(|&(n, _)| n); }
-    SweepReport { budget, share, input: "primary", limit, scalings }
+    SweepReport { budget, spent, share, input: "primary", limit, scalings }
 }
 
 // One entry up the ladder until a run exceeds `limit`, the cap or a failure.
 fn climb(
     entry: &'static AlgorithmEntry,
     limit: Duration,
-    time: &mut dyn FnMut(&AlgorithmEntry, usize) -> Option<Duration>,
+    time: &mut dyn FnMut(&AlgorithmEntry, usize) -> Option<Measure>,
     spent: &mut Duration,
 ) -> Scaling {
     let mut points = Vec::new();
@@ -110,11 +124,11 @@ fn climb(
     for n in sizes() {
         if n > cap { break; }
         match time(entry, n) {
-            None => { stop = Stop::Failed(n); break; }
-            Some(d) => {
-                *spent += d;
-                points.push((n, d));
-                if d > limit { stop = Stop::Over(n); break; }
+            None => { *spent += limit; stop = Stop::Failed(n); break; }
+            Some(m) => {
+                *spent += m.cost;
+                points.push((n, m.run));
+                if m.run > limit { stop = Stop::Over(n); break; }
                 fits = n;
             }
         }
@@ -125,7 +139,8 @@ fn climb(
 /// The runner over real entries on the category's primary input, or on
 /// `input` when one is named, the entries whose category lacks it left out.
 /// A run at a size is a batch sized by the entry's previous time, seeded by
-/// the size, under the no op logger.
+/// the size, under the no op logger, and its cost is the wall time of the
+/// whole measurement.
 #[derive(Clone, Copy, Debug)]
 pub struct Sweep {
     pub budget: Duration,
@@ -147,11 +162,12 @@ impl Sweep {
             entries.iter().copied().filter(|e| self.input_for(e).is_some()).collect();
         let mut last: HashMap<&str, Duration> = HashMap::new();
         let mut clock = |entry: &AlgorithmEntry, n: usize| {
+            let started = Instant::now();
             let m = last.get(entry.name).map_or(1, |&one| batch_size(one, n));
             let seeds: Vec<u64> = (0..m as u64).map(|i| n as u64 * 64 + i).collect();
-            let one = time_runs(entry, self.input_for(entry)?, n, &seeds)?;
-            last.insert(entry.name, one);
-            Some(one)
+            let run = time_runs(entry, self.input_for(entry)?, n, &seeds)?;
+            last.insert(entry.name, run);
+            Some(Measure { run, cost: started.elapsed() })
         };
         let mut report = sweep(&runnable, self.budget, self.share, &mut clock);
         report.input = self.input.unwrap_or("primary");
@@ -168,8 +184,8 @@ impl SweepReport {
         let width = rows.iter().map(|s| s.name.len()).fold("algorithm".len(), usize::max);
         let header = [
             format!(
-                "=== sweep: {} entries, input {}, budget {:.1?}, one run at most {:.2?} (budget / entries / {}) ===",
-                rows.len(), self.input, self.budget, self.limit, self.share
+                "=== sweep: {} entries, input {}, budget {:.1?}, spent {:.1?}, one run at most {:.2?} (budget / entries / {}) ===",
+                rows.len(), self.input, self.budget, self.spent, self.limit, self.share
             ),
             format!("{:<width$}  {:>6}  {:>10}  {:>12}  {}", "algorithm", "sizes", "fits", "time there", "stopped by"),
             format!("{:-<width$}  {:->6}  {:->10}  {:->12}  {:->10}", "", "", "", "", ""),
@@ -186,11 +202,14 @@ impl SweepReport {
         header.into_iter().chain(lines).collect::<Vec<_>>().join("\n")
     }
 
-    /// The archive: a header naming the budget and share, one
+    /// The archive: a header naming the budget, the time spent and the share, one
     /// `name<TAB>size<TAB>nanoseconds` line per timed size sorted by name then
     /// size, and a `# fits` line per entry with its largest fitting size.
     pub fn archive(&self) -> String {
-        let header = format!("# sweep budget_ms={} share={} limit_ns={} input={}\n", self.budget.as_millis(), self.share, self.limit.as_nanos(), self.input);
+        let header = format!(
+            "# sweep budget_ms={} spent_ms={} share={} limit_ns={} input={}\n",
+            self.budget.as_millis(), self.spent.as_millis(), self.share, self.limit.as_nanos(), self.input
+        );
         let by_name: BTreeMap<&str, &Scaling> = self.scalings.iter().map(|s| (s.name, s)).collect();
         let points = by_name.values().flat_map(|s| s.points.iter().map(move |&(n, d)| format!("{}\t{n}\t{}\n", s.name, d.as_nanos())));
         let fits = by_name.values().map(|s| format!("# fits\t{}\t{}\n", s.name, s.fits));
@@ -234,9 +253,10 @@ mod tests {
     static CAPPED: AlgorithmEntry = entry("capped", Some(150));
     static FLAKY: AlgorithmEntry = entry("flaky", None);
 
-    // A clock where a run at size n takes n microseconds.
-    fn micros_per_element(_: &AlgorithmEntry, n: usize) -> Option<Duration> {
-        Some(Duration::from_micros(n as u64))
+    // A clock where a run at size n takes n microseconds and costs only that.
+    fn micros_per_element(_: &AlgorithmEntry, n: usize) -> Option<Measure> {
+        let run = Duration::from_micros(n as u64);
+        Some(Measure { run, cost: run })
     }
 
     #[test]
@@ -284,6 +304,25 @@ mod tests {
     }
 
     #[test]
+    fn the_budget_pays_for_building_the_inputs_too() {
+        // The search test's setup, but a measurement costs ten times its run,
+        // as when building the input dwarfs a fast run. The climb to 600 then
+        // costs about 84ms of the 20ms budget, so no search runs, and the
+        // report says what was spent.
+        let mut searched = Vec::new();
+        let mut clock = |e: &AlgorithmEntry, n: usize| {
+            if (501..600).contains(&n) { searched.push(n); }
+            micros_per_element(e, n).map(|m| Measure { run: m.run, cost: m.run * 10 })
+        };
+        let report = sweep(&[&LINEAR], Duration::from_millis(20), 40, &mut clock);
+        let s = &report.scalings[0];
+        assert_eq!((s.stop, s.fits), (Stop::Over(600), 500));
+        assert!(searched.is_empty(), "{searched:?}");
+        let climbed: Duration = s.points.iter().map(|&(_, d)| d * 10).sum();
+        assert_eq!(report.spent, climbed);
+    }
+
+    #[test]
     fn a_cap_ends_the_climb_without_a_search() {
         let report = sweep(&[&CAPPED], Duration::from_secs(1), 5, &mut micros_per_element);
         let s = &report.scalings[0];
@@ -323,7 +362,7 @@ mod tests {
     fn the_archive_lists_points_by_name_then_size_under_a_header() {
         let report = sweep(&[&CAPPED], Duration::from_millis(1), 2, &mut micros_per_element);
         let text = report.archive();
-        assert!(text.starts_with("# sweep budget_ms=1 share=2 limit_ns=500000 input=primary\n"));
+        assert!(text.starts_with("# sweep budget_ms=1 spent_ms=5 share=2 limit_ns=500000 input=primary\n"));
         assert!(text.contains("capped\t1\t1000\ncapped\t2\t2000\n"));
         assert!(text.ends_with("# fits\tcapped\t150\n"));
     }
