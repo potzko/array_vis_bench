@@ -156,7 +156,9 @@ fn climb(
 /// it left out. No climb passes `max_size`.
 /// A run at a size is a batch sized by the entry's previous time, seeded by
 /// the size, under the no op logger, and its cost is the wall time of the
-/// whole measurement.
+/// whole measurement. An entry's first size has no previous time, so one
+/// unmeasured run there sizes its batch and warms the code up first; timed
+/// alone and cold, the smallest sizes read slower than the next ones.
 #[derive(Clone, Copy, Debug)]
 pub struct Sweep {
     pub budget: Duration,
@@ -180,9 +182,13 @@ impl Sweep {
         let mut last: HashMap<&str, Duration> = HashMap::new();
         let mut clock = |entry: &AlgorithmEntry, n: usize| {
             let started = Instant::now();
-            let m = last.get(entry.name).map_or(1, |&one| batch_size(one, n));
-            let seeds: Vec<u64> = (0..m as u64).map(|i| n as u64 * 64 + i).collect();
-            let run = time_runs(entry, self.input_for(entry)?, n, &seeds)?;
+            let input = self.input_for(entry)?;
+            let one = match last.get(entry.name) {
+                Some(&one) => one,
+                None => time_runs(entry, input, n, &[u64::MAX / 2])?,
+            };
+            let seeds: Vec<u64> = (0..batch_size(one, n) as u64).map(|i| n as u64 * 64 + i).collect();
+            let run = time_runs(entry, input, n, &seeds)?;
             last.insert(entry.name, run);
             Some(Measure { run, cost: started.elapsed() })
         };
