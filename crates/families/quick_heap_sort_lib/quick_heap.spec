@@ -103,5 +103,4 @@ component set_quick_heap_sort
   provides Sort
   menu     quick heap sorts / set
   slot     dh SetDeepHeapify
-  max_input 128
 end

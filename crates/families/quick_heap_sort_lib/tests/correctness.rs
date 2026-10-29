@@ -91,7 +91,7 @@ fn quick_heap_sort_with_set_quick_select_build_sorts() {
     // exercises the SS branch too.
     type Sort = QuickHeapSort<Binary, SQS, small_sort_basic::Size2SmallSort>;
 
-    for &n in &[0usize, 1, 2, 3, 7, 16, 50, 128] {
+    for &n in &[0usize, 1, 2, 3, 7, 16, 50, 128, 1000, 5000] {
         for seed in 0..2u64 {
             let mut a = shuffled(n, seed);
             Sort::sort(&mut a, &mut NoOpLogger);

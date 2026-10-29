@@ -1153,6 +1153,15 @@ mod tests {
             }
         }
 
+        // The set variants grow as n log n, like the classic ones, so no
+        // input cap bounds them in the picker, the sweep or the battery.
+        #[test]
+        fn the_set_variants_carry_no_input_cap() {
+            for e in entries().iter().filter(|e| e.name.starts_with("set quick heap sort<")) {
+                assert_eq!(e.max_input_size, None, "`{}` is capped", e.name);
+            }
+        }
+
         /// finite() is LOAD-BEARING here: `SetDeepHeapify` is a recursive role. A BARE
         /// hole unfolds the cycle as far as `depth` allows, so its count GROWS with
         /// depth (deeper set-in-set sorts); `finite( _ )` occurs-checks it to the cycle
