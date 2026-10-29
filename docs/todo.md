@@ -103,9 +103,11 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
     under callgrind, pin them exactly, and fail a pair past two percent, so
     the zero cost claim rests on a deterministic number beside the timing.
     See [implementation_plans/instruction_counts.md](implementation_plans/instruction_counts.md).
-11. Rod sort axes. Not started. A tournament merge that makes every strategy
-    N log N, the strategy's gap chain as a Shell sequence, and a strategy
-    tuned for the insertion path, after two speed fixes to the merges. See
+11. Done: rod sort axes. A tournament merge that makes every strategy
+    N log N and the strategy's gap chain as a Shell sequence, after two speed
+    fixes to the merges; the tuned strategy was dropped, `log-parity` beats
+    every constant setting. Open: the hold and shift kernel for the shell
+    family, which the rod gap entries need to beat the recursion. See
     [implementation_plans/rod_sort_axes.md](implementation_plans/rod_sort_axes.md).
 
 ## Concept cleanups, 2026-10-20 review

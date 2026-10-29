@@ -1,8 +1,9 @@
 # Implementation plan: rod sort axes
 
-Status: not started. Written 2026-10-29 after the rod sort review that dropped
-its stability claim, gave its time bounds to the strategy and merge together
-and fixed the chain length the strategy is told.
+Status: done 2026-10-29, kept as the record; the tuned strategy was dropped,
+see its section. Written after the rod sort review that dropped its stability
+claim, gave its time bounds to the strategy and merge together and fixed the
+chain length the strategy is told.
 
 ## What rod sort is
 
@@ -63,13 +64,14 @@ Everything below keeps it.
   instead of swapping at every step. The comparisons stay the same, writes go
   from 7.5 to 4.0 per n log2 n, and `optimised` with `InsertionMerge` from 247
   to 158 ns. The visual shows writes where it showed swaps.
-- `AuxMerge` stops allocating its heads on every call. With the heads on the
-  stack `optimised` went from 322 to 185 ns. The driver allocates one index
-  scratch at the top, sized by the top level's branch, and passes it down beside
-  the aux buffer, so `RodMerge::merge` gains that slice. Every strategy's branch
-  is non decreasing in the length, which is what makes the top level's branch
-  enough; `BranchingStrategy` documents that, and a merge asserts the scratch
-  holds its branch.
+- `AuxMerge` stops allocating its heads on every call. `RodMerge` declares
+  `aux_size(n)` and `index_size(branch)` in place of a flag, and the driver
+  creates each buffer once through the logger, the way the rotations' scratch
+  works, so the heads are an index array the visualiser shows moving. The
+  index is sized by the top level's branch, the widest while a strategy's
+  branch grows with the length, and a merge handed less creates its own for
+  that call. `optimised` went from 322 to 191 ns, `root-parity` from 3190 to
+  892.
 
 ## The merge axis: a tournament merge
 
@@ -78,11 +80,13 @@ loser tree, reads them at stride `jump` into the shared aux buffer, and copies
 back as `AuxMerge` does. Each output costs ceil(log2 k) comparisons for k
 chains. Over a root to leaf path the logs of the branches sum to log2 N, so the
 sort is N log N under every strategy and its bound needs no strategy constant.
-Two chains take a plain two pointer merge.
+Two chains take a plain two pointer loop with the heads in locals, mirrored
+into the index for the visualiser: `classic` took 227 ns through the tree,
+185 reading the heads back from the index, 139 like this.
 
 The prototype compared 0.92 to 1.0 n log2 n times at 2^16 under all six
-strategies, where the scan compares 0.92 to 17, and ran in 110 to 140 ns at
-2^20.
+strategies, where the scan compares 0.92 to 17. Built, it ran the wide
+strategies in 121 to 135 ns at 2^20 against 141 to 892 for the scan.
 
 Its test runs one merge over k sorted chains of n elements in total under a
 counting logger and holds it to n ceil(log2 k) plus k comparisons, for k from
@@ -111,16 +115,22 @@ that cuts a level earlier is the difference. The test runs both on the same
 input at powers of the branch for `classic`, `3-parity` and `optimised`, and
 asserts equal comparison counts.
 
-## A strategy for the insertion path
+Built, these entries run on `ShellSort`'s kernel, which swaps at every step,
+while rod sort's own insertion now shifts: `optimised` at 2^20 took 322 ns
+through the shell driver against 231 for the recursion. On one kernel the pass
+order is the faster by about a tenth, 215 against 247 shifting and 327
+against 362 swapping, so the hold and shift kernel in the shell family is what
+would make this axis pay.
 
-`optimised` predates `AuxMerge` and keeps its name and parameters, so no
-existing entry moves. A search over branch 2 to 40, every `inter` below it and
-cuts from 8 to 64, counting comparisons at 2^16 through level order passes, put
-branch 10 with `inter` 9 first at 2.97 n log2 n, against 3.75 for `optimised`
-and 1.53 for Ciura. It joins as `tuned` once the search is rerun at 2^20, since
-the ranking may move with the length. It is tuned for the insertion path only:
-under the scan merge it pays nine comparisons per element per level, under the
-tournament merge three or four.
+## Dropped: a strategy for the insertion path
+
+The search at 2^16 put branch 10 with `inter` 9 first. Rerun at 2^20 the best
+constant setting moved to branch 17 with `inter` 16, 5.51 n log2 n, and
+`log-parity`, whose branch grows with the length and whose `inter` is its
+branch less one, beat every constant setting at both sizes: 2.86 against 2.97
+at 2^16, 5.26 against 5.51 at 2^20. A constant strategy would join already
+dominated. Ciura read 1.53 and 1.60, and the insertion path's comparisons per
+n log2 n roughly double from 2^16 to 2^20, the divisor chain showing.
 
 ## Left out
 
@@ -134,15 +144,13 @@ tournament merge three or four.
 
 ## Catalog and docs
 
-Rod sorts go from 12 entries to 21, seven strategies by three merges. Shell
-sorts go from 18 to 32, nine sequences and seven rod gap chains by two drivers.
-The catalog goes from 1868 to 1891. The pinned count in `spec_catalog`, the
-golden, the README's family table, the crate readme and the header of
-`rod.spec` follow. The full gate's timing baseline gains rows for the new
-entries by hand, never by `--bless`.
+Rod sorts went from 12 entries to 18, six strategies by three merges. Shell
+sorts went from 18 to 30, nine sequences and six rod gap chains by two
+drivers. The catalog went from 1868 to 1886. The full gate's timing baseline
+gains rows for the new entries by hand, never by `--bless`.
 
-## Order of work
+## Follow up
 
-On a branch off `dev`, as a series of small commits, each with its test and
-each leaving the gate green: the two fixes, the tournament merge, the rod gaps,
-the tuned strategy, then the counts and docs.
+The hold and shift kernel for `ShellSort` and `ShellSortOrdered`: the same
+comparisons, fewer writes, writes instead of swaps on screen, and the rod gap
+entries ahead of the recursion they mirror.

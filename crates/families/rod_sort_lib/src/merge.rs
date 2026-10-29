@@ -12,6 +12,9 @@
 //!   every chain head for each output, so `branch - 1` compares per element
 //!   per pass, plus N reads and writes for the buffer round trip. Merge sort
 //!   overall only while the branch stays constant.
+//! - [`TournamentMerge`]: the same buffer round trip with the chain heads in
+//!   a loser tree, so at most ceil(log2 branch) compares per element per
+//!   pass, and N log N whatever the strategy.
 //!
 //! ## Aux buffer ownership
 //!
