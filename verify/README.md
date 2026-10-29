@@ -37,5 +37,7 @@ the performance where they were.
 
 When a change is meant to move a baseline, review the diff the gate printed,
 then run `../verify.sh --bless` and commit the new baseline with the change.
+Then run the gate once more: a bless compares nothing, so it never stamps
+the tree for the branch gate described in `../githooks/README.md`.
 Timing noise on a busy machine can fail the timing step once; rerun before
 treating it as a regression.

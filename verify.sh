@@ -5,36 +5,48 @@
 # zero if any step failed. Baselines live under `verify/`; `--bless` rewrites
 # them after a change that was meant to move them.
 #
-#   ./verify.sh            every step, several minutes
-#   ./verify.sh --quick    skip the workspace tests and the timing step
-#   ./verify.sh --bless    run every step and rewrite the baselines it owns
+#   ./verify.sh              every step, several minutes
+#   ./verify.sh --quick      skip the workspace tests and the timing step
+#   ./verify.sh --portable   skip the steps tied to this machine, the gate for `dev`
+#   ./verify.sh --bless      run every step and rewrite the baselines it owns
 #
-# Steps, in order:
+# A run that passes without --quick or --bless, in a checkout that is clean
+# when it starts and when it ends, stamps the tree portable or full for the
+# branch gate in `githooks/`.
+#
+# Steps, in order, the first four portable:
 #   build     release build of the workspace, no warnings allowed
 #   catalog   the spec compiler's own tests and golden, then the emitted
 #             catalog's names and types against `verify/catalog.types`
-#   scripts   the unit tests of the comparison and plot scripts, and of the
-#             benchmark page's logic under node
+#   scripts   the unit tests of the comparison and plot scripts, of the
+#             benchmark page's logic under node, and of the branch gate
+#   tests     `cargo t`, the workspace under nextest in release
 #   machine   the rustc version, the rustc flags and the cpu model this
 #             machine's assembly and timing baselines were taken on
 #   asm       the six gate symbols of `compare_sorts` against `verify/asm/`
 #   perf      the `compare_sorts` gate over 61 paired runs, generic sorts
 #             within 1.05x of hand rolled ones
-#   tests     `cargo t`, the workspace under nextest in release
 #   timing    every entry timed, median of fifteen interleaved rounds at
 #             size 1000, against `verify/timing.tsv`
 set -uo pipefail
 cd "$(dirname "$0")"
 
+usage() { echo "usage: $0 [--quick | --portable] [--bless]" >&2; exit 2; }
 QUICK=0
+PORTABLE=0
 BLESS=0
 for arg in "$@"; do
   case "$arg" in
     --quick) QUICK=1 ;;
+    --portable) PORTABLE=1 ;;
     --bless) BLESS=1 ;;
-    *) echo "usage: $0 [--quick] [--bless]" >&2; exit 2 ;;
+    *) usage ;;
   esac
 done
+[[ $QUICK -eq 1 && $PORTABLE -eq 1 ]] && usage
+LEVEL=full
+[[ $PORTABLE -eq 1 ]] && LEVEL=portable
+START_TREE=$(githooks/gate.sh clean-tree)
 
 BASE=verify
 OUT=target/verify
@@ -42,6 +54,12 @@ mkdir -p "$OUT/asm" "$BASE/asm"
 FAILED=0
 pass() { echo "PASS: $1"; }
 fail() { echo "FAIL: $1"; FAILED=1; }
+finish() {
+  echo
+  if [[ $FAILED -eq 0 ]]; then echo "VERIFY: all steps passed"; else echo "VERIFY: a step failed"; fi
+  [[ $FAILED -eq 0 && $QUICK -eq 0 && $BLESS -eq 0 ]] && githooks/gate.sh stamp "$LEVEL" "$START_TREE"
+  exit $FAILED
+}
 bless_or_diff() {  # <label> <baseline> <current>
   if [[ $BLESS -eq 1 ]]; then
     cp "$3" "$2" && pass "$1 (baseline written)"
@@ -74,10 +92,29 @@ bless_or_diff "emitted catalog names and types ($(wc -l <"$OUT/catalog.types") e
 echo "== scripts"
 if (cd "$BASE" && python3 -m unittest -q test_compare_timing >"../$OUT/scripts.log" 2>&1) \
    && python3 -m unittest -q test_plot_bench >>"$OUT/scripts.log" 2>&1 \
-   && node --test bench_view/view.test.js >>"$OUT/scripts.log" 2>&1; then
+   && node --test bench_view/view.test.js >>"$OUT/scripts.log" 2>&1 \
+   && (cd githooks && python3 -m unittest -q test_gate >>"../$OUT/scripts.log" 2>&1); then
   pass "verify script tests"
 else
   fail "verify script tests (see $OUT/scripts.log)"
+fi
+
+if [[ $QUICK -eq 1 ]]; then
+  echo "== tests skipped (--quick)"
+else
+  echo "== tests"
+  if ! cargo nextest --version >/dev/null 2>&1; then
+    fail "cargo nextest is not installed: cargo install cargo-nextest --locked"
+  elif cargo t >"$OUT/tests.log" 2>&1; then
+    pass "workspace tests ($(grep -oE '[0-9]+ tests run' "$OUT/tests.log" | tail -1))"
+  else
+    fail "workspace tests ($(grep -cE '^\s*FAIL \[' "$OUT/tests.log") failures, see $OUT/tests.log)"
+  fi
+fi
+
+if [[ $PORTABLE -eq 1 ]]; then
+  echo "== machine, asm, perf and timing skipped (--portable)"
+  finish
 fi
 
 echo "== machine"
@@ -107,17 +144,8 @@ else
 fi
 
 if [[ $QUICK -eq 1 ]]; then
-  echo "== tests and timing skipped (--quick)"
+  echo "== timing skipped (--quick)"
 else
-  echo "== tests"
-  if ! cargo nextest --version >/dev/null 2>&1; then
-    fail "cargo nextest is not installed: cargo install cargo-nextest --locked"
-  elif cargo t >"$OUT/tests.log" 2>&1; then
-    pass "workspace tests ($(grep -oE '[0-9]+ tests run' "$OUT/tests.log" | tail -1))"
-  else
-    fail "workspace tests ($(grep -cE '^\s*FAIL \[' "$OUT/tests.log") failures, see $OUT/tests.log)"
-  fi
-
   echo "== timing"
   time_catalog() { ./target/release/array_vis_bench --timing 1000 15 --out "$1" >"$OUT/timing.log" 2>&1; }
   compare_timing() { python3 -I "$BASE/compare_timing.py" "$BASE/timing.tsv" "$1" >"$OUT/timing_compare.log" 2>&1; }
@@ -142,6 +170,4 @@ else
   fi
 fi
 
-echo
-if [[ $FAILED -eq 0 ]]; then echo "VERIFY: all steps passed"; else echo "VERIFY: a step failed"; fi
-exit $FAILED
+finish

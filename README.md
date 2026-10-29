@@ -82,7 +82,7 @@ emit regression that drops a variant fails the build's own tests.
 | `cargo run --release --bin compare_sorts` | Performance regression gate. Pits the generic quick, merge and heap sorts against hand rolled u64 baselines and asserts each pair stays within 1.05x. |
 | `cargo run --release --bin measure_random_shell` | Complexity probe for the random shell sort variants. |
 | `cargo run -p array_vis_bench_min --release` | Minimal link root with two families and no catalog, proving a consumer can take just the leaves it wants. |
-| `./verify.sh [--quick] [--bless]` | The verification gate: release build without warnings, the compiler's golden and the emitted catalog's types, the assembly of the gate symbols, the `compare_sorts` gate, the workspace tests and a timing comparison, each against a baseline under `verify/`. |
+| `./verify.sh [--quick \| --portable] [--bless]` | The verification gate: release build without warnings, the compiler's golden and the emitted catalog's types, the workspace tests, the assembly of the gate symbols, the `compare_sorts` gate and a timing comparison, each against a baseline under `verify/`. `--portable` runs only the steps that do not depend on this machine, through the workspace tests. A pass in a clean checkout stamps the tree for the branch gate, see [githooks/README.md](githooks/README.md). |
 | `cargo t` | The whole workspace's tests under nextest in release: compiler unit tests, per crate unit tests, and every emitted entry's correctness battery. The battery runs each entry in a subprocess so a hang or crash names the variant. |
 
 `cargo t` is an alias in `.cargo/config.toml` for `cargo nextest run --release
