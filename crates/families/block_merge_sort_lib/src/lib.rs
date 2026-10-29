@@ -250,7 +250,7 @@ mod tests {
         ExternalBuffer, Fixed, FullBuffer, Half, HalfBuffer, InArrayBuffer, InArrayKeys, Log, NoBuffer, NoKeys, Sixteenth, Sqrt,
         TwoSqrt,
     };
-    use sort_logger::NoOpLogger;
+    use sort_logger::{NoOpLogger, SortLog, VisualizerLogger};
 
     // The shapes under test rotate by reversal unless a test names another rotation.
     type Block<B, K> = BlockMergeSort<B, K, ReversalRotation>;
@@ -302,14 +302,25 @@ mod tests {
     fn a_fixed_buffer_without_keys_sorts_stably() { sorts_stably::<Block<ExternalBuffer<Fixed<512>>, NoKeys>>("external 512, none"); }
     #[test]
     fn the_shape_with_nothing_sorts_stably() { sorts_stably::<Block<NoBuffer, NoKeys>>("none, none"); }
-    // Every rotation of the sort is `R`'s. Trinity runs through the scratch the
-    // sort allocates once, the auxiliary rotation allocates its own each call.
+    // Every rotation of the sort is `R`'s. Trinity and the auxiliary rotation
+    // run through the scratch the sort allocates once.
     #[test]
     fn any_rotation_sorts_stably() {
         sorts_stably::<BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation>>("in array, in array, trinity");
         sorts_stably::<BlockMergeSort<NoBuffer, InArrayKeys, TrinityRotation>>("none, in array, trinity");
         sorts_stably::<BlockMergeSort<NoBuffer, NoKeys, AuxiliaryRotation>>("none, none, auxiliary");
     }
+    // With the buffer and the keys in the array, the rotation's scratch is the
+    // one aux array of the run, however many rotations use it.
+    #[test]
+    fn the_auxiliary_rotation_allocates_its_scratch_once_per_sort() {
+        let mut arr = input(0, 1000, &mut Rng(0x5EED));
+        let mut log = VisualizerLogger { type_ghost: std::marker::PhantomData, log: Vec::new() };
+        BlockMergeSort::<InArrayBuffer<Sixteenth>, InArrayKeys, AuxiliaryRotation>::sort(&mut arr, &mut log);
+        let created = log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArrT { .. } | SortLog::CreateAuxArr { .. }));
+        assert_eq!(created.count(), 1);
+    }
+
     #[test]
     fn every_size_of_buffer_sorts_stably() {
         sorts_stably::<Block<InArrayBuffer<Fixed<512>>, InArrayKeys>>("in array 512, in array");
