@@ -11,7 +11,7 @@
 use std::collections::{BTreeMap, HashMap};
 use std::time::{Duration, Instant};
 
-use crate::bench_registry::{list_inputs, primary_input, AlgorithmEntry};
+use crate::bench_registry::{axes_line, list_inputs, primary_input, AlgorithmEntry, Axes};
 use crate::clock::{batch_size, time_runs};
 
 /// The size ladder: every size to 100, then by tens to 200, by hundreds to
@@ -42,11 +42,12 @@ pub enum Stop {
     Failed(usize),
 }
 
-/// One entry's climb: every timed size, the search's runs included, in size
-/// order, and why the climb stopped.
+/// One entry's climb, under its name and axes: every timed size, the
+/// search's runs included, in size order, and why the climb stopped.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Scaling {
     pub name: &'static str,
+    pub axes: Axes,
     pub points: Vec<(usize, Duration)>,
     pub stop: Stop,
     /// The largest size known to fit the share once the search has run: the
@@ -146,7 +147,7 @@ fn climb(
             }
         }
     }
-    Scaling { name: entry.name, points, stop, fits }
+    Scaling { name: entry.name, axes: entry.axes, points, stop, fits }
 }
 
 /// The plan, and the runner over real entries on the category's primary
@@ -218,7 +219,8 @@ impl SweepReport {
 
     /// The archive: a header naming the budget, the time spent, the share and the ceiling, one
     /// `name<TAB>size<TAB>nanoseconds` line per timed size sorted by name then
-    /// size, and a `# fits` line per entry with its largest fitting size.
+    /// size, a `# fits` line per entry with its largest fitting size, and a
+    /// `# axes` line per entry.
     pub fn archive(&self) -> String {
         let header = format!(
             "# sweep budget_ms={} spent_ms={} share={} limit_ns={} input={} max_size={}\n",
@@ -227,7 +229,8 @@ impl SweepReport {
         let by_name: BTreeMap<&str, &Scaling> = self.scalings.iter().map(|s| (s.name, s)).collect();
         let points = by_name.values().flat_map(|s| s.points.iter().map(move |&(n, d)| format!("{}\t{n}\t{}\n", s.name, d.as_nanos())));
         let fits = by_name.values().map(|s| format!("# fits\t{}\t{}\n", s.name, s.fits));
-        header + &points.chain(fits).collect::<String>()
+        let axes = by_name.values().map(|s| axes_line(s.name, s.axes));
+        header + &points.chain(fits).chain(axes).collect::<String>()
     }
 }
 
@@ -266,6 +269,7 @@ mod tests {
     static LINEAR: AlgorithmEntry = entry("linear", None);
     static CAPPED: AlgorithmEntry = entry("capped", Some(150));
     static FLAKY: AlgorithmEntry = entry("flaky", None);
+    static AXED: AlgorithmEntry = AlgorithmEntry { axes: &[("Tree", "avl", "tree")], ..entry("axed", Some(2)) };
 
     // A plan over the primary inputs with no ceiling.
     fn plan(budget: Duration, share: u32) -> Sweep {
@@ -401,7 +405,14 @@ mod tests {
         let text = report.archive();
         assert!(text.starts_with(&format!("# sweep budget_ms=1 spent_ms=5 share=2 limit_ns=500000 input=primary max_size={}\n", usize::MAX)));
         assert!(text.contains("capped\t1\t1000\ncapped\t2\t2000\n"));
-        assert!(text.ends_with("# fits\tcapped\t150\n"));
+        assert!(text.contains("# fits\tcapped\t150\n"));
+    }
+
+    #[test]
+    fn the_archive_ends_with_each_entry_s_axes_by_name() {
+        let report = sweep(&[&AXED, &CAPPED], &plan(Duration::from_millis(1), 2), &mut micros_per_element);
+        let text = report.archive();
+        assert!(text.ends_with("# fits\tcapped\t150\n# axes\taxed\tTree\tavl\ttree\n# axes\tcapped\n"), "{text}");
     }
 
     #[test]

@@ -9,19 +9,20 @@
 //! entry emitted by the spec compiler and one registered by the legacy combo
 //! path look identical here (both are just `AlgorithmEntry` rows).
 
-use crate::bench_registry::{list_inputs, primary_input, AlgorithmEntry, Category, RunConfig, ALGORITHMS};
+use crate::bench_registry::{axes_line, list_inputs, primary_input, AlgorithmEntry, Axes, Category, RunConfig, ALGORITHMS};
 use crate::clock::{batch_size, time_runs};
 use sort_logger::{SortLogger, VisualizerLogger};
 use std::collections::BTreeMap;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::time::Duration;
 
-/// One entry's timing over its rounds: the median, the inter quartile range
-/// as the spread, and how many rounds fell outside the Tukey fences, one and
-/// a half ranges past the quartiles, as the outliers.
+/// One entry's timing over its rounds, under its name and axes: the median,
+/// the inter quartile range as the spread, and how many rounds fell outside
+/// the Tukey fences, one and a half ranges past the quartiles, as the outliers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Timing {
     pub name: &'static str,
+    pub axes: Axes,
     pub median: Duration,
     pub iqr: Duration,
     pub outliers: usize,
@@ -30,7 +31,7 @@ pub struct Timing {
 /// The statistics of one entry's round times. The quartiles are the values at
 /// a quarter and three quarters of the sorted rounds, so three rounds give the
 /// whole spread as the range and never an outlier.
-pub fn timing(name: &'static str, runs: &mut [Duration]) -> Timing {
+pub fn timing(name: &'static str, axes: Axes, runs: &mut [Duration]) -> Timing {
     runs.sort_unstable();
     let len = runs.len();
     let (q1, median, q3) = (runs[len / 4], runs[len / 2], runs[(3 * len / 4).min(len - 1)]);
@@ -38,7 +39,7 @@ pub fn timing(name: &'static str, runs: &mut [Duration]) -> Timing {
     let fence = iqr + iqr / 2;
     let (low, high) = (q1.saturating_sub(fence), q3 + fence);
     let outliers = runs.iter().filter(|&&r| r < low || r > high).count();
-    Timing { name, median, iqr, outliers }
+    Timing { name, axes, median, iqr, outliers }
 }
 
 /// The outcome of running one consumer over a set of algorithms.
@@ -71,7 +72,8 @@ impl MainReport {
         let mut rows: Vec<&Timing> = self.timings.iter().collect();
         rows.sort_by_key(|t| t.name);
         let lines = rows.iter().map(|t| format!("{}\t{}\t{}\t{}\n", t.name, t.median.as_nanos(), t.iqr.as_nanos(), t.outliers));
-        header + &lines.collect::<String>()
+        let axes = rows.iter().map(|t| axes_line(t.name, t.axes));
+        header + &lines.chain(axes).collect::<String>()
     }
 }
 
@@ -312,7 +314,7 @@ impl Main for Benchmark {
             }
         }
         let results: Vec<_> =
-            runnable.iter().zip(durations).map(|(&e, runs)| (e, runs.map(|mut r| timing(e.name, &mut r)))).collect();
+            runnable.iter().zip(durations).map(|(&e, runs)| (e, runs.map(|mut r| timing(e.name, e.axes, &mut r)))).collect();
         let timed: Vec<(&AlgorithmEntry, Timing)> =
             results.iter().filter_map(|&(e, t)| t.map(|t| (e, t))).collect();
         let failed = results.iter().filter(|(_, t)| t.is_none());
@@ -389,27 +391,33 @@ mod tests {
     static TOO_SMALL: AlgorithmEntry = entry("too small", Some(999));
 
     #[test]
-    fn timings_tsv_names_the_setup_then_each_entry_by_name_in_nanoseconds() {
+    fn timings_tsv_names_the_setup_then_each_entry_by_name_in_nanoseconds_then_their_axes() {
+        let zeta = Timing { axes: &[("Pivot", "first", "pivot"), ("SmallSort", "insertion: 32", "small")], ..flat("zeta", Duration::from_micros(3)) };
         let report = MainReport {
-            timings: vec![flat("zeta", Duration::from_micros(3)), flat("alpha", Duration::from_nanos(1500))],
+            timings: vec![zeta, flat("alpha", Duration::from_nanos(1500))],
             setup: Some(Benchmark { n: 1000, k: 15, input: None }),
             ..Default::default()
         };
-        assert_eq!(report.timings_tsv(), "# n=1000 k=15 input=primary\nalpha\t1500\t0\t0\nzeta\t3000\t0\t0\n");
+        assert_eq!(
+            report.timings_tsv(),
+            "# n=1000 k=15 input=primary\nalpha\t1500\t0\t0\nzeta\t3000\t0\t0\n\
+             # axes\talpha\n\
+             # axes\tzeta\tPivot\tfirst\tpivot\tSmallSort\tinsertion: 32\tsmall\n"
+        );
     }
 
     // A timing with no spread, as a table or archive test wants.
     fn flat(name: &'static str, median: Duration) -> Timing {
-        Timing { name, median, iqr: Duration::ZERO, outliers: 0 }
+        Timing { name, axes: &[], median, iqr: Duration::ZERO, outliers: 0 }
     }
 
     #[test]
     fn the_statistics_are_the_median_the_quartile_range_and_the_tukey_outliers() {
         let mut runs: Vec<Duration> = [4, 100, 2, 1, 3].map(ms).to_vec();
-        let t = timing("x", &mut runs);
+        let t = timing("x", &[], &mut runs);
         assert_eq!((t.median, t.iqr, t.outliers), (ms(3), ms(2), 1));
         let mut three: Vec<Duration> = [7, 5, 9].map(ms).to_vec();
-        let t = timing("y", &mut three);
+        let t = timing("y", &[], &mut three);
         assert_eq!((t.median, t.iqr, t.outliers), (ms(7), ms(4), 0));
     }
 

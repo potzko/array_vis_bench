@@ -293,6 +293,18 @@ fn emit_init_events(arr: &[usize], logger: &mut dyn sort_logger::SortLogger<usiz
     }
 }
 
+/// An entry's filled slots as `(role, value, path)`, see `AlgorithmEntry::axes`.
+pub type Axes = &'static [(&'static str, &'static str, &'static str)];
+
+/// The archive line naming an entry's axes: `# axes`, the name, then each
+/// axis as its role, value and path, every field tab separated. The timing
+/// and sweep archives end with one per entry, so a reader can group and
+/// filter by axis without parsing names.
+pub fn axes_line(name: &str, axes: Axes) -> String {
+    let fields = axes.iter().flat_map(|&(role, value, path)| [role, value, path]);
+    ["# axes", name].into_iter().chain(fields).collect::<Vec<_>>().join("\t") + "\n"
+}
+
 pub struct AlgorithmEntry {
     pub name: &'static str,
     pub category: Category,
@@ -338,7 +350,7 @@ pub struct AlgorithmEntry {
     /// The filled slots as `(role, value, path)` in declaration order. The
     /// `path` is the unique navigation key, so a composite filler's sub-slots
     /// nest as `pivot/a` and `pivot/b` and stay distinct when they share a role.
-    pub axes: &'static [(&'static str, &'static str, &'static str)],
+    pub axes: Axes,
     /// The label with one `{Role}` hole per axis, for example
     /// `"quick sort<part: {Partition}, small: {SmallSort}>"`. The picker fills
     /// each hole with the chosen value to show the partial type in the catalog's
