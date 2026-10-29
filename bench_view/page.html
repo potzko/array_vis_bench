@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmark view</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface: #fcfcfb; --raised: #ffffff;
+    --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11, 11, 11, 0.10);
+    --accent: #2a78d6; --wash: rgba(42, 120, 214, 0.08);
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+    --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+    --seq-low: #cde2fb; --seq-high: #104281;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --raised: #222221;
+      --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10);
+      --accent: #3987e5; --wash: rgba(57, 135, 229, 0.12);
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+      --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+      --seq-low: #184f95; --seq-high: #cde2fb;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --raised: #222221;
+    --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10);
+    --accent: #3987e5; --wash: rgba(57, 135, 229, 0.12);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+    --seq-low: #184f95; --seq-high: #cde2fb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font: 13px system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--page); color: var(--ink);
+         display: flex; height: 100vh; gap: 12px; padding: 12px; }
+  button, select, input { font: inherit; color: var(--ink); }
+  button { background: var(--raised); border: 1px solid var(--border); border-radius: 4px; padding: 3px 9px; cursor: pointer; }
+  button:hover { background: var(--wash); }
+  button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  select, input[type=text], input[type=number] { background: var(--raised); border: 1px solid var(--border);
+                                                 border-radius: 4px; padding: 3px 6px; }
+  #sidebar { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  #sidebar h1 { font-size: 15px; font-weight: 600; }
+  #filter { width: 100%; }
+  #facets { flex: 1; min-height: 0; overflow: auto; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 6px; padding: 4px 8px; }
+  .facet { border-bottom: 1px solid var(--border); padding: 4px 0; }
+  .facet:last-child { border-bottom: none; }
+  .facet summary { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 3px 0; list-style: none; }
+  .facet summary::-webkit-details-marker { display: none; }
+  .facet summary::before { content: ">"; color: var(--muted); font-size: 10px; width: 8px; transition: transform 0.1s; }
+  .facet details[open] > summary::before { transform: rotate(90deg); }
+  .facet-label { font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .facet-meta { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .facet summary button { font-size: 11px; padding: 0 6px; }
+  .values { display: flex; flex-direction: column; padding: 2px 0 4px 14px; max-height: 280px; overflow: auto; }
+  .value { display: flex; align-items: center; gap: 6px; padding: 1px 0; cursor: pointer; }
+  .value:hover { background: var(--wash); }
+  .value input { accent-color: var(--accent); cursor: pointer; }
+  .value-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
+  .value.empty .value-label, .value.empty .count { opacity: 0.45; }
+  .count { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; }
+  .only { visibility: hidden; font-size: 11px; padding: 0 5px; }
+  .value:hover .only { visibility: visible; }
+  #fixed { color: var(--muted); font-size: 12px; padding: 4px 0; }
+  main { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 0; }
+  .tabs { display: flex; gap: 4px; align-items: center; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; background: var(--surface);
+              border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+  .control { display: flex; gap: 6px; align-items: center; }
+  .control > span:first-child { color: var(--muted); }
+  #size { width: 180px; accent-color: var(--accent); }
+  #size-readout { font-variant-numeric: tabular-nums; min-width: 9ch; }
+  #ref { width: 300px; }
+  #tol { width: 60px; }
+  #count { margin-left: auto; color: var(--muted); }
+  #chart { flex: 1; min-height: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
+  .hidden { display: none !important; }
+  @media (max-width: 800px) {
+    body { flex-direction: column; height: auto; padding: 16px; }
+    #sidebar { width: 100%; max-height: 50vh; }
+    #chart { min-height: 70vh; }
+    #ref { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<aside id="sidebar">
+  <h1>Benchmark view</h1>
+  <input id="filter" type="text" placeholder="Name filter, a regular expression">
+  <div id="facets"></div>
+  <div id="fixed"></div>
+</aside>
+<main>
+  <div class="tabs">
+    <button data-tab="scaling">Scaling</button>
+    <button data-tab="effects">Effects</button>
+    <button data-tab="parallel">Parallel</button>
+    <span id="count"></span>
+    <button id="copy">Copy link</button>
+  </div>
+  <div class="controls">
+    <label class="control"><span>n</span><input id="size" type="range" min="0" step="1"><span id="size-readout"></span></label>
+    <label class="control" data-tabs="scaling"><span>Colour by</span><select id="colour"></select></label>
+    <label class="control" data-tabs="scaling parallel"><span>Best of</span><select id="best"></select></label>
+    <label class="control" data-tabs="effects"><span>Effect of</span><select id="effect"></select></label>
+    <label class="control" data-tabs="effects parallel"><span>Input</span><select id="one-input"></select></label>
+    <span class="control" data-tabs="scaling"><button id="logx">log x</button><button id="logy">log y</button></span>
+  </div>
+  <div class="controls" data-tabs="scaling parallel">
+    <label class="control"><span>Hide dominated</span>
+      <select id="dom"><option value="off">off</option><option value="family">within a family</option><option value="kind">within a kind</option></select></label>
+    <label class="control"><span>over n from</span><select id="lo"></select></label>
+    <label class="control"><span>to</span><select id="hi"></select></label>
+    <label class="control"><span>tolerance %</span><input id="tol" type="number" min="0" max="100" step="1"></label>
+  </div>
+  <div class="controls" data-tabs="scaling">
+    <label class="control"><span>Reference</span><input id="ref" type="text" list="names" placeholder="type a name, or click a line"></label>
+    <button id="ref-clear">Clear</button>
+    <label class="control"><span>Show</span>
+      <select id="perf"><option value="off">all</option><option value="faster">faster than it</option><option value="slower">slower than it</option></select></label>
+    <label class="control"><input id="norm" type="checkbox"><span>time over the reference</span></label>
+  </div>
+  <div id="chart"></div>
+</main>
+<datalist id="names"></datalist>
+<script>const DATA = __DATA__;</script>
+<script>/*__VIEW__*/</script>
+<script>/*__PAGE__*/</script>
+</body>
+</html>

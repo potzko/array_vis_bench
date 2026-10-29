@@ -99,10 +99,16 @@ Helper scripts:
   `compare_sorts`, which is how the zero cost claim is checked.
 - `verify.sh` runs every check above against the baselines in `verify/` and
   rewrites them with `--bless` after an intended change.
-- `plot_bench.py` charts how every entry scales with the input size. Time
-  the catalog once per size with `--timing N K --out PATH`, or once with
-  `--sweep SECONDS --out PATH`, then hand the archives to the script; the page has a selector tree by type head, a
-  regex filter and a faster or slower than reference filter at one size.
+- `plot_bench.py` writes the benchmark page from timing and sweep
+  archives, `--timing N K [--input NAME] --out PATH` or `--sweep SECONDS
+  --out PATH`, any mix of sizes and input shapes. The sidebar has a
+  checklist per kind, family and axis with the count each value would bring
+  back. The page shows time against size with a panel per input shape,
+  coloured by any facet, collapsed to the best of a facet or cut to the
+  entries no other dominates over a size range; the effect of a facet
+  against the best value in its context; and parallel coordinates. The
+  view lives in the URL, so a link reopens it. See
+  [bench_view/README.md](bench_view/README.md).
 
 ## Workspace layout
 
