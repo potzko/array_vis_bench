@@ -60,7 +60,7 @@ fn main() {
     // contract cap is below N are skipped. An N or K left out keeps the
     // consumer's default. `--out` also writes the medians as a TSV archive,
     // the input `verify.sh` compares against its timing baseline.
-    // `array_vis_bench --sweep SECONDS [--share K] [--only PREFIX] [--out PATH]`
+    // `array_vis_bench --sweep SECONDS [--share K] [--only PREFIX] [--input NAME] [--out PATH]`
     // runs the scaling sweep: every entry (or those whose name starts with
     // PREFIX) climbs the size ladder until one run takes more than
     // SECONDS / (entries * K), K defaulting to 5, then the time left finds
@@ -68,10 +68,13 @@ fn main() {
     // `plot_bench.py` charts.
     let argv: Vec<String> = std::env::args().collect();
     let flag = |name: &str| argv.iter().position(|a| a == name).and_then(|i| argv.get(i + 1));
+    // `--input NAME` picks the input shape by its registered name, for the
+    // categories that have one; the others are skipped and counted.
+    let input: Option<&'static str> = flag("--input").map(|name| &*Box::leak(name.clone().into_boxed_str()));
     if let Some(seconds) = flag("--sweep") {
         let seconds: f64 = seconds.parse().unwrap_or_else(|_| panic!("--sweep takes seconds, got {seconds}"));
         let share = flag("--share").map_or(5, |k| k.parse().unwrap_or_else(|_| panic!("--share takes a count, got {k}")));
-        let report = spec_catalog::run_sweep(std::time::Duration::from_secs_f64(seconds), share, flag("--only").map(String::as_str));
+        let report = spec_catalog::run_sweep(std::time::Duration::from_secs_f64(seconds), share, flag("--only").map(String::as_str), input);
         println!("{}", report.table());
         if let Some(out) = flag("--out") {
             std::fs::write(out, report.archive()).unwrap_or_else(|e| panic!("write sweep archive {out}: {e}"));
@@ -80,7 +83,7 @@ fn main() {
     }
     if let Some(pos) = argv.iter().position(|a| a == "--timing") {
         let arg = |offset: usize| argv.get(pos + offset).and_then(|s| s.parse().ok());
-        let report = spec_catalog::run_timing(arg(1), arg(2));
+        let report = spec_catalog::run_timing(arg(1), arg(2), input);
         if let Some(out) = argv.iter().position(|a| a == "--out").and_then(|i| argv.get(i + 1)) {
             std::fs::write(out, report.timings_tsv())
                 .unwrap_or_else(|e| panic!("write timing archive {out}: {e}"));

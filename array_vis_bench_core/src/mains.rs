@@ -9,11 +9,12 @@
 //! entry emitted by the spec compiler and one registered by the legacy combo
 //! path look identical here (both are just `AlgorithmEntry` rows).
 
-use crate::bench_registry::{find_input, primary_input, AlgorithmEntry, Category, RunConfig, ALGORITHMS};
-use sort_logger::{NoOpLogger, SortLogger, VisualizerLogger};
+use crate::bench_registry::{list_inputs, primary_input, AlgorithmEntry, Category, RunConfig, ALGORITHMS};
+use crate::clock::{batch_size, time_runs};
+use sort_logger::{SortLogger, VisualizerLogger};
 use std::collections::BTreeMap;
 use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 /// The outcome of running one consumer over a set of algorithms.
 #[derive(Debug, Default)]
@@ -36,11 +37,11 @@ impl MainReport {
         self.failures.is_empty()
     }
 
-    /// The timings as a TSV archive: a `# n=N k=K` header naming the setup,
+    /// The timings as a TSV archive: a `# n=N k=K input=I` header naming the setup,
     /// then one `name<TAB>median nanoseconds` line per timed entry, sorted by
     /// name so two archives diff cleanly.
     pub fn timings_tsv(&self) -> String {
-        let header = self.setup.map(|b| format!("# n={} k={}\n", b.n, b.k)).unwrap_or_default();
+        let header = self.setup.map(|b| format!("# n={} k={} input={}\n", b.n, b.k, b.input_label())).unwrap_or_default();
         let mut rows: Vec<_> = self.timings.iter().map(|(name, d)| (*name, d.as_nanos())).collect();
         rows.sort();
         header + &rows.iter().map(|(name, ns)| format!("{name}\t{ns}\n")).collect::<String>()
@@ -166,45 +167,58 @@ impl Main for Visualiser {
     }
 }
 
-/// Benchmark consumer: times each algorithm on a random array of size `n`, `k`
-/// times (fresh seed per run, [`NoOpLogger`] so only the algorithm's work is
-/// measured), then prints one table per category of the median run times,
-/// fastest first. `k` is at least 1, `run` clamps it.
+/// Benchmark consumer: times each algorithm at size `n` over `k` rounds on
+/// the category's primary input, or on `input` when one is named, the input
+/// built before the clock starts and the run under the no op logger so only
+/// the algorithm's work is measured; then prints one table per category of
+/// the median run times, fastest first. `k` is at least 1, `run` clamps it.
 ///
 /// An algorithm whose contract cap (`max_input_size`) is below `n` cannot run
-/// at that size, so it is skipped and counted, not a failure. It is excluded
-/// rather than clamped so every timed entry ran at the same `n` and the ranking
-/// is fair.
+/// at that size, and one whose category has no input of the named shape has
+/// nothing to run on; both are skipped and counted, not failures. They are
+/// excluded rather than clamped so every timed entry ran at the same `n` on
+/// the same shape and the ranking is fair.
 #[derive(Clone, Copy, Debug)]
 pub struct Benchmark {
     pub n: usize,
     pub k: usize,
+    pub input: Option<&'static str>,
 }
 
 impl Default for Benchmark {
     fn default() -> Self {
         // Several chaos sorts declare a cap of 1000, so none of them is skipped.
-        Self { n: 1000, k: 3 }
+        Self { n: 1000, k: 3, input: None }
     }
 }
 
 impl Benchmark {
-    /// Whether `entry`'s cap lets it run at this benchmark's `n`.
+    /// Whether `entry`'s cap lets it run at this benchmark's `n` and its
+    /// category has the input shape to run on.
     pub fn admits(&self, entry: &AlgorithmEntry) -> bool {
-        entry.max_input_size.map_or(true, |cap| cap >= self.n)
+        entry.max_input_size.map_or(true, |cap| cap >= self.n) && self.input_for(entry).is_some()
     }
 
-    // One timed run on the category's primary input at `seed`, the input built
-    // before the clock starts so only the algorithm is timed; `None` when it
-    // panicked.
-    fn one_run(&self, entry: &AlgorithmEntry, seed: u64) -> Option<Duration> {
-        let config = RunConfig { size: self.n, seed };
-        let input = find_input(entry.category, primary_input(entry.category));
-        let (mut arr, index) = (input.generate)(&config);
-        let start = Instant::now();
-        catch_unwind(AssertUnwindSafe(|| (entry.run)(&mut arr, index, &mut NoOpLogger)))
-            .ok()
-            .map(|()| start.elapsed())
+    /// The input `entry` runs on: the named shape when its category has it,
+    /// else the category's primary input when no shape was named.
+    pub fn input_for(&self, entry: &AlgorithmEntry) -> Option<&'static str> {
+        match self.input {
+            None => Some(primary_input(entry.category)),
+            Some(name) => list_inputs(entry.category).into_iter().find(|&i| i == name),
+        }
+    }
+
+    /// The name the archive header records for the input choice.
+    pub fn input_label(&self) -> &'static str {
+        self.input.unwrap_or("primary")
+    }
+
+    // One round of `entry`: a batch of `m` runs at `self.n` on seeds the round
+    // and batch index pick, timed back to back, as the time of one run.
+    fn one_round(&self, entry: &AlgorithmEntry, round: u64, m: usize) -> Option<Duration> {
+        let input = self.input_for(entry)?;
+        let seeds: Vec<u64> = (0..m as u64).map(|i| round * m as u64 + i).collect();
+        time_runs(entry, input, self.n, &seeds)
     }
 }
 
@@ -242,15 +256,27 @@ impl Main for Benchmark {
         let k = self.k.max(1);
         let (runnable, skipped): (Vec<_>, Vec<_>) =
             sorts.iter().copied().partition(|e| self.admits(e));
+        // One unmeasured run per entry first, so caches and branch predictors
+        // have seen the code before a round is timed; its time also sizes the
+        // batch a round times back to back, so a microsecond entry is measured
+        // over many runs rather than one tick of the clock.
+        let mut durations: Vec<Option<Vec<Duration>>> = vec![Some(Vec::with_capacity(k)); runnable.len()];
+        let batches: Vec<usize> = runnable
+            .iter()
+            .zip(durations.iter_mut())
+            .map(|(e, slot)| match self.one_round(e, u64::MAX / 2, 1) {
+                Some(warm) => batch_size(warm),
+                None => { *slot = None; 1 }
+            })
+            .collect();
         // Every entry runs once per round, so a burst of machine load lands on
         // different entries in different rounds and the per entry median
         // shrugs it off. Running one entry k times back to back would put a
         // whole burst into one median.
-        let mut durations: Vec<Option<Vec<Duration>>> = vec![Some(Vec::with_capacity(k)); runnable.len()];
         for round in 0..k as u64 {
-            for (slot, e) in durations.iter_mut().zip(&runnable) {
+            for ((slot, e), &m) in durations.iter_mut().zip(&runnable).zip(&batches) {
                 let Some(runs) = slot else { continue };
-                match self.one_run(e, round) {
+                match self.one_round(e, round, m) {
                     Some(d) => runs.push(d),
                     None => *slot = None,
                 }
@@ -270,8 +296,8 @@ impl Main for Benchmark {
             setup: Some(*self),
         };
         println!(
-            "=== benchmark: n={}, k={k}, {} timed, {} skipped (cap < n) ===",
-            self.n, r.ok, skipped.len()
+            "=== benchmark: n={}, k={k}, input {}, {} timed, {} skipped (cap below n or no such input) ===",
+            self.n, self.input_label(), r.ok, skipped.len()
         );
         let rows: Vec<_> = timed.iter().map(|&(e, median)| (e.category, e.name, median)).collect();
         println!("\n{}", tables(&rows));
@@ -337,10 +363,10 @@ mod tests {
     fn timings_tsv_names_the_setup_then_each_entry_by_name_in_nanoseconds() {
         let report = MainReport {
             timings: vec![("zeta", Duration::from_micros(3)), ("alpha", Duration::from_nanos(1500))],
-            setup: Some(Benchmark { n: 1000, k: 15 }),
+            setup: Some(Benchmark { n: 1000, k: 15, input: None }),
             ..Default::default()
         };
-        assert_eq!(report.timings_tsv(), "# n=1000 k=15\nalpha\t1500\nzeta\t3000\n");
+        assert_eq!(report.timings_tsv(), "# n=1000 k=15 input=primary\nalpha\t1500\nzeta\t3000\n");
     }
 
     #[test]
@@ -348,8 +374,15 @@ mod tests {
         static FIRST: AlgorithmEntry = AlgorithmEntry { run: record_first, ..entry("first", None) };
         static SECOND: AlgorithmEntry = AlgorithmEntry { run: record_second, ..entry("second", None) };
         ORDER.lock().unwrap().clear();
-        let report = Benchmark { n: 4, k: 3 }.run(&[&FIRST, &SECOND]);
-        assert_eq!(*ORDER.lock().unwrap(), ["first", "second", "first", "second", "first", "second"]);
+        let report = Benchmark { n: 4, k: 3, input: None }.run(&[&FIRST, &SECOND]);
+        // The warm up runs first, then the three rounds, each entry once per
+        // round; the warm up of a run this short asks for a batch of 64, so
+        // every round is 64 runs of each in turn.
+        let order = ORDER.lock().unwrap();
+        assert_eq!(&order[..2], ["first", "second"]);
+        let rounds = &order[2..];
+        assert_eq!(rounds.len(), 3 * 2 * 64);
+        assert!(rounds[..64].iter().all(|&e| e == "first") && rounds[64..128].iter().all(|&e| e == "second"));
         assert_eq!((report.ran, report.ok, report.timings.len()), (2, 2, 2));
     }
 
@@ -393,7 +426,10 @@ mod tests {
         assert_eq!(benchmark.name(), "benchmark");
         let report = benchmark.run(&[&FITS, &TOO_SMALL]);
         assert_eq!((report.ran, report.ok), (1, 1), "the entry capped below n is skipped");
-        assert_eq!(RUNS.load(Ordering::SeqCst), 3, "k runs of the one entry that ran");
+        // One warm up run, then k rounds of a batch each; a run this short
+        // gets the largest batch, but the test only relies on the round count.
+        let runs = RUNS.load(Ordering::SeqCst);
+        assert!(runs > 3 && (runs - 1) % 3 == 0, "a warm up then three rounds of one batch, got {runs}");
         assert_eq!(SIZE.load(Ordering::SeqCst), 1000);
         assert_eq!(report.timings.len(), 1);
         assert_eq!(report.timings[0].0, "fits");

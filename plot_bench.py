@@ -24,7 +24,7 @@ from pathlib import Path
 
 from verify.compare_timing import parse_archive
 
-SETUP = re.compile(r"^# n=(\d+) k=(\d+)$", re.MULTILINE)
+SETUP = re.compile(r"^# n=(\d+) k=(\d+)\b", re.MULTILINE)
 
 
 def read_setup(text: str) -> tuple[int, int]:

@@ -4,7 +4,7 @@ import unittest
 
 from plot_bench import load, read_setup, traces, tree
 
-SMALL = "# n=100 k=3\nquick sort<part: hoare>\t1000\nquick sort<part: lomuto>\t1500\nheap sort\t2000\n"
+SMALL = "# n=100 k=3 input=shuffled\nquick sort<part: hoare>\t1000\nquick sort<part: lomuto>\t1500\nheap sort\t2000\n"
 LARGE = "# n=1000 k=3\nquick sort<part: hoare>\t20000\nheap sort\t45000\n"
 
 

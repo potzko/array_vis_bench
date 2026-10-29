@@ -4,13 +4,11 @@
 //! each entry's largest size that fits the share, and `Sweep` is the runner
 //! that times real entries. `SweepReport::table` and `archive` print it.
 
-use std::collections::BTreeMap;
-use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::time::{Duration, Instant};
+use std::collections::{BTreeMap, HashMap};
+use std::time::Duration;
 
-use sort_logger::NoOpLogger;
-
-use crate::bench_registry::{primary_input, AlgorithmEntry, RunConfig};
+use crate::bench_registry::{list_inputs, primary_input, AlgorithmEntry};
+use crate::clock::{batch_size, time_runs};
 
 /// The size ladder: every size to 100, then by tens to 200, by hundreds to
 /// 1000, then powers of two. Dense where sorts are cheap and sparse where one
@@ -50,6 +48,7 @@ pub struct Scaling {
 pub struct SweepReport {
     pub budget: Duration,
     pub share: u32,
+    pub input: &'static str,
     pub limit: Duration,
     pub scalings: Vec<Scaling>,
 }
@@ -94,7 +93,7 @@ pub fn sweep(
         searching.retain(|&(_, lo, hi)| hi - lo > 1);
     }
     for s in &mut scalings { s.points.sort_by_key(|&(n, _)| n); }
-    SweepReport { budget, share, limit, scalings }
+    SweepReport { budget, share, input: "primary", limit, scalings }
 }
 
 // One entry up the ladder until a run exceeds `limit`, the cap or a failure.
@@ -123,27 +122,41 @@ fn climb(
     Scaling { name: entry.name, points, stop, fits }
 }
 
-/// The runner over real entries: one run per size on the category's primary
-/// input, seeded by the size, under the no op logger.
+/// The runner over real entries on the category's primary input, or on
+/// `input` when one is named, the entries whose category lacks it left out.
+/// A run at a size is a batch sized by the entry's previous time, seeded by
+/// the size, under the no op logger.
 #[derive(Clone, Copy, Debug)]
 pub struct Sweep {
     pub budget: Duration,
     pub share: u32,
+    pub input: Option<&'static str>,
 }
 
 impl Sweep {
-    pub fn run(&self, entries: &[&'static AlgorithmEntry]) -> SweepReport {
-        sweep(entries, self.budget, self.share, &mut one_run)
+    /// The input `entry` runs on, `None` when its category has no such shape.
+    pub fn input_for(&self, entry: &AlgorithmEntry) -> Option<&'static str> {
+        match self.input {
+            None => Some(primary_input(entry.category)),
+            Some(name) => list_inputs(entry.category).into_iter().find(|&i| i == name),
+        }
     }
-}
 
-fn one_run(entry: &AlgorithmEntry, n: usize) -> Option<Duration> {
-    let input = primary_input(entry.category);
-    let config = RunConfig { size: n, seed: n as u64 };
-    let start = Instant::now();
-    catch_unwind(AssertUnwindSafe(|| (entry.run_with_input)(input, &config, &mut NoOpLogger)))
-        .ok()
-        .map(|()| start.elapsed())
+    pub fn run(&self, entries: &[&'static AlgorithmEntry]) -> SweepReport {
+        let runnable: Vec<&'static AlgorithmEntry> =
+            entries.iter().copied().filter(|e| self.input_for(e).is_some()).collect();
+        let mut last: HashMap<&str, Duration> = HashMap::new();
+        let mut clock = |entry: &AlgorithmEntry, n: usize| {
+            let m = last.get(entry.name).map_or(1, |&one| batch_size(one));
+            let seeds: Vec<u64> = (0..m as u64).map(|i| n as u64 * 64 + i).collect();
+            let one = time_runs(entry, self.input_for(entry)?, n, &seeds)?;
+            last.insert(entry.name, one);
+            Some(one)
+        };
+        let mut report = sweep(&runnable, self.budget, self.share, &mut clock);
+        report.input = self.input.unwrap_or("primary");
+        report
+    }
 }
 
 impl SweepReport {
@@ -155,8 +168,8 @@ impl SweepReport {
         let width = rows.iter().map(|s| s.name.len()).fold("algorithm".len(), usize::max);
         let header = [
             format!(
-                "=== sweep: {} entries, budget {:.1?}, one run at most {:.2?} (budget / entries / {}) ===",
-                rows.len(), self.budget, self.limit, self.share
+                "=== sweep: {} entries, input {}, budget {:.1?}, one run at most {:.2?} (budget / entries / {}) ===",
+                rows.len(), self.input, self.budget, self.limit, self.share
             ),
             format!("{:<width$}  {:>6}  {:>10}  {:>12}  {}", "algorithm", "sizes", "fits", "time there", "stopped by"),
             format!("{:-<width$}  {:->6}  {:->10}  {:->12}  {:->10}", "", "", "", "", ""),
@@ -177,7 +190,7 @@ impl SweepReport {
     /// `name<TAB>size<TAB>nanoseconds` line per timed size sorted by name then
     /// size, and a `# fits` line per entry with its largest fitting size.
     pub fn archive(&self) -> String {
-        let header = format!("# sweep budget_ms={} share={} limit_ns={}\n", self.budget.as_millis(), self.share, self.limit.as_nanos());
+        let header = format!("# sweep budget_ms={} share={} limit_ns={} input={}\n", self.budget.as_millis(), self.share, self.limit.as_nanos(), self.input);
         let by_name: BTreeMap<&str, &Scaling> = self.scalings.iter().map(|s| (s.name, s)).collect();
         let points = by_name.values().flat_map(|s| s.points.iter().map(move |&(n, d)| format!("{}\t{n}\t{}\n", s.name, d.as_nanos())));
         let fits = by_name.values().map(|s| format!("# fits\t{}\t{}\n", s.name, s.fits));
@@ -188,7 +201,7 @@ impl SweepReport {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bench_registry::Category;
+    use crate::bench_registry::{Category, RunConfig};
     use array_vis_bench_traits::Complexity;
     use sort_logger::SortLogger;
 
@@ -310,7 +323,7 @@ mod tests {
     fn the_archive_lists_points_by_name_then_size_under_a_header() {
         let report = sweep(&[&CAPPED], Duration::from_millis(1), 2, &mut micros_per_element);
         let text = report.archive();
-        assert!(text.starts_with("# sweep budget_ms=1 share=2 limit_ns=500000\n"));
+        assert!(text.starts_with("# sweep budget_ms=1 share=2 limit_ns=500000 input=primary\n"));
         assert!(text.contains("capped\t1\t1000\ncapped\t2\t2000\n"));
         assert!(text.ends_with("# fits\tcapped\t150\n"));
     }

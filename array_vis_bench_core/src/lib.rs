@@ -9,6 +9,7 @@
 
 pub mod array_gen;
 pub mod bench_registry;
+pub mod clock;
 pub mod inputs;
 /// The picker's view of `ALGORITHMS`: the variant list the CLI walks and the
 /// tree `bench_registry::sorted` orders by.

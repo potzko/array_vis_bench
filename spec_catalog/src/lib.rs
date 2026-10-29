@@ -64,22 +64,24 @@ pub fn run_sweep(
     budget: std::time::Duration,
     share: u32,
     only: Option<&str>,
+    input: Option<&'static str>,
 ) -> array_vis_bench_core::sweep::SweepReport {
     use array_vis_bench_core::bench_registry::{AlgorithmEntry, ALGORITHMS};
     use array_vis_bench_core::sweep::Sweep;
     let chosen: Vec<&'static AlgorithmEntry> =
         ALGORITHMS.iter().filter(|e| only.map_or(true, |prefix| e.name.starts_with(prefix))).collect();
-    Sweep { budget, share }.run(&chosen)
+    Sweep { budget, share, input }.run(&chosen)
 }
 
 pub fn run_timing(
     n: Option<usize>,
     k: Option<usize>,
+    input: Option<&'static str>,
 ) -> array_vis_bench_core::mains::MainReport {
     use array_vis_bench_core::bench_registry::{AlgorithmEntry, ALGORITHMS};
     use array_vis_bench_core::mains::{Benchmark, Main};
     let defaults = Benchmark::default();
-    let benchmark = Benchmark { n: n.unwrap_or(defaults.n), k: k.unwrap_or(defaults.k) };
+    let benchmark = Benchmark { n: n.unwrap_or(defaults.n), k: k.unwrap_or(defaults.k), input };
     let all: Vec<&'static AlgorithmEntry> = ALGORITHMS.iter().collect();
     benchmark.run(&all)
 }
@@ -352,7 +354,7 @@ mod tests {
     fn each_new_kind_ticks_through_all_three_mains() {
         use array_vis_bench_core::mains::{Benchmark, Correctness, Main, Visualiser};
         // n = 16 is within the cap of most small sorts, so they run rather than skip.
-        let benchmark = Benchmark { n: 16, k: 1 };
+        let benchmark = Benchmark { n: 16, k: 1, input: None };
         let mains: Vec<Box<dyn Main>> =
             vec![Box::new(Correctness), Box::new(Visualiser::default()), Box::new(benchmark)];
         for cat in [
@@ -477,8 +479,8 @@ mod tests {
         /// not a bench.
         #[test]
         fn run_timing_times_the_whole_catalog() {
-            let report = crate::run_timing(Some(64), Some(1));
-            let benchmark = array_vis_bench_core::mains::Benchmark { n: 64, k: 1 };
+            let report = crate::run_timing(Some(64), Some(1), None);
+            let benchmark = array_vis_bench_core::mains::Benchmark { n: 64, k: 1, input: None };
             let skipped = ALGORITHMS.iter().filter(|e| !benchmark.admits(e)).count();
             assert_eq!(report.ran + skipped, ALGORITHMS.len(), "every entry ran or was skipped");
             assert!(report.all_ok(), "timing had failures: {:?}", report.failures);
@@ -489,7 +491,7 @@ mod tests {
         #[test]
         fn run_timing_without_overrides_uses_the_benchmark_defaults() {
             let benchmark = array_vis_bench_core::mains::Benchmark::default();
-            let report = crate::run_timing(None, None);
+            let report = crate::run_timing(None, None, None);
             let admitted = ALGORITHMS.iter().filter(|e| benchmark.admits(e)).count();
             assert_eq!(report.ran, admitted, "ran the entries the default n admits");
             assert!(report.all_ok(), "timing had failures: {:?}", report.failures);
