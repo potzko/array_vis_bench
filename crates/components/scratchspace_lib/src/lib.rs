@@ -26,10 +26,12 @@ use sort_logger::SortLogger;
 pub mod buffers;
 pub mod bufferless;
 pub mod keys;
+pub mod sizes;
 pub mod workflows;
 pub use buffers::{FixedBuffer, InArrayBuffer};
 pub use bufferless::bufferless_merge;
 pub use keys::{InArrayKeys, NoKeys};
+pub use sizes::{Fixed, Half, Sqrt};
 pub use workflows::{Exercise, ParkLoop, ParkSweep, Relocations, ScratchspaceMergeSort};
 
 // ── Scratchspace backings (the `Scratchspace` role — its own top-level kind) ──

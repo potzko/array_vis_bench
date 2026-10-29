@@ -3,6 +3,7 @@
 Source of `array_vis_bench_traits`. The crate README one level up says what it is for.
 
 - `auxiliary.rs`: `Auxiliary`, the scratchspace a merge uses for its working buffer.
+- `buffer_size.rs`: `BufferSize`, how many cells a block merge sort's buffer gets for an array of `n`.
 - `direct_sort.rs`: `DirectSort`, the full sort role, and `direct_sort!`, its one line impl.
 - `keys.rs`: `Keys`, the key region of a block merge, and `extract_distinct` and `sort_region`, its shared mechanics.
 - `merge.rs`: `RotationMerge`, the merge role, and `run_rotation_merge`, its one-shot.

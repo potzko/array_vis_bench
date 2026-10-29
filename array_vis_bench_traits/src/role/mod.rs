@@ -5,6 +5,7 @@
 //! (`partition_lomuto`, `rotation_reversal`, ...).
 
 pub mod auxiliary;
+pub mod buffer_size;
 pub mod direct_sort;
 pub mod keys;
 pub mod merge;
@@ -16,6 +17,7 @@ pub mod scratchspace;
 pub mod small_sort;
 
 pub use auxiliary::Auxiliary;
+pub use buffer_size::BufferSize;
 pub use direct_sort::DirectSort;
 pub use keys::Keys;
 pub use merge::{run_rotation_merge, RotationMerge};
