@@ -208,7 +208,10 @@ fn own_imports(comp: &Component, reg: &Registry) -> Result<Vec<String>, String> 
 }
 
 /// The first type slot whose hole appears in the label template, with the
-/// template text before that hole minus its trailing brackets and spaces.
+/// template text before that hole up to the outermost bracket still open
+/// there, minus trailing colons and spaces: `combined<{a}, {b}>` and
+/// `stack partition<part: {hp}>` head as `combined` and `stack partition`, so
+/// a slot's own name inside the brackets is not part of the head.
 fn label_opening(comp: &Component) -> Option<(&str, &str)> {
     let (at, slot) = comp
         .params
@@ -216,8 +219,17 @@ fn label_opening(comp: &Component) -> Option<(&str, &str)> {
         .filter(|p| matches!(p.kind, ParamKind::Type { .. }))
         .filter_map(|p| comp.label_tmpl.find(&format!("{{{}}}", p.name)).map(|i| (i, p.name.as_str())))
         .min()?;
-    let head = comp.label_tmpl[..at]
-        .trim_end_matches(|c: char| c == '<' || c == '(' || c == '[' || c.is_whitespace());
+    let before = &comp.label_tmpl[..at];
+    let open = before.char_indices().fold(Vec::new(), |mut open, (i, c)| {
+        match c {
+            '<' | '(' | '[' => open.push(i),
+            '>' | ')' | ']' => { open.pop(); }
+            _ => {}
+        }
+        open
+    });
+    let head = before[..open.first().copied().unwrap_or(before.len())]
+        .trim_end_matches(|c: char| c == ':' || c.is_whitespace());
     Some((slot, head))
 }
 
@@ -304,6 +316,34 @@ mod tests {
                 ("PivotSingle".into(), "first".into(), "partition/pivot".into()),
                 ("SmallSort".into(), "none".into(), "small_sort".into()),
             ]
+        );
+    }
+
+    fn axes_in(fragments: &[(&str, &str)], spec: &str) -> Vec<(String, String, String)> {
+        let reg = Registry::from_fragments(fragments.iter().copied()).unwrap();
+        let axes = resolve(&parse_spec(spec).unwrap().1, &reg).unwrap().axes;
+        axes.into_iter().map(|a| (a.role, a.value, a.path)).collect()
+    }
+
+    #[test]
+    fn a_slot_named_inside_the_brackets_is_not_part_of_the_head() {
+        // `wrap<part: {inner}>` heads as `wrap`: the text before the hole is cut
+        // at the bracket still open there, so the slot's own name stays out.
+        let fragments = [(
+            "lib",
+            "component driver\n  type Driver<{f}>\n  label driver<{f}>\n  slot f Fill\nend\n\
+             component wrap\n  type Wrap<{inner}>\n  label wrap<part: {inner}>\n  provides Fill\n  slot inner Leaf\nend\n\
+             component named\n  type Named<{inner}>\n  label named: {inner}\n  provides Fill\n  slot inner Leaf\nend\n\
+             component leaf\n  type Leaf\n  label leaf\n  provides Leaf\nend\n",
+        )];
+        let axis = |role: &str, value: &str, path: &str| (role.to_string(), value.to_string(), path.to_string());
+        assert_eq!(
+            axes_in(&fragments, "driver< f = wrap< inner = leaf > >"),
+            [axis("Fill", "wrap", "f"), axis("Leaf", "leaf", "f/inner")]
+        );
+        assert_eq!(
+            axes_in(&fragments, "driver< f = named< inner = leaf > >"),
+            [axis("Fill", "named", "f"), axis("Leaf", "leaf", "f/inner")]
         );
     }
 
