@@ -1,9 +1,9 @@
 //! `Nodes`, the node store a `TreeSort` builds its search tree in, and the
-//! `Layout` that packs its nodes. A node is a parent, a left and a right
+//! `Layout`s that pack its nodes. A node is a parent, a left and a right
 //! index plus a rank for the tree's own balance data, kept in one logged side
-//! array, a word each in the `Packed` layout. The link operations every tree
-//! shares live in `Nodes`, `attach` a leaf by key, `rotate`, `replace_child`,
-//! `unlink_min` and `place`.
+//! array: one word for an array under 2^19 elements, two under 2^32, four
+//! for any length. The link operations every tree shares live in `Nodes`,
+//! `attach` a leaf by key, `rotate`, `replace_child`, `unlink_min` and `place`.
 
 use std::marker::PhantomData;
 
@@ -36,10 +36,14 @@ pub trait Layout {
     );
 
     // A whole node, parent then left then right then rank, and a node copied
-    // whole.
-    fn put<T: Ord + Copy, U: ?Sized + SortLogger<T>>(meta: &mut [usize], logger: &mut U, i: usize, node: [usize; 4]);
+    // whole. A layout that keeps a node in one word does each in one write.
+    fn put<T: Ord + Copy, U: ?Sized + SortLogger<T>>(meta: &mut [usize], logger: &mut U, i: usize, node: [usize; 4]) {
+        for (field, value) in node.into_iter().enumerate() { Self::set(meta, logger, i, field, value); }
+    }
 
-    fn copy<T: Ord + Copy, U: ?Sized + SortLogger<T>>(meta: &mut [usize], logger: &mut U, from: usize, to: usize);
+    fn copy<T: Ord + Copy, U: ?Sized + SortLogger<T>>(meta: &mut [usize], logger: &mut U, from: usize, to: usize) {
+        for field in [PARENT, LEFT, RIGHT, RANK] { Self::set(meta, logger, to, field, Self::get(meta, from, field)); }
+    }
 }
 
 // Three links of 19 bits, which name every index below 2^19 and the missing
@@ -77,6 +81,40 @@ impl Layout for Packed {
     fn copy<T: Ord + Copy, U: ?Sized + SortLogger<T>>(meta: &mut [usize], logger: &mut U, from: usize, to: usize) {
         let word = meta[from];
         logger.write_data_u(meta, to, word);
+    }
+}
+
+// Every field BITS wide and WORDS words to a node, no field straddling a word.
+// `Halves` takes two words of 32 bit fields for an array under 2^32 elements,
+// `Whole` a word for each field, so any length a machine can hold has a layout.
+pub struct Fields<const WORDS: usize, const BITS: usize>;
+pub type Halves = Fields<2, 32>;
+pub type Whole = Fields<4, 64>;
+
+impl<const WORDS: usize, const BITS: usize> Fields<WORDS, BITS> {
+    const MASK: usize = usize::MAX >> (WORD - BITS);
+
+    // The word of the field and the bit it starts at there.
+    fn locate(i: usize, field: usize) -> (usize, usize) {
+        (WORDS * i + field / (WORD / BITS), field % (WORD / BITS) * BITS)
+    }
+}
+
+impl<const WORDS: usize, const BITS: usize> Layout for Fields<WORDS, BITS> {
+    const REACH: usize = Self::MASK;
+
+    fn words(n: usize) -> usize { n.checked_mul(WORDS).expect("the node words of the array overflow usize") }
+
+    fn get(meta: &[usize], i: usize, field: usize) -> usize {
+        let (word, shift) = Self::locate(i, field);
+        meta[word] >> shift & Self::MASK
+    }
+
+    fn set<T: Ord + Copy, U: ?Sized + SortLogger<T>>(meta: &mut [usize], logger: &mut U, i: usize, field: usize, value: usize) {
+        let (word, shift) = Self::locate(i, field);
+        debug_assert!(value & !Self::MASK == 0, "{value} does not fit {BITS} bits");
+        let kept = meta[word] & !(Self::MASK << shift);
+        logger.write_data_u(meta, word, kept | value << shift);
     }
 }
 
@@ -212,8 +250,25 @@ mod tests {
     fn packed_holds_every_index_up_to_its_reach() { assert_round_trips::<Packed>(Packed::REACH, Packed::REACH); }
 
     #[test]
+    fn halves_hold_every_index_up_to_a_u32() { assert_round_trips::<Halves>(1 << 20, Halves::REACH); }
+
+    #[test]
+    fn whole_holds_a_word_in_every_field() { assert_round_trips::<Whole>(1 << 20, usize::MAX); }
+
+    #[test]
+    fn the_reaches_chain_from_a_word_to_any_length() {
+        assert_eq!([Packed::REACH, Halves::REACH, Whole::REACH], [(1 << 19) - 1, u32::MAX as usize, usize::MAX]);
+    }
+
+    #[test]
     #[should_panic(expected = "cannot hold")]
     fn a_layout_refuses_an_array_past_its_reach() {
         Nodes::<usize, _, Packed>::new(&mut vec![0; Packed::REACH + 1], &mut NoOpLogger);
+    }
+
+    #[test]
+    #[should_panic(expected = "node words")]
+    fn a_length_whose_node_words_overflow_usize_is_refused() {
+        Nodes::<(), _, Whole>::new(&mut vec![(); 1 << 62], &mut NoOpLogger);
     }
 }

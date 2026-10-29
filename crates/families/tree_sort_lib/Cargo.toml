@@ -4,7 +4,7 @@
 name = "tree_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Tree sort, `TreeSort<B>`: the array as the node store of a binary search tree, one packed link word per node, over a tree axis (avl, naive). Types only; the spec catalog emits the entries."
+description = "Tree sort, `TreeSort<B>`: the array as the node store of a binary search tree, a node packed into one to four words by length, over a tree axis (avl, naive). Types only; the spec catalog emits the entries."
 
 [lib]
 name = "tree_sort_lib"

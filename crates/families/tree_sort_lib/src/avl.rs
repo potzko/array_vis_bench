@@ -86,7 +86,7 @@ fn refresh_height<T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout>(nodes: &m
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::nodes::Packed;
+    use crate::nodes::{Halves, Packed, Whole};
     use crate::test_input::pseudo_random;
     use sort_logger::NoOpLogger;
 
@@ -125,5 +125,9 @@ mod tests {
     }
 
     #[test]
-    fn stays_an_avl_tree_through_every_insertion_and_extraction() { assert_stays_avl::<Packed>(); }
+    fn stays_an_avl_tree_through_every_insertion_and_extraction() {
+        assert_stays_avl::<Packed>();
+        assert_stays_avl::<Halves>();
+        assert_stays_avl::<Whole>();
+    }
 }

@@ -1,7 +1,8 @@
 //! Tree sort, `TreeSort<B>`: the array as the node store of a binary search
-//! tree, one packed link word per node, over a tree axis. `nodes.rs` is the
-//! store, `tree_sort.rs` the driver and the `Tree` role, `avl.rs` and
-//! `naive.rs` its two fillers. The family is declared in `tree.spec` and
+//! tree over a tree axis, a node packed in one word up to 2^19 elements and
+//! in wider layouts beyond, so no length is too long. `nodes.rs` is the store
+//! and its layouts, `tree_sort.rs` the driver and the `Tree` role, `avl.rs`
+//! and `naive.rs` its two fillers. The family is declared in `tree.spec` and
 //! built by `tree.avbs`.
 
 pub mod avl;
@@ -11,7 +12,7 @@ pub mod tree_sort;
 
 pub use avl::Avl;
 pub use naive::Naive;
-pub use nodes::{Layout, Nodes, Packed};
+pub use nodes::{Fields, Halves, Layout, Nodes, Packed, Whole};
 pub use tree_sort::{Tree, TreeSort};
 
 #[cfg(test)]

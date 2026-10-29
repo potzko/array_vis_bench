@@ -31,7 +31,7 @@ impl HasTimeBounds for Naive {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::nodes::{Packed, LEFT, RIGHT};
+    use crate::nodes::{Halves, Packed, Whole, LEFT, RIGHT};
     use sort_logger::NoOpLogger;
 
     fn assert_a_right_path_with_no_rank<L: Layout>() {
@@ -51,5 +51,9 @@ mod tests {
     }
 
     #[test]
-    fn sorted_input_builds_a_right_path_with_no_rotation_and_no_rank() { assert_a_right_path_with_no_rank::<Packed>(); }
+    fn sorted_input_builds_a_right_path_with_no_rotation_and_no_rank() {
+        assert_a_right_path_with_no_rank::<Packed>();
+        assert_a_right_path_with_no_rank::<Halves>();
+        assert_a_right_path_with_no_rank::<Whole>();
+    }
 }

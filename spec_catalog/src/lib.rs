@@ -664,7 +664,7 @@ mod tests {
 
     mod tree {
         use super::*;
-        use tree_sort_lib::{Avl, Layout, Naive, Packed, TreeSort};
+        use tree_sort_lib::{Avl, Naive, TreeSort};
 
         fn entries() -> Vec<&'static AlgorithmEntry> {
             ALGORITHMS.iter().filter(|e| e.name.starts_with("tree sort<")).collect()
@@ -682,7 +682,7 @@ mod tests {
             let cfg = RunConfig { size: 64, seed: 1 };
             for e in &es {
                 assert_eq!(e.category, Category::Sort, "`{}` not Sort", e.name);
-                assert_eq!(e.max_input_size, Some(Packed::REACH), "`{}`: the cap is the packed word's reach", e.name);
+                assert_eq!(e.max_input_size, None, "`{}`: no length is too long for the node store", e.name);
                 assert!(e.stable, "`{}` is stable whatever the tree", e.name);
                 (e.run_with_input)(primary_input(Category::Sort), &cfg, &mut NoOpLogger);
                 (e.run_correctness)();
