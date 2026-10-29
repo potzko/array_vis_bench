@@ -21,19 +21,21 @@ const View = (() => {
     return values;
   }
 
-  // Every facet the entries carry, kind and family first, then the axes in
-  // name order, each with its values in natural order. A role met at one
-  // path is labelled by the role alone, so a role two families share reads
-  // as one facet.
+  // Every facet the entries carry, kind and family first, then the axes the
+  // most entries carry, so a role many families share comes before one a
+  // single family has, each with its values in natural order. A role met at
+  // one path is labelled by the role alone, so a role two families share
+  // reads as one facet.
   function facets(entries) {
-    const valuesOf = new Map();
+    const valuesOf = new Map(), carried = new Map();
     for (const entry of entries) {
       for (const [key, value] of Object.entries(entry.values)) {
         if (!valuesOf.has(key)) valuesOf.set(key, new Set());
         valuesOf.get(key).add(value);
+        carried.set(key, (carried.get(key) || 0) + 1);
       }
     }
-    const axes = [...valuesOf.keys()].filter(key => pathOf(key) !== null).sort(byName);
+    const axes = [...valuesOf.keys()].filter(key => pathOf(key) !== null).sort((a, b) => carried.get(b) - carried.get(a) || byName(a, b));
     const paths = new Map();
     for (const key of axes) {
       const role = key.slice(0, key.indexOf('|'));
@@ -74,14 +76,15 @@ const View = (() => {
   }
 
   // A colour slot per group, keeping the slot a group had in `previous` so a
-  // filter never repaints a group that stays. New groups take the free slots
-  // in order; groups past the `slots` get -1, the muted other.
+  // filter never repaints a group that stays; two groups remembered at one
+  // slot leave it to the first. New groups take the free slots in order, and
+  // groups past the `slots` get -1, the muted other.
   function assignSlots(groups, previous, slots) {
     const out = new Map();
     const taken = new Set();
     for (const group of groups) {
       const slot = previous.get(group);
-      if (slot !== undefined && slot >= 0 && slot < slots) { out.set(group, slot); taken.add(slot); }
+      if (slot !== undefined && slot >= 0 && slot < slots && !taken.has(slot)) { out.set(group, slot); taken.add(slot); }
     }
     let next = 0;
     for (const group of groups) {

@@ -30,15 +30,16 @@ test('an entry carries its kind, family and every axis as facet values', () => {
   assert.deepEqual(QUICK[0].values, { kind: 'sort', family: 'quick sort', 'Part|part': 'hoare', 'Small|small': 'ins' });
 });
 
-test('the facets are kind and family first, then the axes, values in natural order', () => {
+test('the facets are kind and family first, then the axes the most entries carry, values in natural order', () => {
   const facets = View.facets(described([
     ['a', 'sort', 'a', [['Small', 'insertion: 32', 'small'], ['Pivot', 'first', 'part/pivot/a'], ['Pivot', 'mid', 'part/pivot/b']]],
     ['b', 'sort', 'b', [['Small', 'insertion: 4', 'small'], ['Pivot', 'mid', 'part/pivot/a']]],
+    ['c', 'sort', 'c', [['Small', 'insertion: 4', 'small']]],
   ]));
-  assert.deepEqual(facets.map(f => f.key), ['kind', 'family', 'Pivot|part/pivot/a', 'Pivot|part/pivot/b', 'Small|small']);
+  assert.deepEqual(facets.map(f => f.key), ['kind', 'family', 'Small|small', 'Pivot|part/pivot/a', 'Pivot|part/pivot/b']);
   // A role met at one path is labelled by the role alone, at several by role and path.
-  assert.deepEqual(facets.map(f => f.label), ['kind', 'family', 'Pivot (part/pivot/a)', 'Pivot (part/pivot/b)', 'Small']);
-  assert.deepEqual(facets[4].values, ['insertion: 4', 'insertion: 32']);
+  assert.deepEqual(facets.map(f => f.label), ['kind', 'family', 'Small', 'Pivot (part/pivot/a)', 'Pivot (part/pivot/b)']);
+  assert.deepEqual(facets[2].values, ['insertion: 4', 'insertion: 32']);
 });
 
 test('an entry shows when none of its values is switched off, and a facet it lacks does not hide it', () => {
@@ -63,6 +64,9 @@ test('a colour slot follows its group through a filter and the groups past the s
   // `a` filtered out: `b` keeps its slot, `c` takes the freed one.
   const second = View.assignSlots(['b', 'c'], first, 2);
   assert.deepEqual([...second], [['b', 1], ['c', 0]]);
+  // Two groups remembered at one slot: the first keeps it, the other moves.
+  const clash = View.assignSlots(['a', 'c'], new Map([['a', 0], ['c', 0]]), 2);
+  assert.deepEqual([...clash], [['a', 0], ['c', 1]]);
 });
 
 test('best of a facet keeps the fastest entry of each group equal on every other facet', () => {
