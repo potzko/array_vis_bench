@@ -126,7 +126,7 @@ mod tests {
         assert_eq!(COUNT_QUICK, 408, "quick family (2 × [5×5 single + 26 dual] partitions × 4 small)");
         assert_eq!(COUNT_CYCLE, 1, "cycle family");
         assert_eq!(COUNT_TREE, 2, "tree family (avl + naive)");
-        assert_eq!(COUNT_BLOCK_MERGE, 154, "block merge family (7 buffers x 2 key shapes x 11 rotations)");
+        assert_eq!(COUNT_BLOCK_MERGE, 286, "block merge family (13 buffers x 2 key shapes x 11 rotations)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
         assert_eq!(COUNT_ROD, 12, "rod family (6 branching x 2 merge)");
@@ -222,7 +222,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 1736, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 1868, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -731,10 +731,10 @@ mod tests {
         }
 
         #[test]
-        fn emits_seven_buffers_by_two_key_shapes_by_every_rotation_that_run() {
+        fn emits_thirteen_buffers_by_two_key_shapes_by_every_rotation_that_run() {
             let es = entries();
             assert_eq!(es.len(), COUNT_BLOCK_MERGE, "count drifted");
-            assert_eq!(COUNT_BLOCK_MERGE, 154);
+            assert_eq!(COUNT_BLOCK_MERGE, 286);
             let cfg = RunConfig { size: 64, seed: 1 };
             for e in &es {
                 assert_eq!(e.category, Category::Sort);
@@ -746,28 +746,24 @@ mod tests {
 
         #[test]
         fn wiki_sort_and_grail_sort_are_among_the_entries() {
-            let mut names: Vec<&str> =
-                entries().iter().map(|e| e.name).filter(|name| name.ends_with(", rotation: reversal>")).collect();
-            names.sort();
-            assert_eq!(
-                names,
-                [
-                    "block sort<buffer: external<512>, keys: in array, rotation: reversal>",
-                    "block sort<buffer: external<512>, keys: none, rotation: reversal>",
-                    "block sort<buffer: external<half>, keys: in array, rotation: reversal>",
-                    "block sort<buffer: external<half>, keys: none, rotation: reversal>",
-                    "block sort<buffer: external<sqrt>, keys: in array, rotation: reversal>",
-                    "block sort<buffer: external<sqrt>, keys: none, rotation: reversal>",
-                    "block sort<buffer: in array<512>, keys: in array, rotation: reversal>",
-                    "block sort<buffer: in array<512>, keys: none, rotation: reversal>",
-                    "block sort<buffer: in array<half>, keys: in array, rotation: reversal>",
-                    "block sort<buffer: in array<half>, keys: none, rotation: reversal>",
-                    "block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal>",
-                    "block sort<buffer: in array<sqrt>, keys: none, rotation: reversal>",
-                    "block sort<buffer: none, keys: in array, rotation: reversal>",
-                    "block sort<buffer: none, keys: none, rotation: reversal>",
-                ]
-            );
+            let sizes = ["2 sqrt", "512", "half", "log", "sixteenth", "sqrt"];
+            let mut want: Vec<String> = ["external", "in array"]
+                .iter()
+                .flat_map(|at| sizes.iter().map(move |size| format!("{at}<{size}>")))
+                .chain(["none".to_string()])
+                .collect();
+            want.sort();
+            for keys in ["in array", "none"] {
+                let tail = format!(", keys: {keys}, rotation: reversal>");
+                let mut buffers: Vec<&str> = entries()
+                    .iter()
+                    .filter_map(|e| e.name.strip_prefix("block sort<buffer: ")?.strip_suffix(tail.as_str()))
+                    .collect();
+                buffers.sort();
+                assert_eq!(buffers, want, "keys: {keys}");
+            }
+            find("block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal>");
+            find("block sort<buffer: external<512>, keys: in array, rotation: reversal>");
             let wiki = entries().iter().filter(|e| e.name.starts_with("block sort<buffer: in array<sqrt>, keys: in array,")).count();
             assert_eq!(wiki, 11, "WikiSort under every rotation");
         }

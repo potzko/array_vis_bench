@@ -246,7 +246,10 @@ mod tests {
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
     use sort_logger::RegionKind;
-    use scratchspace_lib::{ExternalBuffer, Fixed, FullBuffer, Half, HalfBuffer, InArrayBuffer, InArrayKeys, NoBuffer, NoKeys, Sqrt};
+    use scratchspace_lib::{
+        ExternalBuffer, Fixed, FullBuffer, Half, HalfBuffer, InArrayBuffer, InArrayKeys, Log, NoBuffer, NoKeys, Sixteenth, Sqrt,
+        TwoSqrt,
+    };
     use sort_logger::NoOpLogger;
 
     // The shapes under test rotate by reversal unless a test names another rotation.
@@ -314,6 +317,12 @@ mod tests {
         sorts_stably::<Block<InArrayBuffer<Half>, NoKeys>>("in array half, none");
         sorts_stably::<Block<ExternalBuffer<Sqrt>, InArrayKeys>>("external sqrt, in array");
         sorts_stably::<Block<ExternalBuffer<Half>, NoKeys>>("external half, none");
+        sorts_stably::<Block<InArrayBuffer<Log>, InArrayKeys>>("in array log, in array");
+        sorts_stably::<Block<InArrayBuffer<TwoSqrt>, InArrayKeys>>("in array 2 sqrt, in array");
+        sorts_stably::<Block<InArrayBuffer<Sixteenth>, NoKeys>>("in array sixteenth, none");
+        sorts_stably::<Block<ExternalBuffer<Log>, InArrayKeys>>("external log, in array");
+        sorts_stably::<Block<ExternalBuffer<TwoSqrt>, NoKeys>>("external 2 sqrt, none");
+        sorts_stably::<Block<ExternalBuffer<Sixteenth>, InArrayKeys>>("external sixteenth, in array");
     }
     #[test]
     fn a_buffer_the_size_of_the_array_sorts_stably() {
@@ -506,6 +515,10 @@ mod tests {
         assert_eq!(<Block<ExternalBuffer<Sqrt>, InArrayKeys> as HasSpace>::SPACE, Complexity::SQRT_N);
         assert_eq!(<Block<InArrayBuffer<Half>, InArrayKeys> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
         assert_eq!(<Block<InArrayBuffer<Half>, InArrayKeys> as HasTimeBounds>::BEST, Complexity::N_LOG_N);
+        assert_eq!(<Block<InArrayBuffer<Sixteenth>, InArrayKeys> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
+        assert_eq!(<Block<InArrayBuffer<TwoSqrt>, InArrayKeys> as HasTimeBounds>::WORST, Complexity::N_LOG_N);
+        assert_eq!(<Block<ExternalBuffer<Log>, InArrayKeys> as HasTimeBounds>::WORST, Complexity::N_LOG_SQUARED);
+        assert!(<Block<ExternalBuffer<Log>, InArrayKeys> as HasSpace>::SPACE.is_in_place());
         // a buffer that grows with the array is not in place, and nor is a rotation
         // that copies a side out
         assert!(!<Block<FullBuffer, NoKeys> as HasSpace>::SPACE.is_in_place());

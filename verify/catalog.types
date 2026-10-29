@@ -86,6 +86,28 @@
 "beap sort<dir: min reverse, build: iterative>"	BeapSortClassicOf<MinReverse, Iterative>
 "binary insertion: 16"	InsertionSmallSort<BinaryInsertion, 16>
 "binary insertion: 32"	InsertionSmallSort<BinaryInsertion, 32>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: bridge>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, BridgeRotation>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: contrev>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, ContrevRotation>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: drill>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, DrillRotation>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: grail>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, GrailRotation>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, GriesMillsRotation>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: helix>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, HelixRotation>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: juggling>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, JugglingRotation>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: piston>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, PistonRotation>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, ReversalRotation>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, TrinityRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: bridge>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, BridgeRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: contrev>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, ContrevRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: drill>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, DrillRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: grail>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, GrailRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, GriesMillsRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: helix>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, HelixRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: juggling>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, JugglingRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: piston>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, PistonRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, ReversalRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, TrinityRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, AuxiliaryRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, BridgeRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, ContrevRotation>
@@ -130,6 +152,50 @@
 "block sort<buffer: external<half>, keys: none, rotation: piston>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, PistonRotation>
 "block sort<buffer: external<half>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, ReversalRotation>
 "block sort<buffer: external<half>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, TrinityRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, BridgeRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, ContrevRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: drill>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, DrillRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: grail>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, GrailRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, GriesMillsRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: helix>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, HelixRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, JugglingRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: piston>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, PistonRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, ReversalRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, TrinityRotation>
+"block sort<buffer: external<log>, keys: none, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: external<log>, keys: none, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, BridgeRotation>
+"block sort<buffer: external<log>, keys: none, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, ContrevRotation>
+"block sort<buffer: external<log>, keys: none, rotation: drill>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, DrillRotation>
+"block sort<buffer: external<log>, keys: none, rotation: grail>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, GrailRotation>
+"block sort<buffer: external<log>, keys: none, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, GriesMillsRotation>
+"block sort<buffer: external<log>, keys: none, rotation: helix>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, HelixRotation>
+"block sort<buffer: external<log>, keys: none, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, JugglingRotation>
+"block sort<buffer: external<log>, keys: none, rotation: piston>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, PistonRotation>
+"block sort<buffer: external<log>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, ReversalRotation>
+"block sort<buffer: external<log>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, TrinityRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, BridgeRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, ContrevRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: drill>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, DrillRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: grail>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, GrailRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, GriesMillsRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: helix>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, HelixRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, JugglingRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: piston>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, PistonRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, ReversalRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, TrinityRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, BridgeRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, ContrevRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: drill>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, DrillRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: grail>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, GrailRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, GriesMillsRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: helix>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, HelixRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, JugglingRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: piston>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, PistonRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, ReversalRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, TrinityRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, BridgeRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, ContrevRotation>
@@ -152,6 +218,28 @@
 "block sort<buffer: external<sqrt>, keys: none, rotation: piston>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, PistonRotation>
 "block sort<buffer: external<sqrt>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, ReversalRotation>
 "block sort<buffer: external<sqrt>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, TrinityRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: bridge>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, BridgeRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: contrev>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, ContrevRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: drill>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, DrillRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: grail>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, GrailRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, GriesMillsRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: helix>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, HelixRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: juggling>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, JugglingRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: piston>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, PistonRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, ReversalRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, TrinityRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: bridge>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, BridgeRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: contrev>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, ContrevRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: drill>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, DrillRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: grail>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, GrailRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, GriesMillsRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: helix>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, HelixRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: juggling>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, JugglingRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: piston>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, PistonRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, ReversalRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, TrinityRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, AuxiliaryRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, BridgeRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, ContrevRotation>
@@ -196,6 +284,50 @@
 "block sort<buffer: in array<half>, keys: none, rotation: piston>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, PistonRotation>
 "block sort<buffer: in array<half>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<half>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, TrinityRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, BridgeRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, ContrevRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: drill>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, DrillRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: grail>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, GrailRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, GriesMillsRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: helix>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, HelixRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, JugglingRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: piston>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, PistonRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, ReversalRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, TrinityRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, BridgeRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, ContrevRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: drill>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, DrillRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: grail>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, GrailRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, GriesMillsRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: helix>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, HelixRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, JugglingRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: piston>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, PistonRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, ReversalRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, TrinityRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, BridgeRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, ContrevRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: drill>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, DrillRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: grail>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, GrailRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, GriesMillsRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: helix>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, HelixRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, JugglingRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: piston>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, PistonRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, ReversalRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, TrinityRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, BridgeRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, ContrevRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: drill>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, DrillRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: grail>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, GrailRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, GriesMillsRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: helix>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, HelixRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, JugglingRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: piston>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, PistonRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, ReversalRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, TrinityRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, BridgeRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, ContrevRotation>

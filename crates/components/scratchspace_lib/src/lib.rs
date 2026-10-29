@@ -31,7 +31,7 @@ pub mod workflows;
 pub use buffers::{ExternalBuffer, InArrayBuffer};
 pub use bufferless::bufferless_merge;
 pub use keys::{InArrayKeys, NoKeys};
-pub use sizes::{Fixed, Half, Sqrt};
+pub use sizes::{Fixed, Half, Log, Sixteenth, Sqrt, TwoSqrt};
 pub use workflows::{Exercise, ParkLoop, ParkSweep, Relocations, ScratchspaceMergeSort};
 
 // ── Scratchspace backings (the `Scratchspace` role — its own top-level kind) ──

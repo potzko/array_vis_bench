@@ -47,7 +47,7 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
    See [implementation_plans/enumeration_strategies.md](implementation_plans/enumeration_strategies.md).
 2. Done: the scratchspace phases. The `Keys` axis, the block merge sort
    family (the WikiSort and GrailSort shapes, the buffer in the array or
-   outside it by three sizes, each under every rotation), the buffer region
+   outside it by six sizes, each under every rotation), the buffer region
    logger event with its shading in the renderer, and a bufferless
    merge by rotations, `O(n log n)` moves instead of quadratic. See
    [implementation_plans/scratchspace_block_merge.md](implementation_plans/scratchspace_block_merge.md).

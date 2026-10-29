@@ -124,12 +124,25 @@ component bb_none
 end
 
 # The buffer sizes: the square root WikiSort carves and GrailSort's dynamic
-# buffer allocates, the 512 cells of both one's static buffer, and half the
-# array, a plain merge sort's buffer.
+# buffer allocates and twice that, the logarithm and the 512 cells of both
+# one's static buffer, which the blocks outgrow, and half and a sixteenth of the
+# array, half being a plain merge sort's buffer.
 
 component size_sqrt
   type     Sqrt
   label    sqrt
+  provides BufferSize
+end
+
+component size_two_sqrt
+  type     TwoSqrt
+  label    2 sqrt
+  provides BufferSize
+end
+
+component size_log
+  type     Log
+  label    log
   provides BufferSize
 end
 
@@ -142,6 +155,12 @@ end
 component size_half
   type     Half
   label    half
+  provides BufferSize
+end
+
+component size_sixteenth
+  type     Sixteenth
+  label    sixteenth
   provides BufferSize
 end
 

@@ -6,5 +6,5 @@ Source of `scratchspace_lib`. The crate README one level up says what it is for.
 - `buffers.rs`: the block merge buffers, `InArrayBuffer` and `ExternalBuffer`, each sized by a `BufferSize`.
 - `keys.rs`: the `Keys` backings, `InArrayKeys` and `NoKeys`.
 - `lib.rs`: Auxiliary (scratchspace) backings + the merge that consumes them.
-- `sizes.rs`: the `BufferSize` fillers, `Sqrt`, `Fixed` and `Half`.
+- `sizes.rs`: the `BufferSize` fillers, `Sqrt`, `TwoSqrt`, `Log`, `Fixed`, `Half` and `Sixteenth`.
 - `workflows.rs`: Scratchspace workflows (runnable routines over the ops) + a scratchspace -backed sort.
