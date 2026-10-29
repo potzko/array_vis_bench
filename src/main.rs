@@ -60,12 +60,12 @@ fn main() {
     // contract cap is below N are skipped. An N or K left out keeps the
     // consumer's default. `--out` also writes the medians as a TSV archive,
     // the input `verify.sh` compares against its timing baseline.
-    // `array_vis_bench --sweep SECONDS [--share K] [--only PREFIX] [--input NAME] [--out PATH]`
+    // `array_vis_bench --sweep SECONDS [--share K] [--only PREFIX] [--input NAME] [--max-size N] [--out PATH]`
     // runs the scaling sweep: every entry (or those whose name starts with
     // PREFIX) climbs the size ladder until one run takes more than
-    // SECONDS / (entries * K), K defaulting to 5, then the time left finds
-    // each entry's largest size that fits. `--out` writes the archive
-    // `plot_bench.py` charts.
+    // SECONDS / (entries * K), K defaulting to 5, or it reaches N, 4 Mi by
+    // default; then the time left finds each entry's largest size that fits.
+    // `--out` writes the archive `plot_bench.py` charts.
     let argv: Vec<String> = std::env::args().collect();
     let flag = |name: &str| argv.iter().position(|a| a == name).and_then(|i| argv.get(i + 1));
     // `--input NAME` picks the input shape by its registered name, for the
@@ -74,7 +74,12 @@ fn main() {
     if let Some(seconds) = flag("--sweep") {
         let seconds: f64 = seconds.parse().unwrap_or_else(|_| panic!("--sweep takes seconds, got {seconds}"));
         let share = flag("--share").map_or(5, |k| k.parse().unwrap_or_else(|_| panic!("--share takes a count, got {k}")));
-        let report = spec_catalog::run_sweep(std::time::Duration::from_secs_f64(seconds), share, flag("--only").map(String::as_str), input);
+        let max_size = flag("--max-size").map_or(array_vis_bench_core::sweep::MAX_SIZE, |n| {
+            n.parse().unwrap_or_else(|_| panic!("--max-size takes a size, got {n}"))
+        });
+        let budget = std::time::Duration::from_secs_f64(seconds);
+        let plan = array_vis_bench_core::sweep::Sweep { budget, share, input, max_size };
+        let report = spec_catalog::run_sweep(plan, flag("--only").map(String::as_str));
         println!("{}", report.table());
         if let Some(out) = flag("--out") {
             std::fs::write(out, report.archive()).unwrap_or_else(|e| panic!("write sweep archive {out}: {e}"));

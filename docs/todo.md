@@ -67,7 +67,10 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
    climbs every entry up the size ladder within a time budget and finds the
    largest size each fits, which is what makes a time budget `max_input`
    unnecessary for the benchmark; the caps that remain are contracts or
-   serve the picker and the batteries.
+   serve the picker and the batteries. The budget pays for building the
+   inputs too, a batch's inputs hold at most a million elements, and no
+   climb passes `--max-size`, 4 Mi by default, so an entry whose run does
+   not grow with the size stops there instead of exhausting memory.
 6. Done: sorts join `CorrectnessSuite` through the `DirectSort` role, one
    `direct_sort!` line per driver type. See
    [implementation_plans/kind_trait.md](implementation_plans/kind_trait.md).
