@@ -74,6 +74,9 @@ Partitions report unsorted ranges to a visitor; they never return them.
 
 ## Git
 
-- Work on a branch off the work branch, as small commits that each leave the
-  tree green, then fold back. Commit messages are one or two lines saying
-  the functional change, with no attribution line.
+- Work on a branch off `dev`, as small commits that each leave the tree
+  green, then fold back with `./promote.sh BRANCH`, which checks for the
+  portable stamp or runs that gate first. Commit messages are one or two
+  lines saying the functional change, with no attribution line.
+- `main` moves only by `./promote.sh main`, after the full gate on the
+  machine the baselines were taken on. See `githooks/README.md`.

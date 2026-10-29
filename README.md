@@ -111,6 +111,17 @@ Helper scripts:
   view lives in the URL, so a link reopens it. See
   [bench_view/README.md](bench_view/README.md).
 
+## Branches
+
+Work happens on a branch off `dev`, usually in a worktree under
+`.claude/worktrees/`, and lands on `dev` as a fast forward by
+`./promote.sh BRANCH`. `dev` takes a tree that passed
+`./verify.sh --portable`, which runs anywhere; `main` takes one that passed
+the full `./verify.sh` on the machine the baselines were taken on, and moves
+only by `./promote.sh main`. The pre-push hook in
+[githooks/](githooks/README.md) refuses a push of either branch whose tree
+lacks that stamp.
+
 ## Workspace layout
 
 ```
