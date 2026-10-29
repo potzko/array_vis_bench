@@ -62,8 +62,14 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
    under fifty microseconds, and reports the median with the inter
    quartile range and the Tukey outlier count. `--timing --out PATH`
    writes the medians as a TSV archive under a header naming its setup,
-   `verify.sh` compares one against its baseline, and `plot_bench.py` charts
-   several of them, one per size, as the scaling page. `--sweep SECONDS`
+   and both archive kinds end with a line per entry giving its category and
+   axes. `verify.sh` compares one timing archive against its baseline, and
+   `plot_bench.py` writes the benchmark page from any mix of them: facet
+   checklists with live counts, time against size per input shape, best of
+   a facet, dominance over a size range, the effect of a facet and parallel
+   coordinates, the view kept in the URL. View files in the query language,
+   which would set that view from a named set of entries and inputs, are
+   the next step. `--sweep SECONDS`
    climbs every entry up the size ladder within a time budget and finds the
    largest size each fits, which is what makes a time budget `max_input`
    unnecessary for the benchmark; the caps that remain are contracts or
