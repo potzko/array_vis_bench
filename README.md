@@ -55,7 +55,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 | beap sorts | 80 | 2 classic + 72 quick build + 6 dual build |
 | quick select | 56 | recursive and iterative, pivoted and heap extract |
 | quick heap sorts | 34 | 16 classic + 16 deferred + 2 set quick select |
-| shell sorts | 18 | 9 gap sequences x 2 drivers |
+| shell sorts | 30 | 9 gap sequences and 6 rod gap chains x 2 drivers |
 | circle sorts | 17 | |
 | rod sorts | 18 | 6 branching strategies x 3 merges |
 | bubble sorts | 6 | 3 base + 3 odd even |

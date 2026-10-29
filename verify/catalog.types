@@ -1830,6 +1830,12 @@
 "shell sort ordered<sequence: knuth>"	ShellSortOrdered<Knuth>
 "shell sort ordered<sequence: optimized-256>"	ShellSortOrdered<Optimized256>
 "shell sort ordered<sequence: pratt>"	ShellSortOrdered<Pratt>
+"shell sort ordered<sequence: rod<3-parity>>"	ShellSortOrdered<RodGaps<Parity3>>
+"shell sort ordered<sequence: rod<classic>>"	ShellSortOrdered<RodGaps<Classic>>
+"shell sort ordered<sequence: rod<fibonacci>>"	ShellSortOrdered<RodGaps<Fibonacci>>
+"shell sort ordered<sequence: rod<log-parity>>"	ShellSortOrdered<RodGaps<LogParity>>
+"shell sort ordered<sequence: rod<optimised>>"	ShellSortOrdered<RodGaps<Optimised>>
+"shell sort ordered<sequence: rod<root-parity>>"	ShellSortOrdered<RodGaps<RootParity>>
 "shell sort ordered<sequence: sedgewick-branching>"	ShellSortOrdered<SedgewickBranching>
 "shell sort ordered<sequence: sedgewick>"	ShellSortOrdered<Sedgewick>
 "shell sort ordered<sequence: tokuda>"	ShellSortOrdered<Tokuda>
@@ -1839,6 +1845,12 @@
 "shell sort<sequence: knuth>"	ShellSort<Knuth>
 "shell sort<sequence: optimized-256>"	ShellSort<Optimized256>
 "shell sort<sequence: pratt>"	ShellSort<Pratt>
+"shell sort<sequence: rod<3-parity>>"	ShellSort<RodGaps<Parity3>>
+"shell sort<sequence: rod<classic>>"	ShellSort<RodGaps<Classic>>
+"shell sort<sequence: rod<fibonacci>>"	ShellSort<RodGaps<Fibonacci>>
+"shell sort<sequence: rod<log-parity>>"	ShellSort<RodGaps<LogParity>>
+"shell sort<sequence: rod<optimised>>"	ShellSort<RodGaps<Optimised>>
+"shell sort<sequence: rod<root-parity>>"	ShellSort<RodGaps<RootParity>>
 "shell sort<sequence: sedgewick-branching>"	ShellSort<SedgewickBranching>
 "shell sort<sequence: sedgewick>"	ShellSort<Sedgewick>
 "shell sort<sequence: tokuda>"	ShellSort<Tokuda>

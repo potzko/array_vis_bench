@@ -11,6 +11,7 @@ path = "src/lib.rs"
 [dependencies]
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 sort_logger = { path = "../../../sort_logger" }
+shell_sort_lib = { path = "../shell_sort_lib" }
 
 # Spec-system catalog fragment + query, OWNED by this crate and gathered by
 # `spec_catalog`'s build via the dependency-graph walk.

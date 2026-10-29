@@ -541,6 +541,7 @@ name = "rod_sort_lib"
 version = "0.1.0"
 dependencies = [
  "array_vis_bench_traits",
+ "shell_sort_lib",
  "sort_logger",
 ]
 

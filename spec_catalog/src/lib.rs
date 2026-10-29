@@ -9,7 +9,7 @@
 //! per solved variant via `spec_emit::ArrayBackend` — registering an
 //! `AlgorithmEntry`, picker menu, axes and label template included, into the
 //! real `array_vis_bench_core::bench_registry::ALGORITHMS`. Today's families:
-//! shell (18), insertion (2), quick (408, the slotted port). These are the CANONICAL
+//! shell (30), insertion (2), quick (408, the slotted port). These are the CANONICAL
 //! registrations (no `spec::` marker); leaf crates are linked for their types.
 //!
 //! This is the user's two-layer model, "B" stage: building stones are
@@ -121,7 +121,7 @@ mod tests {
     /// The whole catalog: every emitted family present, counts add up.
     #[test]
     fn catalog_total_is_the_sum_of_the_families() {
-        assert_eq!(COUNT_SHELL, 18, "shell family");
+        assert_eq!(COUNT_SHELL, 30, "shell family (2 drivers x [9 sequences + 6 rod gap chains])");
         assert_eq!(COUNT_INSERTION, 2, "insertion family");
         assert_eq!(COUNT_QUICK, 408, "quick family (2 × [5×5 single + 26 dual] partitions × 4 small)");
         assert_eq!(COUNT_CYCLE, 1, "cycle family");
@@ -222,7 +222,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 1874, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 1886, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -385,14 +385,14 @@ mod tests {
 
     /// The catalog's AVBS CONSUMER program (`consumers.avbs`) drives the real
     /// emitted catalog: build.rs resolved `checks: List<Mains<SortsAndSelects>> =
-    /// [correctness]` to a `correctness` Main over 46 MIXED-KIND algorithms (9
-    /// plain + 9 ordered shells + 28 quick-selects), and running it passes — the
+    /// [correctness]` to a `correctness` Main over 58 MIXED-KIND algorithms (15
+    /// plain + 15 ordered shells + 28 quick-selects), and running it passes, the
     /// language's consumer surface as the app's main, end-to-end.
     #[test]
     fn declared_consumers_drive_the_real_catalog() {
         assert_eq!(
             crate::DECLARED_CONSUMER_SHAPE,
-            &[("checks", 1usize, 46usize)],
+            &[("checks", 1usize, 58usize)],
             "consumers.avbs resolved shape drifted"
         );
         let reports = crate::run_declared_consumers().expect("run the declared consumers");
@@ -400,7 +400,7 @@ mod tests {
         let r = &reports[0];
         // The MainReport's name is the Main's own (`correctness`), not the binding.
         assert_eq!(r.consumer, "correctness");
-        assert_eq!(r.ran, 46, "9 plain + 9 ordered shells + 28 quick-selects");
+        assert_eq!(r.ran, 58, "15 plain + 15 ordered shells + 28 quick-selects");
         assert!(r.all_ok(), "declared correctness consumer had failures: {:?}", r.failures);
     }
 
@@ -421,14 +421,14 @@ mod tests {
         }
 
         #[test]
-        fn emits_both_algorithms_over_all_nine_sequences() {
+        fn emits_both_algorithms_over_every_sequence() {
             let es = entries();
             assert_eq!(es.len(), COUNT_SHELL, "emitted-entry count drifted from the solver");
-            assert_eq!(COUNT_SHELL, 18, "expected 2 algorithms × 9 sequences");
+            assert_eq!(COUNT_SHELL, 30, "expected 2 algorithms x (9 sequences + 6 rod gap chains)");
             let plain = es.iter().filter(|e| e.name.starts_with("shell sort<")).count();
             let ordered = es.iter().filter(|e| e.name.starts_with("shell sort ordered<")).count();
-            assert_eq!(plain, 9, "expected 9 plain shell sorts");
-            assert_eq!(ordered, 9, "expected 9 ordered shell sorts");
+            assert_eq!(plain, 15, "expected 15 plain shell sorts");
+            assert_eq!(ordered, 15, "expected 15 ordered shell sorts");
             for e in &es {
                 assert_eq!(e.category, Category::Sort, "`{}` not Sort", e.name);
                 assert_ne!(e.worst, Complexity::UNKNOWN, "`{}` has UNKNOWN worst", e.name);
@@ -465,9 +465,9 @@ mod tests {
             let reports = run_all(&consumers, &sorts);
             assert_eq!(reports.len(), 3);
             for rep in &reports {
-                assert_eq!(rep.ran, 18, "{} ran {} of 18", rep.consumer, rep.ran);
+                assert_eq!(rep.ran, COUNT_SHELL, "{} ran {} of {COUNT_SHELL}", rep.consumer, rep.ran);
                 assert!(rep.all_ok(), "{} had failures: {:?}", rep.consumer, rep.failures);
-                assert_eq!(rep.ok, 18, "{} ok {} of 18", rep.consumer, rep.ok);
+                assert_eq!(rep.ok, COUNT_SHELL, "{} ok {} of {COUNT_SHELL}", rep.consumer, rep.ok);
                 assert_timings_match_ran(rep);
             }
         }
@@ -518,8 +518,8 @@ mod tests {
             let resolved = program.resolve_consumers(&reg).expect("resolve consumers");
             assert_eq!(resolved.len(), 1);
             let consumer = &resolved[0];
-            // `Sorts` = plain ∪ ordered = all 18 shells.
-            assert_eq!(consumer.algo_labels.len(), 18);
+            // `Sorts` = plain ∪ ordered = every shell.
+            assert_eq!(consumer.algo_labels.len(), COUNT_SHELL);
 
             let mains: Vec<&str> = consumer.mains.iter().map(String::as_str).collect();
             let labels: Vec<&str> = consumer.algo_labels.iter().map(String::as_str).collect();
@@ -527,9 +527,9 @@ mod tests {
 
             assert_eq!(reports.len(), 3, "visualiser + correctness + benchmark");
             for rep in &reports {
-                assert_eq!(rep.ran, 18, "{} ran {} of 18", rep.consumer, rep.ran);
+                assert_eq!(rep.ran, COUNT_SHELL, "{} ran {} of {COUNT_SHELL}", rep.consumer, rep.ran);
                 assert!(rep.all_ok(), "{} had failures: {:?}", rep.consumer, rep.failures);
-                assert_eq!(rep.ok, 18, "{} ok {} of 18", rep.consumer, rep.ok);
+                assert_eq!(rep.ok, COUNT_SHELL, "{} ok {} of {COUNT_SHELL}", rep.consumer, rep.ok);
                 assert_timings_match_ran(rep);
             }
         }

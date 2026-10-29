@@ -369,6 +369,7 @@ mod tests {
     use std::marker::PhantomData;
 
     use super::*;
+    use crate::testing::Compares;
     use sort_logger::{SortLog, VisualizerLogger};
 
     #[test]
@@ -382,16 +383,6 @@ mod tests {
         let swaps = logger.log.iter().filter(|e| matches!(e, SortLog::Swap { .. })).count();
         let writes = logger.log.iter().filter(|e| matches!(e, SortLog::WriteInArr { .. } | SortLog::WriteData { .. })).count();
         assert_eq!((swaps, writes), (0, 10 + 4));
-    }
-
-    // Counts comparisons, so a test can hold a merge to its bound.
-    struct Compares(usize);
-    impl<T: Copy + Ord> SortLogger<T> for Compares {
-        fn log(&mut self, event: SortLog<T>) {
-            if matches!(event, SortLog::CmpInArr { .. } | SortLog::CmpData { .. } | SortLog::CmpAcrossArrs { .. }) {
-                self.0 += 1;
-            }
-        }
     }
 
     // `n` values in `chains` interleaved chains, each chain sorted.

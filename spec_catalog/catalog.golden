@@ -1850,6 +1850,12 @@ Sort	shell sort ordered<sequence: hibbard>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	shell sort ordered<sequence: knuth>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	shell sort ordered<sequence: optimized-256>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	shell sort ordered<sequence: pratt>	1.2 1.0 1.2 0.0 false
+Sort	shell sort ordered<sequence: rod<3-parity>>	2.0 1.1 2.0 0.0 false
+Sort	shell sort ordered<sequence: rod<classic>>	2.0 1.1 2.0 0.0 false
+Sort	shell sort ordered<sequence: rod<fibonacci>>	2.0 1.1 2.0 0.0 false
+Sort	shell sort ordered<sequence: rod<log-parity>>	2.0 1.1 2.0 0.0 false
+Sort	shell sort ordered<sequence: rod<optimised>>	2.0 1.1 2.0 0.0 false
+Sort	shell sort ordered<sequence: rod<root-parity>>	2.0 1.1 2.0 0.0 false
 Sort	shell sort ordered<sequence: sedgewick-branching>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	shell sort ordered<sequence: sedgewick>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	shell sort ordered<sequence: tokuda>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
@@ -1859,6 +1865,12 @@ Sort	shell sort<sequence: hibbard>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	shell sort<sequence: knuth>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	shell sort<sequence: optimized-256>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	shell sort<sequence: pratt>	1.2 1.0 1.2 0.0 false
+Sort	shell sort<sequence: rod<3-parity>>	2.0 1.1 2.0 0.0 false
+Sort	shell sort<sequence: rod<classic>>	2.0 1.1 2.0 0.0 false
+Sort	shell sort<sequence: rod<fibonacci>>	2.0 1.1 2.0 0.0 false
+Sort	shell sort<sequence: rod<log-parity>>	2.0 1.1 2.0 0.0 false
+Sort	shell sort<sequence: rod<optimised>>	2.0 1.1 2.0 0.0 false
+Sort	shell sort<sequence: rod<root-parity>>	2.0 1.1 2.0 0.0 false
 Sort	shell sort<sequence: sedgewick-branching>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	shell sort<sequence: sedgewick>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	shell sort<sequence: tokuda>	1.0Sqrt 1.0 1.0Sqrt 0.0 false

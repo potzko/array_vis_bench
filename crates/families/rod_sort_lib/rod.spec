@@ -77,3 +77,12 @@ component rod_tournament
   label    tournament
   provides RodMerge
 end
+
+# A strategy's gap chain as a Shell sort gap sequence, so the shell drivers'
+# exhaustive hole reaches it: one entry per strategy and driver.
+component rod_gaps
+  type     RodGaps<{strategy}>
+  label    rod<{strategy}>
+  provides GapSequence
+  slot     strategy RodBranching
+end
