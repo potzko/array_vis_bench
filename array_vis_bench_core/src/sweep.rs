@@ -85,8 +85,8 @@ pub struct SweepReport {
 /// the ceiling stops it or a run fails; then
 /// the time the climbs left over goes round robin, one run per entry per
 /// round, to binary search between the last size that fit and the first that
-/// did not, until every search converges or the budget is spent. A failed
-/// run costs the limit.
+/// did not, where a size lies between them, until every search converges or
+/// the budget is spent. A failed run costs the limit.
 pub fn sweep(
     entries: &[&'static AlgorithmEntry],
     plan: &Sweep,
@@ -102,7 +102,7 @@ pub fn sweep(
     let mut searching: Vec<(usize, usize, usize)> = scalings
         .iter()
         .enumerate()
-        .filter_map(|(ind, s)| match s.stop { Stop::Over(over) => Some((ind, s.fits, over)), _ => None })
+        .filter_map(|(ind, s)| match s.stop { Stop::Over(over) if over - s.fits > 1 => Some((ind, s.fits, over)), _ => None })
         .collect();
     while spent < budget && !searching.is_empty() {
         for (ind, lo, hi) in &mut searching {
@@ -350,6 +350,24 @@ mod tests {
         assert!(searched.is_empty(), "{searched:?}");
         let climbed: Duration = s.points.iter().map(|&(_, d)| d * 10).sum();
         assert_eq!(report.spent, climbed);
+    }
+
+    #[test]
+    fn no_search_runs_when_the_first_size_over_follows_the_last_that_fit() {
+        // The limit is 92us: 92 fits and 93 is over with nothing between, and
+        // the budget leaves room to search, yet no size is timed twice.
+        let mut after_climb = Vec::new();
+        let mut climbed = false;
+        let mut clock = |e: &AlgorithmEntry, n: usize| {
+            if climbed { after_climb.push(n); }
+            if n == 93 { climbed = true; }
+            micros_per_element(e, n)
+        };
+        let report = sweep(&[&LINEAR], &plan(Duration::from_millis(92), 1000), &mut clock);
+        let s = &report.scalings[0];
+        assert_eq!((s.stop, s.fits), (Stop::Over(93), 92));
+        assert!(after_climb.is_empty(), "{after_climb:?}");
+        assert!(s.points.windows(2).all(|w| w[0].0 < w[1].0), "a size timed twice");
     }
 
     #[test]
