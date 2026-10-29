@@ -175,6 +175,14 @@ impl Complexity {
         }
     }
 
+    /// Whether `self` grows at least as fast as `other`, so that `O(self) +
+    /// O(other)` is `O(self)`. `UNKNOWN` is on neither side, its growth is not known.
+    pub const fn at_least(self, other: Self) -> bool {
+        if self.is_unknown() || other.is_unknown() { return false; }
+        let max = Self::sum(self, other);
+        max.n_pow == self.n_pow && max.log_pow == self.log_pow && same_special(max.special, self.special)
+    }
+
     /// "In-place" = no allocation that grows with N. Equivalent to
     /// `n_pow == 0 && special is None`. `log_pow ≥ 1` (recursion-stack
     /// depth) is fine. `UNKNOWN` returns `false` — when we don't know,
@@ -275,6 +283,15 @@ const fn sqrt_bit(s: Option<Special>) -> u8 {
     }
 }
 
+/// Const equality of two special tags, which `==` is not.
+const fn same_special(a: Option<Special>, b: Option<Special>) -> bool {
+    match (a, b) {
+        (None, None) => true,
+        (Some(a), Some(b)) => a as u8 == b as u8,
+        _ => false,
+    }
+}
+
 /// Byte-wise const string equality. `str::eq` isn't const, hence the
 /// loop. Kept private since the public API is `Complexity::from_str`.
 const fn str_eq(a: &str, b: &str) -> bool {
@@ -342,6 +359,19 @@ mod tests {
             Complexity::sum(Complexity::N1, Complexity::SQRT_N),
             Complexity::N1,
         );
+    }
+
+    #[test]
+    fn at_least_orders_growth() {
+        assert!(Complexity::SQRT_N.at_least(Complexity::SQRT_N));
+        assert!(Complexity::N1.at_least(Complexity::SQRT_N));
+        assert!(Complexity::SQRT_N.at_least(Complexity::LOG_SQUARED));
+        assert!(!Complexity::LOG_N.at_least(Complexity::SQRT_N));
+        assert!(!Complexity::CONST.at_least(Complexity::SQRT_N));
+        assert!(!Complexity::N_LOG_N.at_least(Complexity::N_SQRT_N));
+        assert!(!Complexity::UNKNOWN.at_least(Complexity::CONST));
+        assert!(!Complexity::N1.at_least(Complexity::UNKNOWN));
+        const _: () = assert!(Complexity::N1.at_least(Complexity::SQRT_N));
     }
 
     #[test]
