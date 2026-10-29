@@ -49,7 +49,7 @@ impl<T: Ord + Copy> Stash<'_, T> {
         log: &mut U,
     ) {
         match self {
-            Stash::None => bufferless_merge(arr, a_start, a_start + a_len, a_start + a_len + b_len, log),
+            Stash::None => bufferless_merge::<ReversalRotation, T, U>(arr, a_start, a_start + a_len, a_start + a_len + b_len, &mut [], log),
             Stash::Internal { at, .. } => swap_merge(arr, a_start, a_len, b_len, *at, log),
             Stash::External(ext) => copy_merge(arr, ext, a_start, a_len, b_len, log),
         }

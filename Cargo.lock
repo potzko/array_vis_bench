@@ -644,6 +644,7 @@ dependencies = [
  "array_vis_bench_traits",
  "merge_sort_lib",
  "rotation_reversal",
+ "rotation_trinity",
  "sort_logger",
 ]
 

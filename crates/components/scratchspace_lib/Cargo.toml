@@ -14,6 +14,10 @@ array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 merge_sort_lib = { path = "../../families/merge_sort_lib" }
 rotation_reversal = { path = "../../rotations/rotation_reversal" }
 
+[dev-dependencies]
+# A rotation that needs scratch, for the bufferless merge's tests.
+rotation_trinity = { path = "../../rotations/rotation_trinity" }
+
 [package.metadata.array_vis_bench]
 spec = "scratchspace.spec"
 query = "scratchspace.avbs"

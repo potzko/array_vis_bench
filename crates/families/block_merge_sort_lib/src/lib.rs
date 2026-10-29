@@ -187,7 +187,7 @@ fn merge_pair<K: Keys, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         let blocks_fit = s <= stash.capacity();
         roll_merge::<K, T, U>(arr, lo, mid, hi, s, 0, if blocks_fit { stash } else { &mut nowhere }, log);
     } else {
-        bufferless_merge(arr, lo, mid, hi, log);
+        bufferless_merge::<ReversalRotation, T, U>(arr, lo, mid, hi, &mut [], log);
     }
 }
 

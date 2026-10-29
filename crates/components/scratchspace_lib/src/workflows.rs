@@ -10,6 +10,7 @@ use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::role::scratchspace::with_scratch;
 use array_vis_bench_traits::role::{Scratchspace, ScratchspaceRun};
 use array_vis_bench_traits::Complexity;
+use rotation_reversal::ReversalRotation;
 use sort_logger::SortLogger;
 
 use crate::bufferless::bufferless_merge;
@@ -248,6 +249,6 @@ fn merge_runs<S: Scratchspace, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
             k += 1;
         }
     } else {
-        bufferless_merge(arr, lo, mid, hi, log);
+        bufferless_merge::<ReversalRotation, _, _>(arr, lo, mid, hi, &mut [], log);
     }
 }

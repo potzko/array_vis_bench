@@ -20,6 +20,7 @@ use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::role::{Auxiliary, Scratchspace};
 use array_vis_bench_traits::Complexity;
 use merge_sort_lib::RotationMerge;
+use rotation_reversal::ReversalRotation;
 use sort_logger::SortLogger;
 
 pub mod buffers;
@@ -137,7 +138,7 @@ impl<A: Auxiliary> RotationMerge for AuxiliaryMerge<A> {
         if scratch.len() >= mid {
             half_copy_merge(arr, mid, scratch, logger);
         } else {
-            bufferless_merge(arr, 0, mid, n, logger);
+            bufferless_merge::<ReversalRotation, _, _>(arr, 0, mid, n, &mut [], logger);
         }
     }
 }
