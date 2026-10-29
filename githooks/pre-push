@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Git's pre-push hook: a push to `dev` or `main` goes through only when the
+# pushed tip's tree carries the stamp `gate.sh` asks of that branch.
+exec "$(dirname "$0")/gate.sh" pre-push "$@"

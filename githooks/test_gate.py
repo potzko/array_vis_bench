@@ -1,4 +1,5 @@
-# Tests for the branch gate: the stamps `gate.sh` writes and checks. Each test
+# Tests for the branch gate: the stamps `gate.sh` writes and checks, and the
+# pre-push hook that guards `dev` and `main` with them. Each test
 # drives real git in a scratch repository with its own identity and default
 # branch and with the global and system config shut out, so the settings of
 # whoever runs the tests cannot change a result.
@@ -21,12 +22,17 @@ def run(args: list, cwd: Path, env: dict | None = None) -> subprocess.CompletedP
 
 
 class Repo:
-    # A scratch repository on `dev` with one commit and `main` beside it.
+    # A scratch repository on `dev` with one commit and `main` beside it, the
+    # hooks installed, and an empty bare `origin` whose HEAD names neither, so
+    # either can be deleted there.
     def __init__(self, root: Path) -> None:
         self.root, self.path = root, root / "repo"
+        run(["git", "init", "-q", "--bare", "-b", "unborn", root / "origin.git"], root)
         run(["git", "init", "-q", "-b", "dev", self.path], root)
         self.git("config", "user.name", "gate test")
         self.git("config", "user.email", "gate@test")
+        self.git("config", "core.hooksPath", str(HOOKS))
+        self.git("remote", "add", "origin", str(root / "origin.git"))
         self.commit("a")
         self.git("branch", "main")
 
@@ -47,9 +53,17 @@ class Repo:
     def stamp(self, level: str, cwd: Path | None = None) -> subprocess.CompletedProcess:
         return self.gate("stamp", level, self.gate("clean-tree", cwd=cwd).stdout.strip(), cwd=cwd)
 
+    def common_dir(self) -> Path:
+        return Path(self.git("rev-parse", "--path-format=absolute", "--git-common-dir"))
+
     def stamp_file(self, rev: str = "HEAD") -> Path:
-        common = Path(self.git("rev-parse", "--path-format=absolute", "--git-common-dir"))
-        return common / "verify-stamps" / self.git("rev-parse", f"{rev}^{{tree}}")
+        return self.common_dir() / "verify-stamps" / self.git("rev-parse", f"{rev}^{{tree}}")
+
+    def push(self, *refs: str, env: dict | None = None) -> subprocess.CompletedProcess:
+        return run(["git", "push", "-q", "origin", *refs], self.path, env)
+
+    def on_origin(self, branch: str) -> str:
+        return self.git("ls-remote", "origin", f"refs/heads/{branch}").split("\t")[0]
 
 
 def scratch_repo(test: unittest.TestCase) -> Repo:
@@ -135,6 +149,50 @@ class CheckTest(unittest.TestCase):
     def test_dev_needs_portable_main_needs_full_and_the_rest_nothing(self) -> None:
         levels = [self.repo.gate("level", branch).stdout.strip() for branch in ("dev", "main", "feature")]
         self.assertEqual(levels, ["portable", "full", ""])
+
+
+class PrePushTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.repo = scratch_repo(self)
+
+    def test_a_push_to_dev_without_a_stamp_is_refused(self) -> None:
+        done = self.repo.push("dev")
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn("needs a portable stamp", done.stderr)
+        self.assertEqual(self.repo.on_origin("dev"), "")
+
+    def test_a_portable_stamp_lets_dev_through(self) -> None:
+        self.repo.stamp("portable")
+        self.assertEqual(self.repo.push("dev").returncode, 0)
+        self.assertEqual(self.repo.on_origin("dev"), self.repo.git("rev-parse", "dev"))
+
+    def test_main_needs_a_full_stamp(self) -> None:
+        self.repo.stamp("portable")
+        self.assertNotEqual(self.repo.push("main").returncode, 0)
+        self.repo.stamp("full")
+        self.assertEqual(self.repo.push("main").returncode, 0)
+
+    def test_a_work_branch_is_not_gated(self) -> None:
+        self.repo.git("branch", "feature")
+        self.assertEqual(self.repo.push("feature").returncode, 0)
+
+    def test_a_work_branch_pushed_onto_dev_is_gated(self) -> None:
+        self.repo.git("branch", "feature")
+        self.assertNotEqual(self.repo.push("feature:dev").returncode, 0)
+
+    def test_deleting_dev_on_origin_is_not_gated(self) -> None:
+        self.repo.push("--no-verify", "dev")
+        self.assertEqual(self.repo.push(":dev").returncode, 0)
+        self.assertEqual(self.repo.on_origin("dev"), "")
+
+    def test_a_bypass_goes_through_and_is_logged_with_its_reason(self) -> None:
+        self.assertEqual(self.repo.push("dev", env={"GATE_BYPASS": "away from the baseline machine"}).returncode, 0)
+        log = (self.repo.common_dir() / "gate-bypass.log").read_text()
+        self.assertIn("refs/heads/dev", log)
+        self.assertIn("away from the baseline machine", log)
+
+    def test_an_empty_bypass_is_no_bypass(self) -> None:
+        self.assertNotEqual(self.repo.push("dev", env={"GATE_BYPASS": ""}).returncode, 0)
 
 
 if __name__ == "__main__":

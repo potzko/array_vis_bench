@@ -9,9 +9,14 @@
 #   gate.sh stamp LEVEL TREE      record a pass, TREE being clean-tree's answer at the start
 #   gate.sh check REV LEVEL       whether REV's tree carries a stamp of LEVEL or above
 #   gate.sh level BRANCH          the level BRANCH needs, nothing when it is unguarded
+#   gate.sh pre-push REMOTE URL   the hook: refuse a push of `dev` or `main` without its stamp
+#
+# `GATE_BYPASS="reason"` lets a refused push through and appends the reason
+# to `gate-bypass.log` in the common git dir.
 set -uo pipefail
 
-STAMPS="$(git rev-parse --path-format=absolute --git-common-dir)/verify-stamps"
+COMMON="$(git rev-parse --path-format=absolute --git-common-dir)"
+STAMPS="$COMMON/verify-stamps"
 
 usage() {
   sed -n '/^#   gate.sh/s/^#   /usage: /p' "$0" >&2
@@ -60,6 +65,22 @@ check() {  # <rev> <level>
   fi
 }
 
+pre_push() {  # <remote> <url>, git's lines of local ref, sha, remote ref, sha on stdin
+  local failed=0 sha remote_ref need
+  while read -r _ sha remote_ref _; do
+    need=$(level "${remote_ref#refs/heads/}")
+    [[ -z $need || $sha =~ ^0+$ ]] && continue
+    if [[ -n ${GATE_BYPASS:-} ]]; then
+      printf '%s\t%s\t%s\t%s\t%s\n' "$(date -Is)" "$1" "$remote_ref" "$sha" "$GATE_BYPASS" >>"$COMMON/gate-bypass.log"
+      echo "pre-push: gate bypassed for $remote_ref: $GATE_BYPASS" >&2
+    elif ! check "$sha" "$need"; then
+      echo "pre-push: refusing $remote_ref, it needs a $need stamp; GATE_BYPASS=\"reason\" pushes anyway" >&2
+      failed=1
+    fi
+  done
+  return $failed
+}
+
 is_level() { [[ $1 == portable || $1 == full ]]; }
 
 case "${1:-}" in
@@ -67,5 +88,6 @@ case "${1:-}" in
   stamp) [[ $# -eq 3 ]] && is_level "$2" || usage; stamp "$2" "$3" ;;
   check) [[ $# -eq 3 ]] && is_level "$3" || usage; check "$2" "$3" ;;
   level) [[ $# -eq 2 ]] || usage; level "$2" ;;
+  pre-push) [[ $# -eq 3 ]] || usage; pre_push "$2" "$3" ;;
   *) usage ;;
 esac
