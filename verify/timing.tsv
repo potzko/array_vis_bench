@@ -84,12 +84,292 @@ beap sort quick build<dir: min reverse, build: stack partition<part: left-right 
 beap sort quick build<dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	369384	5170	1
 beap sort<dir: max forward, build: iterative>	467677	5443	1
 beap sort<dir: min reverse, build: iterative>	464091	10693	0
-block sort<buffer: fixed 512, keys: in array>	54163	2699	2
-block sort<buffer: fixed 512, keys: none>	51033	2488	1
-block sort<buffer: in array, keys: in array>	70340	1964	2
-block sort<buffer: in array, keys: none>	89301	2275	2
-block sort<buffer: none, keys: in array>	101546	1961	2
-block sort<buffer: none, keys: none>	91539	2140	1
+block sort<buffer: external<2 sqrt>, keys: in array, rotation: auxiliary>	74480	4447	0
+block sort<buffer: external<2 sqrt>, keys: in array, rotation: bridge>	75090	7035	0
+block sort<buffer: external<2 sqrt>, keys: in array, rotation: contrev>	74147	9901	0
+block sort<buffer: external<2 sqrt>, keys: in array, rotation: drill>	72284	4475	3
+block sort<buffer: external<2 sqrt>, keys: in array, rotation: grail>	72352	3168	3
+block sort<buffer: external<2 sqrt>, keys: in array, rotation: gries-mills>	73965	3067	1
+block sort<buffer: external<2 sqrt>, keys: in array, rotation: helix>	72024	1923	1
+block sort<buffer: external<2 sqrt>, keys: in array, rotation: juggling>	74139	5415	1
+block sort<buffer: external<2 sqrt>, keys: in array, rotation: piston>	73580	2925	2
+block sort<buffer: external<2 sqrt>, keys: in array, rotation: reversal>	71474	3266	1
+block sort<buffer: external<2 sqrt>, keys: in array, rotation: trinity>	73321	2387	0
+block sort<buffer: external<2 sqrt>, keys: none, rotation: auxiliary>	116977	2560	1
+block sort<buffer: external<2 sqrt>, keys: none, rotation: bridge>	113166	1518	4
+block sort<buffer: external<2 sqrt>, keys: none, rotation: contrev>	102552	3503	0
+block sort<buffer: external<2 sqrt>, keys: none, rotation: drill>	103815	4179	0
+block sort<buffer: external<2 sqrt>, keys: none, rotation: grail>	104302	4262	2
+block sort<buffer: external<2 sqrt>, keys: none, rotation: gries-mills>	104887	2635	1
+block sort<buffer: external<2 sqrt>, keys: none, rotation: helix>	104787	7227	1
+block sort<buffer: external<2 sqrt>, keys: none, rotation: juggling>	107851	3544	1
+block sort<buffer: external<2 sqrt>, keys: none, rotation: piston>	101643	4027	1
+block sort<buffer: external<2 sqrt>, keys: none, rotation: reversal>	91664	1998	2
+block sort<buffer: external<2 sqrt>, keys: none, rotation: trinity>	108819	2692	3
+block sort<buffer: external<512>, keys: in array, rotation: auxiliary>	61603	3673	0
+block sort<buffer: external<512>, keys: in array, rotation: bridge>	60501	1642	1
+block sort<buffer: external<512>, keys: in array, rotation: contrev>	59623	939	2
+block sort<buffer: external<512>, keys: in array, rotation: drill>	59612	1492	1
+block sort<buffer: external<512>, keys: in array, rotation: grail>	59826	1475	1
+block sort<buffer: external<512>, keys: in array, rotation: gries-mills>	61482	2665	0
+block sort<buffer: external<512>, keys: in array, rotation: helix>	59574	3088	0
+block sort<buffer: external<512>, keys: in array, rotation: juggling>	60687	1824	0
+block sort<buffer: external<512>, keys: in array, rotation: piston>	61083	2131	0
+block sort<buffer: external<512>, keys: in array, rotation: reversal>	58524	2509	1
+block sort<buffer: external<512>, keys: in array, rotation: trinity>	60532	2955	3
+block sort<buffer: external<512>, keys: none, rotation: auxiliary>	55364	5527	0
+block sort<buffer: external<512>, keys: none, rotation: bridge>	55110	3530	1
+block sort<buffer: external<512>, keys: none, rotation: contrev>	54914	4672	0
+block sort<buffer: external<512>, keys: none, rotation: drill>	55328	5221	0
+block sort<buffer: external<512>, keys: none, rotation: grail>	54569	5476	0
+block sort<buffer: external<512>, keys: none, rotation: gries-mills>	55705	4894	0
+block sort<buffer: external<512>, keys: none, rotation: helix>	55193	4448	0
+block sort<buffer: external<512>, keys: none, rotation: juggling>	55582	2313	1
+block sort<buffer: external<512>, keys: none, rotation: piston>	55373	3252	0
+block sort<buffer: external<512>, keys: none, rotation: reversal>	55387	1475	1
+block sort<buffer: external<512>, keys: none, rotation: trinity>	55724	1763	1
+block sort<buffer: external<half>, keys: in array, rotation: auxiliary>	62503	1653	0
+block sort<buffer: external<half>, keys: in array, rotation: bridge>	61848	2704	0
+block sort<buffer: external<half>, keys: in array, rotation: contrev>	61883	1642	1
+block sort<buffer: external<half>, keys: in array, rotation: drill>	62308	3352	1
+block sort<buffer: external<half>, keys: in array, rotation: grail>	60956	2602	2
+block sort<buffer: external<half>, keys: in array, rotation: gries-mills>	62252	1592	2
+block sort<buffer: external<half>, keys: in array, rotation: helix>	61244	2191	2
+block sort<buffer: external<half>, keys: in array, rotation: juggling>	61562	2001	1
+block sort<buffer: external<half>, keys: in array, rotation: piston>	62317	1932	2
+block sort<buffer: external<half>, keys: in array, rotation: reversal>	59881	2385	1
+block sort<buffer: external<half>, keys: in array, rotation: trinity>	62476	3333	1
+block sort<buffer: external<half>, keys: none, rotation: auxiliary>	74456	3096	0
+block sort<buffer: external<half>, keys: none, rotation: bridge>	71493	2031	0
+block sort<buffer: external<half>, keys: none, rotation: contrev>	69842	2003	0
+block sort<buffer: external<half>, keys: none, rotation: drill>	69929	1682	0
+block sort<buffer: external<half>, keys: none, rotation: grail>	69143	2314	1
+block sort<buffer: external<half>, keys: none, rotation: gries-mills>	70467	2571	2
+block sort<buffer: external<half>, keys: none, rotation: helix>	70077	1781	0
+block sort<buffer: external<half>, keys: none, rotation: juggling>	71714	2007	0
+block sort<buffer: external<half>, keys: none, rotation: piston>	69835	1822	0
+block sort<buffer: external<half>, keys: none, rotation: reversal>	66141	1486	0
+block sort<buffer: external<half>, keys: none, rotation: trinity>	72295	2399	1
+block sort<buffer: external<log>, keys: in array, rotation: auxiliary>	123753	4559	0
+block sort<buffer: external<log>, keys: in array, rotation: bridge>	117681	3535	1
+block sort<buffer: external<log>, keys: in array, rotation: contrev>	109163	5352	0
+block sort<buffer: external<log>, keys: in array, rotation: drill>	109050	2685	2
+block sort<buffer: external<log>, keys: in array, rotation: grail>	109883	3738	1
+block sort<buffer: external<log>, keys: in array, rotation: gries-mills>	111145	4703	0
+block sort<buffer: external<log>, keys: in array, rotation: helix>	108876	3665	0
+block sort<buffer: external<log>, keys: in array, rotation: juggling>	114176	7080	0
+block sort<buffer: external<log>, keys: in array, rotation: piston>	110280	5273	1
+block sort<buffer: external<log>, keys: in array, rotation: reversal>	101428	4098	0
+block sort<buffer: external<log>, keys: in array, rotation: trinity>	112185	2195	1
+block sort<buffer: external<log>, keys: none, rotation: auxiliary>	140162	2713	1
+block sort<buffer: external<log>, keys: none, rotation: bridge>	133769	4310	0
+block sort<buffer: external<log>, keys: none, rotation: contrev>	116642	3342	1
+block sort<buffer: external<log>, keys: none, rotation: drill>	119307	3162	1
+block sort<buffer: external<log>, keys: none, rotation: grail>	117614	3563	0
+block sort<buffer: external<log>, keys: none, rotation: gries-mills>	118749	3640	2
+block sort<buffer: external<log>, keys: none, rotation: helix>	120476	6693	0
+block sort<buffer: external<log>, keys: none, rotation: juggling>	124103	5233	0
+block sort<buffer: external<log>, keys: none, rotation: piston>	115662	4222	0
+block sort<buffer: external<log>, keys: none, rotation: reversal>	103074	2736	0
+block sort<buffer: external<log>, keys: none, rotation: trinity>	123358	2593	2
+block sort<buffer: external<sixteenth>, keys: in array, rotation: auxiliary>	74357	3217	0
+block sort<buffer: external<sixteenth>, keys: in array, rotation: bridge>	72864	2746	1
+block sort<buffer: external<sixteenth>, keys: in array, rotation: contrev>	72646	2613	2
+block sort<buffer: external<sixteenth>, keys: in array, rotation: drill>	72173	1882	1
+block sort<buffer: external<sixteenth>, keys: in array, rotation: grail>	72640	1714	2
+block sort<buffer: external<sixteenth>, keys: in array, rotation: gries-mills>	73309	1668	1
+block sort<buffer: external<sixteenth>, keys: in array, rotation: helix>	71715	2611	1
+block sort<buffer: external<sixteenth>, keys: in array, rotation: juggling>	73010	2240	0
+block sort<buffer: external<sixteenth>, keys: in array, rotation: piston>	73255	1854	2
+block sort<buffer: external<sixteenth>, keys: in array, rotation: reversal>	71234	2686	2
+block sort<buffer: external<sixteenth>, keys: in array, rotation: trinity>	73268	1780	1
+block sort<buffer: external<sixteenth>, keys: none, rotation: auxiliary>	116752	4676	0
+block sort<buffer: external<sixteenth>, keys: none, rotation: bridge>	113038	3165	0
+block sort<buffer: external<sixteenth>, keys: none, rotation: contrev>	102704	3482	2
+block sort<buffer: external<sixteenth>, keys: none, rotation: drill>	103620	2443	2
+block sort<buffer: external<sixteenth>, keys: none, rotation: grail>	103995	4013	0
+block sort<buffer: external<sixteenth>, keys: none, rotation: gries-mills>	104308	6321	0
+block sort<buffer: external<sixteenth>, keys: none, rotation: helix>	105565	6024	1
+block sort<buffer: external<sixteenth>, keys: none, rotation: juggling>	107292	3763	2
+block sort<buffer: external<sixteenth>, keys: none, rotation: piston>	102892	4240	1
+block sort<buffer: external<sixteenth>, keys: none, rotation: reversal>	91704	3586	1
+block sort<buffer: external<sixteenth>, keys: none, rotation: trinity>	108569	4505	1
+block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary>	79122	1980	2
+block sort<buffer: external<sqrt>, keys: in array, rotation: bridge>	77275	3173	2
+block sort<buffer: external<sqrt>, keys: in array, rotation: contrev>	77457	2695	2
+block sort<buffer: external<sqrt>, keys: in array, rotation: drill>	77583	4040	2
+block sort<buffer: external<sqrt>, keys: in array, rotation: grail>	77184	1600	2
+block sort<buffer: external<sqrt>, keys: in array, rotation: gries-mills>	78819	5316	1
+block sort<buffer: external<sqrt>, keys: in array, rotation: helix>	76438	2584	1
+block sort<buffer: external<sqrt>, keys: in array, rotation: juggling>	78709	1247	3
+block sort<buffer: external<sqrt>, keys: in array, rotation: piston>	78754	2942	2
+block sort<buffer: external<sqrt>, keys: in array, rotation: reversal>	75478	1879	2
+block sort<buffer: external<sqrt>, keys: in array, rotation: trinity>	78210	4670	1
+block sort<buffer: external<sqrt>, keys: none, rotation: auxiliary>	130129	3866	3
+block sort<buffer: external<sqrt>, keys: none, rotation: bridge>	125449	3862	3
+block sort<buffer: external<sqrt>, keys: none, rotation: contrev>	108561	4353	1
+block sort<buffer: external<sqrt>, keys: none, rotation: drill>	113134	4599	1
+block sort<buffer: external<sqrt>, keys: none, rotation: grail>	113012	3263	0
+block sort<buffer: external<sqrt>, keys: none, rotation: gries-mills>	112032	4716	0
+block sort<buffer: external<sqrt>, keys: none, rotation: helix>	113796	3010	2
+block sort<buffer: external<sqrt>, keys: none, rotation: juggling>	118311	3956	1
+block sort<buffer: external<sqrt>, keys: none, rotation: piston>	113024	4400	2
+block sort<buffer: external<sqrt>, keys: none, rotation: reversal>	98560	3119	3
+block sort<buffer: external<sqrt>, keys: none, rotation: trinity>	116999	4237	0
+block sort<buffer: in array<2 sqrt>, keys: in array, rotation: auxiliary>	83278	3325	0
+block sort<buffer: in array<2 sqrt>, keys: in array, rotation: bridge>	81728	4935	0
+block sort<buffer: in array<2 sqrt>, keys: in array, rotation: contrev>	83584	2558	1
+block sort<buffer: in array<2 sqrt>, keys: in array, rotation: drill>	81919	3211	1
+block sort<buffer: in array<2 sqrt>, keys: in array, rotation: grail>	82539	3835	1
+block sort<buffer: in array<2 sqrt>, keys: in array, rotation: gries-mills>	85793	3718	1
+block sort<buffer: in array<2 sqrt>, keys: in array, rotation: helix>	79742	1765	1
+block sort<buffer: in array<2 sqrt>, keys: in array, rotation: juggling>	82430	3669	0
+block sort<buffer: in array<2 sqrt>, keys: in array, rotation: piston>	84474	3252	1
+block sort<buffer: in array<2 sqrt>, keys: in array, rotation: reversal>	75198	1986	1
+block sort<buffer: in array<2 sqrt>, keys: in array, rotation: trinity>	82572	1447	1
+block sort<buffer: in array<2 sqrt>, keys: none, rotation: auxiliary>	119483	3618	1
+block sort<buffer: in array<2 sqrt>, keys: none, rotation: bridge>	116417	4446	1
+block sort<buffer: in array<2 sqrt>, keys: none, rotation: contrev>	107839	3734	0
+block sort<buffer: in array<2 sqrt>, keys: none, rotation: drill>	107191	3523	0
+block sort<buffer: in array<2 sqrt>, keys: none, rotation: grail>	108241	2372	1
+block sort<buffer: in array<2 sqrt>, keys: none, rotation: gries-mills>	108845	3902	1
+block sort<buffer: in array<2 sqrt>, keys: none, rotation: helix>	108049	3750	0
+block sort<buffer: in array<2 sqrt>, keys: none, rotation: juggling>	110700	2580	0
+block sort<buffer: in array<2 sqrt>, keys: none, rotation: piston>	107543	2604	1
+block sort<buffer: in array<2 sqrt>, keys: none, rotation: reversal>	93413	2880	0
+block sort<buffer: in array<2 sqrt>, keys: none, rotation: trinity>	112157	3727	0
+block sort<buffer: in array<512>, keys: in array, rotation: auxiliary>	309445	28981	0
+block sort<buffer: in array<512>, keys: in array, rotation: bridge>	310437	22266	3
+block sort<buffer: in array<512>, keys: in array, rotation: contrev>	415042	24519	2
+block sort<buffer: in array<512>, keys: in array, rotation: drill>	337635	22801	1
+block sort<buffer: in array<512>, keys: in array, rotation: grail>	345107	16779	2
+block sort<buffer: in array<512>, keys: in array, rotation: gries-mills>	514103	33430	0
+block sort<buffer: in array<512>, keys: in array, rotation: helix>	321503	37939	1
+block sort<buffer: in array<512>, keys: in array, rotation: juggling>	329147	17275	1
+block sort<buffer: in array<512>, keys: in array, rotation: piston>	458227	28754	0
+block sort<buffer: in array<512>, keys: in array, rotation: reversal>	190685	7502	0
+block sort<buffer: in array<512>, keys: in array, rotation: trinity>	301489	17916	0
+block sort<buffer: in array<512>, keys: none, rotation: auxiliary>	283340	14574	0
+block sort<buffer: in array<512>, keys: none, rotation: bridge>	281973	15207	1
+block sort<buffer: in array<512>, keys: none, rotation: contrev>	371615	31086	1
+block sort<buffer: in array<512>, keys: none, rotation: drill>	315094	19808	0
+block sort<buffer: in array<512>, keys: none, rotation: grail>	308116	15189	0
+block sort<buffer: in array<512>, keys: none, rotation: gries-mills>	456939	23401	2
+block sort<buffer: in array<512>, keys: none, rotation: helix>	290276	10063	1
+block sort<buffer: in array<512>, keys: none, rotation: juggling>	297127	7152	1
+block sort<buffer: in array<512>, keys: none, rotation: piston>	405409	21677	1
+block sort<buffer: in array<512>, keys: none, rotation: reversal>	177856	9412	0
+block sort<buffer: in array<512>, keys: none, rotation: trinity>	274893	12497	0
+block sort<buffer: in array<half>, keys: in array, rotation: auxiliary>	292996	15099	0
+block sort<buffer: in array<half>, keys: in array, rotation: bridge>	296100	16737	0
+block sort<buffer: in array<half>, keys: in array, rotation: contrev>	398678	18800	0
+block sort<buffer: in array<half>, keys: in array, rotation: drill>	331627	21637	0
+block sort<buffer: in array<half>, keys: in array, rotation: grail>	320613	24460	0
+block sort<buffer: in array<half>, keys: in array, rotation: gries-mills>	483210	32275	1
+block sort<buffer: in array<half>, keys: in array, rotation: helix>	301022	13193	1
+block sort<buffer: in array<half>, keys: in array, rotation: juggling>	312708	19343	0
+block sort<buffer: in array<half>, keys: in array, rotation: piston>	438338	33532	1
+block sort<buffer: in array<half>, keys: in array, rotation: reversal>	181929	8355	1
+block sort<buffer: in array<half>, keys: in array, rotation: trinity>	291703	16866	0
+block sort<buffer: in array<half>, keys: none, rotation: auxiliary>	271112	11275	0
+block sort<buffer: in array<half>, keys: none, rotation: bridge>	274281	10355	0
+block sort<buffer: in array<half>, keys: none, rotation: contrev>	357173	15227	1
+block sort<buffer: in array<half>, keys: none, rotation: drill>	302819	9254	1
+block sort<buffer: in array<half>, keys: none, rotation: grail>	304491	18947	0
+block sort<buffer: in array<half>, keys: none, rotation: gries-mills>	443166	21509	1
+block sort<buffer: in array<half>, keys: none, rotation: helix>	280394	14543	1
+block sort<buffer: in array<half>, keys: none, rotation: juggling>	287311	14979	0
+block sort<buffer: in array<half>, keys: none, rotation: piston>	388986	20287	1
+block sort<buffer: in array<half>, keys: none, rotation: reversal>	174115	4603	0
+block sort<buffer: in array<half>, keys: none, rotation: trinity>	269085	10738	0
+block sort<buffer: in array<log>, keys: in array, rotation: auxiliary>	120463	4511	0
+block sort<buffer: in array<log>, keys: in array, rotation: bridge>	117010	3481	0
+block sort<buffer: in array<log>, keys: in array, rotation: contrev>	107627	2619	0
+block sort<buffer: in array<log>, keys: in array, rotation: drill>	108588	3034	0
+block sort<buffer: in array<log>, keys: in array, rotation: grail>	109976	4479	0
+block sort<buffer: in array<log>, keys: in array, rotation: gries-mills>	110544	1849	1
+block sort<buffer: in array<log>, keys: in array, rotation: helix>	109483	3356	0
+block sort<buffer: in array<log>, keys: in array, rotation: juggling>	111996	3867	0
+block sort<buffer: in array<log>, keys: in array, rotation: piston>	109746	5707	0
+block sort<buffer: in array<log>, keys: in array, rotation: reversal>	100530	2277	0
+block sort<buffer: in array<log>, keys: in array, rotation: trinity>	112109	2978	0
+block sort<buffer: in array<log>, keys: none, rotation: auxiliary>	141728	4489	0
+block sort<buffer: in array<log>, keys: none, rotation: bridge>	134268	3831	0
+block sort<buffer: in array<log>, keys: none, rotation: contrev>	118514	4584	0
+block sort<buffer: in array<log>, keys: none, rotation: drill>	120295	1459	3
+block sort<buffer: in array<log>, keys: none, rotation: grail>	119333	4778	0
+block sort<buffer: in array<log>, keys: none, rotation: gries-mills>	119196	8075	0
+block sort<buffer: in array<log>, keys: none, rotation: helix>	119898	3134	1
+block sort<buffer: in array<log>, keys: none, rotation: juggling>	125766	4039	1
+block sort<buffer: in array<log>, keys: none, rotation: piston>	117376	3194	1
+block sort<buffer: in array<log>, keys: none, rotation: reversal>	103466	3746	0
+block sort<buffer: in array<log>, keys: none, rotation: trinity>	125652	2846	1
+block sort<buffer: in array<sixteenth>, keys: in array, rotation: auxiliary>	82871	1423	0
+block sort<buffer: in array<sixteenth>, keys: in array, rotation: bridge>	82281	2567	1
+block sort<buffer: in array<sixteenth>, keys: in array, rotation: contrev>	84564	2617	0
+block sort<buffer: in array<sixteenth>, keys: in array, rotation: drill>	80992	3164	1
+block sort<buffer: in array<sixteenth>, keys: in array, rotation: grail>	81819	1839	0
+block sort<buffer: in array<sixteenth>, keys: in array, rotation: gries-mills>	86313	3187	0
+block sort<buffer: in array<sixteenth>, keys: in array, rotation: helix>	80967	2391	1
+block sort<buffer: in array<sixteenth>, keys: in array, rotation: juggling>	82337	1915	0
+block sort<buffer: in array<sixteenth>, keys: in array, rotation: piston>	83789	1518	2
+block sort<buffer: in array<sixteenth>, keys: in array, rotation: reversal>	75357	1978	1
+block sort<buffer: in array<sixteenth>, keys: in array, rotation: trinity>	83237	2655	1
+block sort<buffer: in array<sixteenth>, keys: none, rotation: auxiliary>	120218	4911	1
+block sort<buffer: in array<sixteenth>, keys: none, rotation: bridge>	116806	3485	2
+block sort<buffer: in array<sixteenth>, keys: none, rotation: contrev>	108449	5641	1
+block sort<buffer: in array<sixteenth>, keys: none, rotation: drill>	107292	3277	1
+block sort<buffer: in array<sixteenth>, keys: none, rotation: grail>	108014	2298	1
+block sort<buffer: in array<sixteenth>, keys: none, rotation: gries-mills>	108810	2890	1
+block sort<buffer: in array<sixteenth>, keys: none, rotation: helix>	106177	4188	1
+block sort<buffer: in array<sixteenth>, keys: none, rotation: juggling>	111261	2808	0
+block sort<buffer: in array<sixteenth>, keys: none, rotation: piston>	108009	3427	0
+block sort<buffer: in array<sixteenth>, keys: none, rotation: reversal>	93129	2412	1
+block sort<buffer: in array<sixteenth>, keys: none, rotation: trinity>	113203	3275	1
+block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary>	81950	2445	0
+block sort<buffer: in array<sqrt>, keys: in array, rotation: bridge>	80720	4567	0
+block sort<buffer: in array<sqrt>, keys: in array, rotation: contrev>	81340	1905	0
+block sort<buffer: in array<sqrt>, keys: in array, rotation: drill>	80290	1811	1
+block sort<buffer: in array<sqrt>, keys: in array, rotation: grail>	80546	2538	2
+block sort<buffer: in array<sqrt>, keys: in array, rotation: gries-mills>	83083	2282	1
+block sort<buffer: in array<sqrt>, keys: in array, rotation: helix>	79769	3519	1
+block sort<buffer: in array<sqrt>, keys: in array, rotation: juggling>	81552	3432	0
+block sort<buffer: in array<sqrt>, keys: in array, rotation: piston>	82471	2631	2
+block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal>	77529	2793	0
+block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity>	81744	4575	1
+block sort<buffer: in array<sqrt>, keys: none, rotation: auxiliary>	130623	4156	1
+block sort<buffer: in array<sqrt>, keys: none, rotation: bridge>	126673	6968	0
+block sort<buffer: in array<sqrt>, keys: none, rotation: contrev>	113452	2947	1
+block sort<buffer: in array<sqrt>, keys: none, rotation: drill>	114346	2068	1
+block sort<buffer: in array<sqrt>, keys: none, rotation: grail>	113272	5252	2
+block sort<buffer: in array<sqrt>, keys: none, rotation: gries-mills>	114988	3054	0
+block sort<buffer: in array<sqrt>, keys: none, rotation: helix>	114216	4544	0
+block sort<buffer: in array<sqrt>, keys: none, rotation: juggling>	118263	3289	2
+block sort<buffer: in array<sqrt>, keys: none, rotation: piston>	114727	6027	0
+block sort<buffer: in array<sqrt>, keys: none, rotation: reversal>	100836	3861	0
+block sort<buffer: in array<sqrt>, keys: none, rotation: trinity>	118913	4051	0
+block sort<buffer: none, keys: in array, rotation: auxiliary>	152483	5709	0
+block sort<buffer: none, keys: in array, rotation: bridge>	144511	5729	1
+block sort<buffer: none, keys: in array, rotation: contrev>	127314	2605	1
+block sort<buffer: none, keys: in array, rotation: drill>	128737	4798	1
+block sort<buffer: none, keys: in array, rotation: grail>	127106	3187	0
+block sort<buffer: none, keys: in array, rotation: gries-mills>	128161	3553	1
+block sort<buffer: none, keys: in array, rotation: helix>	129633	3887	0
+block sort<buffer: none, keys: in array, rotation: juggling>	135542	2924	1
+block sort<buffer: none, keys: in array, rotation: piston>	128623	4308	1
+block sort<buffer: none, keys: in array, rotation: reversal>	115370	3380	2
+block sort<buffer: none, keys: in array, rotation: trinity>	136539	6304	0
+block sort<buffer: none, keys: none, rotation: auxiliary>	147169	6208	0
+block sort<buffer: none, keys: none, rotation: bridge>	139040	4549	2
+block sort<buffer: none, keys: none, rotation: contrev>	120272	3638	1
+block sort<buffer: none, keys: none, rotation: drill>	122254	3893	0
+block sort<buffer: none, keys: none, rotation: grail>	123736	5210	0
+block sort<buffer: none, keys: none, rotation: gries-mills>	121198	2917	0
+block sort<buffer: none, keys: none, rotation: helix>	126102	4916	0
+block sort<buffer: none, keys: none, rotation: juggling>	128203	5364	0
+block sort<buffer: none, keys: none, rotation: piston>	119601	5509	0
+block sort<buffer: none, keys: none, rotation: reversal>	104757	2955	1
+block sort<buffer: none, keys: none, rotation: trinity>	129431	2300	0
 block<first>	5440	731	0
 block<last>	5341	414	1
 block<median of 3>	5869	234	1
