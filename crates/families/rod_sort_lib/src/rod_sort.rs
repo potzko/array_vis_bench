@@ -50,8 +50,10 @@ impl<S: BranchingStrategy, M: RodMerge> RodSort<S, M> {
         aux: &mut [T],
         logger: &mut U,
     ) {
-        let virtual_len = arr.len() / jump;
-        if virtual_len == 0 {
+        // The chain is arr[0], arr[jump], ..., so a partial last stride still
+        // holds one element. A chain of one is sorted whatever the strategy.
+        let virtual_len = arr.len().div_ceil(jump);
+        if virtual_len <= 1 {
             return;
         }
         if S::should_cut(virtual_len) {
@@ -124,6 +126,7 @@ impl<S: BranchingStrategy, M: RodMerge> HasStability for RodSort<S, M> {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
     use std::cmp::Ordering;
 
     use super::*;
@@ -137,6 +140,34 @@ mod tests {
     impl Eq for Keyed {}
     impl PartialOrd for Keyed { fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) } }
     impl Ord for Keyed { fn cmp(&self, other: &Self) -> Ordering { self.key.cmp(&other.key) } }
+
+    thread_local! { static CUTS: RefCell<Vec<usize>> = const { RefCell::new(Vec::new()) }; }
+
+    // Splits in two and records every length it cuts. Cutting at four or less
+    // means no split below the root makes a chain of one, which the driver
+    // would skip, so the cut lengths account for every element.
+    struct Recorded;
+    impl BranchingStrategy for Recorded {
+        const NAME: &'static str = "recorded";
+        const DEPTH: Complexity = Complexity::LOG_N;
+        const PATH_BRANCHING: Complexity = Complexity::LOG_N;
+        fn should_cut(virtual_len: usize) -> bool {
+            let cut = virtual_len <= 4;
+            if cut { CUTS.with(|cuts| cuts.borrow_mut().push(virtual_len)); }
+            cut
+        }
+        fn branch(_: usize) -> usize { 2 }
+    }
+
+    #[test]
+    fn every_leaf_is_told_how_many_elements_its_chain_holds() {
+        for n in 2..64 {
+            CUTS.with(|cuts| cuts.borrow_mut().clear());
+            let mut arr: Vec<usize> = (0..n).rev().collect();
+            RodSort::<Recorded, InsertionMerge>::sort(&mut arr, &mut NoOpLogger);
+            assert_eq!(CUTS.with(|cuts| cuts.borrow().iter().sum::<usize>()), n, "leaf lengths for n = {n}");
+        }
+    }
 
     #[test]
     fn a_rod_sort_reorders_equal_keys_and_does_not_claim_stability() {
