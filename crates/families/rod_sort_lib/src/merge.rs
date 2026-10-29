@@ -146,21 +146,22 @@ impl RodMerge for AuxMerge {
 /// Strided insertion sort: sort `arr` viewed as a stride-`jump` virtual
 /// array. Reused for the base case and the intermediate pass — those see
 /// unsorted strided data, not merge structure, so they always run this.
+///
+/// Holds the element and shifts the larger chain predecessors up one slot
+/// each, so moving d places costs d + 1 writes where swapping cost 2d.
 pub(crate) fn insertion_sort_jump<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     jump: usize,
     logger: &mut U,
 ) {
-    let mut i = 0;
-    while i < arr.len() {
-        let mut ii = i;
-        while ii >= jump {
-            if !logger.cond_swap_lt(arr, ii, ii - jump) {
-                break;
-            }
-            ii -= jump;
+    for i in (jump..arr.len()).step_by(jump) {
+        let held = arr[i];
+        let mut slot = i;
+        while slot >= jump && !logger.cmp_le_data(arr, slot - jump, held) {
+            logger.write(arr, slot, slot - jump);
+            slot -= jump;
         }
-        i += jump;
+        if slot != i { logger.write_data(arr, slot, held); }
     }
 }
 
@@ -173,4 +174,25 @@ impl HasSpace for InsertionMerge {
 impl HasSpace for AuxMerge {
     // Top-level merge allocates an N-sized aux buffer.
     const SPACE: Complexity = Complexity::N1;
+}
+
+#[cfg(test)]
+mod tests {
+    use std::marker::PhantomData;
+
+    use super::*;
+    use sort_logger::{SortLog, VisualizerLogger};
+
+    #[test]
+    fn strided_insertion_writes_once_per_place_an_element_moves() {
+        // A reversed chain of five at stride 3: the element at chain index i
+        // moves i places, i shifts and one write of the held element.
+        let mut arr = [5, 0, 0, 4, 0, 0, 3, 0, 0, 2, 0, 0, 1];
+        let mut logger = VisualizerLogger { type_ghost: PhantomData, log: Vec::new() };
+        insertion_sort_jump(&mut arr, 3, &mut logger);
+        assert_eq!(arr, [1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0, 5]);
+        let swaps = logger.log.iter().filter(|e| matches!(e, SortLog::Swap { .. })).count();
+        let writes = logger.log.iter().filter(|e| matches!(e, SortLog::WriteInArr { .. } | SortLog::WriteData { .. })).count();
+        assert_eq!((swaps, writes), (0, 10 + 4));
+    }
 }
