@@ -428,14 +428,18 @@ mod tests {
         static SECOND: AlgorithmEntry = AlgorithmEntry { run: record_second, ..entry("second", None) };
         ORDER.lock().unwrap().clear();
         let report = Benchmark { n: 4, k: 3, input: None }.run(&[&FIRST, &SECOND]);
-        // The warm up runs first, then the three rounds, each entry once per
-        // round; the warm up of a run this short asks for a batch of 64, so
-        // every round is 64 runs of each in turn.
+        // The warm up runs first, then the three rounds, each a batch of
+        // `first` then a batch of `second`. A batch's size comes from the
+        // warm up's time on the real clock, so it is read off the first round
+        // rather than assumed.
         let order = ORDER.lock().unwrap();
         assert_eq!(&order[..2], ["first", "second"]);
         let rounds = &order[2..];
-        assert_eq!(rounds.len(), 3 * 2 * 64);
-        assert!(rounds[..64].iter().all(|&e| e == "first") && rounds[64..128].iter().all(|&e| e == "second"));
+        let firsts = rounds.iter().take_while(|&&e| e == "first").count();
+        let seconds = rounds[firsts..].iter().take_while(|&&e| e == "second").count();
+        assert!(firsts >= 1 && seconds >= 1, "{rounds:?}");
+        let round: Vec<&str> = std::iter::repeat_n("first", firsts).chain(std::iter::repeat_n("second", seconds)).collect();
+        assert_eq!(rounds, round.repeat(3));
         assert_eq!((report.ran, report.ok, report.timings.len()), (2, 2, 2));
     }
 
