@@ -125,13 +125,63 @@ impl RodMerge for AuxMerge {
         }
         let aux = &mut aux[..virtual_len];
         let chains = branch.min(virtual_len);
-        if index.len() < Self::index_size(chains) {
-            let mut heads = logger.create_aux_arr(chains);
-            scan_merge(arr, aux, &mut heads, jump, branch, logger);
-            logger.free_aux_arr(&heads);
-        } else {
-            scan_merge(arr, aux, &mut index[..chains], jump, branch, logger);
+        with_index::<T, U>(index, Self::index_size(chains), logger, |heads, logger| {
+            scan_merge(arr, aux, heads, jump, branch, logger)
+        });
+    }
+}
+
+pub struct TournamentMerge;
+impl RodMerge for TournamentMerge {
+    const NAME: &'static str = "tournament";
+
+    #[inline]
+    fn aux_size(n: usize) -> usize {
+        n
+    }
+
+    #[inline]
+    fn index_size(branch: usize) -> usize {
+        2 * branch
+    }
+
+    #[inline]
+    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        aux: &mut [T],
+        index: &mut [usize],
+        jump: usize,
+        branch: usize,
+        _inter: usize,
+        logger: &mut U,
+    ) {
+        let virtual_len = arr.len().div_ceil(jump);
+        if branch <= 1 || virtual_len <= 1 {
+            return;
         }
+        let aux = &mut aux[..virtual_len];
+        let chains = branch.min(virtual_len);
+        with_index::<T, U>(index, Self::index_size(chains), logger, |index, logger| {
+            tournament_merge(arr, aux, index, jump, branch, logger)
+        });
+    }
+}
+
+// Runs `body` on the first `len` cells of `index`, or on a buffer of its own
+// when the driver's is shorter, which only a strategy whose branch narrows
+// with the length can cause.
+fn with_index<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    index: &mut [usize],
+    len: usize,
+    logger: &mut U,
+    body: impl FnOnce(&mut [usize], &mut U),
+) {
+    if index.len() >= len {
+        body(&mut index[..len], logger);
+    } else {
+        let mut own = logger.create_aux_arr(len);
+        body(&mut own, logger);
+        logger.free_aux_arr(&own);
     }
 }
 
@@ -168,6 +218,84 @@ fn scan_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     }
 }
 
+// A loser tree over the chain heads. Chain `s` is the leaf `chains + s`,
+// `tree[node]` holds the loser of the match at `node` and `tree[0]` the
+// overall winner, the chain whose head comes next. A spent chain loses every
+// match, so it never wins while another chain has elements left.
+struct Tournament<'a, T> {
+    arr: &'a [T],
+    heads: &'a mut [usize],
+    tree: &'a mut [usize],
+    jump: usize,
+    len: usize,
+}
+
+impl<T: Ord + Copy> Tournament<'_, T> {
+    fn beats<U: ?Sized + SortLogger<T>>(&self, a: usize, b: usize, logger: &mut U) -> bool {
+        match (self.heads[a] < self.len, self.heads[b] < self.len) {
+            (false, _) => false,
+            (true, false) => true,
+            (true, true) => logger.cmp_lt_accross(self.arr, self.heads[a] * self.jump, self.arr, self.heads[b] * self.jump),
+        }
+    }
+
+    // Plays every match under `node`, leaves each loser at its node and
+    // returns the winner.
+    fn play<U: ?Sized + SortLogger<T>>(&mut self, node: usize, logger: &mut U) -> usize {
+        let chains = self.heads.len();
+        if node >= chains { return node - chains; }
+        let (left, right) = (self.play(2 * node, logger), self.play(2 * node + 1, logger));
+        let (winner, loser) = if self.beats(right, left, logger) { (right, left) } else { (left, right) };
+        logger.write_data_u(self.tree, node, loser);
+        winner
+    }
+
+    // Replays the matches on chain `s`'s path to the root once its head moved.
+    fn replay<U: ?Sized + SortLogger<T>>(&mut self, s: usize, logger: &mut U) {
+        let mut winner = s;
+        let mut node = (self.heads.len() + s) / 2;
+        while node >= 1 {
+            let held = self.tree[node];
+            if self.beats(held, winner, logger) {
+                logger.write_data_u(self.tree, node, winner);
+                winner = held;
+            }
+            node /= 2;
+        }
+        logger.write_data_u(self.tree, 0, winner);
+    }
+}
+
+// Merges the chains into `aux` through a loser tree, at most ceil(log2 k)
+// compares per output for k chains, then copies `aux` back at stride `jump`.
+// `index` holds the heads, then the tree.
+fn tournament_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    aux: &mut [T],
+    index: &mut [usize],
+    jump: usize,
+    branch: usize,
+    logger: &mut U,
+) {
+    let len = aux.len();
+    let (heads, tree) = index.split_at_mut(index.len() / 2);
+    for s in 0..heads.len() {
+        logger.write_data_u(heads, s, s);
+    }
+    let mut game = Tournament { arr, heads, tree, jump, len };
+    let first = game.play(1, logger);
+    logger.write_data_u(game.tree, 0, first);
+    for write_idx in 0..len {
+        let s = game.tree[0];
+        logger.write_accross(game.arr, game.heads[s] * jump, aux, write_idx);
+        logger.write_data_u(game.heads, s, game.heads[s] + branch);
+        game.replay(s, logger);
+    }
+    for write_idx in 0..len {
+        logger.write_accross(aux, write_idx, arr, write_idx * jump);
+    }
+}
+
 /// Strided insertion sort: sort `arr` viewed as a stride-`jump` virtual
 /// array. Reused for the base case and the intermediate pass — those see
 /// unsorted strided data, not merge structure, so they always run this.
@@ -200,6 +328,9 @@ impl HasSpace for AuxMerge {
     // Top-level merge allocates an N-sized aux buffer.
     const SPACE: Complexity = Complexity::N1;
 }
+impl HasSpace for TournamentMerge {
+    const SPACE: Complexity = Complexity::N1;
+}
 
 #[cfg(test)]
 mod tests {
@@ -219,5 +350,41 @@ mod tests {
         let swaps = logger.log.iter().filter(|e| matches!(e, SortLog::Swap { .. })).count();
         let writes = logger.log.iter().filter(|e| matches!(e, SortLog::WriteInArr { .. } | SortLog::WriteData { .. })).count();
         assert_eq!((swaps, writes), (0, 10 + 4));
+    }
+
+    // Counts comparisons, so a test can hold a merge to its bound.
+    struct Compares(usize);
+    impl<T: Copy + Ord> SortLogger<T> for Compares {
+        fn log(&mut self, event: SortLog<T>) {
+            if matches!(event, SortLog::CmpInArr { .. } | SortLog::CmpData { .. } | SortLog::CmpAcrossArrs { .. }) {
+                self.0 += 1;
+            }
+        }
+    }
+
+    // `n` values in `chains` interleaved chains, each chain sorted.
+    fn sorted_chains(n: usize, chains: usize) -> Vec<usize> {
+        let mut arr: Vec<usize> = (0..n).map(|i| i * 7919 % 1000).collect();
+        for s in 0..chains {
+            let mut chain: Vec<usize> = arr.iter().skip(s).step_by(chains).copied().collect();
+            chain.sort();
+            chain.into_iter().enumerate().for_each(|(k, value)| arr[s + k * chains] = value);
+        }
+        arr
+    }
+
+    #[test]
+    fn a_tournament_merge_compares_ceil_log2_k_times_per_element() {
+        for chains in 2..=40usize {
+            let n = 20 * chains + 7;
+            let mut arr = sorted_chains(n, chains);
+            let mut aux = vec![0; TournamentMerge::aux_size(n)];
+            let mut index = vec![0; TournamentMerge::index_size(chains)];
+            let mut compares = Compares(0);
+            TournamentMerge::merge(&mut arr, &mut aux, &mut index, 1, chains, 0, &mut compares);
+            assert!(arr.windows(2).all(|pair| pair[0] <= pair[1]), "{chains} chains left unsorted");
+            let rounds = chains.next_power_of_two().trailing_zeros() as usize;
+            assert!(compares.0 <= n * rounds + chains, "{chains} chains took {} compares", compares.0);
+        }
     }
 }

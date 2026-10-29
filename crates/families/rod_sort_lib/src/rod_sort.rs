@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use super::merge::{insertion_sort_jump, AuxMerge, InsertionMerge, RodMerge};
+use super::merge::{insertion_sort_jump, AuxMerge, InsertionMerge, RodMerge, TournamentMerge};
 use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use sort_logger::SortLogger;
@@ -111,6 +111,15 @@ impl<S: BranchingStrategy> HasTimeBounds for RodSort<S, AuxMerge> {
     const AVERAGE: Complexity = Self::WORST;
 }
 
+// A loser tree pays at most ceil(log2 b) compares per element at a level of
+// branch b, and the logs of the branches on a path sum to log2 N whatever the
+// strategy, since their product is N.
+impl<S: BranchingStrategy> HasTimeBounds for RodSort<S, TournamentMerge> {
+    const WORST: Complexity = Complexity::N_LOG_N;
+    const BEST: Complexity = Complexity::N_LOG_N;
+    const AVERAGE: Complexity = Complexity::N_LOG_N;
+}
+
 impl<S, M> HasSpace for RodSort<S, M>
 where
     S: BranchingStrategy,
@@ -163,9 +172,13 @@ mod tests {
 
     #[test]
     fn a_merge_handed_too_little_index_scratch_brings_its_own() {
-        let mut arr: Vec<usize> = (0..500).map(|i| i * 7919 % 500).collect();
-        RodSort::<Narrowing, AuxMerge>::sort(&mut arr, &mut NoOpLogger);
-        assert!(arr.windows(2).all(|pair| pair[0] <= pair[1]));
+        let sorts: [fn(&mut [usize], &mut NoOpLogger); 2] =
+            [RodSort::<Narrowing, AuxMerge>::sort, RodSort::<Narrowing, TournamentMerge>::sort];
+        for sort in sorts {
+            let mut arr: Vec<usize> = (0..500).map(|i| i * 7919 % 500).collect();
+            sort(&mut arr, &mut NoOpLogger);
+            assert!(arr.windows(2).all(|pair| pair[0] <= pair[1]));
+        }
     }
 
     // Orders by `key` alone, so `tag` shows where an element started.

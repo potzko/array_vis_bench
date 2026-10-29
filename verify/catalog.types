@@ -1714,16 +1714,22 @@
 "reversal"	ReversalRotation
 "rod sort<strategy: 3-parity, merge: aux>"	RodSort<Parity3, AuxMerge>
 "rod sort<strategy: 3-parity, merge: insertion>"	RodSort<Parity3, InsertionMerge>
+"rod sort<strategy: 3-parity, merge: tournament>"	RodSort<Parity3, TournamentMerge>
 "rod sort<strategy: classic, merge: aux>"	RodSort<Classic, AuxMerge>
 "rod sort<strategy: classic, merge: insertion>"	RodSort<Classic, InsertionMerge>
+"rod sort<strategy: classic, merge: tournament>"	RodSort<Classic, TournamentMerge>
 "rod sort<strategy: fibonacci, merge: aux>"	RodSort<Fibonacci, AuxMerge>
 "rod sort<strategy: fibonacci, merge: insertion>"	RodSort<Fibonacci, InsertionMerge>
+"rod sort<strategy: fibonacci, merge: tournament>"	RodSort<Fibonacci, TournamentMerge>
 "rod sort<strategy: log-parity, merge: aux>"	RodSort<LogParity, AuxMerge>
 "rod sort<strategy: log-parity, merge: insertion>"	RodSort<LogParity, InsertionMerge>
+"rod sort<strategy: log-parity, merge: tournament>"	RodSort<LogParity, TournamentMerge>
 "rod sort<strategy: optimised, merge: aux>"	RodSort<Optimised, AuxMerge>
 "rod sort<strategy: optimised, merge: insertion>"	RodSort<Optimised, InsertionMerge>
+"rod sort<strategy: optimised, merge: tournament>"	RodSort<Optimised, TournamentMerge>
 "rod sort<strategy: root-parity, merge: aux>"	RodSort<RootParity, AuxMerge>
 "rod sort<strategy: root-parity, merge: insertion>"	RodSort<RootParity, InsertionMerge>
+"rod sort<strategy: root-parity, merge: tournament>"	RodSort<RootParity, TournamentMerge>
 "rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<AuxiliaryRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<bridge>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<BridgeRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<contrev>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<ContrevRotation>, false>

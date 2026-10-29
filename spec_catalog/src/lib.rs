@@ -129,7 +129,7 @@ mod tests {
         assert_eq!(COUNT_BLOCK_MERGE, 286, "block merge family (13 buffers x 2 key shapes x 11 rotations)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
-        assert_eq!(COUNT_ROD, 12, "rod family (6 branching x 2 merge)");
+        assert_eq!(COUNT_ROD, 18, "rod family (6 branching x 3 merge)");
         assert_eq!(COUNT_CIRCLE, 17, "circle family");
         assert_eq!(COUNT_MERGE, 216, "merge family (40 classic + 176 rotation)");
         assert_eq!(COUNT_HEAP, 400, "heap family (16 classic + 360 quick + 24 dual)");
@@ -222,7 +222,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 1868, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 1874, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -1001,10 +1001,10 @@ mod tests {
             ALGORITHMS.iter().filter(|e| e.name.starts_with("rod sort<")).collect()
         }
         #[test]
-        fn emits_twelve_that_run() {
+        fn emits_eighteen_that_run() {
             let es = entries();
             assert_eq!(es.len(), COUNT_ROD, "count drifted");
-            assert_eq!(COUNT_ROD, 12);
+            assert_eq!(COUNT_ROD, 18);
             let cfg = RunConfig { size: 64, seed: 1 };
             for e in &es {
                 assert_eq!(e.category, Category::Sort);
