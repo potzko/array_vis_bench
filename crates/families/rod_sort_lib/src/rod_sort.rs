@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use super::merge::{insertion_sort_jump, RodMerge};
+use super::merge::{insertion_sort_jump, AuxMerge, InsertionMerge, RodMerge};
 use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use sort_logger::SortLogger;
@@ -84,19 +84,27 @@ array_vis_bench_traits::direct_sort!(RodSort<S, M>; S: BranchingStrategy, M: Rod
 
 // ── Composable annotations ──────────────────────────────────────────
 //
-// RodSort's complexity is dominated by the merge strategy — the
-// branching strategy only affects constants.
 // Space is `LOG_N` (recursion stack) when the merge is in-place; `N1`
 // when AuxMerge allocates the top-level buffer.
 
-impl<S, M> HasTimeBounds for RodSort<S, M>
-where
-    S: BranchingStrategy,
-    M: RodMerge + HasTimeBounds,
-{
-    const WORST: Complexity = M::WORST;
-    const BEST: Complexity = M::BEST;
-    const AVERAGE: Complexity = M::AVERAGE;
+// On sorted input every pass compares each element once with its chain
+// predecessor, so the best case is N per level. A level with jump `j` holds `j`
+// chains of N / j, so its insertion passes cost at most N^2 / j, and the levels
+// sum to N^2. The average is left at that bound: the gaps form a divisor chain,
+// Shell's own powers of two among them, and nothing tighter is shown here.
+impl<S: BranchingStrategy> HasTimeBounds for RodSort<S, InsertionMerge> {
+    const WORST: Complexity = Complexity::N_SQUARED;
+    const BEST: Complexity = Complexity::product(Complexity::N1, S::DEPTH);
+    const AVERAGE: Complexity = Complexity::N_SQUARED;
+}
+
+// Each output scans every live chain head, so a level costs N times its branch
+// whatever the input, and the levels sum to N times the path branching. The
+// two copies per level are N times the depth, which that already covers.
+impl<S: BranchingStrategy> HasTimeBounds for RodSort<S, AuxMerge> {
+    const WORST: Complexity = Complexity::product(Complexity::N1, S::PATH_BRANCHING);
+    const BEST: Complexity = Self::WORST;
+    const AVERAGE: Complexity = Self::WORST;
 }
 
 impl<S, M> HasSpace for RodSort<S, M>
@@ -119,7 +127,7 @@ mod tests {
     use std::cmp::Ordering;
 
     use super::*;
-    use crate::{Classic, InsertionMerge};
+    use crate::Classic;
     use sort_logger::NoOpLogger;
 
     // Orders by `key` alone, so `tag` shows where an element started.

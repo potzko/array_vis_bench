@@ -8,9 +8,10 @@
 //! - [`InsertionMerge`]: the original strategy — strided insertion sort
 //!   over the full slice at stride `jump`. Cheap when sub-streams are
 //!   short and nearly-sorted, but O(N · stream_length) in the worst case.
-//! - [`AuxMerge`]: a `branch`-way merge sort merge through an aux buffer —
-//!   O(N · log(branch)) compares per pass, plus N reads / writes for the
-//!   buffer round-trip. Asymptotically the same as merge sort overall.
+//! - [`AuxMerge`]: a `branch`-way merge through an aux buffer that scans
+//!   every chain head for each output, so `branch - 1` compares per element
+//!   per pass, plus N reads and writes for the buffer round trip. Merge sort
+//!   overall only while the branch stays constant.
 //!
 //! ## Aux buffer ownership
 //!
@@ -21,7 +22,7 @@
 //! `NEEDS_AUX` flag lets [`InsertionMerge`] skip the allocation entirely.
 
 use array_vis_bench_traits::Complexity;
-use array_vis_bench_traits::composable::{HasSpace, HasTimeBounds};
+use array_vis_bench_traits::composable::HasSpace;
 use sort_logger::SortLogger;
 
 pub trait RodMerge {
@@ -163,28 +164,11 @@ pub(crate) fn insertion_sort_jump<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     }
 }
 
-// ── Composable annotations ──────────────────────────────────────────
-//
-// Each merge variant captures the *whole* rod-sort algorithmic
-// complexity when used as the final merge step. The branching
-// strategy only changes constants — the merge dominates.
-//
-// InsertionMerge: in-place strided insertion, O(N²) worst.
-// AuxMerge: full N-buffer merge-sort merge, O(N log N) worst.
+// Time bounds depend on the strategy as much as on the merge, so they sit on
+// `RodSort<S, M>` for each merge; a merge carries its own space.
 
-impl HasTimeBounds for InsertionMerge {
-    const WORST: Complexity = Complexity::N_SQUARED;
-    const BEST: Complexity = Complexity::N1;
-    const AVERAGE: Complexity = Complexity::N_SQUARED;
-}
 impl HasSpace for InsertionMerge {
     const SPACE: Complexity = Complexity::CONST;
-}
-
-impl HasTimeBounds for AuxMerge {
-    const WORST: Complexity = Complexity::N_LOG_N;
-    const BEST: Complexity = Complexity::N_LOG_N;
-    const AVERAGE: Complexity = Complexity::N_LOG_N;
 }
 impl HasSpace for AuxMerge {
     // Top-level merge allocates an N-sized aux buffer.

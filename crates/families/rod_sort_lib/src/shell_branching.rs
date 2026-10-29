@@ -1,5 +1,4 @@
 use array_vis_bench_traits::Complexity;
-use array_vis_bench_traits::composable::{HasSpace, HasTimeBounds};
 
 /// A branching strategy for shell-shell sort.
 ///
@@ -14,7 +13,14 @@ use array_vis_bench_traits::composable::{HasSpace, HasTimeBounds};
 /// insertion-sort instead (the base case for variants with an explicit cutoff).
 pub trait BranchingStrategy {
     const NAME: &'static str;
-    const BIG_O: &'static str;
+
+    /// Levels on a root to leaf path, as a class of N, rounded up to a class
+    /// `Complexity` has: a depth of log log N reads as log N.
+    const DEPTH: Complexity;
+
+    /// The sum of `branch` over a root to leaf path, as a class of N: what a
+    /// merge that looks at every chain head for each element pays per element.
+    const PATH_BRANCHING: Complexity;
 
     /// True → skip recursion, insertion-sort this virtual sub-array directly.
     fn should_cut(virtual_len: usize) -> bool;
@@ -36,7 +42,8 @@ pub trait BranchingStrategy {
 pub struct Classic;
 impl BranchingStrategy for Classic {
     const NAME: &'static str = "classic";
-    const BIG_O: &'static str = "O(N^2)";
+    const DEPTH: Complexity = Complexity::LOG_N;
+    const PATH_BRANCHING: Complexity = Complexity::LOG_N;
 
     fn should_cut(_: usize) -> bool { false }
     fn branch(_: usize) -> usize { 2 }
@@ -48,7 +55,8 @@ impl BranchingStrategy for Classic {
 pub struct Parity3;
 impl BranchingStrategy for Parity3 {
     const NAME: &'static str = "3-parity";
-    const BIG_O: &'static str = "O(N^2)";
+    const DEPTH: Complexity = Complexity::LOG_N;
+    const PATH_BRANCHING: Complexity = Complexity::LOG_N;
 
     fn should_cut(virtual_len: usize) -> bool { virtual_len < 2 }
     fn branch(_: usize) -> usize { 3 }
@@ -60,7 +68,9 @@ impl BranchingStrategy for Parity3 {
 pub struct LogParity;
 impl BranchingStrategy for LogParity {
     const NAME: &'static str = "log-parity";
-    const BIG_O: &'static str = "O(N^2)";
+    // At most log N levels, each branching at most log N.
+    const DEPTH: Complexity = Complexity::LOG_N;
+    const PATH_BRANCHING: Complexity = Complexity::LOG_SQUARED;
 
     fn should_cut(virtual_len: usize) -> bool { virtual_len < 16 }
     fn branch(virtual_len: usize) -> usize { (virtual_len as f64).log2() as usize }
@@ -75,7 +85,10 @@ impl BranchingStrategy for LogParity {
 pub struct RootParity;
 impl BranchingStrategy for RootParity {
     const NAME: &'static str = "root-parity";
-    const BIG_O: &'static str = "O(N^2)";
+    // log log N levels; the branching sums to sqrt N + N^(1/4) + ..., which the
+    // top level dominates.
+    const DEPTH: Complexity = Complexity::LOG_N;
+    const PATH_BRANCHING: Complexity = Complexity::SQRT_N;
 
     fn should_cut(virtual_len: usize) -> bool { virtual_len <= 4 }
     fn branch(virtual_len: usize) -> usize { (virtual_len as f64).sqrt() as usize }
@@ -90,7 +103,8 @@ impl BranchingStrategy for RootParity {
 pub struct Optimised;
 impl BranchingStrategy for Optimised {
     const NAME: &'static str = "optimised";
-    const BIG_O: &'static str = "O(N^2)";
+    const DEPTH: Complexity = Complexity::LOG_N;
+    const PATH_BRANCHING: Complexity = Complexity::LOG_N;
 
     fn should_cut(virtual_len: usize) -> bool { virtual_len < 64 }
     fn branch(_: usize) -> usize { 32 }
@@ -103,7 +117,9 @@ impl BranchingStrategy for Optimised {
 pub struct Fibonacci;
 impl BranchingStrategy for Fibonacci {
     const NAME: &'static str = "fibonacci";
-    const BIG_O: &'static str = "O(N^2)";
+    // The branch is about 1.44 log2 N, so the bounds of log parity.
+    const DEPTH: Complexity = Complexity::LOG_N;
+    const PATH_BRANCHING: Complexity = Complexity::LOG_SQUARED;
 
     fn should_cut(virtual_len: usize) -> bool { virtual_len < 16 }
 
@@ -125,28 +141,3 @@ impl BranchingStrategy for Fibonacci {
         Self::branch(virtual_len).saturating_sub(1)
     }
 }
-
-// ── Composable annotations ──────────────────────────────────────────
-//
-// Every branching strategy currently declares O(N²) worst-case under
-// shell-shell sort. Best case is O(N) for already-sorted input.
-
-macro_rules! impl_branching_annotations {
-    ($ty:ty) => {
-        impl HasTimeBounds for $ty {
-            const WORST: Complexity = Complexity::N_SQUARED;
-            const BEST: Complexity = Complexity::N1;
-            const AVERAGE: Complexity = Complexity::N_SQUARED;
-        }
-        impl HasSpace for $ty {
-            const SPACE: Complexity = Complexity::CONST;
-        }
-    };
-}
-
-impl_branching_annotations!(Classic);
-impl_branching_annotations!(Parity3);
-impl_branching_annotations!(LogParity);
-impl_branching_annotations!(RootParity);
-impl_branching_annotations!(Optimised);
-impl_branching_annotations!(Fibonacci);
