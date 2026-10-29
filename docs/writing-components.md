@@ -198,7 +198,7 @@ and `beap.spec`.
 | `slot <name> <Role>` | A type parameter, filled by any component of `<Role>`. A query must fill every slot. |
 | `const <name> [values <v>...]` | A const generic, matched by name or position. `values` is the finite set a quantified hole ranges over; without it the const takes only a literal. A query must pass every const. |
 | `menu <path>` | Picker sub-path beneath the category. |
-| `max_input <n>` | Cap: inputs larger than `n` are out of scope, either by contract (small sorts) or as a time budget (expensive exotic sorts). Becomes `AlgorithmEntry.max_input_size`. |
+| `max_input <n>` | Cap: inputs larger than `n` are out of scope, either by contract (small sorts) or because the sort is truly slow. A time cap sits at the size where the component's fastest variant first takes over half a second without the logger; a sort faster than that gets no cap. Becomes `AlgorithmEntry.max_input_size`. |
 | `adaptive <bool>` | Per-family literal: faster on nearly-sorted input. |
 | `nondeterministic <bool>` | Per-family literal: the trace varies between runs (randomised gaps). Becomes `AlgorithmEntry.nondeterministic`. |
 

@@ -1486,9 +1486,13 @@ mod tests {
             // slow / potzko are exponential; the enum represents it directly.
             assert_eq!(find("slow sort").worst, Complexity::EXPONENTIAL);
             assert_eq!(find("slow sort potzko").worst, Complexity::EXPONENTIAL);
-            // bounded chaos sorts carry their contract cap.
-            assert_eq!(find("slow sort potzko").max_input_size, Some(20));
-            assert_eq!(find("slow sort").max_input_size, Some(150));
+            // A cap sits where the fastest variant first takes over half a
+            // second, so the exponential sorts keep one and the fast chaos
+            // sorts have none.
+            assert_eq!(find("slow sort potzko").max_input_size, Some(29));
+            assert_eq!(find("slow sort").max_input_size, Some(200));
+            let fast = entries().into_iter().filter(|e| e.name.starts_with("random shell sort") || e.name.starts_with("cyclent sort stack"));
+            for e in fast { assert_eq!(e.max_input_size, None, "`{}` is capped", e.name); }
         }
 
         #[test]

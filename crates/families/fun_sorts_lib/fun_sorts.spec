@@ -10,7 +10,11 @@
 # O(N^2.71), cyclent → O(N^3)); the `Complexity` enum already represents them, and
 # every emitted type carries its bounds via `fun_sorts_lib::composable`.
 #
-# `max_input` caps the (slow) chaos sorts so the correctness battery stays bounded.
+# `max_input` caps only what is truly slow: a component's cap is the size at
+# which its fastest variant first takes over half a second without the logger,
+# on shuffled input, as `--sweep` with a half second share measured it on
+# 2026-10-29. No variant is refused a size it sorts within that time, and a
+# component that stays under it past a million elements has no cap.
 # random shell sort is `nondeterministic` (randomised gaps), so a check that compares
 # two traces of one entry skips it.
 
@@ -20,7 +24,7 @@ component fs_slow_sort
   label     slow sort
   provides  Sort
   menu      fun sorts / slow sort
-  max_input 150
+  max_input 200
 end
 
 component fs_slow_sort_potzko
@@ -28,7 +32,7 @@ component fs_slow_sort_potzko
   label     slow sort potzko
   provides  Sort
   menu      fun sorts / slow sort potzko
-  max_input 20
+  max_input 29
 end
 
 component fs_bad_heap_sort
@@ -36,7 +40,7 @@ component fs_bad_heap_sort
   label     bad heap sort
   provides  Sort
   menu      fun sorts / bad heap sort
-  max_input 200
+  max_input 900
 end
 
 component fs_bad_heap_sort_alt
@@ -57,7 +61,7 @@ component fs_cyclent_sort
   provides Sort
   menu     fun sorts / cyclent sort
   slot     part PartScheme
-  max_input 5000
+  max_input 32768
 end
 
 component fs_cyclent_sort_opt
@@ -66,7 +70,7 @@ component fs_cyclent_sort_opt
   provides Sort
   menu     fun sorts / cyclent sort opt
   slot     part PartScheme
-  max_input 5000
+  max_input 32768
 end
 
 component fs_cyclent_sort_stack
@@ -75,7 +79,6 @@ component fs_cyclent_sort_stack
   provides Sort
   menu     fun sorts / cyclent sort stack
   slot     part PartScheme
-  max_input 5000
 end
 
 component fs_cyclent_sort_stack_optimized
@@ -84,7 +87,6 @@ component fs_cyclent_sort_stack_optimized
   provides Sort
   menu     fun sorts / cyclent sort stack optimized
   slot     part PartScheme
-  max_input 5000
 end
 
 # ════════════════════════ NON-TRIVIAL SMALL SORTS (curated 2) ════════════════
@@ -99,7 +101,7 @@ component fs_stooge_sort
   provides  Sort
   menu      fun sorts / stooge sort
   slot      small FunSmallSort
-  max_input 500
+  max_input 16384
 end
 
 # ════════════════════════ RANDOM SHELL (×5 gap distributions) ════════════════
@@ -109,7 +111,6 @@ component fs_random_shell_sort
   provides        Sort
   menu            fun sorts / random shell sort
   slot            dist GapDistribution
-  max_input       1000
   nondeterministic true
 end
 
@@ -122,7 +123,7 @@ component fs_quick_surrender
   provides  Sort
   menu      fun sorts / quick surrender
   slot      inner QuickSelect
-  max_input 500
+  max_input 65536
 end
 
 component fs_quick_surrender_optimised
@@ -132,5 +133,5 @@ component fs_quick_surrender_optimised
   menu      fun sorts / quick surrender optimised
   slot      inner QuickSelect
   slot      small FunSmallSort
-  max_input 1000
+  max_input 262144
 end

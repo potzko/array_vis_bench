@@ -23,6 +23,9 @@ role BeapDeepHeapifyClassic = DeepHeapifyClassic - heap_dh_recursive
 # ════════════════ DeepHeapify — dual-pivot (1 composite over a DPS selector) ════════════════
 
 # ════════════════════════ DRIVERS (3 distinct heads) ════════════════════════
+# The cap is the size at which the fastest variant of each component first
+# takes over half a second without the logger, on shuffled input; see
+# fun_sorts.spec for the rule.
 component beap_sort_classic
   type     BeapSortClassicOf<{d}, {dh}>
   label    beap sort<dir: {d}, build: {dh}>
@@ -30,7 +33,7 @@ component beap_sort_classic
   menu     heap sorts / beap / classic
   slot     d  HeapDir
   slot     dh BeapDeepHeapifyClassic
-  max_input 10000
+  max_input 131072
 end
 component beap_sort_quick_build
   type     BeapSortQuickOf<{d}, {dh}>
@@ -39,7 +42,7 @@ component beap_sort_quick_build
   menu     heap sorts / beap / quick build / single pivot
   slot     d  HeapDir
   slot     dh BeapDeepHeapifyQuick
-  max_input 10000
+  max_input 131072
 end
 component beap_sort_dual_build
   type     BeapSortDualOf<{d}, {dh}>
@@ -48,5 +51,5 @@ component beap_sort_dual_build
   menu     heap sorts / beap / quick build / dual pivot
   slot     d  HeapDir
   slot     dh BeapDeepHeapifyDual
-  max_input 10000
+  max_input 131072
 end
