@@ -82,7 +82,8 @@ impl<S: SmallSort> HasTimeBounds for NaiveMergeSort<S> {
 impl<S: SmallSort> HasSpace for NaiveMergeSort<S> {
     const SPACE: Complexity = Complexity::N_LOG_N;
 }
-impl<S: SmallSort> HasStability for NaiveMergeSort<S> {
-    const STABLE: bool = true;
+// The merge keeps equal keys in order, so only the small sort can lose it.
+impl<S: SmallSort + HasStability> HasStability for NaiveMergeSort<S> {
+    const STABLE: bool = S::STABLE;
 }
 

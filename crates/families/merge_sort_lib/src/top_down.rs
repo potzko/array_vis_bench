@@ -115,8 +115,9 @@ impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool> HasSpace
 {
     const SPACE: Complexity = Complexity::N1;
 }
-impl<S: SmallSort, const PING_PONG: bool, const EARLY_EXIT: bool> HasStability
+// The merge keeps equal keys in order, so only the small sort can lose it.
+impl<S: SmallSort + HasStability, const PING_PONG: bool, const EARLY_EXIT: bool> HasStability
     for TopDownMergeSort<S, PING_PONG, EARLY_EXIT>
 {
-    const STABLE: bool = true;
+    const STABLE: bool = S::STABLE;
 }

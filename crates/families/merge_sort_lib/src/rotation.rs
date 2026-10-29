@@ -84,10 +84,11 @@ impl<S: SmallSort, M: RotationMerge + HasSpace, const EARLY_EXIT: bool> HasSpace
 {
     const SPACE: Complexity = <M as HasSpace>::SPACE;
 }
-impl<S: SmallSort, M: RotationMerge + HasStability, const EARLY_EXIT: bool> HasStability
-    for TopDownRotationMergeSort<S, M, EARLY_EXIT>
+// Stable only when both the merge and the small sort keep equal keys in order.
+impl<S: SmallSort + HasStability, M: RotationMerge + HasStability, const EARLY_EXIT: bool>
+    HasStability for TopDownRotationMergeSort<S, M, EARLY_EXIT>
 {
-    const STABLE: bool = <M as HasStability>::STABLE;
+    const STABLE: bool = <M as HasStability>::STABLE && S::STABLE;
 }
 
 /// Bottom-up (iterative) rotation merge sort.
@@ -157,7 +158,8 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
 array_vis_bench_traits::direct_sort!(BottomUpRotationMergeSort<S, M, EARLY_EXIT>; S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool);
 
 // Same forwarding shape as the top-down rotation head: the per-merge rotation
-// strategy M dictates the whole-sort bounds, space, and stability.
+// strategy M dictates the whole-sort bounds and space, and its stability joins
+// the small sort's.
 impl<S: SmallSort, M: RotationMerge + HasTimeBounds, const EARLY_EXIT: bool> HasTimeBounds
     for BottomUpRotationMergeSort<S, M, EARLY_EXIT>
 {
@@ -170,8 +172,9 @@ impl<S: SmallSort, M: RotationMerge + HasSpace, const EARLY_EXIT: bool> HasSpace
 {
     const SPACE: Complexity = <M as HasSpace>::SPACE;
 }
-impl<S: SmallSort, M: RotationMerge + HasStability, const EARLY_EXIT: bool> HasStability
-    for BottomUpRotationMergeSort<S, M, EARLY_EXIT>
+// Stable only when both the merge and the small sort keep equal keys in order.
+impl<S: SmallSort + HasStability, M: RotationMerge + HasStability, const EARLY_EXIT: bool>
+    HasStability for BottomUpRotationMergeSort<S, M, EARLY_EXIT>
 {
-    const STABLE: bool = <M as HasStability>::STABLE;
+    const STABLE: bool = <M as HasStability>::STABLE && S::STABLE;
 }

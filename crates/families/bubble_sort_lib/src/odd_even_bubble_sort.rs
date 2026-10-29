@@ -10,7 +10,7 @@ pub struct OddEvenBubbleSort<S: NonTrivialSmallSort> {
 
 // Composable annotations (spec compiler inherits these). Adaptive via the
 // `mutated` early-exit flag (O(N) best on sorted input); Θ(N²) average/worst;
-// in-place; stable.
+// in-place; stable when the block sort S is, since it alone moves elements.
 impl<S: NonTrivialSmallSort> HasTimeBounds for OddEvenBubbleSort<S> {
     const WORST: Complexity = Complexity::N_SQUARED;
     const BEST: Complexity = Complexity::N1;
@@ -19,8 +19,8 @@ impl<S: NonTrivialSmallSort> HasTimeBounds for OddEvenBubbleSort<S> {
 impl<S: NonTrivialSmallSort> HasSpace for OddEvenBubbleSort<S> {
     const SPACE: Complexity = Complexity::CONST;
 }
-impl<S: NonTrivialSmallSort> HasStability for OddEvenBubbleSort<S> {
-    const STABLE: bool = true;
+impl<S: NonTrivialSmallSort + HasStability> HasStability for OddEvenBubbleSort<S> {
+    const STABLE: bool = S::STABLE;
 }
 
 impl<S: NonTrivialSmallSort> OddEvenBubbleSort<S> {

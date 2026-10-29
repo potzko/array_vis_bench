@@ -548,10 +548,10 @@ Sort	bottom-up merge sort<small: insertion: 32, pp=false, ee=false>	1.1 1.1 1.1 
 Sort	bottom-up merge sort<small: insertion: 32, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
 Sort	bottom-up merge sort<small: insertion: 32, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
 Sort	bottom-up merge sort<small: insertion: 32, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
-Sort	bottom-up merge sort<small: network: 16, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
-Sort	bottom-up merge sort<small: network: 16, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
-Sort	bottom-up merge sort<small: network: 16, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
-Sort	bottom-up merge sort<small: network: 16, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up merge sort<small: network: 16, pp=false, ee=false>	1.1 1.1 1.1 1.0 false
+Sort	bottom-up merge sort<small: network: 16, pp=false, ee=true>	1.1 1.1 1.1 1.0 false
+Sort	bottom-up merge sort<small: network: 16, pp=true, ee=false>	1.1 1.1 1.1 1.0 false
+Sort	bottom-up merge sort<small: network: 16, pp=true, ee=true>	1.1 1.1 1.1 1.0 false
 Sort	bottom-up merge sort<small: size: 1, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
 Sort	bottom-up merge sort<small: size: 1, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
 Sort	bottom-up merge sort<small: size: 1, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
@@ -582,28 +582,28 @@ Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<jug
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<drill>>	2.0 1.0 2.0 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<grail>>	2.0 1.0 2.0 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<auxiliary>>	1.2 1.0 1.2 1.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<bridge>>	1.2 1.0 1.2 1.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<contrev>>	1.2 1.0 1.2 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<drill>>	1.2 1.0 1.2 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<grail>>	1.2 1.0 1.2 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
-Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<bridge>>	2.0 1.0 2.0 1.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<contrev>>	2.0 1.0 2.0 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<drill>>	2.0 1.0 2.0 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<grail>>	2.0 1.0 2.0 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<helix>>	2.0 1.0 2.0 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<juggling>>	2.0 1.0 2.0 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<piston>>	2.0 1.0 2.0 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<reversal>>	2.0 1.0 2.0 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<trinity>>	2.0 1.0 2.0 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<auxiliary>>	1.2 1.0 1.2 1.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<bridge>>	1.2 1.0 1.2 1.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<contrev>>	1.2 1.0 1.2 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<drill>>	1.2 1.0 1.2 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<grail>>	1.2 1.0 1.2 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 false
 Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
@@ -1300,10 +1300,10 @@ Sort	merge sort<small: insertion: 32, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: insertion: 32, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: insertion: 32, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: insertion: 32, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
-Sort	merge sort<small: network: 16, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
-Sort	merge sort<small: network: 16, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
-Sort	merge sort<small: network: 16, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
-Sort	merge sort<small: network: 16, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	merge sort<small: network: 16, pp=false, ee=false>	1.1 1.1 1.1 1.0 false
+Sort	merge sort<small: network: 16, pp=false, ee=true>	1.1 1.1 1.1 1.0 false
+Sort	merge sort<small: network: 16, pp=true, ee=false>	1.1 1.1 1.1 1.0 false
+Sort	merge sort<small: network: 16, pp=true, ee=true>	1.1 1.1 1.1 1.0 false
 Sort	merge sort<small: size: 1, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: size: 1, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: size: 1, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
@@ -1313,7 +1313,7 @@ Sort	merge sort<small: size: 2, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: size: 2, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: size: 2, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
 Sort	naive merge sort<small: insertion: 32>	1.1 1.1 1.1 1.1 true
-Sort	naive merge sort<small: network: 16>	1.1 1.1 1.1 1.1 true
+Sort	naive merge sort<small: network: 16>	1.1 1.1 1.1 1.1 false
 Sort	naive merge sort<small: size: 1>	1.1 1.1 1.1 1.1 true
 Sort	naive merge sort<small: size: 2>	1.1 1.1 1.1 1.1 true
 Sort	natural merge sort<pp=false, ee=false>	1.1 1.0 1.1 1.0 true
@@ -1321,7 +1321,7 @@ Sort	natural merge sort<pp=false, ee=true>	1.1 1.0 1.1 1.0 true
 Sort	natural merge sort<pp=true, ee=false>	1.1 1.0 1.1 1.0 true
 Sort	natural merge sort<pp=true, ee=true>	1.1 1.0 1.1 1.0 true
 Sort	odd-even bubble sort<small: insertion: 32>	2.0 1.0 2.0 0.0 true
-Sort	odd-even bubble sort<small: network: 16>	2.0 1.0 2.0 0.0 true
+Sort	odd-even bubble sort<small: network: 16>	2.0 1.0 2.0 0.0 false
 Sort	odd-even bubble sort<small: size: 2>	2.0 1.0 2.0 0.0 true
 Sort	quick heap sort deferred<arity: 16-ary, small: deferred binary insertion: 16>	1.1 1.1 1.1 0.1 false
 Sort	quick heap sort deferred<arity: 16-ary, small: deferred binary insertion: 32>	1.1 1.1 1.1 0.1 false
@@ -1772,28 +1772,28 @@ Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<juggling>>	1.
 Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
-Sort	rotation merge sort<small: network: 16, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
-Sort	rotation merge sort<small: network: 16, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: naive<drill>>	2.0 1.0 2.0 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: naive<grail>>	2.0 1.0 2.0 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: smaller-side<auxiliary>>	1.2 1.0 1.2 1.0 true
-Sort	rotation merge sort<small: network: 16, merge: smaller-side<bridge>>	1.2 1.0 1.2 1.0 true
-Sort	rotation merge sort<small: network: 16, merge: smaller-side<contrev>>	1.2 1.0 1.2 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: smaller-side<drill>>	1.2 1.0 1.2 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: smaller-side<grail>>	1.2 1.0 1.2 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
-Sort	rotation merge sort<small: network: 16, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 false
+Sort	rotation merge sort<small: network: 16, merge: naive<bridge>>	2.0 1.0 2.0 1.0 false
+Sort	rotation merge sort<small: network: 16, merge: naive<contrev>>	2.0 1.0 2.0 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: naive<drill>>	2.0 1.0 2.0 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: naive<grail>>	2.0 1.0 2.0 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: naive<helix>>	2.0 1.0 2.0 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: naive<juggling>>	2.0 1.0 2.0 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: naive<piston>>	2.0 1.0 2.0 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: naive<reversal>>	2.0 1.0 2.0 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: naive<trinity>>	2.0 1.0 2.0 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<auxiliary>>	1.2 1.0 1.2 1.0 false
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<bridge>>	1.2 1.0 1.2 1.0 false
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<contrev>>	1.2 1.0 1.2 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<drill>>	1.2 1.0 1.2 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<grail>>	1.2 1.0 1.2 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 false
 Sort	rotation merge sort<small: size: 1, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
 Sort	rotation merge sort<small: size: 1, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
 Sort	rotation merge sort<small: size: 1, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
