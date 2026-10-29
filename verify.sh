@@ -13,7 +13,8 @@
 #   build     release build of the workspace, no warnings allowed
 #   catalog   the spec compiler's own tests and golden, then the emitted
 #             catalog's names and types against `verify/catalog.types`
-#   scripts   the unit tests of the comparison and plot scripts
+#   scripts   the unit tests of the comparison and plot scripts, and of the
+#             benchmark page's logic under node
 #   machine   the rustc version, the rustc flags and the cpu model this
 #             machine's assembly and timing baselines were taken on
 #   asm       the six gate symbols of `compare_sorts` against `verify/asm/`
@@ -72,7 +73,8 @@ bless_or_diff "emitted catalog names and types ($(wc -l <"$OUT/catalog.types") e
 
 echo "== scripts"
 if (cd "$BASE" && python3 -m unittest -q test_compare_timing >"../$OUT/scripts.log" 2>&1) \
-   && python3 -m unittest -q test_plot_bench >>"$OUT/scripts.log" 2>&1; then
+   && python3 -m unittest -q test_plot_bench >>"$OUT/scripts.log" 2>&1 \
+   && node --test bench_view/view.test.js >>"$OUT/scripts.log" 2>&1; then
   pass "verify script tests"
 else
   fail "verify script tests (see $OUT/scripts.log)"
