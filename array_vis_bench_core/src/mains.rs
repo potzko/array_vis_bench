@@ -294,7 +294,7 @@ impl Main for Benchmark {
             .iter()
             .zip(durations.iter_mut())
             .map(|(e, slot)| match self.one_round(e, u64::MAX / 2, 1) {
-                Some(warm) => batch_size(warm),
+                Some(warm) => batch_size(warm, self.n),
                 None => { *slot = None; 1 }
             })
             .collect();

@@ -147,7 +147,7 @@ impl Sweep {
             entries.iter().copied().filter(|e| self.input_for(e).is_some()).collect();
         let mut last: HashMap<&str, Duration> = HashMap::new();
         let mut clock = |entry: &AlgorithmEntry, n: usize| {
-            let m = last.get(entry.name).map_or(1, |&one| batch_size(one));
+            let m = last.get(entry.name).map_or(1, |&one| batch_size(one, n));
             let seeds: Vec<u64> = (0..m as u64).map(|i| n as u64 * 64 + i).collect();
             let one = time_runs(entry, self.input_for(entry)?, n, &seeds)?;
             last.insert(entry.name, one);
