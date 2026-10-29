@@ -16,7 +16,11 @@ the performance where they were.
   stripped.
 - `timing.tsv`: the median run time of every entry at size 1000 over
   fifteen interleaved rounds, as `array_vis_bench --timing 1000 15 --out`
-  writes it, under a `# n=1000 k=15` header that names that setup. Interleaving is what makes the medians stable: a burst of
+  writes it, under a `# n=1000 k=15 input=primary` header that names that
+  setup, with the inter quartile range and the outlier count in the columns
+  after the median. The clock covers the algorithm alone: the input is
+  built before it starts, and a run shorter than fifty microseconds is
+  timed as a batch and divided. Interleaving is what makes the medians stable: a burst of
   machine load lands on different entries in different rounds.
 - `fingerprint.py`: produces `catalog.types` from the generated
   `catalog_entries.rs`.

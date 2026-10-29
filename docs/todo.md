@@ -56,8 +56,11 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
 4. The set quick select heap family shipped at minimal proof scope (two
    variants). Widening the inner select's partition role or the arities is
    a curation decision, not new machinery.
-5. Done: the `benchmark` consumer (`--timing [N] [K]` and `--consumers`)
-   is the live benchmark and `compare_sorts` the gate. `--timing --out PATH`
+5. Done: the `benchmark` consumer (`--timing [N] [K] [--input NAME]` and
+   `--consumers`) is the live benchmark and `compare_sorts` the gate. It
+   warms each entry up, builds the input outside the clock, batches runs
+   under fifty microseconds, and reports the median with the inter
+   quartile range and the Tukey outlier count. `--timing --out PATH`
    writes the medians as a TSV archive under a header naming its setup,
    `verify.sh` compares one against its baseline, and `plot_bench.py` charts
    several of them, one per size, as the scaling page. `--sweep SECONDS`
