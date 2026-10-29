@@ -344,6 +344,11 @@ pub struct AlgorithmEntry {
     /// each hole with the chosen value to show the partial type in the catalog's
     /// own syntax. Empty means the picker shows the generic breadcrumb.
     pub label_template: &'static str,
+    /// The algorithm on an array a caller built, with the index the
+    /// category's input carries (a rotation's split, a merge's midpoint, a
+    /// quick select's target; a sort ignores it). Nothing but the algorithm
+    /// runs inside it, so a clock around it times the algorithm alone.
+    pub run: RunFn,
     /// Run the algorithm against the named input. The input must be
     /// registered in the input registry matching `category`. The
     /// algorithm emits all events (including CreateArr + N WriteData

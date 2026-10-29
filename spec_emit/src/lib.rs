@@ -273,6 +273,7 @@ fn entry_body(kinds: &[Kind], paths: &AbiPaths, ctx: &EntryCtx) -> Result<String
         menu: &[{menu_lit}],
         axes: &[{axes_lit}],
         label_template: {template_lit},
+        run: run_dyn,
         run_with_input: run_default,
         run_correctness: run_correct,
     }};
@@ -367,6 +368,13 @@ mod tests {
         let b = sort_body("shell sort<sequence: ciura>");
         assert_eq!(b.matches("<Ty>::sort(arr, logger);").count(), 1, "expected the one dyn adapter");
         assert_eq!(b.matches("::sort(").count(), 1, "the inherent call is the only sort call: {b}");
+    }
+
+    #[test]
+    fn every_kind_exposes_its_adapter_as_the_entry_run() {
+        for (cat, ..) in EXPECTED {
+            assert!(body(plain(cat)).contains("run: run_dyn,"), "category `{cat}` run field");
+        }
     }
 
     #[test]

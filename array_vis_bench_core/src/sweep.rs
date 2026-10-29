@@ -193,6 +193,7 @@ mod tests {
     use sort_logger::SortLogger;
 
     fn no_run(_: &str, _: &RunConfig, _: &mut dyn SortLogger<usize>) {}
+    fn no_sort(_: &mut [usize], _: usize, _: &mut dyn SortLogger<usize>) {}
     fn no_battery() {}
 
     const fn entry(name: &'static str, cap: Option<usize>) -> AlgorithmEntry {
@@ -210,6 +211,7 @@ mod tests {
             menu: &[],
             axes: &[],
             label_template: "",
+            run: no_sort,
             run_with_input: no_run,
             run_correctness: no_battery,
         }

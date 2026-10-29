@@ -456,6 +456,7 @@ mod tests {
                 menu: $menu,
                 axes: $axes,
                 label_template: $template,
+                run: |_, _, _| {},
                 run_with_input: |_, _, _| {},
                 run_correctness: || {},
             }

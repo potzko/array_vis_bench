@@ -9,7 +9,7 @@
 //! entry emitted by the spec compiler and one registered by the legacy combo
 //! path look identical here (both are just `AlgorithmEntry` rows).
 
-use crate::bench_registry::{primary_input, AlgorithmEntry, Category, RunConfig, ALGORITHMS};
+use crate::bench_registry::{find_input, primary_input, AlgorithmEntry, Category, RunConfig, ALGORITHMS};
 use sort_logger::{NoOpLogger, SortLogger, VisualizerLogger};
 use std::collections::BTreeMap;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -194,12 +194,15 @@ impl Benchmark {
         entry.max_input_size.map_or(true, |cap| cap >= self.n)
     }
 
-    // The median of `k` timed runs on seeds 0 to k - 1, `None` when one panicked.
+    // One timed run on the category's primary input at `seed`, the input built
+    // before the clock starts so only the algorithm is timed; `None` when it
+    // panicked.
     fn one_run(&self, entry: &AlgorithmEntry, seed: u64) -> Option<Duration> {
-        let input = primary_input(entry.category);
         let config = RunConfig { size: self.n, seed };
+        let input = find_input(entry.category, primary_input(entry.category));
+        let (mut arr, index) = (input.generate)(&config);
         let start = Instant::now();
-        catch_unwind(AssertUnwindSafe(|| (entry.run_with_input)(input, &config, &mut NoOpLogger)))
+        catch_unwind(AssertUnwindSafe(|| (entry.run)(&mut arr, index, &mut NoOpLogger)))
             .ok()
             .map(|()| start.elapsed())
     }
@@ -290,18 +293,19 @@ mod tests {
 
     // Records how often and at what size it ran, so a test can read the
     // consumer's `k` and `n` back out of the entry it drove.
-    fn record(_input: &str, config: &RunConfig, _logger: &mut dyn SortLogger<usize>) {
+    fn record(arr: &mut [usize], _: usize, _: &mut dyn SortLogger<usize>) {
         RUNS.fetch_add(1, Ordering::SeqCst);
-        SIZE.store(config.size, Ordering::SeqCst);
+        SIZE.store(arr.len(), Ordering::SeqCst);
     }
+    fn no_input_run(_: &str, _: &RunConfig, _: &mut dyn SortLogger<usize>) {}
 
     fn no_battery() {}
 
     static ORDER: std::sync::Mutex<Vec<&'static str>> = std::sync::Mutex::new(Vec::new());
-    fn record_first(_input: &str, _config: &RunConfig, _logger: &mut dyn SortLogger<usize>) {
+    fn record_first(_: &mut [usize], _: usize, _: &mut dyn SortLogger<usize>) {
         ORDER.lock().unwrap().push("first");
     }
-    fn record_second(_input: &str, _config: &RunConfig, _logger: &mut dyn SortLogger<usize>) {
+    fn record_second(_: &mut [usize], _: usize, _: &mut dyn SortLogger<usize>) {
         ORDER.lock().unwrap().push("second");
     }
 
@@ -320,7 +324,8 @@ mod tests {
             menu: &[],
             axes: &[],
             label_template: "",
-            run_with_input: record,
+            run: record,
+            run_with_input: no_input_run,
             run_correctness: no_battery,
         }
     }
@@ -340,8 +345,8 @@ mod tests {
 
     #[test]
     fn the_benchmark_runs_every_entry_once_per_round() {
-        static FIRST: AlgorithmEntry = AlgorithmEntry { run_with_input: record_first, ..entry("first", None) };
-        static SECOND: AlgorithmEntry = AlgorithmEntry { run_with_input: record_second, ..entry("second", None) };
+        static FIRST: AlgorithmEntry = AlgorithmEntry { run: record_first, ..entry("first", None) };
+        static SECOND: AlgorithmEntry = AlgorithmEntry { run: record_second, ..entry("second", None) };
         ORDER.lock().unwrap().clear();
         let report = Benchmark { n: 4, k: 3 }.run(&[&FIRST, &SECOND]);
         assert_eq!(*ORDER.lock().unwrap(), ["first", "second", "first", "second", "first", "second"]);
