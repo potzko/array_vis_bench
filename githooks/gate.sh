@@ -42,7 +42,10 @@ stamp() {  # <level> <tree at the start of the run>
   local file="$STAMPS/$2"
   if [[ -z $2 ]]; then echo "stamp: none, the tree was not clean when the run started"; return; fi
   if [[ $(clean_tree) != "$2" ]]; then echo "stamp: none, the tree changed during the run"; return; fi
-  if [[ $1 == portable && $(head -1 "$file" 2>/dev/null) == full ]]; then echo "stamp: tree ${2:0:7} keeps its full stamp"; return; fi
+  if [[ $1 == portable && $(head -1 "$file" 2>/dev/null) == full ]]; then
+    echo "stamp: tree ${2:0:7} keeps its full stamp"
+    return
+  fi
   mkdir -p "$STAMPS" && printf '%s\n%s\n' "$1" "$(rustc -V)" >"$file" && echo "stamp: $1 on tree ${2:0:7}"
 }
 

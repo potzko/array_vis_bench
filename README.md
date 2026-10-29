@@ -83,6 +83,7 @@ emit regression that drops a variant fails the build's own tests.
 | `cargo run --release --bin measure_random_shell` | Complexity probe for the random shell sort variants. |
 | `cargo run -p array_vis_bench_min --release` | Minimal link root with two families and no catalog, proving a consumer can take just the leaves it wants. |
 | `./verify.sh [--quick \| --portable] [--bless]` | The verification gate: release build without warnings, the compiler's golden and the emitted catalog's types, the workspace tests, the assembly of the gate symbols, the `compare_sorts` gate and a timing comparison, each against a baseline under `verify/`. `--portable` runs only the steps that do not depend on this machine, through the workspace tests. A pass in a clean checkout stamps the tree for the branch gate, see [githooks/README.md](githooks/README.md). |
+| `./promote.sh [--push] BRANCH \| main` | Fast forwards `dev` to BRANCH, or `main` to `dev`, once the source's tree carries the stamp the target needs, running the gate in the source's clean worktree first when it does not. `--push` pushes the target to origin. |
 | `cargo t` | The whole workspace's tests under nextest in release: compiler unit tests, per crate unit tests, and every emitted entry's correctness battery. The battery runs each entry in a subprocess so a hang or crash names the variant. |
 
 `cargo t` is an alias in `.cargo/config.toml` for `cargo nextest run --release

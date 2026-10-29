@@ -22,7 +22,16 @@ machine the baselines in `../verify/` were taken on.
   `GATE_BYPASS="reason" git push ...` goes through anyway and appends the
   reason to `gate-bypass.log` in the common git dir; `git push --no-verify`
   skips the hook without a trace.
-- `test_gate.py`: the tests, which run real git in scratch repositories.
+- `test_gate.py`: the tests, which run real git in scratch repositories,
+  `../promote.sh` included.
+
+`../promote.sh BRANCH` fast forwards `dev` to a work branch and
+`../promote.sh main` fast forwards `main` to `dev`. Each checks the stamp
+first and, when there is none, runs the gate in the clean worktree that has
+the source checked out. A target checked out somewhere is fast forwarded in
+that checkout, any other is moved by ref alone, and no checkout is switched.
+`--push` pushes the target afterwards. A commit made straight on a local
+`dev` is allowed; it reaches origin only through the hook.
 
 The hooks take effect once the clone points at this folder, by absolute path
 so that every worktree runs the copy in the main checkout rather than its
