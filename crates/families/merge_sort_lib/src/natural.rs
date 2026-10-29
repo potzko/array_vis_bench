@@ -128,15 +128,15 @@ fn detect_runs<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     while i < n {
         let start = i;
         i += 1;
-        if i < n && logger.cmp_le_accross(arr, i, arr, i - 1) {
+        if i < n && logger.cmp_lt_accross(arr, i, arr, i - 1) {
             // Strictly descending run — scan and reverse.
-            while i < n && logger.cmp_le_accross(arr, i, arr, i - 1) {
+            while i < n && logger.cmp_lt_accross(arr, i, arr, i - 1) {
                 i += 1;
             }
             reverse(&mut arr[start..i], logger);
         } else {
             // Non-decreasing run — scan.
-            while i < n && !logger.cmp_le_accross(arr, i, arr, i - 1) {
+            while i < n && !logger.cmp_lt_accross(arr, i, arr, i - 1) {
                 i += 1;
             }
         }
@@ -144,4 +144,58 @@ fn detect_runs<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     }
 
     bounds
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cmp::Ordering;
+
+    use super::*;
+    use sort_logger::NoOpLogger;
+
+    // Orders by `key` alone, so `tag` shows where an element started.
+    #[derive(Clone, Copy, Debug)]
+    struct Keyed { key: usize, tag: usize }
+    impl PartialEq for Keyed { fn eq(&self, other: &Self) -> bool { self.key == other.key } }
+    impl Eq for Keyed {}
+    impl PartialOrd for Keyed { fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) } }
+    impl Ord for Keyed { fn cmp(&self, other: &Self) -> Ordering { self.key.cmp(&other.key) } }
+
+    fn keyed(keys: &[usize]) -> Vec<Keyed> {
+        keys.iter().enumerate().map(|(tag, &key)| Keyed { key, tag }).collect()
+    }
+
+    fn tags(arr: &[Keyed]) -> Vec<usize> { arr.iter().map(|k| k.tag).collect() }
+
+    #[test]
+    fn equal_neighbours_extend_an_ascending_run_and_are_not_reversed() {
+        let mut arr = keyed(&[1, 1, 0, 0]);
+        assert_eq!(detect_runs(&mut arr, &mut NoOpLogger), [0, 2, 4]);
+        assert_eq!(tags(&arr), [0, 1, 2, 3]);
+    }
+
+    #[test]
+    fn a_strictly_descending_run_is_reversed() {
+        let mut arr = keyed(&[3, 2, 1]);
+        assert_eq!(detect_runs(&mut arr, &mut NoOpLogger), [0, 3]);
+        assert_eq!(tags(&arr), [2, 1, 0]);
+    }
+
+    #[test]
+    fn equal_keys_keep_their_input_order_in_every_variant() {
+        let input = [1, 1, 0, 0, 2, 2, 1, 0, 0];
+        let expected = [2, 3, 7, 8, 0, 1, 6, 4, 5];
+        let mut arr = keyed(&input);
+        NaturalMergeSort::<false, false>::sort(&mut arr, &mut NoOpLogger);
+        assert_eq!(tags(&arr), expected);
+        let mut arr = keyed(&input);
+        NaturalMergeSort::<true, false>::sort(&mut arr, &mut NoOpLogger);
+        assert_eq!(tags(&arr), expected);
+        let mut arr = keyed(&input);
+        NaturalMergeSort::<false, true>::sort(&mut arr, &mut NoOpLogger);
+        assert_eq!(tags(&arr), expected);
+        let mut arr = keyed(&input);
+        NaturalMergeSort::<true, true>::sort(&mut arr, &mut NoOpLogger);
+        assert_eq!(tags(&arr), expected);
+    }
 }
