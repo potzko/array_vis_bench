@@ -265,6 +265,11 @@ pub type RunFn = fn(&mut [usize], usize, &mut dyn sort_logger::SortLogger<usize>
 /// boundary its battery checks; every other kind returns `None`.
 pub type RunFnNoop = fn(&mut [usize], usize, &mut sort_logger::NoOpLogger) -> Option<(usize, usize)>;
 
+/// A sort's adapter over [`correctness::Keyed`], the shape the stability
+/// battery calls. It needs no index and returns nothing: the battery reads the
+/// order the sort left behind.
+pub type RunFnKeyed = fn(&mut [correctness::Keyed], &mut sort_logger::NoOpLogger);
+
 /// Run an algorithm of `category` against a named input. Looks the input up in
 /// [`INPUTS`], generates the array and index via the registered `generate` fn,
 /// emits the initial-state events on `logger`, then calls `f(arr, index, logger)`.
@@ -447,12 +452,13 @@ pub type PropHook = fn(Category, RunFnNoop, &str, Option<usize>);
 /// The `CorrectnessSuite` of each kind calls the matching battery, so the
 /// test logic is written once per category rather than inlined per leaf.
 pub mod correctness {
-    use super::{Category, RunFnNoop, PROP_HOOKS};
+    use super::{Category, RunFnKeyed, RunFnNoop, PROP_HOOKS};
     use crate::array_gen::{get_arr, get_rand_arr, get_rand_arr_in_range, get_reversed_arr};
     use rand::seq::SliceRandom;
     use rand::thread_rng;
     use rand::Rng;
     use sort_logger::NoOpLogger;
+    use std::cmp::Ordering;
 
     /// Run `sort_fn` on `arr` and verify it produces a sorted permutation.
     /// Emits a `RUNNING: …` stderr line so subprocess TLE diagnostics can
@@ -579,20 +585,45 @@ pub mod correctness {
         }
     }
 
-    /// Stability battery — runs only on sorts that claim `stable = true`.
-    /// Encodes (value, original_index) pairs where comparison is by value
-    /// only (value in high bits, index in low bits). After sorting,
-    /// equal-valued elements must appear in ascending original-index order.
-    /// Patterns longer than `cap` are skipped, as in [`sort_battery`].
-    pub fn sort_stability_battery(sort_fn: RunFnNoop, name: &str, stable: bool, cap: Option<usize>) {
+    /// An element ordered by `key` alone. `index` is its input position and no
+    /// comparison looks at it, so how a sort left equal keys relative to each
+    /// other reads back off `index`. Packing both into one integer would make
+    /// every element distinct and no sort could reorder anything.
+    #[derive(Clone, Copy, Debug)]
+    pub struct Keyed {
+        pub key: usize,
+        pub index: usize,
+    }
+
+    impl PartialEq for Keyed {
+        fn eq(&self, other: &Self) -> bool {
+            self.key == other.key
+        }
+    }
+
+    impl Eq for Keyed {}
+
+    impl PartialOrd for Keyed {
+        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+
+    impl Ord for Keyed {
+        fn cmp(&self, other: &Self) -> Ordering {
+            self.key.cmp(&other.key)
+        }
+    }
+
+    /// Stability battery, runs only on sorts that claim `stable = true`. Sorts
+    /// [`Keyed`] elements and checks that equal keys come out in ascending
+    /// original index. Patterns longer than `cap` are skipped, as in
+    /// [`sort_battery`].
+    pub fn sort_stability_battery(sort_fn: RunFnKeyed, name: &str, stable: bool, cap: Option<usize>) {
         if !stable {
             return;
         }
         let limit = cap.unwrap_or(usize::MAX);
-        let value_bits = 32;
-        let encode = |value: usize, index: usize| -> usize { (value << value_bits) | index };
-        let decode_value = |x: usize| -> usize { x >> value_bits };
-        let decode_index = |x: usize| -> usize { x & ((1 << value_bits) - 1) };
 
         let test_cases: Vec<(&str, Vec<usize>)> = vec![
             ("3 values, n=200", (0..200).map(|i| i % 3).collect()),
@@ -601,32 +632,28 @@ pub mod correctness {
             ("10 values, n=500", get_rand_arr_in_range(500, 0, 10)),
         ];
 
-        for (label, values) in test_cases.iter().filter(|(_, values)| values.len() <= limit) {
-            let mut arr: Vec<usize> = values
+        for (label, keys) in test_cases.iter().filter(|(_, keys)| keys.len() <= limit) {
+            let mut arr: Vec<Keyed> = keys
                 .iter()
                 .enumerate()
-                .map(|(i, &v)| encode(v, i))
+                .map(|(index, &key)| Keyed { key, index })
                 .collect();
             let mut logger = NoOpLogger;
-            sort_fn(&mut arr, 0, &mut logger);
+            sort_fn(&mut arr, &mut logger);
 
-            for i in 1..arr.len() {
+            for (at, pair) in arr.windows(2).enumerate() {
+                let (prev, next) = (pair[0], pair[1]);
                 assert!(
-                    decode_value(arr[i - 1]) <= decode_value(arr[i]),
-                    "{}: stability '{}' — not sorted at position {}",
-                    name, label, i
+                    prev.key <= next.key,
+                    "{name}: stability '{label}': not sorted at position {}",
+                    at + 1
                 );
-                if decode_value(arr[i - 1]) == decode_value(arr[i]) {
-                    assert!(
-                        decode_index(arr[i - 1]) < decode_index(arr[i]),
-                        "{}: stability '{}' — order violated at position {} \
-                         (value={}, indices {} then {})",
-                        name, label, i,
-                        decode_value(arr[i]),
-                        decode_index(arr[i - 1]),
-                        decode_index(arr[i]),
-                    );
-                }
+                assert!(
+                    prev.key < next.key || prev.index < next.index,
+                    "{name}: stability '{label}': order violated at position {} \
+                     (key={}, indices {} then {})",
+                    at + 1, next.key, prev.index, next.index
+                );
             }
         }
     }
@@ -933,6 +960,7 @@ pub mod correctness {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use correctness::Keyed;
 
     fn input(name: &'static str, categories: &'static [Category], primary: bool) -> InputEntry {
         InputEntry { name, categories, generate: |c| (vec![0; c.size], 0), primary }
@@ -1015,7 +1043,7 @@ mod tests {
     // Panics on an array past `CAP`, so a battery that feeds a pattern past the
     // cap it was given fails the test. Each fn below is otherwise a correct
     // adapter for its kind.
-    fn within_cap(arr: &[usize]) {
+    fn within_cap<T>(arr: &[T]) {
         assert!(arr.len() <= CAP, "fed {} elements past the cap", arr.len());
     }
     fn rotate(arr: &mut [usize], split: usize, _l: &mut sort_logger::NoOpLogger) -> Option<(usize, usize)> {
@@ -1046,12 +1074,45 @@ mod tests {
         correctness::quick_select_battery(|arr, _target, _l| { within_cap(arr); arr.sort(); None }, "select", cap);
         correctness::partition_battery(partition, "partition", cap);
         correctness::scratchspace_battery(roll, "scratchspace", cap);
-        correctness::sort_stability_battery(
-            |arr, _index, _l| { within_cap(arr); arr.sort(); None },
-            "stability",
-            true,
-            cap,
-        );
+        correctness::sort_stability_battery(|arr, _l| { within_cap(arr); arr.sort(); }, "stability", true, cap);
+    }
+
+    // Swaps the minimum into place, which carries a key past its equal twins.
+    fn selection_sort(arr: &mut [Keyed], _l: &mut sort_logger::NoOpLogger) {
+        for at in 0..arr.len() {
+            let min = (at..arr.len()).min_by_key(|&i| arr[i].key).unwrap();
+            arr.swap(at, min);
+        }
+    }
+
+    #[test]
+    fn keyed_elements_with_one_key_are_equal_whatever_their_index() {
+        let (first, second) = (Keyed { key: 4, index: 0 }, Keyed { key: 4, index: 9 });
+        assert_eq!(first, second);
+        assert_eq!(first.cmp(&second), std::cmp::Ordering::Equal);
+        assert!(first < Keyed { key: 5, index: 0 });
+    }
+
+    #[test]
+    fn the_stability_battery_passes_a_stable_sort() {
+        correctness::sort_stability_battery(|arr, _l| arr.sort(), "slice sort", true, None);
+    }
+
+    #[test]
+    #[should_panic(expected = "order violated")]
+    fn the_stability_battery_fails_an_unstable_sort_that_claims_stability() {
+        correctness::sort_stability_battery(selection_sort, "selection sort", true, None);
+    }
+
+    #[test]
+    #[should_panic(expected = "not sorted")]
+    fn the_stability_battery_fails_a_sort_that_leaves_keys_out_of_order() {
+        correctness::sort_stability_battery(|_arr, _l| {}, "no sort", true, None);
+    }
+
+    #[test]
+    fn the_stability_battery_skips_a_sort_that_claims_nothing() {
+        correctness::sort_stability_battery(selection_sort, "selection sort", false, None);
     }
 
     #[test]

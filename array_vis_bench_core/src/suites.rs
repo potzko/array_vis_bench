@@ -47,8 +47,11 @@ impl<S: DirectSort + HasStability> CorrectnessSuite for SortSuite<S> {
             S::sort(arr, logger);
             None
         }
+        fn run_keyed<S: DirectSort>(arr: &mut [correctness::Keyed], logger: &mut NoOpLogger) {
+            S::sort(arr, logger);
+        }
         correctness::sort_battery(run::<S>, name, cap);
-        correctness::sort_stability_battery(run::<S>, name, S::STABLE, cap);
+        correctness::sort_stability_battery(run_keyed::<S>, name, S::STABLE, cap);
     }
 }
 
