@@ -85,8 +85,7 @@ array_vis_bench_traits::direct_sort!(RodSort<S, M>; S: BranchingStrategy, M: Rod
 // ── Composable annotations ──────────────────────────────────────────
 //
 // RodSort's complexity is dominated by the merge strategy — the
-// branching strategy only affects constants. Stability requires both
-// the merge and the branching to be stable.
+// branching strategy only affects constants.
 // Space is `LOG_N` (recursion stack) when the merge is in-place; `N1`
 // when AuxMerge allocates the top-level buffer.
 
@@ -108,11 +107,35 @@ where
     const SPACE: Complexity = Complexity::sum(Complexity::LOG_N, M::SPACE);
 }
 
-impl<S, M> HasStability for RodSort<S, M>
-where
-    S: BranchingStrategy + HasStability,
-    M: RodMerge + HasStability,
-{
-    const STABLE: bool = S::STABLE && M::STABLE;
+// Splitting by position loses the input order of equal keys whatever the
+// merge: in `[x, a1, a2, y]` the even chain sorts to `[a2, x]` and the odd one
+// to `[a1, y]`, and nothing a merge can see says `a1` came first.
+impl<S: BranchingStrategy, M: RodMerge> HasStability for RodSort<S, M> {
+    const STABLE: bool = false;
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cmp::Ordering;
+
+    use super::*;
+    use crate::{Classic, InsertionMerge};
+    use sort_logger::NoOpLogger;
+
+    // Orders by `key` alone, so `tag` shows where an element started.
+    #[derive(Clone, Copy, Debug)]
+    struct Keyed { key: usize, tag: usize }
+    impl PartialEq for Keyed { fn eq(&self, other: &Self) -> bool { self.key == other.key } }
+    impl Eq for Keyed {}
+    impl PartialOrd for Keyed { fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) } }
+    impl Ord for Keyed { fn cmp(&self, other: &Self) -> Ordering { self.key.cmp(&other.key) } }
+
+    #[test]
+    fn a_rod_sort_reorders_equal_keys_and_does_not_claim_stability() {
+        let mut arr = [(9, 0), (1, 1), (1, 2), (9, 3)].map(|(key, tag)| Keyed { key, tag });
+        RodSort::<Classic, InsertionMerge>::sort(&mut arr, &mut NoOpLogger);
+        assert_eq!(arr.map(|k| k.tag), [2, 1, 0, 3]);
+        assert!(!<RodSort<Classic, InsertionMerge> as HasStability>::STABLE);
+    }
 }
 

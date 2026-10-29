@@ -1,5 +1,5 @@
 use array_vis_bench_traits::Complexity;
-use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
+use array_vis_bench_traits::composable::{HasSpace, HasTimeBounds};
 
 /// A branching strategy for shell-shell sort.
 ///
@@ -130,8 +130,6 @@ impl BranchingStrategy for Fibonacci {
 //
 // Every branching strategy currently declares O(N²) worst-case under
 // shell-shell sort. Best case is O(N) for already-sorted input.
-// Stability false at the algorithm level is set by the outer
-// ShellShellSort composition.
 
 macro_rules! impl_branching_annotations {
     ($ty:ty) => {
@@ -142,9 +140,6 @@ macro_rules! impl_branching_annotations {
         }
         impl HasSpace for $ty {
             const SPACE: Complexity = Complexity::CONST;
-        }
-        impl HasStability for $ty {
-            const STABLE: bool = true;
         }
     };
 }

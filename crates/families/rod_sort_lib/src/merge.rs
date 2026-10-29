@@ -21,7 +21,7 @@
 //! `NEEDS_AUX` flag lets [`InsertionMerge`] skip the allocation entirely.
 
 use array_vis_bench_traits::Complexity;
-use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
+use array_vis_bench_traits::composable::{HasSpace, HasTimeBounds};
 use sort_logger::SortLogger;
 
 pub trait RodMerge {
@@ -180,9 +180,6 @@ impl HasTimeBounds for InsertionMerge {
 impl HasSpace for InsertionMerge {
     const SPACE: Complexity = Complexity::CONST;
 }
-impl HasStability for InsertionMerge {
-    const STABLE: bool = true;
-}
 
 impl HasTimeBounds for AuxMerge {
     const WORST: Complexity = Complexity::N_LOG_N;
@@ -192,7 +189,4 @@ impl HasTimeBounds for AuxMerge {
 impl HasSpace for AuxMerge {
     // Top-level merge allocates an N-sized aux buffer.
     const SPACE: Complexity = Complexity::N1;
-}
-impl HasStability for AuxMerge {
-    const STABLE: bool = true;
 }

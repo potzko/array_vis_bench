@@ -1732,18 +1732,18 @@ Sort	random shell sort<distinct parabolic>	1.0Sqrt 1.0Sqrt 1.0Sqrt 1.0 false
 Sort	random shell sort<log uniform>	1.0Sqrt 1.0Sqrt 1.0Sqrt 1.0 false
 Sort	random shell sort<parabolic>	1.0Sqrt 1.0Sqrt 1.0Sqrt 1.0 false
 Sort	random shell sort<uniform>	1.0Sqrt 1.0Sqrt 1.0Sqrt 1.0 false
-Sort	rod sort<strategy: 3-parity, merge: aux>	1.1 1.1 1.1 1.0 true
-Sort	rod sort<strategy: 3-parity, merge: insertion>	2.0 1.0 2.0 0.1 true
-Sort	rod sort<strategy: classic, merge: aux>	1.1 1.1 1.1 1.0 true
-Sort	rod sort<strategy: classic, merge: insertion>	2.0 1.0 2.0 0.1 true
-Sort	rod sort<strategy: fibonacci, merge: aux>	1.1 1.1 1.1 1.0 true
-Sort	rod sort<strategy: fibonacci, merge: insertion>	2.0 1.0 2.0 0.1 true
-Sort	rod sort<strategy: log-parity, merge: aux>	1.1 1.1 1.1 1.0 true
-Sort	rod sort<strategy: log-parity, merge: insertion>	2.0 1.0 2.0 0.1 true
-Sort	rod sort<strategy: optimised, merge: aux>	1.1 1.1 1.1 1.0 true
-Sort	rod sort<strategy: optimised, merge: insertion>	2.0 1.0 2.0 0.1 true
-Sort	rod sort<strategy: root-parity, merge: aux>	1.1 1.1 1.1 1.0 true
-Sort	rod sort<strategy: root-parity, merge: insertion>	2.0 1.0 2.0 0.1 true
+Sort	rod sort<strategy: 3-parity, merge: aux>	1.1 1.1 1.1 1.0 false
+Sort	rod sort<strategy: 3-parity, merge: insertion>	2.0 1.0 2.0 0.1 false
+Sort	rod sort<strategy: classic, merge: aux>	1.1 1.1 1.1 1.0 false
+Sort	rod sort<strategy: classic, merge: insertion>	2.0 1.0 2.0 0.1 false
+Sort	rod sort<strategy: fibonacci, merge: aux>	1.1 1.1 1.1 1.0 false
+Sort	rod sort<strategy: fibonacci, merge: insertion>	2.0 1.0 2.0 0.1 false
+Sort	rod sort<strategy: log-parity, merge: aux>	1.1 1.1 1.1 1.0 false
+Sort	rod sort<strategy: log-parity, merge: insertion>	2.0 1.0 2.0 0.1 false
+Sort	rod sort<strategy: optimised, merge: aux>	1.1 1.1 1.1 1.0 false
+Sort	rod sort<strategy: optimised, merge: insertion>	2.0 1.0 2.0 0.1 false
+Sort	rod sort<strategy: root-parity, merge: aux>	1.1 1.1 1.1 1.0 false
+Sort	rod sort<strategy: root-parity, merge: insertion>	2.0 1.0 2.0 0.1 false
 Sort	rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: naive<contrev>>	2.0 1.0 2.0 0.0 true
