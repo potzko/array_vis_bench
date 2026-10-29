@@ -296,13 +296,13 @@ fn emit_init_events(arr: &[usize], logger: &mut dyn sort_logger::SortLogger<usiz
 /// An entry's filled slots as `(role, value, path)`, see `AlgorithmEntry::axes`.
 pub type Axes = &'static [(&'static str, &'static str, &'static str)];
 
-/// The archive line naming an entry's axes: `# axes`, the name, then each
-/// axis as its role, value and path, every field tab separated. The timing
-/// and sweep archives end with one per entry, so a reader can group and
-/// filter by axis without parsing names.
-pub fn axes_line(name: &str, axes: Axes) -> String {
+/// The archive line describing an entry: `# entry`, the name, the category,
+/// then each axis as its role, value and path, every field tab separated.
+/// The timing and sweep archives end with one per entry, so a reader can
+/// group and filter by kind and axis without parsing names.
+pub fn entry_line(name: &str, category: Category, axes: Axes) -> String {
     let fields = axes.iter().flat_map(|&(role, value, path)| [role, value, path]);
-    ["# axes", name].into_iter().chain(fields).collect::<Vec<_>>().join("\t") + "\n"
+    ["# entry", name, category.as_str()].into_iter().chain(fields).collect::<Vec<_>>().join("\t") + "\n"
 }
 
 pub struct AlgorithmEntry {
