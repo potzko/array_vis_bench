@@ -11,7 +11,7 @@ use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::Complexity;
 use sort_logger::SortLogger;
 
-use crate::nodes::{Nodes, MAX_NODES};
+use crate::nodes::{Layout, Nodes, Packed};
 
 pub trait Tree {
     // The rank `attach` writes into a new leaf: the height 1 for a height
@@ -20,11 +20,11 @@ pub trait Tree {
     const LEAF_RANK: usize;
 
     // Node `node` was just attached as a leaf.
-    fn inserted<T: Ord + Copy, U: ?Sized + SortLogger<T>>(nodes: &mut Nodes<'_, T, U>, node: usize);
+    fn inserted<T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout>(nodes: &mut Nodes<'_, T, U, L>, node: usize);
 
     // The leftmost node was just unlinked from `parent`, which is `nil` when
     // it was the root.
-    fn removed<T: Ord + Copy, U: ?Sized + SortLogger<T>>(nodes: &mut Nodes<'_, T, U>, parent: usize);
+    fn removed<T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout>(nodes: &mut Nodes<'_, T, U, L>, parent: usize);
 }
 
 pub struct TreeSort<B: Tree>(PhantomData<B>);
@@ -33,8 +33,8 @@ impl<B: Tree> TreeSort<B> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], logger: &mut U) {
         let n = arr.len();
         if n < 2 { return; }
-        assert!(n <= MAX_NODES, "tree sort takes at most {MAX_NODES} elements, got {n}");
-        let mut nodes = Nodes::new(arr, logger);
+        assert!(n <= Packed::REACH, "tree sort takes at most {} elements, got {n}", Packed::REACH);
+        let mut nodes = Nodes::<T, U, Packed>::new(arr, logger);
         for i in 0..n {
             nodes.attach(i, B::LEAF_RANK);
             B::inserted(&mut nodes, i);

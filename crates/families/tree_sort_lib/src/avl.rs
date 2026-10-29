@@ -1,13 +1,13 @@
 //! `Avl`, the height balanced tree of the tree sort family. After each attach
 //! and each leftmost deletion it retraces towards the root, refreshing
 //! heights and rotating wherever two siblings differ by more than one level.
-//! The rank field of the node store holds the height.
+//! The rank word of the node store holds the height.
 
 use array_vis_bench_traits::composable::HasTimeBounds;
 use array_vis_bench_traits::Complexity;
 use sort_logger::SortLogger;
 
-use crate::nodes::{Nodes, LEFT, RIGHT};
+use crate::nodes::{Layout, Nodes, LEFT, RIGHT};
 use crate::tree_sort::Tree;
 
 pub struct Avl;
@@ -15,11 +15,11 @@ pub struct Avl;
 impl Tree for Avl {
     const LEAF_RANK: usize = 1;
 
-    fn inserted<T: Ord + Copy, U: ?Sized + SortLogger<T>>(nodes: &mut Nodes<'_, T, U>, node: usize) {
+    fn inserted<T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout>(nodes: &mut Nodes<'_, T, U, L>, node: usize) {
         retrace(nodes, nodes.parent(node));
     }
 
-    fn removed<T: Ord + Copy, U: ?Sized + SortLogger<T>>(nodes: &mut Nodes<'_, T, U>, parent: usize) {
+    fn removed<T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout>(nodes: &mut Nodes<'_, T, U, L>, parent: usize) {
         retrace(nodes, parent);
     }
 }
@@ -34,7 +34,7 @@ impl HasTimeBounds for Avl {
 // whose subtree kept its height, because the heights above it are then
 // untouched: an insertion stops at its first rotation, a deletion may rotate
 // at several levels.
-fn retrace<T: Ord + Copy, U: ?Sized + SortLogger<T>>(nodes: &mut Nodes<'_, T, U>, mut x: usize) {
+fn retrace<T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout>(nodes: &mut Nodes<'_, T, U, L>, mut x: usize) {
     while x != nodes.nil {
         let parent = nodes.parent(x);
         let before = nodes.rank(x);
@@ -55,7 +55,7 @@ fn retrace<T: Ord + Copy, U: ?Sized + SortLogger<T>>(nodes: &mut Nodes<'_, T, U>
 // Restore balance at `x` with one rotation towards its lighter side, after
 // first rotating the heavy child when its inner grandchild is the taller, the
 // double rotation case.
-fn rebalance<T: Ord + Copy, U: ?Sized + SortLogger<T>>(nodes: &mut Nodes<'_, T, U>, x: usize) -> usize {
+fn rebalance<T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout>(nodes: &mut Nodes<'_, T, U, L>, x: usize) -> usize {
     let left_heavy = nodes.rank(nodes.link(x, LEFT)) > nodes.rank(nodes.link(x, RIGHT));
     let (side, other) = if left_heavy { (RIGHT, LEFT) } else { (LEFT, RIGHT) };
     let heavy = nodes.link(x, other);
@@ -66,11 +66,11 @@ fn rebalance<T: Ord + Copy, U: ?Sized + SortLogger<T>>(nodes: &mut Nodes<'_, T, 
 }
 
 // A rotation followed by the two height refreshes it owes, lower node first.
-fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-    nodes: &mut Nodes<'_, T, U>,
+fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout>(
+    nodes: &mut Nodes<'_, T, U, L>,
     x: usize,
-    side: u32,
-    other: u32,
+    side: usize,
+    other: usize,
 ) -> usize {
     let y = nodes.rotate(x, side, other);
     refresh_height(nodes, x);
@@ -78,7 +78,7 @@ fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     y
 }
 
-fn refresh_height<T: Ord + Copy, U: ?Sized + SortLogger<T>>(nodes: &mut Nodes<'_, T, U>, i: usize) {
+fn refresh_height<T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout>(nodes: &mut Nodes<'_, T, U, L>, i: usize) {
     let height = 1 + nodes.rank(nodes.link(i, LEFT)).max(nodes.rank(nodes.link(i, RIGHT)));
     nodes.set_rank(i, height);
 }
@@ -86,13 +86,14 @@ fn refresh_height<T: Ord + Copy, U: ?Sized + SortLogger<T>>(nodes: &mut Nodes<'_
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::nodes::Packed;
     use crate::test_input::pseudo_random;
     use sort_logger::NoOpLogger;
 
     // The stored height of every node is right, its children differ by at
     // most one level and each child points back at it, so the tree really is
     // an AVL tree and the bound holds. Returns the height.
-    fn assert_avl<T: Ord + Copy>(nodes: &Nodes<T, NoOpLogger>, i: usize) -> usize {
+    fn assert_avl<T: Ord + Copy, L: Layout>(nodes: &Nodes<T, NoOpLogger, L>, i: usize) -> usize {
         if i == nodes.nil { return 0; }
         let (left, right) = (nodes.link(i, LEFT), nodes.link(i, RIGHT));
         let (left_height, right_height) = (assert_avl(nodes, left), assert_avl(nodes, right));
@@ -104,12 +105,11 @@ mod tests {
         1 + left_height.max(right_height)
     }
 
-    #[test]
-    fn stays_an_avl_tree_through_every_insertion_and_extraction() {
+    fn assert_stays_avl<L: Layout>() {
         let mut arr = pseudo_random(300, 40);
         let n = arr.len();
         let mut logger = NoOpLogger;
-        let mut nodes = Nodes::new(&mut arr, &mut logger);
+        let mut nodes = Nodes::<_, _, L>::new(&mut arr, &mut logger);
         for i in 0..n {
             nodes.attach(i, Avl::LEAF_RANK);
             Avl::inserted(&mut nodes, i);
@@ -123,4 +123,7 @@ mod tests {
         }
         assert_eq!(nodes.root, nodes.nil);
     }
+
+    #[test]
+    fn stays_an_avl_tree_through_every_insertion_and_extraction() { assert_stays_avl::<Packed>(); }
 }

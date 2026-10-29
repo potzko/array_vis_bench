@@ -6,7 +6,7 @@ use array_vis_bench_traits::composable::HasTimeBounds;
 use array_vis_bench_traits::Complexity;
 use sort_logger::SortLogger;
 
-use crate::nodes::Nodes;
+use crate::nodes::{Layout, Nodes};
 use crate::tree_sort::Tree;
 
 pub struct Naive;
@@ -14,9 +14,9 @@ pub struct Naive;
 impl Tree for Naive {
     const LEAF_RANK: usize = 0;
 
-    fn inserted<T: Ord + Copy, U: ?Sized + SortLogger<T>>(_nodes: &mut Nodes<'_, T, U>, _node: usize) {}
+    fn inserted<T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout>(_nodes: &mut Nodes<'_, T, U, L>, _node: usize) {}
 
-    fn removed<T: Ord + Copy, U: ?Sized + SortLogger<T>>(_nodes: &mut Nodes<'_, T, U>, _parent: usize) {}
+    fn removed<T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout>(_nodes: &mut Nodes<'_, T, U, L>, _parent: usize) {}
 }
 
 // Attaching n keys costs the sum of their depths: a path for sorted or all
@@ -31,14 +31,13 @@ impl HasTimeBounds for Naive {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::nodes::{LEFT, RIGHT};
+    use crate::nodes::{Packed, LEFT, RIGHT};
     use sort_logger::NoOpLogger;
 
-    #[test]
-    fn sorted_input_builds_a_right_path_with_no_rotation_and_no_rank() {
+    fn assert_a_right_path_with_no_rank<L: Layout>() {
         let mut arr: Vec<usize> = (0..64).collect();
         let mut logger = NoOpLogger;
-        let mut nodes = Nodes::new(&mut arr, &mut logger);
+        let mut nodes = Nodes::<_, _, L>::new(&mut arr, &mut logger);
         for i in 0..64 {
             nodes.attach(i, Naive::LEAF_RANK);
             Naive::inserted(&mut nodes, i);
@@ -50,4 +49,7 @@ mod tests {
             assert_eq!(nodes.rank(i), 0, "node {i} carries a rank it never reads");
         }
     }
+
+    #[test]
+    fn sorted_input_builds_a_right_path_with_no_rotation_and_no_rank() { assert_a_right_path_with_no_rank::<Packed>(); }
 }

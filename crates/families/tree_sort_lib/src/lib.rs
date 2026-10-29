@@ -11,7 +11,7 @@ pub mod tree_sort;
 
 pub use avl::Avl;
 pub use naive::Naive;
-pub use nodes::{Nodes, MAX_NODES};
+pub use nodes::{Layout, Nodes, Packed};
 pub use tree_sort::{Tree, TreeSort};
 
 #[cfg(test)]
