@@ -100,24 +100,49 @@ end
 # The slots of the block merge sort, declared in block_merge_sort_lib's fragment.
 # The buffer slot has its own role, `BlockBuffer`, so that these backings are
 # not also `Auxiliary` fillers of the `auxiliary<...>` merge kinds. `bb_none` is
-# `NoBuffer` again under that role, the bottom rung of the ladder.
+# `NoBuffer` again under that role, the bottom rung of the ladder. A buffer in
+# the array or outside it takes its size from a `BufferSize`.
 
 component bb_in_array
-  type     InArrayBuffer
-  label    in array
+  type     InArrayBuffer<{size}>
+  label    in array<{size}>
   provides BlockBuffer
+  slot     size BufferSize
 end
 
-component bb_fixed
-  type     FixedBuffer
-  label    fixed 512
+component bb_external
+  type     ExternalBuffer<{size}>
+  label    external<{size}>
   provides BlockBuffer
+  slot     size BufferSize
 end
 
 component bb_none
   type     NoBuffer
   label    none
   provides BlockBuffer
+end
+
+# The buffer sizes: the square root WikiSort carves and GrailSort's dynamic
+# buffer allocates, the 512 cells of both one's static buffer, and half the
+# array, a plain merge sort's buffer.
+
+component size_sqrt
+  type     Sqrt
+  label    sqrt
+  provides BufferSize
+end
+
+component size_512
+  type     Fixed<512>
+  label    512
+  provides BufferSize
+end
+
+component size_half
+  type     Half
+  label    half
+  provides BufferSize
 end
 
 component keys_in_array

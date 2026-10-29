@@ -28,7 +28,7 @@ pub mod bufferless;
 pub mod keys;
 pub mod sizes;
 pub mod workflows;
-pub use buffers::{FixedBuffer, InArrayBuffer};
+pub use buffers::{ExternalBuffer, InArrayBuffer};
 pub use bufferless::bufferless_merge;
 pub use keys::{InArrayKeys, NoKeys};
 pub use sizes::{Fixed, Half, Sqrt};

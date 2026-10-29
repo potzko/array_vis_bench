@@ -3,7 +3,7 @@
 Source of `scratchspace_lib`. The crate README one level up says what it is for.
 
 - `bufferless.rs`: `bufferless_merge`, the stable in place merge by rotations that the bufferless backings share.
-- `buffers.rs`: the block merge buffers, `InArrayBuffer` and `FixedBuffer`.
+- `buffers.rs`: the block merge buffers, `InArrayBuffer` and `ExternalBuffer`, each sized by a `BufferSize`.
 - `keys.rs`: the `Keys` backings, `InArrayKeys` and `NoKeys`.
 - `lib.rs`: Auxiliary (scratchspace) backings + the merge that consumes them.
 - `sizes.rs`: the `BufferSize` fillers, `Sqrt`, `Fixed` and `Half`.

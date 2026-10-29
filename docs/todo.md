@@ -46,8 +46,9 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
    defines, and a glyph for xor, which `(A | B) - (A /\ B)` already writes.
    See [implementation_plans/enumeration_strategies.md](implementation_plans/enumeration_strategies.md).
 2. Done: the scratchspace phases. The `Keys` axis, the block merge sort
-   family (the WikiSort and GrailSort shapes, six of them, each under every
-   rotation), the buffer region logger event with its shading in the renderer, and a bufferless
+   family (the WikiSort and GrailSort shapes, the buffer in the array or
+   outside it by three sizes, each under every rotation), the buffer region
+   logger event with its shading in the renderer, and a bufferless
    merge by rotations, `O(n log n)` moves instead of quadratic. See
    [implementation_plans/scratchspace_block_merge.md](implementation_plans/scratchspace_block_merge.md).
 3. Dropped: the sentinel quicksort. Its trigger was the canonical driver

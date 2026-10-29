@@ -40,4 +40,8 @@ pub trait Auxiliary {
     fn internal_size(_n: usize) -> usize {
         0
     }
+
+    /// The order of growth of `internal_size`. Carving `c` cells and sorting them
+    /// back into the array costs `O(n + c^2)` moves on top of the merges.
+    const CARVED: Complexity = Complexity::CONST;
 }

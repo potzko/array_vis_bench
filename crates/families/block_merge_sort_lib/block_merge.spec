@@ -1,10 +1,11 @@
 # Block merge sort family catalog fragment, owned by block_merge_sort_lib and
 # gathered by `spec_catalog` through `[package.metadata.array_vis_bench] spec =
 # "block_merge.spec"`. One driver with three slots: the buffer, a `BlockBuffer`
-# (in array, fixed 512 or none, declared in scratchspace.spec), the keys, a
-# `Keys` (in array or none), and the `Rotation` every rotation of the sort runs.
-# The in array buffer with in array keys is WikiSort, the fixed buffer with in
-# array keys is GrailSort with a buffer.
+# (in array or external, each sized by a `BufferSize`, or none, declared in
+# scratchspace.spec), the keys, a `Keys` (in array or none), and the `Rotation`
+# every rotation of the sort runs. A buffer of sqrt in the array with in array
+# keys is WikiSort, an external one of 512 with in array keys is GrailSort with
+# its static buffer, and of sqrt with its dynamic one.
 
 component block_sort
   type     BlockMergeSort<{buffer}, {keys}, {rot}>

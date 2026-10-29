@@ -1,4 +1,5 @@
-// Block merge family, query owned by block_merge_sort_lib. Three buffers by two
-// key shapes by eleven rotations, 66 entries.
+// Block merge family, query owned by block_merge_sort_lib. Seven buffers (in the
+// array or external, by three sizes, or none) by two key shapes by eleven
+// rotations, 154 entries.
 
 BlockMergeSorts: SortingAlgorithm = SortingAlgorithm<BlockMergeSort<buffer = _, keys = _, rot = _>>

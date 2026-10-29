@@ -27,8 +27,8 @@ mod test_util;
 
 /// `B` is the `Auxiliary` buffer that backs the local merges, `K` the `Keys`
 /// that tag the blocks and `R` the `Rotation` the sort rotates with. An in array
-/// buffer with in array keys is WikiSort, a fixed external buffer with in array
-/// keys is GrailSort with a buffer.
+/// buffer of `sqrt(n)` with in array keys is WikiSort, an external one of 512
+/// with in array keys is GrailSort with its static buffer.
 pub struct BlockMergeSort<B, K, R>(PhantomData<(B, K, R)>);
 
 // Runs of RUN elements are insertion sorted before the first merge, and an array
@@ -40,14 +40,18 @@ const MIN_KEYS: usize = 4;
 
 // A merge costs `O(n)` when blocks roll and a buffer holds each, and the rotation
 // merge's `O(n log n)` when either is missing. `log n` levels of merges, so the
-// bound of the weaker of the two axes times `log n`.
+// bound of the weaker of the two axes times `log n`. A buffer of `c` cells carved
+// from the array adds `c^2` for carving it and sorting it back in, which only a
+// buffer growing faster than `sqrt(n)` makes count.
 impl<B: Auxiliary, K: Keys, R: Rotation> HasTimeBounds for BlockMergeSort<B, K, R> {
-    const WORST: Complexity =
-        Complexity::product(Complexity::LOG_N, Complexity::sum(K::MERGE_WORST, B::MERGE_WORST));
-    // A sorted array is one insertion sort per run and a comparison per merge.
-    const BEST: Complexity = Complexity::N1;
-    const AVERAGE: Complexity =
-        Complexity::product(Complexity::LOG_N, Complexity::sum(K::MERGE_WORST, B::MERGE_WORST));
+    const WORST: Complexity = Complexity::sum(
+        Complexity::product(Complexity::LOG_N, Complexity::sum(K::MERGE_WORST, B::MERGE_WORST)),
+        Complexity::product(B::CARVED, B::CARVED),
+    );
+    // A sorted array is one insertion sort per run, a comparison per merge and a
+    // binary search per carved element.
+    const BEST: Complexity = Complexity::sum(Complexity::N1, Complexity::product(B::CARVED, Complexity::LOG_N));
+    const AVERAGE: Complexity = Self::WORST;
 }
 
 // A rotation that copies a side out costs its own space on top of the buffer's.
@@ -82,10 +86,12 @@ impl<B: Auxiliary, K: Keys, R: Rotation> BlockMergeSort<B, K, R> {
 
         let external = B::scratch_size(n);
         // A buffer the array's blocks outgrow still serves the runs that fit it, and
-        // the block merges past that rotate their local merges.
-        if keys > 0 && external > 0 && external < n.isqrt() {
+        // the block merges past that rotate their local merges. A backing offers
+        // a carved buffer or an external one, so the sum is whichever it has.
+        let cells = buffer + external;
+        if keys > 0 && cells > 0 && cells < n.isqrt() {
             log.mark(format!(
-                "block sort: the buffer of {external} cannot hold a block of {}, the block merges rotate",
+                "block sort: the buffer of {cells} cannot hold a block of {}, the block merges rotate",
                 n.isqrt()
             ));
         }
@@ -240,7 +246,7 @@ mod tests {
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
     use sort_logger::RegionKind;
-    use scratchspace_lib::{FixedBuffer, FullBuffer, HalfBuffer, InArrayBuffer, InArrayKeys, NoBuffer, NoKeys};
+    use scratchspace_lib::{ExternalBuffer, Fixed, FullBuffer, Half, HalfBuffer, InArrayBuffer, InArrayKeys, NoBuffer, NoKeys, Sqrt};
     use sort_logger::NoOpLogger;
 
     // The shapes under test rotate by reversal unless a test names another rotation.
@@ -282,24 +288,32 @@ mod tests {
     }
 
     #[test]
-    fn the_wiki_shape_sorts_stably() { sorts_stably::<Block<InArrayBuffer, InArrayKeys>>("in array, in array"); }
+    fn the_wiki_shape_sorts_stably() { sorts_stably::<Block<InArrayBuffer<Sqrt>, InArrayKeys>>("in array, in array"); }
     #[test]
-    fn the_grail_shape_with_a_buffer_sorts_stably() { sorts_stably::<Block<FixedBuffer, InArrayKeys>>("fixed, in array"); }
+    fn the_grail_shape_with_a_buffer_sorts_stably() { sorts_stably::<Block<ExternalBuffer<Fixed<512>>, InArrayKeys>>("external 512, in array"); }
     #[test]
     fn the_shape_with_keys_and_no_buffer_sorts_stably() { sorts_stably::<Block<NoBuffer, InArrayKeys>>("none, in array"); }
     #[test]
-    fn an_in_array_buffer_without_keys_sorts_stably() { sorts_stably::<Block<InArrayBuffer, NoKeys>>("in array, none"); }
+    fn an_in_array_buffer_without_keys_sorts_stably() { sorts_stably::<Block<InArrayBuffer<Sqrt>, NoKeys>>("in array, none"); }
     #[test]
-    fn a_fixed_buffer_without_keys_sorts_stably() { sorts_stably::<Block<FixedBuffer, NoKeys>>("fixed, none"); }
+    fn a_fixed_buffer_without_keys_sorts_stably() { sorts_stably::<Block<ExternalBuffer<Fixed<512>>, NoKeys>>("external 512, none"); }
     #[test]
     fn the_shape_with_nothing_sorts_stably() { sorts_stably::<Block<NoBuffer, NoKeys>>("none, none"); }
     // Every rotation of the sort is `R`'s. Trinity runs through the scratch the
     // sort allocates once, the auxiliary rotation allocates its own each call.
     #[test]
     fn any_rotation_sorts_stably() {
-        sorts_stably::<BlockMergeSort<InArrayBuffer, InArrayKeys, TrinityRotation>>("in array, in array, trinity");
+        sorts_stably::<BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation>>("in array, in array, trinity");
         sorts_stably::<BlockMergeSort<NoBuffer, InArrayKeys, TrinityRotation>>("none, in array, trinity");
         sorts_stably::<BlockMergeSort<NoBuffer, NoKeys, AuxiliaryRotation>>("none, none, auxiliary");
+    }
+    #[test]
+    fn every_size_of_buffer_sorts_stably() {
+        sorts_stably::<Block<InArrayBuffer<Fixed<512>>, InArrayKeys>>("in array 512, in array");
+        sorts_stably::<Block<InArrayBuffer<Half>, InArrayKeys>>("in array half, in array");
+        sorts_stably::<Block<InArrayBuffer<Half>, NoKeys>>("in array half, none");
+        sorts_stably::<Block<ExternalBuffer<Sqrt>, InArrayKeys>>("external sqrt, in array");
+        sorts_stably::<Block<ExternalBuffer<Half>, NoKeys>>("external half, none");
     }
     #[test]
     fn a_buffer_the_size_of_the_array_sorts_stably() {
@@ -324,13 +338,15 @@ mod tests {
 
     #[test]
     fn no_shape_moves_an_element_without_logging_it() {
-        moves_are_all_logged::<Block<InArrayBuffer, InArrayKeys>>("in array, in array");
-        moves_are_all_logged::<Block<FixedBuffer, InArrayKeys>>("fixed, in array");
+        moves_are_all_logged::<Block<InArrayBuffer<Sqrt>, InArrayKeys>>("in array, in array");
+        moves_are_all_logged::<Block<ExternalBuffer<Fixed<512>>, InArrayKeys>>("external 512, in array");
         moves_are_all_logged::<Block<NoBuffer, InArrayKeys>>("none, in array");
-        moves_are_all_logged::<Block<InArrayBuffer, NoKeys>>("in array, none");
-        moves_are_all_logged::<Block<FixedBuffer, NoKeys>>("fixed, none");
+        moves_are_all_logged::<Block<InArrayBuffer<Sqrt>, NoKeys>>("in array, none");
+        moves_are_all_logged::<Block<ExternalBuffer<Fixed<512>>, NoKeys>>("external 512, none");
         moves_are_all_logged::<Block<NoBuffer, NoKeys>>("none, none");
-        moves_are_all_logged::<BlockMergeSort<FixedBuffer, InArrayKeys, TrinityRotation>>("fixed, in array, trinity");
+        moves_are_all_logged::<BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, TrinityRotation>>("external 512, in array, trinity");
+        moves_are_all_logged::<Block<InArrayBuffer<Half>, InArrayKeys>>("in array half, in array");
+        moves_are_all_logged::<Block<ExternalBuffer<Sqrt>, InArrayKeys>>("external sqrt, in array");
         moves_are_all_logged::<BlockMergeSort<NoBuffer, NoKeys, AuxiliaryRotation>>("none, none, auxiliary");
     }
 
@@ -347,22 +363,27 @@ mod tests {
     fn enough_distinct_elements_log_nothing() {
         let mut rng = Rng(3);
         let arr = input(0, 600, &mut rng);
-        assert!(marks::<Block<InArrayBuffer, InArrayKeys>>(&arr).is_empty());
-        assert!(marks::<Block<FixedBuffer, InArrayKeys>>(&arr).is_empty());
+        assert!(marks::<Block<InArrayBuffer<Sqrt>, InArrayKeys>>(&arr).is_empty());
+        assert!(marks::<Block<ExternalBuffer<Fixed<512>>, InArrayKeys>>(&arr).is_empty());
         assert!(marks::<Block<NoBuffer, NoKeys>>(&arr).is_empty());
     }
 
-    // The blocks of an array of 270000 are 519 elements, more than a fixed buffer holds.
+    // The blocks of an array of 270000 are 519 elements, more than 512 cells hold,
+    // carved from the array or not.
     #[test]
-    fn blocks_that_outgrow_the_fixed_buffer_are_logged() {
+    fn blocks_that_outgrow_the_buffer_are_logged() {
         let arr = input(0, 270_000, &mut Rng(5));
-        let marked = marks::<Block<FixedBuffer, InArrayKeys>>(&arr);
-        assert_eq!(marked.len(), 1, "{marked:?}");
-        assert!(marked[0].contains("the buffer of 512 cannot hold a block of 519"), "{marked:?}");
+        for marked in [
+            marks::<Block<ExternalBuffer<Fixed<512>>, InArrayKeys>>(&arr),
+            marks::<Block<InArrayBuffer<Fixed<512>>, InArrayKeys>>(&arr),
+        ] {
+            assert_eq!(marked.len(), 1, "{marked:?}");
+            assert!(marked[0].contains("the buffer of 512 cannot hold a block of 519"), "{marked:?}");
+        }
         // blocks that fit it, or no blocks, or a buffer of the array's own, are not
-        assert!(marks::<Block<FixedBuffer, InArrayKeys>>(&input(0, 100_000, &mut Rng(6))).is_empty());
-        assert!(marks::<Block<FixedBuffer, NoKeys>>(&arr).is_empty());
-        assert!(marks::<Block<InArrayBuffer, InArrayKeys>>(&arr).is_empty());
+        assert!(marks::<Block<ExternalBuffer<Fixed<512>>, InArrayKeys>>(&input(0, 100_000, &mut Rng(6))).is_empty());
+        assert!(marks::<Block<ExternalBuffer<Fixed<512>>, NoKeys>>(&arr).is_empty());
+        assert!(marks::<Block<InArrayBuffer<Sqrt>, InArrayKeys>>(&arr).is_empty());
     }
 
     #[test]
@@ -372,20 +393,20 @@ mod tests {
         // fewer, three give no keys at all
         for kind in [9, 8, 7, 3] {
             let arr = input(kind, 600, &mut rng);
-            let marked = marks::<Block<InArrayBuffer, InArrayKeys>>(&arr);
+            let marked = marks::<Block<InArrayBuffer<Sqrt>, InArrayKeys>>(&arr);
             assert_eq!(marked.len(), 1, "kind {kind}: {marked:?}");
             assert!(marked[0].starts_with("block sort: "), "{marked:?}");
-            assert!(!marks::<Block<FixedBuffer, InArrayKeys>>(&arr).is_empty(), "kind {kind} starves the keys of a fixed buffer");
-            assert!(!marks::<Block<InArrayBuffer, NoKeys>>(&arr).is_empty(), "kind {kind} starves the buffer");
+            assert!(!marks::<Block<ExternalBuffer<Fixed<512>>, InArrayKeys>>(&arr).is_empty(), "kind {kind} starves the keys of a fixed buffer");
+            assert!(!marks::<Block<InArrayBuffer<Sqrt>, NoKeys>>(&arr).is_empty(), "kind {kind} starves the buffer");
         }
         // the buffer alone is dropped when only the keys fit
         let arr = input(10, 600, &mut rng);
-        let marked = marks::<Block<InArrayBuffer, InArrayKeys>>(&arr);
+        let marked = marks::<Block<InArrayBuffer<Sqrt>, InArrayKeys>>(&arr);
         assert_eq!(marked.len(), 1, "{marked:?}");
         assert!(marked[0].contains("keeping 27 keys and a buffer of 0"), "{marked:?}");
         // the shapes that ask for nothing have nothing to drop
         assert!(marks::<Block<NoBuffer, NoKeys>>(&input(3, 600, &mut rng)).is_empty());
-        assert!(marks::<Block<FixedBuffer, NoKeys>>(&input(3, 600, &mut rng)).is_empty());
+        assert!(marks::<Block<ExternalBuffer<Fixed<512>>, NoKeys>>(&input(3, 600, &mut rng)).is_empty());
     }
 
     // The region events of a sort of `arr`, without the array names but told apart
@@ -404,15 +425,15 @@ mod tests {
         let arr = input(0, 600, &mut Rng(21));
         // 600 elements carve 27 keys and 24 buffer cells, the keys first
         assert_eq!(
-            regions::<Block<InArrayBuffer, InArrayKeys>>(&arr),
+            regions::<Block<InArrayBuffer<Sqrt>, InArrayKeys>>(&arr),
             [(true, 0, 27, Keys, true), (true, 27, 24, Buffer, true), (true, 0, 27, Keys, false), (true, 27, 24, Buffer, false)]
         );
         // an external buffer is its own array, held around the merges
         assert_eq!(
-            regions::<Block<FixedBuffer, InArrayKeys>>(&arr),
+            regions::<Block<ExternalBuffer<Fixed<512>>, InArrayKeys>>(&arr),
             [(true, 0, 27, Keys, true), (false, 0, 512, Buffer, true), (false, 0, 512, Buffer, false), (true, 0, 27, Keys, false)]
         );
-        assert_eq!(regions::<Block<InArrayBuffer, NoKeys>>(&arr), [(true, 0, 24, Buffer, true), (true, 0, 24, Buffer, false)]);
+        assert_eq!(regions::<Block<InArrayBuffer<Sqrt>, NoKeys>>(&arr), [(true, 0, 24, Buffer, true), (true, 0, 24, Buffer, false)]);
         assert!(regions::<Block<NoBuffer, NoKeys>>(&arr).is_empty());
     }
 
@@ -421,9 +442,9 @@ mod tests {
         use RegionKind::Keys;
         // ten distinct values keep ten keys and no buffer, one value keeps nothing
         let few = input(9, 600, &mut Rng(22));
-        assert_eq!(regions::<Block<InArrayBuffer, InArrayKeys>>(&few), [(true, 0, 10, Keys, true), (true, 0, 10, Keys, false)]);
+        assert_eq!(regions::<Block<InArrayBuffer<Sqrt>, InArrayKeys>>(&few), [(true, 0, 10, Keys, true), (true, 0, 10, Keys, false)]);
         let one = input(3, 600, &mut Rng(23));
-        assert!(regions::<Block<InArrayBuffer, InArrayKeys>>(&one).is_empty());
+        assert!(regions::<Block<InArrayBuffer<Sqrt>, InArrayKeys>>(&one).is_empty());
     }
 
     // A merge sort that costs `n log n` moves grows 22 times for 16 times the input.
@@ -439,8 +460,8 @@ mod tests {
     #[test]
     fn the_wiki_and_grail_shapes_move_elements_n_log_n_times() {
         for (small, large) in [
-            (moves::<Block<InArrayBuffer, InArrayKeys>>(1024), moves::<Block<InArrayBuffer, InArrayKeys>>(16384)),
-            (moves::<Block<FixedBuffer, InArrayKeys>>(1024), moves::<Block<FixedBuffer, InArrayKeys>>(16384)),
+            (moves::<Block<InArrayBuffer<Sqrt>, InArrayKeys>>(1024), moves::<Block<InArrayBuffer<Sqrt>, InArrayKeys>>(16384)),
+            (moves::<Block<ExternalBuffer<Fixed<512>>, InArrayKeys>>(1024), moves::<Block<ExternalBuffer<Fixed<512>>, InArrayKeys>>(16384)),
         ] {
             assert!(large < 30 * small, "moves {small} -> {large}");
         }
@@ -468,20 +489,28 @@ mod tests {
 
     #[test]
     fn the_bounds_follow_from_the_axes() {
-        type Wiki = Block<InArrayBuffer, InArrayKeys>;
+        type Wiki = Block<InArrayBuffer<Sqrt>, InArrayKeys>;
         assert_eq!(<Wiki as HasTimeBounds>::WORST, Complexity::N_LOG_N);
         assert_eq!(<Wiki as HasTimeBounds>::BEST, Complexity::N1);
         assert!(<Wiki as HasSpace>::SPACE.is_in_place());
         assert!(<Wiki as HasStability>::STABLE);
         // a missing buffer or missing keys leaves a merge the rotation merge's cost
-        assert_eq!(<Block<FixedBuffer, InArrayKeys> as HasTimeBounds>::WORST, Complexity::N_LOG_SQUARED);
+        assert_eq!(<Block<ExternalBuffer<Fixed<512>>, InArrayKeys> as HasTimeBounds>::WORST, Complexity::N_LOG_SQUARED);
         assert_eq!(<Block<NoBuffer, InArrayKeys> as HasTimeBounds>::WORST, Complexity::N_LOG_SQUARED);
-        assert_eq!(<Block<InArrayBuffer, NoKeys> as HasTimeBounds>::WORST, Complexity::N_LOG_SQUARED);
+        assert_eq!(<Block<InArrayBuffer<Sqrt>, NoKeys> as HasTimeBounds>::WORST, Complexity::N_LOG_SQUARED);
+        // a constant size leaves the block merges rotating, a square root merges
+        // linearly out of place too, and a linear size carved from the array
+        // costs its square to carve and a search per carved element when sorted
+        assert_eq!(<Block<InArrayBuffer<Fixed<512>>, InArrayKeys> as HasTimeBounds>::WORST, Complexity::N_LOG_SQUARED);
+        assert_eq!(<Block<ExternalBuffer<Sqrt>, InArrayKeys> as HasTimeBounds>::WORST, Complexity::N_LOG_N);
+        assert_eq!(<Block<ExternalBuffer<Sqrt>, InArrayKeys> as HasSpace>::SPACE, Complexity::SQRT_N);
+        assert_eq!(<Block<InArrayBuffer<Half>, InArrayKeys> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
+        assert_eq!(<Block<InArrayBuffer<Half>, InArrayKeys> as HasTimeBounds>::BEST, Complexity::N_LOG_N);
         // a buffer that grows with the array is not in place, and nor is a rotation
         // that copies a side out
         assert!(!<Block<FullBuffer, NoKeys> as HasSpace>::SPACE.is_in_place());
-        assert!(!<BlockMergeSort<InArrayBuffer, InArrayKeys, AuxiliaryRotation> as HasSpace>::SPACE.is_in_place());
-        assert!(<BlockMergeSort<InArrayBuffer, InArrayKeys, TrinityRotation> as HasSpace>::SPACE.is_in_place());
+        assert!(!<BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation> as HasSpace>::SPACE.is_in_place());
+        assert!(<BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation> as HasSpace>::SPACE.is_in_place());
     }
 
     // The role reaches the inherent sort.
@@ -489,7 +518,7 @@ mod tests {
     fn the_direct_sort_role_sorts() {
         use array_vis_bench_traits::DirectSort;
         let mut arr: Vec<usize> = (0..100).rev().collect();
-        <Block<InArrayBuffer, InArrayKeys> as DirectSort>::sort(&mut arr, &mut NoOpLogger);
+        <Block<InArrayBuffer<Sqrt>, InArrayKeys> as DirectSort>::sort(&mut arr, &mut NoOpLogger);
         assert_eq!(arr, (0..100).collect::<Vec<_>>());
     }
 }
