@@ -85,6 +85,12 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
    stays in the monorepo. Keep implementations, program and a
    consumer in one link unit so the inlining story holds.
 
+10. Instruction counts for the code generation gate. Not started. Count the
+    instructions of the three `compare_sorts` pairs and one entry per kind
+    under callgrind, pin them exactly, and fail a pair past two percent, so
+    the zero cost claim rests on a deterministic number beside the timing.
+    See [implementation_plans/instruction_counts.md](implementation_plans/instruction_counts.md).
+
 ## Concept cleanups, 2026-10-20 review
 
 Seven more places where one fact is stated twice, each with a plan. The
