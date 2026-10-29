@@ -70,7 +70,7 @@ impl<B: Auxiliary, K: Keys> BlockMergeSort<B, K> {
         // The keys come first in the carved region and the buffer behind them. A
         // block of `isqrt(n)` elements gives `n / isqrt(n)` blocks to tag.
         let (want_keys, want_buffer) = (K::key_count(n / n.isqrt() + 2), B::internal_size(n));
-        let found = K::extract(arr, 0, n, want_keys + want_buffer, log);
+        let found = K::extract::<ReversalRotation, T, U>(arr, 0, n, want_keys + want_buffer, &mut [], log);
         let (keys, buffer) = settle(found, want_keys, want_buffer, log);
         if keys > 0 { log.hold_region(arr, 0, keys, RegionKind::Keys); }
         if buffer > 0 { log.hold_region(arr, keys, buffer, RegionKind::Buffer); }

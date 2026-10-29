@@ -10,9 +10,10 @@
 //! distinct elements, `O(1)` space. No keys is the shape that never rolls a
 //! block, so it has nothing to tag. `extract_distinct` and `sort_region` are the
 //! shared mechanics, public because an in array buffer is carved the same way.
+//! Extraction moves its keys by rotations, of whichever `Rotation` the caller runs.
 
-use crate::reverse;
 use crate::Complexity;
+use crate::Rotation;
 use sort_logger::SortLogger;
 
 pub trait Keys {
@@ -34,15 +35,17 @@ pub trait Keys {
     /// the rest keeping their order, and return how many were found. The first
     /// occurrence of each value is the one taken, so an element that stays is
     /// never ahead of an equal one that left. An in array buffer is carved by the
-    /// same call, which is why the default is here and not in a backing.
-    fn extract<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    /// same call, which is why the default is here and not in a backing. `scratch`
+    /// is the rotation's, `R::scratch_size` cells or more.
+    fn extract<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         lo: usize,
         hi: usize,
         want: usize,
+        scratch: &mut [T],
         log: &mut U,
     ) -> usize {
-        extract_distinct(arr, lo, hi, want, log)
+        extract_distinct::<R, T, U>(arr, lo, hi, want, scratch, log)
     }
 
     /// Tag the block starting at `block` with the key at `key`: swap the key with
@@ -73,19 +76,17 @@ pub trait Keys {
     );
 }
 
-/// Left rotate `arr[lo..hi]` so that `arr[mid..hi]` comes first. Three
-/// reversals of sub slices of one array, every swap logged.
-fn rotate_region<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+/// Left rotate `arr[lo..hi]` so that `arr[mid..hi]` comes first, by `R`.
+fn rotate_region<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
     mid: usize,
     hi: usize,
+    scratch: &mut [T],
     log: &mut U,
 ) {
     if lo == mid || mid == hi { return; }
-    reverse(&mut arr[lo..mid], log);
-    reverse(&mut arr[mid..hi], log);
-    reverse(&mut arr[lo..hi], log);
+    R::rotate(&mut arr[lo..hi], mid - lo, scratch, log);
 }
 
 /// First index of `arr[a..b]`, sorted, whose element is not below `arr[at]`.
@@ -109,11 +110,12 @@ pub fn first_not_below<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 /// return how many were found. The elements left behind keep their order. The
 /// found keys form one sorted block that slides along behind the scan, so each
 /// new key costs a binary search and two rotations: `O(n + want^2)` moves.
-pub fn extract_distinct<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+pub fn extract_distinct<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
     hi: usize,
     want: usize,
+    scratch: &mut [T],
     log: &mut U,
 ) -> usize {
     if want == 0 || lo >= hi { return 0; }
@@ -126,13 +128,13 @@ pub fn extract_distinct<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
             continue;
         }
         let moved = rank + (i - first - found);
-        rotate_region(arr, first, first + found, i, log);
+        rotate_region::<R, T, U>(arr, first, first + found, i, scratch, log);
         first = i - found;
-        rotate_region(arr, moved, i, i + 1, log);
+        rotate_region::<R, T, U>(arr, moved, i, i + 1, scratch, log);
         found += 1;
         i += 1;
     }
-    rotate_region(arr, lo, first, first + found, log);
+    rotate_region::<R, T, U>(arr, lo, first, first + found, scratch, log);
     found
 }
 
@@ -154,6 +156,7 @@ pub fn sort_region<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::reverse;
     use core::cmp::Ordering;
     use sort_logger::NoOpLogger;
 
@@ -180,6 +183,34 @@ mod tests {
 
     fn keys_of(arr: &[Item]) -> Vec<u32> { arr.iter().map(|x| x.key).collect() }
 
+    // Two rotations to extract under: three reversals, and one that goes through
+    // its scratch, so an extraction that does not hand the scratch on panics.
+    struct Reversal;
+    impl Rotation for Reversal {
+        const NAME: &'static str = "reversal";
+        fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], split_ind: usize, _scratch: &mut [T], log: &mut U) {
+            reverse(&mut arr[..split_ind], log);
+            reverse(&mut arr[split_ind..], log);
+            reverse(arr, log);
+        }
+    }
+    struct ThroughScratch;
+    impl Rotation for ThroughScratch {
+        const NAME: &'static str = "through scratch";
+        fn scratch_size(n: usize) -> usize { n }
+        fn rotate<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], split_ind: usize, scratch: &mut [T], log: &mut U) {
+            let n = arr.len();
+            log.copy_range(arr, 0, scratch, 0, n);
+            log.copy_range(scratch, split_ind, arr, 0, n - split_ind);
+            log.copy_range(scratch, 0, arr, n - split_ind, split_ind);
+        }
+    }
+
+    fn extract<R: Rotation>(arr: &mut [Item], lo: usize, hi: usize, want: usize) -> usize {
+        let mut scratch = vec![Item { key: 0, tag: 0 }; R::scratch_size(arr.len())];
+        extract_distinct::<R, _, _>(arr, lo, hi, want, &mut scratch, &mut NoOpLogger)
+    }
+
     // The expected outcome, spelled out: the first occurrence of each of the
     // first `want` distinct values, sorted, then everything else in order.
     fn reference(arr: &[Item], want: usize) -> Vec<(u32, u32)> {
@@ -195,7 +226,7 @@ mod tests {
     #[test]
     fn distinct_values_are_gathered_sorted_at_the_front() {
         let mut arr = items(&[5, 3, 9, 1, 7, 2]);
-        let found = extract_distinct(&mut arr, 0, 6, 3, &mut NoOpLogger);
+        let found = extract::<Reversal>(&mut arr, 0, 6, 3);
         assert_eq!(found, 3);
         assert_eq!(keys_of(&arr), [3, 5, 9, 1, 7, 2]);
     }
@@ -203,7 +234,7 @@ mod tests {
     #[test]
     fn a_repeated_value_is_taken_once_at_its_first_occurrence() {
         let mut arr = items(&[2, 2, 1, 3, 1, 2, 4]);
-        let found = extract_distinct(&mut arr, 0, 7, 3, &mut NoOpLogger);
+        let found = extract::<Reversal>(&mut arr, 0, 7, 3);
         assert_eq!(found, 3);
         let got: Vec<(u32, u32)> = arr.iter().map(|x| (x.key, x.tag)).collect();
         assert_eq!(got, [(1, 2), (2, 0), (3, 3), (2, 1), (1, 4), (2, 5), (4, 6)]);
@@ -212,14 +243,13 @@ mod tests {
     #[test]
     fn too_few_distinct_values_take_what_there_is() {
         let mut arr = items(&[7, 7, 7, 7]);
-        assert_eq!(extract_distinct(&mut arr, 0, 4, 3, &mut NoOpLogger), 1);
+        assert_eq!(extract::<Reversal>(&mut arr, 0, 4, 3), 1);
         assert_eq!(arr.iter().map(|x| x.tag).collect::<Vec<_>>(), [0, 1, 2, 3]);
-        assert_eq!(extract_distinct(&mut arr, 0, 4, 0, &mut NoOpLogger), 0);
-        assert_eq!(extract_distinct(&mut arr, 2, 2, 3, &mut NoOpLogger), 0);
+        assert_eq!(extract::<Reversal>(&mut arr, 0, 4, 0), 0);
+        assert_eq!(extract::<Reversal>(&mut arr, 2, 2, 3), 0);
     }
 
-    #[test]
-    fn extraction_matches_the_reference_on_random_arrays() {
+    fn matches_the_reference_on_random_arrays<R: Rotation>() {
         let mut state: u64 = 0xA11CE;
         let mut next = |m: usize| {
             state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
@@ -232,15 +262,21 @@ mod tests {
             let arr0 = items(&(0..n).map(|_| next(values) as u32).collect::<Vec<_>>());
             let lo = next(3).min(n - 1);
             let mut arr = arr0.clone();
-            let found = extract_distinct(&mut arr, lo, n, want, &mut NoOpLogger);
+            let found = extract::<R>(&mut arr, lo, n, want);
             let want_ref = reference(&arr0[lo..], want);
             assert_eq!(arr[..lo].iter().map(|x| x.tag).collect::<Vec<_>>(), (0..lo as u32).collect::<Vec<_>>());
             let got: Vec<(u32, u32)> = arr[lo..].iter().map(|x| (x.key, x.tag)).collect();
-            assert_eq!(got, want_ref, "round {round}: n={n} values={values} want={want} lo={lo}");
+            assert_eq!(got, want_ref, "{}, round {round}: n={n} values={values} want={want} lo={lo}", R::NAME);
             let distinct = want_ref.iter().take(found).map(|p| p.0).collect::<std::collections::BTreeSet<_>>();
             assert_eq!(distinct.len(), found, "round {round}: the found keys repeat a value");
         }
     }
+
+    #[test]
+    fn extraction_matches_the_reference_on_random_arrays() { matches_the_reference_on_random_arrays::<Reversal>(); }
+
+    #[test]
+    fn extraction_hands_the_rotation_its_scratch() { matches_the_reference_on_random_arrays::<ThroughScratch>(); }
 
     #[test]
     fn sort_region_is_stable_and_stays_inside_its_range() {
