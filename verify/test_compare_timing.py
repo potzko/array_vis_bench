@@ -9,6 +9,9 @@ class ParseArchiveTest(unittest.TestCase):
     def test_the_setup_header_and_blank_lines_are_skipped(self) -> None:
         self.assertEqual(parse_archive("# n=1000 k=15\na\t10\n\nb\t20\n"), {"a": 10, "b": 20})
 
+    def test_the_spread_and_outlier_columns_are_ignored(self) -> None:
+        self.assertEqual(parse_archive("# n=1000 k=15 input=primary\na\t10\t3\t1\n"), {"a": 10})
+
 
 class RegressionsTest(unittest.TestCase):
     def test_identical_archives_pass(self) -> None:

@@ -16,6 +16,31 @@ use std::collections::BTreeMap;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::time::Duration;
 
+/// One entry's timing over its rounds: the median, the inter quartile range
+/// as the spread, and how many rounds fell outside the Tukey fences, one and
+/// a half ranges past the quartiles, as the outliers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Timing {
+    pub name: &'static str,
+    pub median: Duration,
+    pub iqr: Duration,
+    pub outliers: usize,
+}
+
+/// The statistics of one entry's round times. The quartiles are the values at
+/// a quarter and three quarters of the sorted rounds, so three rounds give the
+/// whole spread as the range and never an outlier.
+pub fn timing(name: &'static str, runs: &mut [Duration]) -> Timing {
+    runs.sort_unstable();
+    let len = runs.len();
+    let (q1, median, q3) = (runs[len / 4], runs[len / 2], runs[(3 * len / 4).min(len - 1)]);
+    let iqr = q3 - q1;
+    let fence = iqr + iqr / 2;
+    let (low, high) = (q1.saturating_sub(fence), q3 + fence);
+    let outliers = runs.iter().filter(|&&r| r < low || r > high).count();
+    Timing { name, median, iqr, outliers }
+}
+
 /// The outcome of running one consumer over a set of algorithms.
 #[derive(Debug, Default)]
 pub struct MainReport {
@@ -24,9 +49,9 @@ pub struct MainReport {
     pub ok: usize,
     /// Names of the algorithms that failed (panicked, or produced no output).
     pub failures: Vec<String>,
-    /// The median run time of each algorithm a timing consumer ran, in the
-    /// order it ran them. Empty for a consumer that does not time.
-    pub timings: Vec<(&'static str, Duration)>,
+    /// Each algorithm a timing consumer ran, in the order it ran them, with
+    /// the statistics of its rounds. Empty for a consumer that does not time.
+    pub timings: Vec<Timing>,
     /// The input size and run count the timings were taken at; `None` for a
     /// consumer that does not time.
     pub setup: Option<Benchmark>,
@@ -37,14 +62,16 @@ impl MainReport {
         self.failures.is_empty()
     }
 
-    /// The timings as a TSV archive: a `# n=N k=K input=I` header naming the setup,
-    /// then one `name<TAB>median nanoseconds` line per timed entry, sorted by
+    /// The timings as a TSV archive: a `# n=N k=K input=I` header naming the
+    /// setup, then one line per timed entry, the name, the median and the
+    /// inter quartile range in nanoseconds and the outlier count, sorted by
     /// name so two archives diff cleanly.
     pub fn timings_tsv(&self) -> String {
         let header = self.setup.map(|b| format!("# n={} k={} input={}\n", b.n, b.k, b.input_label())).unwrap_or_default();
-        let mut rows: Vec<_> = self.timings.iter().map(|(name, d)| (*name, d.as_nanos())).collect();
-        rows.sort();
-        header + &rows.iter().map(|(name, ns)| format!("{name}\t{ns}\n")).collect::<String>()
+        let mut rows: Vec<&Timing> = self.timings.iter().collect();
+        rows.sort_by_key(|t| t.name);
+        let lines = rows.iter().map(|t| format!("{}\t{}\t{}\t{}\n", t.name, t.median.as_nanos(), t.iqr.as_nanos(), t.outliers));
+        header + &lines.collect::<String>()
     }
 }
 
@@ -223,25 +250,27 @@ impl Benchmark {
 }
 
 // One table per category, categories in name order, each table fastest first
-// with the name column as wide as its longest name.
-fn tables(timed: &[(Category, &str, Duration)]) -> String {
-    let grouped = BTreeMap::<&str, Vec<_>>::new();
-    let by_category = timed.iter().fold(grouped, |mut acc, &(category, name, median)| {
-        acc.entry(category.as_str()).or_default().push((name, median));
+// with the name column as wide as its longest name: the median, the inter
+// quartile range and the outlier count of each entry's rounds.
+fn tables(timed: &[(Category, Timing)]) -> String {
+    let grouped = BTreeMap::<&str, Vec<Timing>>::new();
+    let by_category = timed.iter().fold(grouped, |mut acc, &(category, t)| {
+        acc.entry(category.as_str()).or_default().push(t);
         acc
     });
     by_category
         .into_iter()
         .map(|(category, mut rows)| {
-            rows.sort_by_key(|&(_, median)| median);
-            let width = rows.iter().map(|(name, _)| name.len()).fold("algorithm".len(), usize::max);
+            rows.sort_by_key(|t| t.median);
+            let width = rows.iter().map(|t| t.name.len()).fold("algorithm".len(), usize::max);
             let header = [
                 format!("=== {category} ({} variants) ===", rows.len()),
-                format!("{:<width$}  {:>12}", "algorithm", "median"),
-                format!("{:-<width$}  {:->12}", "", ""),
+                format!("{:<width$}  {:>12}  {:>12}  {:>8}", "algorithm", "median", "iqr", "outliers"),
+                format!("{:-<width$}  {:->12}  {:->12}  {:->8}", "", "", "", ""),
             ];
-            let lines =
-                rows.iter().map(|(name, median)| format!("{name:<width$}  {median:>12.2?}"));
+            let lines = rows.iter().map(|t| {
+                format!("{:<width$}  {:>12.2?}  {:>12.2?}  {:>8}", t.name, t.median, t.iqr, t.outliers)
+            });
             header.into_iter().chain(lines).collect::<Vec<_>>().join("\n")
         })
         .collect::<Vec<_>>()
@@ -282,24 +311,24 @@ impl Main for Benchmark {
                 }
             }
         }
-        let median = |runs: &mut Vec<Duration>| { runs.sort_unstable(); runs[runs.len() / 2] };
-        let results: Vec<_> = runnable.iter().zip(durations).map(|(&e, runs)| (e, runs.map(|mut r| median(&mut r)))).collect();
-        let timed: Vec<_> =
-            results.iter().filter_map(|&(e, median)| median.map(|m| (e, m))).collect();
-        let failed = results.iter().filter(|(_, median)| median.is_none());
+        let results: Vec<_> =
+            runnable.iter().zip(durations).map(|(&e, runs)| (e, runs.map(|mut r| timing(e.name, &mut r)))).collect();
+        let timed: Vec<(&AlgorithmEntry, Timing)> =
+            results.iter().filter_map(|&(e, t)| t.map(|t| (e, t))).collect();
+        let failed = results.iter().filter(|(_, t)| t.is_none());
         let r = MainReport {
             consumer: self.name(),
             ran: results.len(),
             ok: timed.len(),
             failures: failed.map(|(e, _)| e.name.to_string()).collect(),
-            timings: timed.iter().map(|&(e, median)| (e.name, median)).collect(),
+            timings: timed.iter().map(|&(_, t)| t).collect(),
             setup: Some(*self),
         };
         println!(
             "=== benchmark: n={}, k={k}, input {}, {} timed, {} skipped (cap below n or no such input) ===",
             self.n, self.input_label(), r.ok, skipped.len()
         );
-        let rows: Vec<_> = timed.iter().map(|&(e, median)| (e.category, e.name, median)).collect();
+        let rows: Vec<_> = timed.iter().map(|&(e, t)| (e.category, t)).collect();
         println!("\n{}", tables(&rows));
         if !r.failures.is_empty() {
             println!("{} panicked: {}", r.failures.len(), r.failures.join(", "));
@@ -362,11 +391,26 @@ mod tests {
     #[test]
     fn timings_tsv_names_the_setup_then_each_entry_by_name_in_nanoseconds() {
         let report = MainReport {
-            timings: vec![("zeta", Duration::from_micros(3)), ("alpha", Duration::from_nanos(1500))],
+            timings: vec![flat("zeta", Duration::from_micros(3)), flat("alpha", Duration::from_nanos(1500))],
             setup: Some(Benchmark { n: 1000, k: 15, input: None }),
             ..Default::default()
         };
-        assert_eq!(report.timings_tsv(), "# n=1000 k=15 input=primary\nalpha\t1500\nzeta\t3000\n");
+        assert_eq!(report.timings_tsv(), "# n=1000 k=15 input=primary\nalpha\t1500\t0\t0\nzeta\t3000\t0\t0\n");
+    }
+
+    // A timing with no spread, as a table or archive test wants.
+    fn flat(name: &'static str, median: Duration) -> Timing {
+        Timing { name, median, iqr: Duration::ZERO, outliers: 0 }
+    }
+
+    #[test]
+    fn the_statistics_are_the_median_the_quartile_range_and_the_tukey_outliers() {
+        let mut runs: Vec<Duration> = [4, 100, 2, 1, 3].map(ms).to_vec();
+        let t = timing("x", &mut runs);
+        assert_eq!((t.median, t.iqr, t.outliers), (ms(3), ms(2), 1));
+        let mut three: Vec<Duration> = [7, 5, 9].map(ms).to_vec();
+        let t = timing("y", &mut three);
+        assert_eq!((t.median, t.iqr, t.outliers), (ms(7), ms(4), 0));
     }
 
     #[test]
@@ -398,21 +442,22 @@ mod tests {
 
     #[test]
     fn a_table_lists_the_fastest_first_with_right_aligned_medians() {
-        let timed = [(Category::Sort, "slow", ms(5)), (Category::Sort, "fast", ms(1))];
+        let timed = [(Category::Sort, flat("slow", ms(5))), (Category::Sort, flat("fast", ms(1)))];
         let table = tables(&timed);
         let lines: Vec<&str> = table.lines().collect();
         assert_eq!(lines[0], "=== sort (2 variants) ===");
-        assert!(lines[3].starts_with("fast") && lines[3].ends_with("1.00ms"), "{table}");
-        assert!(lines[4].starts_with("slow") && lines[4].ends_with("5.00ms"), "{table}");
+        assert!(lines[3].starts_with("fast") && lines[3].contains("1.00ms"), "{table}");
+        assert!(lines[4].starts_with("slow") && lines[4].contains("5.00ms"), "{table}");
+        assert!(lines[1].ends_with("iqr  outliers") && lines[4].ends_with("0"), "{table}");
         assert_eq!(lines[3].len(), lines[4].len(), "the median column lines up");
     }
 
     #[test]
     fn there_is_one_table_per_category_that_timed_something() {
         let timed = [
-            (Category::Sort, "a sort", ms(2)),
-            (Category::Rotation, "a rotation", ms(1)),
-            (Category::Sort, "another sort", ms(3)),
+            (Category::Sort, flat("a sort", ms(2))),
+            (Category::Rotation, flat("a rotation", ms(1))),
+            (Category::Sort, flat("another sort", ms(3))),
         ];
         let table = tables(&timed);
         let headers: Vec<&str> = table.lines().filter(|l| l.starts_with("===")).collect();
@@ -432,6 +477,6 @@ mod tests {
         assert!(runs > 3 && (runs - 1) % 3 == 0, "a warm up then three rounds of one batch, got {runs}");
         assert_eq!(SIZE.load(Ordering::SeqCst), 1000);
         assert_eq!(report.timings.len(), 1);
-        assert_eq!(report.timings[0].0, "fits");
+        assert_eq!(report.timings[0].name, "fits");
     }
 }

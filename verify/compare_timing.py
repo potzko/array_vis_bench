@@ -28,9 +28,11 @@ def read_archive(path: Path) -> dict[str, int]:
     return parse_archive(path.read_text())
 
 
+# The first two columns, the name and the median; a newer archive adds the
+# spread and the outlier count after them.
 def parse_archive(text: str) -> dict[str, int]:
     rows = (line.split("\t") for line in text.splitlines() if line.strip() and not line.startswith("#"))
-    return {name: int(ns) for name, ns in rows}
+    return {row[0]: int(row[1]) for row in rows}
 
 
 def regressions(
