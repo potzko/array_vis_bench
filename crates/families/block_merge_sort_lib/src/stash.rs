@@ -4,10 +4,10 @@
 //! array by swapping, so the buffer's values end up in the array's scratch cells
 //! and come back when the merge is done. `Stash::External` copies into an aux
 //! array, and its leftovers are stale copies that nobody reads. `Stash::None` has
-//! nowhere to park, the run stays in place and the merge is the rotation merge.
+//! nowhere to park, the run stays in place and the merge is the rotation merge,
+//! over the rotation the sort was given.
 
 use array_vis_bench_traits::role::Rotation;
-use rotation_reversal::ReversalRotation;
 use scratchspace_lib::bufferless_merge;
 use sort_logger::SortLogger;
 
@@ -40,16 +40,18 @@ impl<T: Ord + Copy> Stash<'_, T> {
     /// Merge the parked run of `a_len` elements, whose cells start at `a_start`,
     /// with the `b_len` elements behind those cells. The output fills `a_len +
     /// b_len` cells from `a_start`, an equal key of the run ahead of one of B.
-    pub fn merge<U: ?Sized + SortLogger<T>>(
+    /// `scratch` is `R`'s, for the rotation merge of `Stash::None`.
+    pub fn merge<R: Rotation, U: ?Sized + SortLogger<T>>(
         &mut self,
         arr: &mut [T],
         a_start: usize,
         a_len: usize,
         b_len: usize,
+        scratch: &mut [T],
         log: &mut U,
     ) {
         match self {
-            Stash::None => bufferless_merge::<ReversalRotation, T, U>(arr, a_start, a_start + a_len, a_start + a_len + b_len, &mut [], log),
+            Stash::None => bufferless_merge::<R, T, U>(arr, a_start, a_start + a_len, a_start + a_len + b_len, scratch, log),
             Stash::Internal { at, .. } => swap_merge(arr, a_start, a_len, b_len, *at, log),
             Stash::External(ext) => copy_merge(arr, ext, a_start, a_len, b_len, log),
         }
@@ -58,18 +60,19 @@ impl<T: Ord + Copy> Stash<'_, T> {
     /// Move the `rem` elements at `arr[from..from + rem]` behind the `len` cells
     /// of a block that follow them, `slots` being the first of those. A parked
     /// block's cells are scratch, so a block swap does it, and a block still in
-    /// place is rotated past them.
-    pub fn pass_behind<U: ?Sized + SortLogger<T>>(
+    /// place is rotated past them by `R`.
+    pub fn pass_behind<R: Rotation, U: ?Sized + SortLogger<T>>(
         &mut self,
         arr: &mut [T],
         from: usize,
         slots: usize,
         len: usize,
         rem: usize,
+        scratch: &mut [T],
         log: &mut U,
     ) {
         match self {
-            Stash::None => ReversalRotation::rotate(&mut arr[from..slots + len], rem, &mut [], log),
+            Stash::None => R::rotate(&mut arr[from..slots + len], rem, scratch, log),
             _ => log.block_swap(arr, from, slots + len - rem, rem),
         }
     }
@@ -132,6 +135,7 @@ fn copy_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 mod tests {
     use super::*;
     use crate::test_util::{junk, merged, pairs, sorted_run, Item, Rng};
+    use rotation_reversal::ReversalRotation;
     use sort_logger::NoOpLogger;
 
     #[test]
@@ -149,7 +153,7 @@ mod tests {
             let mut arr: Vec<Item> = junk(cap).into_iter().chain(a.iter().copied()).chain(b.iter().copied()).collect();
             let mut stash = Stash::Internal { at: 0, cap };
             stash.park(&mut arr, cap, a_len, &mut NoOpLogger);
-            stash.merge(&mut arr, cap, a_len, b_len, &mut NoOpLogger);
+            stash.merge::<ReversalRotation, _>(&mut arr, cap, a_len, b_len, &mut [], &mut NoOpLogger);
             assert_eq!(pairs(&arr[cap..]), want, "internal, round {round}");
             let mut buffer: Vec<u32> = arr[..cap].iter().map(|x| x.tag).collect();
             buffer.sort();
@@ -160,14 +164,14 @@ mod tests {
             let mut ext = junk(cap);
             let mut stash = Stash::External(&mut ext);
             stash.park(&mut arr, 0, a_len, &mut NoOpLogger);
-            stash.merge(&mut arr, 0, a_len, b_len, &mut NoOpLogger);
+            stash.merge::<ReversalRotation, _>(&mut arr, 0, a_len, b_len, &mut [], &mut NoOpLogger);
             assert_eq!(pairs(&arr), want, "external, round {round}");
 
             // none: A stays in place
             let mut arr: Vec<Item> = a.iter().chain(&b).copied().collect();
             let mut stash = Stash::None;
             stash.park(&mut arr, 0, a_len, &mut NoOpLogger);
-            stash.merge(&mut arr, 0, a_len, b_len, &mut NoOpLogger);
+            stash.merge::<ReversalRotation, _>(&mut arr, 0, a_len, b_len, &mut [], &mut NoOpLogger);
             assert_eq!(pairs(&arr), want, "none, round {round}");
         }
     }
@@ -193,7 +197,7 @@ mod tests {
             arr.extend(junk(4));
             let before = tags(&arr);
             stash.park(&mut arr, prefix + rem, len, &mut NoOpLogger);
-            stash.pass_behind(&mut arr, prefix, prefix + rem, len, rem, &mut NoOpLogger);
+            stash.pass_behind::<ReversalRotation, _>(&mut arr, prefix, prefix + rem, len, rem, &mut [], &mut NoOpLogger);
             let after = tags(&arr);
             assert_eq!(&after[prefix + len..prefix + len + rem], &before[prefix..prefix + rem], "the elements are not behind");
             if !parked {

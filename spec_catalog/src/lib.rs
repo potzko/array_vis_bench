@@ -126,7 +126,7 @@ mod tests {
         assert_eq!(COUNT_QUICK, 408, "quick family (2 × [5×5 single + 26 dual] partitions × 4 small)");
         assert_eq!(COUNT_CYCLE, 1, "cycle family");
         assert_eq!(COUNT_TREE, 2, "tree family (avl + naive)");
-        assert_eq!(COUNT_BLOCK_MERGE, 6, "block merge family (3 buffers x 2 key shapes)");
+        assert_eq!(COUNT_BLOCK_MERGE, 66, "block merge family (3 buffers x 2 key shapes x 11 rotations)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
         assert_eq!(COUNT_ROD, 12, "rod family (6 branching x 2 merge)");
@@ -222,7 +222,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 1588, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 1648, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -718,6 +718,8 @@ mod tests {
     mod block_merge {
         use super::*;
         use block_merge_sort_lib::BlockMergeSort;
+        use rotation_auxiliary::AuxiliaryRotation;
+        use rotation_reversal::ReversalRotation;
         use scratchspace_lib::{FixedBuffer, InArrayBuffer, InArrayKeys, NoBuffer, NoKeys};
 
         fn entries() -> Vec<&'static AlgorithmEntry> {
@@ -729,10 +731,10 @@ mod tests {
         }
 
         #[test]
-        fn emits_three_buffers_by_two_key_shapes_that_run() {
+        fn emits_three_buffers_by_two_key_shapes_by_every_rotation_that_run() {
             let es = entries();
             assert_eq!(es.len(), COUNT_BLOCK_MERGE, "count drifted");
-            assert_eq!(COUNT_BLOCK_MERGE, 6);
+            assert_eq!(COUNT_BLOCK_MERGE, 66);
             let cfg = RunConfig { size: 64, seed: 1 };
             for e in &es {
                 assert_eq!(e.category, Category::Sort);
@@ -744,51 +746,59 @@ mod tests {
 
         #[test]
         fn wiki_sort_and_grail_sort_are_among_the_entries() {
-            let mut names: Vec<&str> = entries().iter().map(|e| e.name).collect();
+            let mut names: Vec<&str> =
+                entries().iter().map(|e| e.name).filter(|name| name.ends_with(", rotation: reversal>")).collect();
             names.sort();
             assert_eq!(
                 names,
                 [
-                    "block sort<buffer: fixed 512, keys: in array>",
-                    "block sort<buffer: fixed 512, keys: none>",
-                    "block sort<buffer: in array, keys: in array>",
-                    "block sort<buffer: in array, keys: none>",
-                    "block sort<buffer: none, keys: in array>",
-                    "block sort<buffer: none, keys: none>",
+                    "block sort<buffer: fixed 512, keys: in array, rotation: reversal>",
+                    "block sort<buffer: fixed 512, keys: none, rotation: reversal>",
+                    "block sort<buffer: in array, keys: in array, rotation: reversal>",
+                    "block sort<buffer: in array, keys: none, rotation: reversal>",
+                    "block sort<buffer: none, keys: in array, rotation: reversal>",
+                    "block sort<buffer: none, keys: none, rotation: reversal>",
                 ]
             );
+            let wiki = entries().iter().filter(|e| e.name.starts_with("block sort<buffer: in array, keys: in array,")).count();
+            assert_eq!(wiki, 11, "WikiSort under every rotation");
         }
 
         #[test]
         fn inherited_complexity_matches_the_concrete_types() {
-            let wiki = find("block sort<buffer: in array, keys: in array>");
-            type Wiki = BlockMergeSort<InArrayBuffer, InArrayKeys>;
+            let wiki = find("block sort<buffer: in array, keys: in array, rotation: reversal>");
+            type Wiki = BlockMergeSort<InArrayBuffer, InArrayKeys, ReversalRotation>;
             assert_eq!(wiki.worst, <Wiki as HasTimeBounds>::WORST);
             assert_eq!(wiki.best, <Wiki as HasTimeBounds>::BEST);
             assert_eq!(wiki.space, <Wiki as HasSpace>::SPACE);
             assert_eq!(wiki.stable, <Wiki as HasStability>::STABLE);
             assert!(wiki.adaptive);
-            let grail = find("block sort<buffer: fixed 512, keys: in array>");
-            assert_eq!(grail.worst, <BlockMergeSort<FixedBuffer, InArrayKeys> as HasTimeBounds>::WORST);
-            assert_eq!(grail.space, <BlockMergeSort<FixedBuffer, InArrayKeys> as HasSpace>::SPACE);
-            let bare = find("block sort<buffer: none, keys: none>");
-            assert_eq!(bare.worst, <BlockMergeSort<NoBuffer, NoKeys> as HasTimeBounds>::WORST);
+            let grail = find("block sort<buffer: fixed 512, keys: in array, rotation: reversal>");
+            type Grail = BlockMergeSort<FixedBuffer, InArrayKeys, ReversalRotation>;
+            assert_eq!(grail.worst, <Grail as HasTimeBounds>::WORST);
+            assert_eq!(grail.space, <Grail as HasSpace>::SPACE);
+            let bare = find("block sort<buffer: none, keys: none, rotation: reversal>");
+            assert_eq!(bare.worst, <BlockMergeSort<NoBuffer, NoKeys, ReversalRotation> as HasTimeBounds>::WORST);
+            // a rotation that copies a side out takes the sort out of place
+            let copying = find("block sort<buffer: in array, keys: in array, rotation: auxiliary>");
+            assert_eq!(copying.space, <BlockMergeSort<InArrayBuffer, InArrayKeys, AuxiliaryRotation> as HasSpace>::SPACE);
+            assert!(!copying.space.is_in_place());
         }
 
         #[test]
-        fn registered_under_merge_sorts_with_a_buffer_and_a_keys_facet() {
+        fn registered_under_merge_sorts_with_a_buffer_a_keys_and_a_rotation_facet() {
             let v = navigation::variants();
             let one = v.iter().find(|v| v.name.starts_with("block sort<")).expect("registered");
             assert_eq!(one.category, vec!["sorts", "merge sorts", "block"], "got {:?}", one.category);
             let roles: Vec<&str> = one.axes.iter().map(|a| a.role.as_str()).collect();
-            assert!(roles.contains(&"BlockBuffer") && roles.contains(&"Keys"), "{roles:?}");
+            assert!(["BlockBuffer", "Keys", "Rotation"].iter().all(|role| roles.contains(role)), "{roles:?}");
         }
 
         /// A run through the logger the visualiser drives holds each region and releases it.
         #[test]
         fn the_wiki_sort_logs_its_regions_for_the_visualiser() {
             use sort_logger::{RegionKind, SortLog, SortLogger, VisualizerLogger};
-            let e = find("block sort<buffer: in array, keys: in array>");
+            let e = find("block sort<buffer: in array, keys: in array, rotation: reversal>");
             let mut logger =
                 VisualizerLogger::<usize> { type_ghost: std::marker::PhantomData, log: Vec::new() };
             let cfg = RunConfig { size: 400, seed: 1 };

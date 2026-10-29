@@ -3,7 +3,7 @@
 name = "block_merge_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Block merge sort, `BlockMergeSort<Buffer, Keys>`: a stable merge sort that rolls blocks of one run through the other, merging with a small buffer and tagging the blocks with a key region. The in array buffer with in array keys is WikiSort, a fixed external buffer with in array keys is GrailSort with a buffer."
+description = "Block merge sort, `BlockMergeSort<Buffer, Keys, Rotation>`: a stable merge sort that rolls blocks of one run through the other, merging with a small buffer, tagging the blocks with a key region and rotating with any rotation. The in array buffer with in array keys is WikiSort, a fixed external buffer with in array keys is GrailSort with a buffer."
 
 [lib]
 name = "block_merge_sort_lib"
@@ -13,7 +13,13 @@ path = "src/lib.rs"
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 sort_logger = { path = "../../../sort_logger" }
 scratchspace_lib = { path = "../../components/scratchspace_lib" }
+
+[dev-dependencies]
+# Three rotations for the module tests: reversal, one that needs scratch, and
+# one that allocates its own.
 rotation_reversal = { path = "../../rotations/rotation_reversal" }
+rotation_trinity = { path = "../../rotations/rotation_trinity" }
+rotation_auxiliary = { path = "../../rotations/rotation_auxiliary" }
 
 # Catalog fragment and query, owned by this crate and gathered by
 # `spec_catalog` through the dependency graph.
