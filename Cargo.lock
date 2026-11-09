@@ -847,6 +847,7 @@ dependencies = [
  "rotation_helix",
  "rotation_juggling",
  "rotation_piston",
+ "rotation_piston_opt",
  "rotation_reversal",
  "rotation_trinity",
  "scratchspace_lib",

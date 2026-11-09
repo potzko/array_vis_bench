@@ -13,4 +13,6 @@ where piston's three put one, and the range closes in from both ends onto the
 ring. A range whose smaller side, or whose difference of sides, fits a 256
 cell buffer is finished through it.
 
+Its catalog components are declared in `rotation_piston_opt.spec`.
+
 - `src`: the crate's source.

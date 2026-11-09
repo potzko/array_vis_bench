@@ -14,5 +14,6 @@ the slot of a rotation merge and the first class rotation entry.
 - `rotation_helix`: grail derived with alternating loops.
 - `rotation_juggling`: gcd cycles.
 - `rotation_piston`: successive block swaps.
+- `rotation_piston_opt`: piston with the middle of the range run as a ring.
 - `rotation_reversal`: triple reversal.
 - `rotation_trinity`: contrev plus bridge with an eight element scratch.
