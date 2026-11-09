@@ -184,16 +184,16 @@ mod tests {
         let inputs = [pseudo_random(n, 40), pseudo_random(n, 1 << 20), ascending.clone(), ascending.into_iter().rev().collect()];
         for mut arr in inputs {
             let (mut meta, mut logger) = (vec![0; L::words(n)], NoOpLogger);
-            let mut nodes = Nodes::<_, _, L>::over(&mut arr, &mut meta, &mut logger);
+            let mut nodes = Nodes::<_, _, L>::over(n, &mut meta, &mut logger);
             for i in 0..n {
-                nodes.attach(i, Avl::<SLACK>::LEAF_RANK);
+                nodes.attach(i, Avl::<SLACK>::LEAF_RANK, &arr[..]);
                 Avl::<SLACK>::inserted(&mut nodes, i);
                 assert_within_slack::<SLACK, _, L>(&nodes, nodes.root);
             }
             for k in 0..n {
                 let (least, parent) = nodes.unlink_min();
                 Avl::<SLACK>::removed(&mut nodes, parent);
-                nodes.place(least, k);
+                nodes.place(&mut arr, least, k);
                 assert_within_slack::<SLACK, _, L>(&nodes, nodes.root);
             }
             assert_eq!(nodes.root, nodes.nil);
@@ -249,9 +249,10 @@ mod tests {
     // the taller child one level down, the shorter `slack` levels lower than
     // that or empty, the taller side alternating with depth so that deletions
     // from the left meet both a light and a heavy side. Nodes are numbered in
-    // pre order and keyed in order, from 1. Returns the subtree root.
+    // pre order and keyed in order in `keys`, from 1. Returns the subtree root.
     fn hang_sparsest<const SLACK: usize, L: Layout>(
         nodes: &mut Nodes<usize, NoOpLogger, L>,
+        keys: &mut [usize],
         (height, depth, parent): (usize, usize, usize),
         (next_node, next_key): (&mut usize, &mut usize),
     ) -> usize {
@@ -260,10 +261,10 @@ mod tests {
         *next_node += 1;
         let (tall, short) = (height - 1, (height - 1).saturating_sub(SLACK));
         let (left_height, right_height) = if depth % 2 == 0 { (tall, short) } else { (short, tall) };
-        let left = hang_sparsest::<SLACK, L>(nodes, (left_height, depth + 1, i), (next_node, next_key));
-        nodes.set_key(i, *next_key);
+        let left = hang_sparsest::<SLACK, L>(nodes, keys, (left_height, depth + 1, i), (next_node, next_key));
+        keys[i] = *next_key;
         *next_key += 1;
-        let right = hang_sparsest::<SLACK, L>(nodes, (right_height, depth + 1, i), (next_node, next_key));
+        let right = hang_sparsest::<SLACK, L>(nodes, keys, (right_height, depth + 1, i), (next_node, next_key));
         for (field, to) in [(PARENT, parent), (LEFT, left), (RIGHT, right)] { nodes.set_link(i, field, to); }
         nodes.set_rank(i, height & Height::<L>::MASK);
         i
@@ -277,20 +278,20 @@ mod tests {
         let (n, extra) = (sparsest_size(SLACK, height), 40);
         let stride = (n + extra) / 50 + 1;
         let (mut arr, mut meta, mut logger) = (vec![0; n + extra], vec![0; L::words(n + extra)], NoOpLogger);
-        let mut nodes = Nodes::<_, _, L>::over(&mut arr, &mut meta, &mut logger);
+        let mut nodes = Nodes::<_, _, L>::over(n + extra, &mut meta, &mut logger);
         let nil = nodes.nil;
-        nodes.root = hang_sparsest::<SLACK, L>(&mut nodes, (height, 0, nil), (&mut 0, &mut 1));
+        nodes.root = hang_sparsest::<SLACK, L>(&mut nodes, &mut arr, (height, 0, nil), (&mut 0, &mut 1));
         assert_eq!(assert_within_slack::<SLACK, _, L>(&nodes, nodes.root), height, "the sparsest tree is as tall as asked");
         for (i, key) in (n..n + extra).zip(pseudo_random(extra, n)) {
-            nodes.set_key(i, key);
-            nodes.attach(i, Avl::<SLACK>::LEAF_RANK);
+            arr[i] = key;
+            nodes.attach(i, Avl::<SLACK>::LEAF_RANK, &arr[..]);
             Avl::<SLACK>::inserted(&mut nodes, i);
             assert_within_slack::<SLACK, _, L>(&nodes, nodes.root);
         }
         for k in 0..n + extra {
             let (least, parent) = nodes.unlink_min();
             Avl::<SLACK>::removed(&mut nodes, parent);
-            nodes.place(least, k);
+            nodes.place(&mut arr, least, k);
             if k < 40 || k % stride == 0 { assert_within_slack::<SLACK, _, L>(&nodes, nodes.root); }
         }
         assert_eq!(nodes.root, nodes.nil);

@@ -118,12 +118,12 @@ mod tests {
             let (mut fixed_arr, mut wrapped_arr) = (input.clone(), input);
             let (mut fixed_meta, mut wrapped_meta) = (vec![0; L::words(n)], vec![0; L::words(n)]);
             let (mut fixed_logger, mut wrapped_logger) = (NoOpLogger, NoOpLogger);
-            let mut fixed = Nodes::<_, _, L>::over(&mut fixed_arr, &mut fixed_meta, &mut fixed_logger);
-            let mut wrapped = Nodes::<_, _, L>::over(&mut wrapped_arr, &mut wrapped_meta, &mut wrapped_logger);
+            let mut fixed = Nodes::<_, _, L>::over(n, &mut fixed_meta, &mut fixed_logger);
+            let mut wrapped = Nodes::<_, _, L>::over(n, &mut wrapped_meta, &mut wrapped_logger);
             for i in 0..n {
-                fixed.attach(i, FixedAvl::LEAF_RANK);
+                fixed.attach(i, FixedAvl::LEAF_RANK, &fixed_arr[..]);
                 FixedAvl::inserted(&mut fixed, i);
-                wrapped.attach(i, Avl::<1>::LEAF_RANK);
+                wrapped.attach(i, Avl::<1>::LEAF_RANK, &wrapped_arr[..]);
                 Avl::<1>::inserted(&mut wrapped, i);
                 assert_same_tree(&fixed, &wrapped, n);
             }
@@ -132,8 +132,8 @@ mod tests {
                 assert_eq!((least, parent), (wrapped_least, wrapped_parent));
                 FixedAvl::removed(&mut fixed, parent);
                 Avl::<1>::removed(&mut wrapped, parent);
-                fixed.place(least, k);
-                wrapped.place(least, k);
+                fixed.place(&mut fixed_arr, least, k);
+                wrapped.place(&mut wrapped_arr, least, k);
                 assert_same_tree(&fixed, &wrapped, n);
             }
         }

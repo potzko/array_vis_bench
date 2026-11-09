@@ -410,9 +410,9 @@ fn tree_merge<B: Tree, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         logger.write_data_u(heads, s, s);
         logger.write_accross(arr, s * jump, keys, s);
     }
-    let mut nodes = Nodes::<T, U, Packed>::over(keys, meta, logger);
+    let mut nodes = Nodes::<T, U, Packed>::over(keys.len(), meta, logger);
     for s in 0..heads.len() {
-        nodes.attach(s, B::LEAF_RANK);
+        nodes.attach(s, B::LEAF_RANK, &**keys);
         B::inserted(&mut nodes, s);
     }
     for write_idx in 0..len {
@@ -422,8 +422,8 @@ fn tree_merge<B: Tree, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         nodes.logger().write_accross(arr, heads[s] * jump, out, write_idx);
         nodes.logger().write_data_u(heads, s, next);
         if next < len {
-            nodes.set_key(s, arr[next * jump]);
-            nodes.attach(s, B::LEAF_RANK);
+            nodes.logger().write_accross(arr, next * jump, keys, s);
+            nodes.attach(s, B::LEAF_RANK, &**keys);
             B::inserted(&mut nodes, s);
         }
     }

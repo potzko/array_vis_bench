@@ -14,7 +14,7 @@ pub mod tree_sort;
 pub use avl::Avl;
 pub use fixed_avl::FixedAvl;
 pub use naive::Naive;
-pub use nodes::{Fields, Halves, Layout, Nodes, Packed, Whole};
+pub use nodes::{Fields, Halves, Layout, NodeKeys, Nodes, Packed, Whole};
 pub use tree_sort::{Tree, TreeSort};
 
 #[cfg(test)]

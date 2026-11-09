@@ -43,15 +43,15 @@ impl<B: Tree> TreeSort<B> {
         let n = arr.len();
         if n < 2 { return; }
         let mut meta = logger.create_aux_arr(L::words(n));
-        let mut nodes = Nodes::<T, U, L>::over(arr, &mut meta, logger);
+        let mut nodes = Nodes::<T, U, L>::over(n, &mut meta, logger);
         for i in 0..n {
-            nodes.attach(i, B::LEAF_RANK);
+            nodes.attach(i, B::LEAF_RANK, &*arr);
             B::inserted(&mut nodes, i);
         }
         for k in 0..n {
             let (least, parent) = nodes.unlink_min();
             B::removed(&mut nodes, parent);
-            nodes.place(least, k);
+            nodes.place(arr, least, k);
         }
         logger.free_aux_arr(&meta);
     }

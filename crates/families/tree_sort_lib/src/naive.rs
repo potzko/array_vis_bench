@@ -35,11 +35,11 @@ mod tests {
     use sort_logger::NoOpLogger;
 
     fn assert_a_right_path_with_no_rank<L: Layout>() {
-        let mut arr: Vec<usize> = (0..64).collect();
+        let arr: Vec<usize> = (0..64).collect();
         let (mut meta, mut logger) = (vec![0; L::words(64)], NoOpLogger);
-        let mut nodes = Nodes::<_, _, L>::over(&mut arr, &mut meta, &mut logger);
+        let mut nodes = Nodes::<_, _, L>::over(64, &mut meta, &mut logger);
         for i in 0..64 {
-            nodes.attach(i, Naive::LEAF_RANK);
+            nodes.attach(i, Naive::LEAF_RANK, &arr[..]);
             Naive::inserted(&mut nodes, i);
         }
         assert_eq!(nodes.root, 0);

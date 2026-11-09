@@ -1,9 +1,11 @@
-//! `Nodes`, the node store a `TreeSort` builds its search tree in, and the
-//! `Layout`s that pack its nodes. A node is a parent, a left and a right
-//! index plus a rank for the tree's own balance data, kept in one logged side
-//! array: one word for an array under 2^19 elements, two under 2^32, four
-//! for any length. The link operations every tree shares live in `Nodes`,
-//! `attach` a leaf by key, `rotate`, `replace_child`, `unlink_min` and `place`.
+//! `Nodes`, the node store a `TreeSort` builds its search tree in, the
+//! `Layout`s that pack its nodes, and `NodeKeys`, what it orders them by. A
+//! node is a parent, a left and a right index plus a rank for the tree's own
+//! balance data, kept in one logged side array: one word for an array under
+//! 2^19 elements, two under 2^32, four for any length. The store holds indices
+//! alone, and its caller hands it the keys. The link operations every tree
+//! shares live in `Nodes`, `attach` a leaf by key, `rotate`, `replace_child`,
+//! `unlink_min` and `place`.
 
 use std::marker::PhantomData;
 
@@ -121,34 +123,39 @@ impl<const WORDS: usize, const BITS: usize> Layout for Fields<WORDS, BITS> {
     }
 }
 
-// `arr` holds the values, `meta` the nodes as `L` lays them out, and `nil` is
-// the missing link. Every write to either goes through the logger.
+/// What the tree orders its nodes by: whether node `a`'s key is less than node
+/// `b`'s, compared through the logger. A slice is its own keys, node `i`
+/// keyed by its `i`th value.
+pub trait NodeKeys<T: Ord + Copy> {
+    fn less<U: ?Sized + SortLogger<T>>(&self, logger: &mut U, a: usize, b: usize) -> bool;
+}
+
+impl<T: Ord + Copy> NodeKeys<T> for [T] {
+    fn less<U: ?Sized + SortLogger<T>>(&self, logger: &mut U, a: usize, b: usize) -> bool { logger.cmp_lt(self, a, b) }
+}
+
+// `meta` holds the nodes as `L` lays them out, and `nil` is the missing link.
+// Every write to it goes through the logger. The keys are the caller's.
 pub struct Nodes<'a, T, U: ?Sized, L> {
-    arr: &'a mut [T],
     meta: &'a mut [usize],
     pub nil: usize,
     pub root: usize,
     logger: &'a mut U,
-    layout: PhantomData<L>,
+    types: PhantomData<(T, L)>,
 }
 
 impl<'a, T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout> Nodes<'a, T, U, L> {
-    // A tree over the values in `arr` whose nodes live in `meta`, at least
-    // `L::words(arr.len())` words, which the caller creates through the logger
-    // and frees once the tree is done with.
-    pub fn over(arr: &'a mut [T], meta: &'a mut [usize], logger: &'a mut U) -> Self {
-        let n = arr.len();
+    // A tree of up to `n` nodes living in `meta`, at least `L::words(n)` words,
+    // which the caller creates through the logger and frees once the tree is
+    // done with.
+    pub fn over(n: usize, meta: &'a mut [usize], logger: &'a mut U) -> Self {
         assert!(n <= L::REACH, "a layout of reach {} cannot hold {n} nodes", L::REACH);
         assert!(meta.len() >= L::words(n), "{} words cannot hold the nodes of {n}", meta.len());
-        Nodes { arr, meta, nil: n, root: n, logger, layout: PhantomData }
+        Nodes { meta, nil: n, root: n, logger, types: PhantomData }
     }
 
     // The logger, for a caller that logs its own work between tree operations.
     pub fn logger(&mut self) -> &mut U { self.logger }
-
-    // A new key for node `i`, which must be out of the tree until it is
-    // attached again.
-    pub fn set_key(&mut self, i: usize, key: T) { self.logger.write_data(self.arr, i, key); }
 
     pub fn link(&self, i: usize, side: usize) -> usize { L::get(&self.meta, i, side) }
 
@@ -171,15 +178,15 @@ impl<'a, T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout> Nodes<'a, T, U, L>
         self.set_link(parent, side, new);
     }
 
-    // Descend by key from the root and hang node `i` there as a new leaf of
+    // Descend by `keys` from the root and hang node `i` there as a new leaf of
     // the given rank. An equal key goes right, which is what keeps the in
     // order sequence sorted by key then by index.
-    pub fn attach(&mut self, i: usize, rank: usize) {
+    pub fn attach<K: NodeKeys<T> + ?Sized>(&mut self, i: usize, rank: usize, keys: &K) {
         let (mut parent, mut side) = (self.nil, LEFT);
         let mut cur = self.root;
         while cur != self.nil {
             parent = cur;
-            side = if self.logger.cmp_lt(self.arr, i, cur) { LEFT } else { RIGHT };
+            side = if keys.less(self.logger, i, cur) { LEFT } else { RIGHT };
             cur = self.link(cur, side);
         }
         L::put::<T, U>(&mut self.meta, self.logger, i, [parent, self.nil, self.nil, rank]);
@@ -213,21 +220,21 @@ impl<'a, T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout> Nodes<'a, T, U, L>
         (least, parent)
     }
 
-    // Write the value of the unlinked node `m` at `k`, the next output slot.
-    // The live nodes all sit at indices from `k` up, so unless the minimum
-    // was node `k` itself, node `k` first moves into the slot the deletion
-    // freed.
-    pub fn place(&mut self, m: usize, k: usize) {
+    // Write the value of the unlinked node `m` at `k` of `arr`, the next output
+    // slot, for a tree whose node `i` is the value `arr[i]`. The live nodes all
+    // sit at indices from `k` up, so unless the minimum was node `k` itself,
+    // node `k` first moves into the slot the deletion freed.
+    pub fn place(&mut self, arr: &mut [T], m: usize, k: usize) {
         if m == k { return; }
-        let least = self.arr[m];
-        self.relocate(k, m);
-        self.logger.write_data(self.arr, k, least);
+        let least = arr[m];
+        self.relocate(arr, k, m);
+        self.logger.write_data(arr, k, least);
     }
 
     // Move the node at `from` to the free index `to`, value and fields, and
     // point its parent and children at the new index.
-    fn relocate(&mut self, from: usize, to: usize) {
-        self.logger.write(self.arr, to, from);
+    fn relocate(&mut self, arr: &mut [T], from: usize, to: usize) {
+        self.logger.write(arr, to, from);
         L::copy::<T, U>(&mut self.meta, self.logger, from, to);
         self.replace_child(self.parent(to), from, to);
         for side in [LEFT, RIGHT] {
@@ -295,31 +302,46 @@ mod tests {
     #[test]
     fn a_node_unlinked_as_the_least_goes_back_in_under_a_new_key() {
         let mut keys = vec![5usize, 1, 4, 2, 3];
-        let mut shadow = keys.clone();
         let mut meta = vec![0; Packed::words(keys.len())];
         let mut logger = NoOpLogger;
-        let mut nodes = Nodes::<_, _, Packed>::over(&mut keys, &mut meta, &mut logger);
-        (0..5).for_each(|i| nodes.attach(i, 0));
+        let mut nodes = Nodes::<_, _, Packed>::over(keys.len(), &mut meta, &mut logger);
+        (0..5).for_each(|i| nodes.attach(i, 0, &keys[..]));
         let mut out = Vec::new();
         for _ in 0..10 {
             let (least, _) = nodes.unlink_min();
-            out.push(shadow[least]);
-            shadow[least] += 10;
-            nodes.set_key(least, shadow[least]);
-            nodes.attach(least, 0);
+            out.push(keys[least]);
+            keys[least] += 10;
+            nodes.attach(least, 0, &keys[..]);
         }
         assert_eq!(out, [1, 2, 3, 4, 5, 11, 12, 13, 14, 15]);
+    }
+
+    // Orders the nodes by the keys of `0` backwards, so the least is the largest.
+    struct Backwards(Vec<usize>);
+    impl NodeKeys<usize> for Backwards {
+        fn less<U: ?Sized + SortLogger<usize>>(&self, logger: &mut U, a: usize, b: usize) -> bool { logger.cmp_gt(&self.0, a, b) }
+    }
+
+    #[test]
+    fn the_tree_orders_its_nodes_by_the_keys_it_is_handed() {
+        let keys = Backwards(vec![5, 1, 4, 2, 3]);
+        let mut meta = vec![0; Packed::words(5)];
+        let mut logger = NoOpLogger;
+        let mut nodes = Nodes::<usize, _, Packed>::over(5, &mut meta, &mut logger);
+        (0..5).for_each(|i| nodes.attach(i, 0, &keys));
+        let out: Vec<usize> = (0..5).map(|_| keys.0[nodes.unlink_min().0]).collect();
+        assert_eq!(out, [5, 4, 3, 2, 1]);
     }
 
     #[test]
     #[should_panic(expected = "cannot hold")]
     fn a_layout_refuses_an_array_past_its_reach() {
-        Nodes::<usize, _, Packed>::over(&mut vec![0; Packed::REACH + 1], &mut [], &mut NoOpLogger);
+        Nodes::<usize, _, Packed>::over(Packed::REACH + 1, &mut [], &mut NoOpLogger);
     }
 
     #[test]
     #[should_panic(expected = "node words")]
     fn a_length_whose_node_words_overflow_usize_is_refused() {
-        Nodes::<(), _, Whole>::over(&mut vec![(); 1 << 62], &mut [], &mut NoOpLogger);
+        Nodes::<(), _, Whole>::over(1 << 62, &mut [], &mut NoOpLogger);
     }
 }
