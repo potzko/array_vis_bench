@@ -1,0 +1,14 @@
+# The rotation_block_cycle crate: `BlockCycleRotation`.
+[package]
+name = "rotation_block_cycle"
+version = "0.1.0"
+edition = "2021"
+description = "BlockCycleRotation leaf crate."
+
+[lib]
+name = "rotation_block_cycle"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
