@@ -1,0 +1,14 @@
+# The rotation_piston_opt crate: `OptimizedPistonRotation`.
+[package]
+name = "rotation_piston_opt"
+version = "0.1.0"
+edition = "2021"
+description = "OptimizedPistonRotation leaf crate."
+
+[lib]
+name = "rotation_piston_opt"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
