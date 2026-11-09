@@ -122,6 +122,32 @@ order is the faster by about a tenth, 215 against 247 shifting and 327
 against 362 swapping, so the hold and shift kernel in the shell family is what
 would make this axis pay.
 
+## Added after: a tree merge over the tree sort family
+
+`TreeMerge<B: Tree>` is a fourth `RodMerge` filler, one per tree the tree
+sort family has, so rod sort gains a merge for each. Node `s` is chain `s`,
+keyed by a copy of its head: the least node comes out, and unless its chain
+is spent it goes back in under the chain's next head. The keys sit after the
+output in the aux buffer, the heads and the tree's nodes in the index, each
+created once per sort. `Nodes` borrows its node buffer from its caller for
+this and lends its logger and keys; tree sort creates the buffer itself.
+
+The bounds come from the tree's own: a tree whose sort is N log N keeps its
+depth logarithmic in the chains and the merge is N log N, while a tree that can
+grow into a path pays up to k per output, the scan's N times the path
+branching. From the probe, random `u64`:
+
+| merge | compares at 2^16, per n log2 n | writes | ns at 2^20 |
+|---|---|---|---|
+| tournament | 0.92 to 0.96 | 1.3 to 3.1 | 124 to 145 |
+| tree, avl | 0.92 to 0.97 | 3.3 to 8.4 | 235 to 436 |
+| tree, naive | 1.08 to 1.11 | 1.5 to 2.0 | 147 to 150 |
+
+The AVL tree compares as little as the loser tree and pays for it in writes,
+rebalancing after every output, most of all with two or three chains. The
+naive tree is the faster on random heads and degrades as tree sort's does:
+on sorted input `optimised` compared 5.34 n log2 n times, the scan's cost.
+
 ## Dropped: a strategy for the insertion path
 
 The search at 2^16 put branch 10 with `inter` 9 first. Rerun at 2^20 the best
