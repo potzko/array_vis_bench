@@ -632,7 +632,7 @@ reach for:
 - **Compare:** `cmp_eq/neq/lt/le/gt/ge` (in-array), `*_data` (vs a value), `*_accross` (between arrays).
 - **Move:** `write` (a[i]=a[j]), `write_data` (a[i]=v), `swap`, `cond_swap_lt/le/ge/gt`, `write_accross`.
 - **Compound:** `reverse`, `block_swap`, `shift_insert`, `copy_range`.
-- **Aux arrays:** `create_aux_arr`/`free_aux_arr` (usize), `create_aux_arr_t`/`copy_aux_arr_t`/`free_aux_arr_t` (element-typed), `*_u8` family; `write_data_u`/`write_data_u8` to mutate them observably. `create_aux_arr_split`/`create_aux_arr_split_t` and their frees make one allocation of several sections, each shown as an array of its own, which `split_sections` cuts apart.
+- **Aux arrays:** `create_aux_arr`/`free_aux_arr` (usize), `create_aux_arr_t`/`copy_aux_arr_t`/`free_aux_arr_t` (element-typed), `*_u8` family; `write_data_u`/`write_data_u8` to mutate them observably. `create_aux_arr_split`/`create_aux_arr_split_t` and their frees make one allocation of several sections, drawn inline in one row, each to its own scale, which `split_sections` cuts apart; `draw_beside` puts one row in another's, across element types.
 - **Markers:** `mark`, `mark_mssg`.
 
 Two impls back it: `NoOpLogger` (benchmark; every method a no-op) and

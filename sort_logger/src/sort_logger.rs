@@ -34,6 +34,25 @@ fn nonempty(sections: &[usize]) -> impl Iterator<Item = (usize, usize)> + '_ {
         .filter(|&(_, len)| len > 0)
 }
 
+// Announces each section of `buf`, laid out as `sections`, through `announce`,
+// and puts every one after the first beside the first, so they share a row.
+fn announce_in_a_row<A, T: Copy + Ord, L: SortLogger<T> + ?Sized>(
+    logger: &mut L,
+    buf: &[A],
+    sections: &[usize],
+    announce: impl Fn(&mut L, &[A]),
+) {
+    let mut first = None;
+    for (start, len) in nonempty(sections) {
+        announce(logger, &buf[start..start + len]);
+        let name = arr_name!(buf[start..]);
+        match first {
+            Some(of) => logger.draw_beside(name, of),
+            None => first = Some(name),
+        }
+    }
+}
+
 /// Generate the six-method int-typed aux-array family
 /// (`$log` / `$create` / `$create_split` / `$free` / `$free_split` /
 /// `$write_data`) for one concrete integer element type `$ty`. All variants
@@ -57,12 +76,12 @@ macro_rules! int_aux_family {
             ret
         }
         /// One allocation of the `sections` laid end to end, announced as an
-        /// array per non empty section, so the visualiser shows and scales each
-        /// on its own. Cut it with [`split_sections`].
+        /// array per non empty section in one row, so the visualiser draws them
+        /// inline, each to its own scale. Cut it with [`split_sections`].
         #[inline(always)]
         fn $create_split(&mut self, sections: &[usize]) -> Vec<$ty> {
             let ret = vec![0 as $ty; sections.iter().sum()];
-            for (start, len) in nonempty(sections) { self.$log(&ret[start..start + len]); }
+            announce_in_a_row(self, &ret, sections, |logger, section| logger.$log(section));
             ret
         }
         #[inline(always)]
@@ -148,15 +167,22 @@ pub trait SortLogger<T: Copy + Ord> {
         ret
     }
     /// One allocation of the `sections` laid end to end, announced as an array
-    /// per non empty section, so the visualiser shows and scales each on its
-    /// own. Cut it with [`split_sections`].
+    /// per non empty section in one row, so the visualiser draws them inline,
+    /// each to its own scale. Cut it with [`split_sections`].
     #[inline(always)]
     fn create_aux_arr_split_t(&mut self, sections: &[usize]) -> Vec<T> {
         let len = sections.iter().sum();
         let mut ret = Vec::<T>::with_capacity(len);
         unsafe { ret.set_len(len) }
-        for (start, len) in nonempty(sections) { self.log_aux_arr_t(&ret[start..start + len]); }
+        announce_in_a_row(self, &ret, sections, |logger, section| logger.log_aux_arr_t(section));
         ret
+    }
+    /// Draw the row holding the array named `name` in the row of the array named
+    /// `of`, names being [`arr_name!`] addresses, so arrays of two element
+    /// types can share a row.
+    #[inline(always)]
+    fn draw_beside(&mut self, name: usize, of: usize) {
+        self.log(SortLog::Beside { name, of })
     }
     #[inline(always)]
     fn free_aux_arr_t(&mut self, arr: &[T]) {
@@ -569,21 +595,24 @@ mod tests {
     }
 
     #[test]
-    fn a_buffer_in_sections_is_created_and_freed_as_an_array_per_section() {
+    fn a_buffer_in_sections_is_an_array_per_section_in_one_row() {
         let mut log = VisualizerLogger::<usize> { type_ghost: PhantomData, log: Vec::new() };
         let words = log.create_aux_arr_split(&[3, 0, 2]);
         let elems = log.create_aux_arr_split_t(&[4]);
+        let (base, tail, whole) = (words.as_ptr() as usize, words[3..].as_ptr() as usize, elems.as_ptr() as usize);
+        log.draw_beside(whole, base);
         log.free_aux_arr_split(&words, &[3, 0, 2]);
         log.free_aux_arr_split_t(&elems, &[4]);
         // the empty section is left out, its name would be the next one's
-        let (base, tail, whole) = (words.as_ptr() as usize, words[3..].as_ptr() as usize, elems.as_ptr() as usize);
         assert_eq!(words, [0; 5]);
         assert_eq!(
             log.log,
             [
                 SortLog::CreateAuxArr { name: base, length: 3 },
                 SortLog::CreateAuxArr { name: tail, length: 2 },
+                SortLog::Beside { name: tail, of: base },
                 SortLog::CreateAuxArrT { name: whole, length: 4 },
+                SortLog::Beside { name: whole, of: base },
                 SortLog::FreeAuxArr { name: base },
                 SortLog::FreeAuxArr { name: tail },
                 SortLog::FreeAuxArr { name: whole },

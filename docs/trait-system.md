@@ -111,8 +111,8 @@ composition it enters.
 `swap`, `cond_swap_lt`, `write_accross`), compounds (`reverse`, `block_swap`,
 `shift_insert`, `copy_range`), auxiliary arrays (`create_aux_arr_t`,
 `free_aux_arr_t`, integer width variants, and split variants that make one
-allocation of sections the renderer shows as arrays of their own), markers,
-and regions
+allocation of sections the renderer draws inline in one row, each to its own
+scale, with `draw_beside` to join rows), markers, and regions
 (`hold_region` and `release_region` say that a sub range of an array is the
 buffer or the key region of the sort for a while, which the renderer shades).
 Every method is non
