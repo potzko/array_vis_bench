@@ -27,8 +27,8 @@ pub trait BranchingStrategy {
 
     /// How many interleaved sub-arrays to split into at this level. Every
     /// strategy here is non decreasing in the length, so the top level's
-    /// branch is the widest a sort meets, which sizes the merges' index
-    /// scratch; see `RodMerge::index_size`.
+    /// branch is the widest a sort meets, which sizes the merges' scratch;
+    /// see `RodMerge::sections`.
     fn branch(virtual_len: usize) -> usize;
 
     /// Factor for an optional extra insertion-sort pass after recursive sorting,

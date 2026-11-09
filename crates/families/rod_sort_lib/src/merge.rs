@@ -21,52 +21,83 @@
 //!
 //! ## Aux buffer ownership
 //!
-//! The top-level merge needs an aux buffer of size N (jump=1, virtual_len=N).
+//! The top-level merge needs an output of size N (jump=1, virtual_len=N).
 //! Every shallower merge needs strictly less. The recursion is sequential,
-//! so a single N-sized buffer suffices for the entire sort and is allocated
-//! once at the top, see [`super::rod_sort::RodSort::sort`]. The chain heads
-//! are one index buffer the same way, sized by the top level's branch.
-//! [`InsertionMerge`] asks for neither, so it allocates nothing.
+//! so one [`Scratch`] suffices for the entire sort and is allocated once at
+//! the top, see [`super::rod_sort::RodSort::sort`]: the output and a key per
+//! chain in one element buffer, the chain heads and a tree over them in one
+//! index buffer, each section at a fixed place and shown as an array of its
+//! own. [`InsertionMerge`] asks for none, so it allocates nothing.
 
 use std::marker::PhantomData;
 
 use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::HasSpace;
 use shell_sort_lib::insert_into_chain;
-use sort_logger::SortLogger;
+use sort_logger::{split_sections, SortLogger};
 use tree_sort_lib::{Layout, Nodes, Packed, Tree};
+
+/// The lengths of a [`Scratch`]'s sections.
+#[derive(Clone, Copy, Default)]
+pub struct Sections {
+    pub out: usize,
+    pub keys: usize,
+    pub heads: usize,
+    pub tree: usize,
+}
+
+impl Sections {
+    /// The element buffer's sections, the output then the keys.
+    pub fn elems(self) -> [usize; 2] { [self.out, self.keys] }
+
+    /// The index buffer's sections, the heads then the tree.
+    pub fn words(self) -> [usize; 2] { [self.heads, self.tree] }
+}
+
+/// The scratch every merge of a sort shares: the output and a key per chain,
+/// the chain heads and a tree over them. The driver creates it once as two
+/// buffers in sections, so the visualiser shows each section as an array of
+/// its own.
+pub struct Scratch<'a, T> {
+    pub out: &'a mut [T],
+    pub keys: &'a mut [T],
+    pub heads: &'a mut [usize],
+    pub tree: &'a mut [usize],
+}
+
+impl<'a, T> Scratch<'a, T> {
+    /// `elems` and `words` cut into the sections `sections` lays them out in.
+    pub fn over(elems: &'a mut [T], words: &'a mut [usize], sections: Sections) -> Self {
+        let [out, keys] = split_sections(elems, sections.elems());
+        let [heads, tree] = split_sections(words, sections.words());
+        Scratch { out, keys, heads, tree }
+    }
+}
 
 pub trait RodMerge {
     const NAME: &'static str;
 
-    /// Aux elements the merges of a sort over `n` need, whose top level has
-    /// `branch` chains, allocated once by the driver and shared by every merge.
-    /// 0 for a merge that works in place.
+    /// The scratch the merges of a sort over `n` need, whose top level has
+    /// `branch` chains, created once by the driver and shared by every merge.
+    /// The top level's branch is the widest a sort meets while the strategy's
+    /// branch grows with the length; a merge handed less brings its own. None
+    /// for a merge that works in place.
     #[inline]
-    fn aux_size(_n: usize, _branch: usize) -> usize {
-        0
-    }
-
-    /// Index scratch a merge of `branch` chains needs. The driver sizes it by
-    /// the top level's branch, the widest a sort meets while the strategy's
-    /// branch grows with the length; a merge handed less brings its own.
-    #[inline]
-    fn index_size(_branch: usize) -> usize {
-        0
+    fn sections(_n: usize, _branch: usize) -> Sections {
+        Sections::default()
     }
 
     /// Merge the `branch` already-sorted sub-streams at stride `jump` into
     /// a single sorted stride-`jump` sequence over `arr`.
     ///
-    /// `aux` and `index` are the buffers [`Self::aux_size`] and
-    /// [`Self::index_size`] asked for, or empty when they asked for none. `inter` is the branching strategy's intermediate factor
+    /// `scratch` holds the sections [`Self::sections`] asked for, each empty
+    /// when it asked for none. `inter` is the branching strategy's intermediate factor
     /// (already gated by the caller — 0 means skip). The InsertionMerge
     /// uses `inter` for an extra pre-pass at stride `jump * inter`; the
     /// AuxMerge ignores it (it would scramble the branch sub-streams).
     fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
-        aux: &mut [T],
-        index: &mut [usize],
+        scratch: &mut Scratch<T>,
         jump: usize,
         branch: usize,
         inter: usize,
@@ -81,8 +112,7 @@ impl RodMerge for InsertionMerge {
     #[inline]
     fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
-        _aux: &mut [T],
-        _index: &mut [usize],
+        _scratch: &mut Scratch<T>,
         jump: usize,
         _branch: usize,
         inter: usize,
@@ -108,20 +138,14 @@ impl RodMerge for AuxMerge {
     const NAME: &'static str = "aux";
 
     #[inline]
-    fn aux_size(n: usize, _branch: usize) -> usize {
-        n
-    }
-
-    #[inline]
-    fn index_size(branch: usize) -> usize {
-        branch
+    fn sections(n: usize, branch: usize) -> Sections {
+        Sections { out: n, heads: branch, ..Sections::default() }
     }
 
     #[inline]
     fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
-        aux: &mut [T],
-        index: &mut [usize],
+        scratch: &mut Scratch<T>,
         jump: usize,
         branch: usize,
         _inter: usize,
@@ -134,10 +158,9 @@ impl RodMerge for AuxMerge {
         if branch <= 1 || virtual_len <= 1 {
             return;
         }
-        let aux = &mut aux[..virtual_len];
         let chains = branch.min(virtual_len);
-        with_index::<T, U>(index, Self::index_size(chains), logger, |heads, logger| {
-            scan_merge(arr, aux, heads, jump, branch, logger)
+        with_scratch(scratch, Self::sections(virtual_len, chains), logger, |s, logger| {
+            scan_merge(arr, s.out, s.heads, jump, branch, logger)
         });
     }
 }
@@ -147,20 +170,14 @@ impl RodMerge for TournamentMerge {
     const NAME: &'static str = "tournament";
 
     #[inline]
-    fn aux_size(n: usize, _branch: usize) -> usize {
-        n
-    }
-
-    #[inline]
-    fn index_size(branch: usize) -> usize {
-        2 * branch
+    fn sections(n: usize, branch: usize) -> Sections {
+        Sections { out: n, heads: branch, tree: branch, ..Sections::default() }
     }
 
     #[inline]
     fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
-        aux: &mut [T],
-        index: &mut [usize],
+        scratch: &mut Scratch<T>,
         jump: usize,
         branch: usize,
         _inter: usize,
@@ -170,11 +187,10 @@ impl RodMerge for TournamentMerge {
         if branch <= 1 || virtual_len <= 1 {
             return;
         }
-        let aux = &mut aux[..virtual_len];
         let chains = branch.min(virtual_len);
-        with_index::<T, U>(index, Self::index_size(chains), logger, |index, logger| match chains {
-            2 => two_way_merge(arr, aux, &mut index[..2], jump, logger),
-            _ => tournament_merge(arr, aux, index, jump, branch, logger),
+        with_scratch(scratch, Self::sections(virtual_len, chains), logger, |s, logger| match chains {
+            2 => two_way_merge(arr, s.out, s.heads, jump, logger),
+            _ => tournament_merge(arr, s.out, s.heads, s.tree, jump, branch, logger),
         });
     }
 }
@@ -183,23 +199,15 @@ pub struct TreeMerge<B: Tree>(PhantomData<B>);
 impl<B: Tree> RodMerge for TreeMerge<B> {
     const NAME: &'static str = "tree";
 
-    // The output, then a key per chain.
     #[inline]
-    fn aux_size(n: usize, branch: usize) -> usize {
-        n + branch
-    }
-
-    // The heads, then the tree's nodes.
-    #[inline]
-    fn index_size(branch: usize) -> usize {
-        branch + Packed::words(branch)
+    fn sections(n: usize, branch: usize) -> Sections {
+        Sections { out: n, keys: branch, heads: branch, tree: Packed::words(branch) }
     }
 
     #[inline]
     fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
-        aux: &mut [T],
-        index: &mut [usize],
+        scratch: &mut Scratch<T>,
         jump: usize,
         branch: usize,
         _inter: usize,
@@ -210,34 +218,34 @@ impl<B: Tree> RodMerge for TreeMerge<B> {
             return;
         }
         let chains = branch.min(virtual_len);
-        let (out, rest) = aux.split_at_mut(virtual_len);
-        with_index::<T, U>(index, Self::index_size(chains), logger, |index, logger| {
-            if rest.len() >= chains {
-                tree_merge::<B, T, U>(arr, out, &mut rest[..chains], index, jump, branch, logger);
-            } else {
-                let mut keys = logger.create_aux_arr_t(chains);
-                tree_merge::<B, T, U>(arr, out, &mut keys, index, jump, branch, logger);
-                logger.free_aux_arr_t(&keys);
-            }
+        with_scratch(scratch, Self::sections(virtual_len, chains), logger, |s, logger| {
+            tree_merge::<B, T, U>(arr, s, jump, branch, logger)
         });
     }
 }
 
-// Runs `body` on the first `len` cells of `index`, or on a buffer of its own
-// when the driver's is shorter, which only a strategy whose branch narrows
-// with the length can cause.
-fn with_index<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-    index: &mut [usize],
-    len: usize,
+// Runs `body` on the front of each section of `scratch`, as much as `need`
+// asks, or past the output on sections of its own when the driver's are
+// shorter, which only a strategy whose branch narrows with the length can
+// cause.
+fn with_scratch<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    scratch: &mut Scratch<T>,
+    need: Sections,
     logger: &mut U,
-    body: impl FnOnce(&mut [usize], &mut U),
+    body: impl FnOnce(&mut Scratch<T>, &mut U),
 ) {
-    if index.len() >= len {
-        body(&mut index[..len], logger);
+    let out = &mut scratch.out[..need.out];
+    if scratch.keys.len() >= need.keys && scratch.heads.len() >= need.heads && scratch.tree.len() >= need.tree {
+        let (keys, heads, tree) = (&mut scratch.keys[..need.keys], &mut scratch.heads[..need.heads], &mut scratch.tree[..need.tree]);
+        body(&mut Scratch { out, keys, heads, tree }, logger);
     } else {
-        let mut own = logger.create_aux_arr(len);
-        body(&mut own, logger);
-        logger.free_aux_arr(&own);
+        let own = Sections { out: 0, ..need };
+        let mut elems = logger.create_aux_arr_split_t(&own.elems());
+        let mut words = logger.create_aux_arr_split(&own.words());
+        let Scratch { keys, heads, tree, .. } = Scratch::over(&mut elems, &mut words, own);
+        body(&mut Scratch { out, keys, heads, tree }, logger);
+        logger.free_aux_arr_split(&words, &own.words());
+        logger.free_aux_arr_split_t(&elems, &own.elems());
     }
 }
 
@@ -324,17 +332,16 @@ impl<T: Ord + Copy> Tournament<'_, T> {
 
 // Merges the chains into `aux` through a loser tree, at most ceil(log2 k)
 // compares per output for k chains, then copies `aux` back at stride `jump`.
-// `index` holds the heads, then the tree.
 fn tournament_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     aux: &mut [T],
-    index: &mut [usize],
+    heads: &mut [usize],
+    tree: &mut [usize],
     jump: usize,
     branch: usize,
     logger: &mut U,
 ) {
     let len = aux.len();
-    let (heads, tree) = index.split_at_mut(index.len() / 2);
     for s in 0..heads.len() {
         logger.write_data_u(heads, s, s);
     }
@@ -386,19 +393,16 @@ fn two_way_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 // Merges the chains into `out` through a search tree of the tree family, then
 // copies `out` back at stride `jump`. Node `s` is chain `s`, keyed by a copy of
 // its head in `keys`: the least node comes out, and unless its chain is spent
-// it goes back in under the chain's next head. `index` holds the heads, then
-// the nodes.
+// it goes back in under the chain's next head. The tree holds the nodes.
 fn tree_merge<B: Tree, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
-    out: &mut [T],
-    keys: &mut [T],
-    index: &mut [usize],
+    scratch: &mut Scratch<T>,
     jump: usize,
     branch: usize,
     logger: &mut U,
 ) {
+    let Scratch { out, keys, heads, tree: meta } = scratch;
     let len = out.len();
-    let (heads, meta) = index.split_at_mut(keys.len());
     for s in 0..heads.len() {
         logger.write_data_u(heads, s, s);
         logger.write_accross(arr, s * jump, keys, s);
@@ -489,30 +493,25 @@ mod tests {
         arr
     }
 
+    // One merge through `M` of `chains` chains of `arr`, returning its compares.
+    fn merged<M: RodMerge>(arr: &mut [usize], chains: usize) -> usize {
+        let sections = M::sections(arr.len(), chains);
+        let mut elems = vec![0; sections.elems().iter().sum()];
+        let mut words = vec![0; sections.words().iter().sum()];
+        let mut compares = Compares(0);
+        M::merge(arr, &mut Scratch::over(&mut elems, &mut words, sections), 1, chains, 0, &mut compares);
+        assert!(arr.windows(2).all(|pair| pair[0] <= pair[1]), "{chains} chains left unsorted");
+        compares.0
+    }
+
     #[test]
     fn a_tournament_merge_compares_ceil_log2_k_times_per_element() {
         for chains in 2..=40usize {
             let n = 20 * chains + 7;
-            let mut arr = sorted_chains(n, chains);
-            let mut aux = vec![0; TournamentMerge::aux_size(n, chains)];
-            let mut index = vec![0; TournamentMerge::index_size(chains)];
-            let mut compares = Compares(0);
-            TournamentMerge::merge(&mut arr, &mut aux, &mut index, 1, chains, 0, &mut compares);
-            assert!(arr.windows(2).all(|pair| pair[0] <= pair[1]), "{chains} chains left unsorted");
+            let compares = merged::<TournamentMerge>(&mut sorted_chains(n, chains), chains);
             let rounds = chains.next_power_of_two().trailing_zeros() as usize;
-            assert!(compares.0 <= n * rounds + chains, "{chains} chains took {} compares", compares.0);
+            assert!(compares <= n * rounds + chains, "{chains} chains took {compares} compares");
         }
-    }
-
-    // One tree merge over `chains` chains of `arr`, returning its compares.
-    fn tree_merged<B: Tree>(arr: &mut [usize], chains: usize) -> usize {
-        let n = arr.len();
-        let mut aux = vec![0; TreeMerge::<B>::aux_size(n, chains)];
-        let mut index = vec![0; TreeMerge::<B>::index_size(chains)];
-        let mut compares = Compares(0);
-        TreeMerge::<B>::merge(arr, &mut aux, &mut index, 1, chains, 0, &mut compares);
-        assert!(arr.windows(2).all(|pair| pair[0] <= pair[1]), "{chains} chains left unsorted");
-        compares.0
     }
 
     #[test]
@@ -522,7 +521,7 @@ mod tests {
         for chains in 2..=40usize {
             let n = 20 * chains + 7;
             let height = (1.4405 * ((chains + 2) as f64).log2()) as usize;
-            let compares = tree_merged::<Avl<1>>(&mut sorted_chains(n, chains), chains);
+            let compares = merged::<TreeMerge<Avl<1>>>(&mut sorted_chains(n, chains), chains);
             assert!(compares <= n * height, "{chains} chains took {compares} compares");
         }
     }
@@ -530,12 +529,12 @@ mod tests {
     #[test]
     fn a_naive_tree_merge_sorts_and_degrades_to_a_scan_on_presorted_chains() {
         for chains in 2..=40usize {
-            tree_merged::<Naive>(&mut sorted_chains(20 * chains + 7, chains), chains);
+            merged::<TreeMerge<Naive>>(&mut sorted_chains(20 * chains + 7, chains), chains);
         }
         // Presorted, every next head is past all the others, so the tree is a
         // right path and each attach walks it.
         let (n, chains) = (20 * 16 + 7, 16);
-        let compares = tree_merged::<Naive>(&mut (0..n).collect::<Vec<_>>(), chains);
+        let compares = merged::<TreeMerge<Naive>>(&mut (0..n).collect::<Vec<_>>(), chains);
         assert!(compares >= (n - chains) * (chains - 1), "{compares} compares");
     }
 }
