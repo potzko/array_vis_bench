@@ -17,7 +17,8 @@
 //!   pass, and N log N whatever the strategy.
 //! - [`TreeMerge`]: the same round trip with the chain heads in a search tree
 //!   of the tree sort family, least out and next head in, as balanced as the
-//!   tree it is given.
+//!   tree it is given, comparing the heads through the [`HeadKeys`] it is
+//!   given.
 //!
 //! ## Aux buffer ownership
 //!
@@ -35,7 +36,7 @@ use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::HasSpace;
 use shell_sort_lib::insert_into_chain;
 use sort_logger::{arr_name, split_sections, SortLogger};
-use tree_sort_lib::{Layout, Nodes, Packed, Tree};
+use tree_sort_lib::{Layout, NodeKeys, Nodes, Packed, Tree};
 
 /// The lengths of a [`Scratch`]'s sections.
 #[derive(Clone, Copy, Default)]
@@ -201,13 +202,13 @@ impl RodMerge for TournamentMerge {
     }
 }
 
-pub struct TreeMerge<B: Tree>(PhantomData<B>);
-impl<B: Tree> RodMerge for TreeMerge<B> {
+pub struct TreeMerge<B: Tree, K: HeadKeys>(PhantomData<(B, K)>);
+impl<B: Tree, K: HeadKeys> RodMerge for TreeMerge<B, K> {
     const NAME: &'static str = "tree";
 
     #[inline]
     fn sections(n: usize, branch: usize) -> Sections {
-        Sections { out: n, keys: branch, heads: branch, tree: Packed::words(branch) }
+        Sections { out: n, keys: K::keys_size(branch), heads: branch, tree: Packed::words(branch) }
     }
 
     #[inline]
@@ -225,9 +226,54 @@ impl<B: Tree> RodMerge for TreeMerge<B> {
         }
         let chains = branch.min(virtual_len);
         with_scratch(scratch, Self::sections(virtual_len, chains), logger, |s, logger| {
-            tree_merge::<B, T, U>(arr, s, jump, branch, logger)
+            tree_merge::<B, K, T, U>(arr, s, jump, branch, logger)
         });
     }
+}
+
+/// How a tree merge keeps each chain's key, the value at its head: `push`
+/// moves a chain's head, and `read` says where its key sits, an array and an
+/// index there, so the tree compares it through the logger wherever it is.
+pub trait HeadKeys: Sized {
+    /// Key cells a merge of `chains` chains keeps besides the array.
+    fn keys_size(chains: usize) -> usize;
+
+    /// Chain `s`'s head is now the virtual position `head`, past the end once
+    /// the chain is spent.
+    fn push<T: Ord + Copy, U: ?Sized + SortLogger<T>>(chains: &mut Chains<T, Self>, logger: &mut U, s: usize, head: usize);
+
+    fn read<'c, T>(chains: &'c Chains<T, Self>, s: usize) -> (&'c [T], usize);
+}
+
+/// The chains a tree merge draws from, `arr` at stride `jump`: the head of
+/// each, and the keys `K` keeps of them.
+pub struct Chains<'a, T, K> {
+    arr: &'a [T],
+    jump: usize,
+    heads: &'a mut [usize],
+    keys: &'a mut [T],
+    kind: PhantomData<K>,
+}
+
+impl<T: Ord + Copy, K: HeadKeys> NodeKeys<T> for Chains<'_, T, K> {
+    fn less<U: ?Sized + SortLogger<T>>(&self, logger: &mut U, a: usize, b: usize) -> bool {
+        let ((left, i), (right, j)) = (K::read(self, a), K::read(self, b));
+        logger.cmp_lt_accross(left, i, right, j)
+    }
+}
+
+/// Each chain's head value copied into a key cell of its own, which the tree
+/// compares: a few cells side by side, copied once per element.
+pub struct CopiedKeys;
+impl HeadKeys for CopiedKeys {
+    fn keys_size(chains: usize) -> usize { chains }
+
+    fn push<T: Ord + Copy, U: ?Sized + SortLogger<T>>(chains: &mut Chains<T, Self>, logger: &mut U, s: usize, head: usize) {
+        logger.write_data_u(chains.heads, s, head);
+        if head * chains.jump < chains.arr.len() { logger.write_accross(chains.arr, head * chains.jump, chains.keys, s); }
+    }
+
+    fn read<'c, T>(chains: &'c Chains<T, Self>, s: usize) -> (&'c [T], usize) { (chains.keys, s) }
 }
 
 // Runs `body` on the front of each section of `scratch`, as much as `need`
@@ -394,10 +440,10 @@ fn two_way_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 }
 
 // Merges the chains into `out` through a search tree of the tree family, then
-// copies `out` back at stride `jump`. Node `s` is chain `s`, keyed by a copy of
-// its head in `keys`: the least node comes out, and unless its chain is spent
-// it goes back in under the chain's next head. The tree holds the nodes.
-fn tree_merge<B: Tree, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+// copies `out` back at stride `jump`. Node `s` is chain `s`, keyed by its head
+// as `K` keeps it: the least node comes out, and unless its chain is spent it
+// goes back in under the chain's next head. The tree holds the nodes.
+fn tree_merge<B: Tree, K: HeadKeys, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     scratch: &mut Scratch<T>,
     jump: usize,
@@ -405,25 +451,22 @@ fn tree_merge<B: Tree, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     logger: &mut U,
 ) {
     let Scratch { out, keys, heads, tree: meta } = scratch;
-    let len = out.len();
-    for s in 0..heads.len() {
-        logger.write_data_u(heads, s, s);
-        logger.write_accross(arr, s * jump, keys, s);
-    }
-    let mut nodes = Nodes::<T, U, Packed>::over(keys.len(), meta, logger);
-    for s in 0..heads.len() {
-        nodes.attach(s, B::LEAF_RANK, &**keys);
+    let (len, count) = (out.len(), heads.len());
+    let mut chains = Chains::<T, K> { arr: &*arr, jump, heads, keys, kind: PhantomData };
+    (0..count).for_each(|s| K::push(&mut chains, logger, s, s));
+    let mut nodes = Nodes::<T, U, Packed>::over(count, meta, logger);
+    for s in 0..count {
+        nodes.attach(s, B::LEAF_RANK, &chains);
         B::inserted(&mut nodes, s);
     }
     for write_idx in 0..len {
         let (s, parent) = nodes.unlink_min();
         B::removed(&mut nodes, parent);
-        let next = heads[s] + branch;
-        nodes.logger().write_accross(arr, heads[s] * jump, out, write_idx);
-        nodes.logger().write_data_u(heads, s, next);
-        if next < len {
-            nodes.logger().write_accross(arr, next * jump, keys, s);
-            nodes.attach(s, B::LEAF_RANK, &**keys);
+        let head = chains.heads[s];
+        nodes.logger().write_accross(chains.arr, head * jump, out, write_idx);
+        K::push(&mut chains, nodes.logger(), s, head + branch);
+        if head + branch < len {
+            nodes.attach(s, B::LEAF_RANK, &chains);
             B::inserted(&mut nodes, s);
         }
     }
@@ -459,7 +502,7 @@ impl HasSpace for AuxMerge {
 impl HasSpace for TournamentMerge {
     const SPACE: Complexity = Complexity::N1;
 }
-impl<B: Tree> HasSpace for TreeMerge<B> {
+impl<B: Tree, K: HeadKeys> HasSpace for TreeMerge<B, K> {
     const SPACE: Complexity = Complexity::N1;
 }
 
@@ -523,7 +566,7 @@ mod tests {
         for chains in 2..=40usize {
             let n = 20 * chains + 7;
             let height = (1.4405 * ((chains + 2) as f64).log2()) as usize;
-            let compares = merged::<TreeMerge<Avl<1>>>(&mut sorted_chains(n, chains), chains);
+            let compares = merged::<TreeMerge<Avl<1>, CopiedKeys>>(&mut sorted_chains(n, chains), chains);
             assert!(compares <= n * height, "{chains} chains took {compares} compares");
         }
     }
@@ -531,12 +574,12 @@ mod tests {
     #[test]
     fn a_naive_tree_merge_sorts_and_degrades_to_a_scan_on_presorted_chains() {
         for chains in 2..=40usize {
-            merged::<TreeMerge<Naive>>(&mut sorted_chains(20 * chains + 7, chains), chains);
+            merged::<TreeMerge<Naive, CopiedKeys>>(&mut sorted_chains(20 * chains + 7, chains), chains);
         }
         // Presorted, every next head is past all the others, so the tree is a
         // right path and each attach walks it.
         let (n, chains) = (20 * 16 + 7, 16);
-        let compares = merged::<TreeMerge<Naive>>(&mut (0..n).collect::<Vec<_>>(), chains);
+        let compares = merged::<TreeMerge<Naive, CopiedKeys>>(&mut (0..n).collect::<Vec<_>>(), chains);
         assert!(compares >= (n - chains) * (chains - 1), "{compares} compares");
     }
 }

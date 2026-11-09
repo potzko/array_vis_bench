@@ -1024,6 +1024,12 @@ mod tests {
             }
         }
         #[test]
+        fn the_tree_merge_has_an_entry_for_each_strategy_tree_and_key_store() {
+            let trees: Vec<&str> = entries().iter().map(|e| e.name).filter(|name| name.contains("tree<")).collect();
+            assert_eq!(trees.len(), 6 * 8, "{trees:?}");
+            assert!(trees.iter().all(|name| name.ends_with(", keys: copied>>")), "{trees:?}");
+        }
+        #[test]
         fn registered_under_rod_sorts_with_two_facets() {
             let v = navigation::variants();
             let one = v.iter().find(|v| v.name.starts_with("rod sort<")).expect("registered");

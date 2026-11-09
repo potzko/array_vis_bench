@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use super::merge::{insertion_sort_jump, with_new_scratch, AuxMerge, InsertionMerge, RodMerge, Scratch, TournamentMerge, TreeMerge};
+use super::merge::{insertion_sort_jump, with_new_scratch, AuxMerge, HeadKeys, InsertionMerge, RodMerge, Scratch, TournamentMerge, TreeMerge};
 use tree_sort_lib::Tree;
 use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
@@ -119,7 +119,7 @@ impl<S: BranchingStrategy> HasTimeBounds for RodSort<S, TournamentMerge> {
 // that can grow into a path pays up to k per output, the scan's N times the
 // path branching, and as little as one compare per level at best. On random
 // heads either stays logarithmic.
-impl<S: BranchingStrategy, B: Tree + HasTimeBounds> HasTimeBounds for RodSort<S, TreeMerge<B>> {
+impl<S: BranchingStrategy, B: Tree + HasTimeBounds, K: HeadKeys> HasTimeBounds for RodSort<S, TreeMerge<B, K>> {
     const WORST: Complexity = if Complexity::N_LOG_N.at_least(B::WORST) {
         Complexity::N_LOG_N
     } else {
@@ -155,7 +155,7 @@ mod tests {
     use std::marker::PhantomData;
 
     use super::*;
-    use crate::{Classic, Optimised};
+    use crate::{Classic, CopiedKeys, Optimised};
     use sort_logger::{NoOpLogger, SortLog, VisualizerLogger};
     use tree_sort_lib::{Avl, Naive};
 
@@ -187,7 +187,7 @@ mod tests {
         // the output, then the keys, the heads and the tree side by side.
         assert_eq!(rows_created(RodSort::<Optimised, AuxMerge>::sort), [vec![4096], vec![32]]);
         assert_eq!(rows_created(RodSort::<Optimised, TournamentMerge>::sort), [vec![4096], vec![32, 32]]);
-        assert_eq!(rows_created(RodSort::<Optimised, TreeMerge<Avl<1>>>::sort), [vec![4096], vec![32, 32, 32]]);
+        assert_eq!(rows_created(RodSort::<Optimised, TreeMerge<Avl<1>, CopiedKeys>>::sort), [vec![4096], vec![32, 32, 32]]);
         assert!(rows_created(RodSort::<Optimised, InsertionMerge>::sort).is_empty());
     }
 
@@ -207,8 +207,8 @@ mod tests {
         let sorts: [fn(&mut [usize], &mut NoOpLogger); 4] = [
             RodSort::<Narrowing, AuxMerge>::sort,
             RodSort::<Narrowing, TournamentMerge>::sort,
-            RodSort::<Narrowing, TreeMerge<Avl<1>>>::sort,
-            RodSort::<Narrowing, TreeMerge<Naive>>::sort,
+            RodSort::<Narrowing, TreeMerge<Avl<1>, CopiedKeys>>::sort,
+            RodSort::<Narrowing, TreeMerge<Naive, CopiedKeys>>::sort,
         ];
         for sort in sorts {
             let mut arr: Vec<usize> = (0..500).map(|i| i * 7919 % 500).collect();

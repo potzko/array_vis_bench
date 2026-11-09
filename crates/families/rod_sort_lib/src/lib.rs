@@ -11,7 +11,7 @@ pub mod shell_branching;
 mod testing;
 
 pub use gaps::RodGaps;
-pub use merge::{AuxMerge, InsertionMerge, RodMerge, Scratch, Sections, TournamentMerge, TreeMerge};
+pub use merge::{AuxMerge, Chains, CopiedKeys, HeadKeys, InsertionMerge, RodMerge, Scratch, Sections, TournamentMerge, TreeMerge};
 pub use rod_sort::RodSort;
 pub use shell_branching::{
     BranchingStrategy, Classic, Fibonacci, LogParity, Optimised, Parity3, RootParity,

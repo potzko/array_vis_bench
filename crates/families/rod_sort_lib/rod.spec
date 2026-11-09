@@ -79,12 +79,21 @@ component rod_tournament
   provides RodMerge
 end
 
-# The tree sort family's trees as the merge's priority queue, one filler each.
+# The tree sort family's trees as the merge's priority queue, one filler each,
+# keyed by each chain's head as a `HeadKeys` keeps it.
 component rod_tree
-  type     TreeMerge<{tree}>
-  label    tree<{tree}>
+  type     TreeMerge<{tree}, {keys}>
+  label    tree<{tree}, keys: {keys}>
   provides RodMerge
   slot     tree Tree
+  slot     keys HeadKeys
+end
+
+# Each head's value copied into a key cell of its own, the tree comparing the copies.
+component rod_keys_copied
+  type     CopiedKeys
+  label    copied
+  provides HeadKeys
 end
 
 # A strategy's gap chain as a Shell sort gap sequence, so the shell drivers'
