@@ -90,6 +90,12 @@ fn retrace<const SLACK: usize, T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layo
         let parent = nodes.parent(x);
         let before = nodes.rank(x);
         let (left, right) = (nodes.rank(nodes.link(x, LEFT)), nodes.rank(nodes.link(x, RIGHT)));
+        // `>=` and `==` decide alike, as an imbalance gets to the threshold and no
+        // further, and sorts of 8192 keys in seven shapes logged the same events
+        // under both at every slack. Timed in one binary on one pinned core over
+        // random input, `==` ran within 0.7% of `>=` at 2^14 and 2^17 keys, the
+        // sign changing from one slack to the next, and the noise at 2^20 hid any
+        // difference. `>=` stays, as the form that still rebalances an overshoot.
         let after = if Height::<L>::lead(left, right).unsigned_abs() >= Avl::<SLACK>::THRESHOLD {
             let top = rebalance(nodes, x);
             nodes.rank(top)
