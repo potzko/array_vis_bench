@@ -96,6 +96,13 @@ component rod_keys_copied
   provides HeadKeys
 end
 
+# Only the heads, the tree comparing each head where it sits in the array.
+component rod_keys_indexed
+  type     IndexedKeys
+  label    indexed
+  provides HeadKeys
+end
+
 # A strategy's gap chain as a Shell sort gap sequence, so the shell drivers'
 # exhaustive hole reaches it: one entry per strategy and driver.
 component rod_gaps

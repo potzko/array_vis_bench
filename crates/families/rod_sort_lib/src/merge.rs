@@ -276,6 +276,19 @@ impl HeadKeys for CopiedKeys {
     fn read<'c, T>(chains: &'c Chains<T, Self>, s: usize) -> (&'c [T], usize) { (chains.keys, s) }
 }
 
+/// Only the heads, the tree comparing each chain's key where it sits in the
+/// array: no key cell and no copy, but a read at stride `jump` per compare.
+pub struct IndexedKeys;
+impl HeadKeys for IndexedKeys {
+    fn keys_size(_: usize) -> usize { 0 }
+
+    fn push<T: Ord + Copy, U: ?Sized + SortLogger<T>>(chains: &mut Chains<T, Self>, logger: &mut U, s: usize, head: usize) {
+        logger.write_data_u(chains.heads, s, head);
+    }
+
+    fn read<'c, T>(chains: &'c Chains<T, Self>, s: usize) -> (&'c [T], usize) { (chains.arr, chains.heads[s] * chains.jump) }
+}
+
 // Runs `body` on the front of each section of `scratch`, as much as `need`
 // asks, or past the output on sections of its own when the driver's are
 // shorter, which only a strategy whose branch narrows with the length can
@@ -568,6 +581,16 @@ mod tests {
             let height = (1.4405 * ((chains + 2) as f64).log2()) as usize;
             let compares = merged::<TreeMerge<Avl<1>, CopiedKeys>>(&mut sorted_chains(n, chains), chains);
             assert!(compares <= n * height, "{chains} chains took {compares} compares");
+        }
+    }
+
+    #[test]
+    fn indexed_keys_compare_as_often_as_copied_ones() {
+        for chains in 2..=40usize {
+            let arr = sorted_chains(20 * chains + 7, chains);
+            let copied = merged::<TreeMerge<Avl<1>, CopiedKeys>>(&mut arr.clone(), chains);
+            let indexed = merged::<TreeMerge<Avl<1>, IndexedKeys>>(&mut arr.clone(), chains);
+            assert_eq!(copied, indexed, "{chains} chains");
         }
     }
 

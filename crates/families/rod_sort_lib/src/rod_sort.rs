@@ -155,7 +155,7 @@ mod tests {
     use std::marker::PhantomData;
 
     use super::*;
-    use crate::{Classic, CopiedKeys, Optimised};
+    use crate::{Classic, CopiedKeys, IndexedKeys, Optimised};
     use sort_logger::{NoOpLogger, SortLog, VisualizerLogger};
     use tree_sort_lib::{Avl, Naive};
 
@@ -189,6 +189,23 @@ mod tests {
         assert_eq!(rows_created(RodSort::<Optimised, TournamentMerge>::sort), [vec![4096], vec![32, 32]]);
         assert_eq!(rows_created(RodSort::<Optimised, TreeMerge<Avl<1>, CopiedKeys>>::sort), [vec![4096], vec![32, 32, 32]]);
         assert!(rows_created(RodSort::<Optimised, InsertionMerge>::sort).is_empty());
+    }
+
+    #[test]
+    fn indexed_keys_keep_no_key_cells_and_compare_in_the_array() {
+        let sort = RodSort::<Optimised, TreeMerge<Avl<1>, IndexedKeys>>::sort;
+        assert_eq!(rows_created(sort), [vec![4096], vec![32, 32]]);
+        let mut arr: Vec<usize> = (0..4096).rev().collect();
+        let mut logger = VisualizerLogger { type_ghost: PhantomData, log: Vec::new() };
+        sort(&mut arr, &mut logger);
+        let base = arr.as_ptr() as usize;
+        let inside = base..base + arr.len() * size_of::<usize>();
+        let compared = logger.log.iter().flat_map(|event| match *event {
+            SortLog::CmpInArr { name, .. } | SortLog::CmpData { name, .. } => vec![name],
+            SortLog::CmpAcrossArrs { name_a, name_b, .. } => vec![name_a, name_b],
+            _ => vec![],
+        });
+        assert!(compared.into_iter().all(|name| inside.contains(&name)));
     }
 
     // Wide on short chains and narrow on long ones, so the scratch sized from

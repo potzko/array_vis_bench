@@ -129,7 +129,7 @@ mod tests {
         assert_eq!(COUNT_BLOCK_MERGE, 390, "block merge family (13 buffers x 2 key shapes x 15 rotations)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
-        assert_eq!(COUNT_ROD, 66, "rod family (6 branching x [3 merges + the tree merge over 8 trees])");
+        assert_eq!(COUNT_ROD, 114, "rod family (6 branching x [3 merges + the tree merge over 8 trees x 2 key stores])");
         assert_eq!(COUNT_CIRCLE, 17, "circle family");
         assert_eq!(COUNT_MERGE, 280, "merge family (40 classic + 240 rotation)");
         assert_eq!(COUNT_HEAP, 400, "heap family (16 classic + 360 quick + 24 dual)");
@@ -222,7 +222,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 2120, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 2168, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -1026,8 +1026,11 @@ mod tests {
         #[test]
         fn the_tree_merge_has_an_entry_for_each_strategy_tree_and_key_store() {
             let trees: Vec<&str> = entries().iter().map(|e| e.name).filter(|name| name.contains("tree<")).collect();
-            assert_eq!(trees.len(), 6 * 8, "{trees:?}");
-            assert!(trees.iter().all(|name| name.ends_with(", keys: copied>>")), "{trees:?}");
+            assert_eq!(trees.len(), 6 * 8 * 2, "{trees:?}");
+            for keys in ["copied", "indexed"] {
+                let kept = trees.iter().filter(|name| name.ends_with(&format!(", keys: {keys}>>"))).count();
+                assert_eq!(kept, 6 * 8, "keys: {keys}");
+            }
         }
         #[test]
         fn registered_under_rod_sorts_with_two_facets() {

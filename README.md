@@ -44,7 +44,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 
 ## Current catalog
 
-2120 entries are emitted from the build at the tip of this branch.
+2168 entries are emitted from the build at the tip of this branch.
 
 | family | entries | notes |
 |---|---|---|
@@ -58,7 +58,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 | quick heap sorts | 34 | 16 classic + 16 deferred + 2 set quick select |
 | shell sorts | 30 | 9 gap sequences and 6 rod gap chains x 2 drivers |
 | circle sorts | 17 | |
-| rod sorts | 66 | 6 branching strategies x 11 merges, eight of them over the tree sort trees |
+| rod sorts | 114 | 6 branching strategies x 19 merges, sixteen of them over the tree sort trees, keyed by copies or in place |
 | bubble sorts | 6 | 3 base + 3 odd even |
 | comb sorts | 6 | 6 shrink ratios |
 | weak heap sorts | 4 | 2 directions x 2 bit storages |

@@ -1860,68 +1860,116 @@
 "rod sort<strategy: 3-parity, merge: insertion>"	RodSort<Parity3, InsertionMerge>
 "rod sort<strategy: 3-parity, merge: tournament>"	RodSort<Parity3, TournamentMerge>
 "rod sort<strategy: 3-parity, merge: tree<avl: 1, keys: copied>>"	RodSort<Parity3, TreeMerge<Avl<1>, CopiedKeys>>
+"rod sort<strategy: 3-parity, merge: tree<avl: 1, keys: indexed>>"	RodSort<Parity3, TreeMerge<Avl<1>, IndexedKeys>>
 "rod sort<strategy: 3-parity, merge: tree<avl: 16, keys: copied>>"	RodSort<Parity3, TreeMerge<Avl<16>, CopiedKeys>>
+"rod sort<strategy: 3-parity, merge: tree<avl: 16, keys: indexed>>"	RodSort<Parity3, TreeMerge<Avl<16>, IndexedKeys>>
 "rod sort<strategy: 3-parity, merge: tree<avl: 2, keys: copied>>"	RodSort<Parity3, TreeMerge<Avl<2>, CopiedKeys>>
+"rod sort<strategy: 3-parity, merge: tree<avl: 2, keys: indexed>>"	RodSort<Parity3, TreeMerge<Avl<2>, IndexedKeys>>
 "rod sort<strategy: 3-parity, merge: tree<avl: 32, keys: copied>>"	RodSort<Parity3, TreeMerge<Avl<32>, CopiedKeys>>
+"rod sort<strategy: 3-parity, merge: tree<avl: 32, keys: indexed>>"	RodSort<Parity3, TreeMerge<Avl<32>, IndexedKeys>>
 "rod sort<strategy: 3-parity, merge: tree<avl: 4, keys: copied>>"	RodSort<Parity3, TreeMerge<Avl<4>, CopiedKeys>>
+"rod sort<strategy: 3-parity, merge: tree<avl: 4, keys: indexed>>"	RodSort<Parity3, TreeMerge<Avl<4>, IndexedKeys>>
 "rod sort<strategy: 3-parity, merge: tree<avl: 8, keys: copied>>"	RodSort<Parity3, TreeMerge<Avl<8>, CopiedKeys>>
+"rod sort<strategy: 3-parity, merge: tree<avl: 8, keys: indexed>>"	RodSort<Parity3, TreeMerge<Avl<8>, IndexedKeys>>
 "rod sort<strategy: 3-parity, merge: tree<avl: fixed 1, keys: copied>>"	RodSort<Parity3, TreeMerge<FixedAvl, CopiedKeys>>
+"rod sort<strategy: 3-parity, merge: tree<avl: fixed 1, keys: indexed>>"	RodSort<Parity3, TreeMerge<FixedAvl, IndexedKeys>>
 "rod sort<strategy: 3-parity, merge: tree<naive, keys: copied>>"	RodSort<Parity3, TreeMerge<Naive, CopiedKeys>>
+"rod sort<strategy: 3-parity, merge: tree<naive, keys: indexed>>"	RodSort<Parity3, TreeMerge<Naive, IndexedKeys>>
 "rod sort<strategy: classic, merge: aux>"	RodSort<Classic, AuxMerge>
 "rod sort<strategy: classic, merge: insertion>"	RodSort<Classic, InsertionMerge>
 "rod sort<strategy: classic, merge: tournament>"	RodSort<Classic, TournamentMerge>
 "rod sort<strategy: classic, merge: tree<avl: 1, keys: copied>>"	RodSort<Classic, TreeMerge<Avl<1>, CopiedKeys>>
+"rod sort<strategy: classic, merge: tree<avl: 1, keys: indexed>>"	RodSort<Classic, TreeMerge<Avl<1>, IndexedKeys>>
 "rod sort<strategy: classic, merge: tree<avl: 16, keys: copied>>"	RodSort<Classic, TreeMerge<Avl<16>, CopiedKeys>>
+"rod sort<strategy: classic, merge: tree<avl: 16, keys: indexed>>"	RodSort<Classic, TreeMerge<Avl<16>, IndexedKeys>>
 "rod sort<strategy: classic, merge: tree<avl: 2, keys: copied>>"	RodSort<Classic, TreeMerge<Avl<2>, CopiedKeys>>
+"rod sort<strategy: classic, merge: tree<avl: 2, keys: indexed>>"	RodSort<Classic, TreeMerge<Avl<2>, IndexedKeys>>
 "rod sort<strategy: classic, merge: tree<avl: 32, keys: copied>>"	RodSort<Classic, TreeMerge<Avl<32>, CopiedKeys>>
+"rod sort<strategy: classic, merge: tree<avl: 32, keys: indexed>>"	RodSort<Classic, TreeMerge<Avl<32>, IndexedKeys>>
 "rod sort<strategy: classic, merge: tree<avl: 4, keys: copied>>"	RodSort<Classic, TreeMerge<Avl<4>, CopiedKeys>>
+"rod sort<strategy: classic, merge: tree<avl: 4, keys: indexed>>"	RodSort<Classic, TreeMerge<Avl<4>, IndexedKeys>>
 "rod sort<strategy: classic, merge: tree<avl: 8, keys: copied>>"	RodSort<Classic, TreeMerge<Avl<8>, CopiedKeys>>
+"rod sort<strategy: classic, merge: tree<avl: 8, keys: indexed>>"	RodSort<Classic, TreeMerge<Avl<8>, IndexedKeys>>
 "rod sort<strategy: classic, merge: tree<avl: fixed 1, keys: copied>>"	RodSort<Classic, TreeMerge<FixedAvl, CopiedKeys>>
+"rod sort<strategy: classic, merge: tree<avl: fixed 1, keys: indexed>>"	RodSort<Classic, TreeMerge<FixedAvl, IndexedKeys>>
 "rod sort<strategy: classic, merge: tree<naive, keys: copied>>"	RodSort<Classic, TreeMerge<Naive, CopiedKeys>>
+"rod sort<strategy: classic, merge: tree<naive, keys: indexed>>"	RodSort<Classic, TreeMerge<Naive, IndexedKeys>>
 "rod sort<strategy: fibonacci, merge: aux>"	RodSort<Fibonacci, AuxMerge>
 "rod sort<strategy: fibonacci, merge: insertion>"	RodSort<Fibonacci, InsertionMerge>
 "rod sort<strategy: fibonacci, merge: tournament>"	RodSort<Fibonacci, TournamentMerge>
 "rod sort<strategy: fibonacci, merge: tree<avl: 1, keys: copied>>"	RodSort<Fibonacci, TreeMerge<Avl<1>, CopiedKeys>>
+"rod sort<strategy: fibonacci, merge: tree<avl: 1, keys: indexed>>"	RodSort<Fibonacci, TreeMerge<Avl<1>, IndexedKeys>>
 "rod sort<strategy: fibonacci, merge: tree<avl: 16, keys: copied>>"	RodSort<Fibonacci, TreeMerge<Avl<16>, CopiedKeys>>
+"rod sort<strategy: fibonacci, merge: tree<avl: 16, keys: indexed>>"	RodSort<Fibonacci, TreeMerge<Avl<16>, IndexedKeys>>
 "rod sort<strategy: fibonacci, merge: tree<avl: 2, keys: copied>>"	RodSort<Fibonacci, TreeMerge<Avl<2>, CopiedKeys>>
+"rod sort<strategy: fibonacci, merge: tree<avl: 2, keys: indexed>>"	RodSort<Fibonacci, TreeMerge<Avl<2>, IndexedKeys>>
 "rod sort<strategy: fibonacci, merge: tree<avl: 32, keys: copied>>"	RodSort<Fibonacci, TreeMerge<Avl<32>, CopiedKeys>>
+"rod sort<strategy: fibonacci, merge: tree<avl: 32, keys: indexed>>"	RodSort<Fibonacci, TreeMerge<Avl<32>, IndexedKeys>>
 "rod sort<strategy: fibonacci, merge: tree<avl: 4, keys: copied>>"	RodSort<Fibonacci, TreeMerge<Avl<4>, CopiedKeys>>
+"rod sort<strategy: fibonacci, merge: tree<avl: 4, keys: indexed>>"	RodSort<Fibonacci, TreeMerge<Avl<4>, IndexedKeys>>
 "rod sort<strategy: fibonacci, merge: tree<avl: 8, keys: copied>>"	RodSort<Fibonacci, TreeMerge<Avl<8>, CopiedKeys>>
+"rod sort<strategy: fibonacci, merge: tree<avl: 8, keys: indexed>>"	RodSort<Fibonacci, TreeMerge<Avl<8>, IndexedKeys>>
 "rod sort<strategy: fibonacci, merge: tree<avl: fixed 1, keys: copied>>"	RodSort<Fibonacci, TreeMerge<FixedAvl, CopiedKeys>>
+"rod sort<strategy: fibonacci, merge: tree<avl: fixed 1, keys: indexed>>"	RodSort<Fibonacci, TreeMerge<FixedAvl, IndexedKeys>>
 "rod sort<strategy: fibonacci, merge: tree<naive, keys: copied>>"	RodSort<Fibonacci, TreeMerge<Naive, CopiedKeys>>
+"rod sort<strategy: fibonacci, merge: tree<naive, keys: indexed>>"	RodSort<Fibonacci, TreeMerge<Naive, IndexedKeys>>
 "rod sort<strategy: log-parity, merge: aux>"	RodSort<LogParity, AuxMerge>
 "rod sort<strategy: log-parity, merge: insertion>"	RodSort<LogParity, InsertionMerge>
 "rod sort<strategy: log-parity, merge: tournament>"	RodSort<LogParity, TournamentMerge>
 "rod sort<strategy: log-parity, merge: tree<avl: 1, keys: copied>>"	RodSort<LogParity, TreeMerge<Avl<1>, CopiedKeys>>
+"rod sort<strategy: log-parity, merge: tree<avl: 1, keys: indexed>>"	RodSort<LogParity, TreeMerge<Avl<1>, IndexedKeys>>
 "rod sort<strategy: log-parity, merge: tree<avl: 16, keys: copied>>"	RodSort<LogParity, TreeMerge<Avl<16>, CopiedKeys>>
+"rod sort<strategy: log-parity, merge: tree<avl: 16, keys: indexed>>"	RodSort<LogParity, TreeMerge<Avl<16>, IndexedKeys>>
 "rod sort<strategy: log-parity, merge: tree<avl: 2, keys: copied>>"	RodSort<LogParity, TreeMerge<Avl<2>, CopiedKeys>>
+"rod sort<strategy: log-parity, merge: tree<avl: 2, keys: indexed>>"	RodSort<LogParity, TreeMerge<Avl<2>, IndexedKeys>>
 "rod sort<strategy: log-parity, merge: tree<avl: 32, keys: copied>>"	RodSort<LogParity, TreeMerge<Avl<32>, CopiedKeys>>
+"rod sort<strategy: log-parity, merge: tree<avl: 32, keys: indexed>>"	RodSort<LogParity, TreeMerge<Avl<32>, IndexedKeys>>
 "rod sort<strategy: log-parity, merge: tree<avl: 4, keys: copied>>"	RodSort<LogParity, TreeMerge<Avl<4>, CopiedKeys>>
+"rod sort<strategy: log-parity, merge: tree<avl: 4, keys: indexed>>"	RodSort<LogParity, TreeMerge<Avl<4>, IndexedKeys>>
 "rod sort<strategy: log-parity, merge: tree<avl: 8, keys: copied>>"	RodSort<LogParity, TreeMerge<Avl<8>, CopiedKeys>>
+"rod sort<strategy: log-parity, merge: tree<avl: 8, keys: indexed>>"	RodSort<LogParity, TreeMerge<Avl<8>, IndexedKeys>>
 "rod sort<strategy: log-parity, merge: tree<avl: fixed 1, keys: copied>>"	RodSort<LogParity, TreeMerge<FixedAvl, CopiedKeys>>
+"rod sort<strategy: log-parity, merge: tree<avl: fixed 1, keys: indexed>>"	RodSort<LogParity, TreeMerge<FixedAvl, IndexedKeys>>
 "rod sort<strategy: log-parity, merge: tree<naive, keys: copied>>"	RodSort<LogParity, TreeMerge<Naive, CopiedKeys>>
+"rod sort<strategy: log-parity, merge: tree<naive, keys: indexed>>"	RodSort<LogParity, TreeMerge<Naive, IndexedKeys>>
 "rod sort<strategy: optimised, merge: aux>"	RodSort<Optimised, AuxMerge>
 "rod sort<strategy: optimised, merge: insertion>"	RodSort<Optimised, InsertionMerge>
 "rod sort<strategy: optimised, merge: tournament>"	RodSort<Optimised, TournamentMerge>
 "rod sort<strategy: optimised, merge: tree<avl: 1, keys: copied>>"	RodSort<Optimised, TreeMerge<Avl<1>, CopiedKeys>>
+"rod sort<strategy: optimised, merge: tree<avl: 1, keys: indexed>>"	RodSort<Optimised, TreeMerge<Avl<1>, IndexedKeys>>
 "rod sort<strategy: optimised, merge: tree<avl: 16, keys: copied>>"	RodSort<Optimised, TreeMerge<Avl<16>, CopiedKeys>>
+"rod sort<strategy: optimised, merge: tree<avl: 16, keys: indexed>>"	RodSort<Optimised, TreeMerge<Avl<16>, IndexedKeys>>
 "rod sort<strategy: optimised, merge: tree<avl: 2, keys: copied>>"	RodSort<Optimised, TreeMerge<Avl<2>, CopiedKeys>>
+"rod sort<strategy: optimised, merge: tree<avl: 2, keys: indexed>>"	RodSort<Optimised, TreeMerge<Avl<2>, IndexedKeys>>
 "rod sort<strategy: optimised, merge: tree<avl: 32, keys: copied>>"	RodSort<Optimised, TreeMerge<Avl<32>, CopiedKeys>>
+"rod sort<strategy: optimised, merge: tree<avl: 32, keys: indexed>>"	RodSort<Optimised, TreeMerge<Avl<32>, IndexedKeys>>
 "rod sort<strategy: optimised, merge: tree<avl: 4, keys: copied>>"	RodSort<Optimised, TreeMerge<Avl<4>, CopiedKeys>>
+"rod sort<strategy: optimised, merge: tree<avl: 4, keys: indexed>>"	RodSort<Optimised, TreeMerge<Avl<4>, IndexedKeys>>
 "rod sort<strategy: optimised, merge: tree<avl: 8, keys: copied>>"	RodSort<Optimised, TreeMerge<Avl<8>, CopiedKeys>>
+"rod sort<strategy: optimised, merge: tree<avl: 8, keys: indexed>>"	RodSort<Optimised, TreeMerge<Avl<8>, IndexedKeys>>
 "rod sort<strategy: optimised, merge: tree<avl: fixed 1, keys: copied>>"	RodSort<Optimised, TreeMerge<FixedAvl, CopiedKeys>>
+"rod sort<strategy: optimised, merge: tree<avl: fixed 1, keys: indexed>>"	RodSort<Optimised, TreeMerge<FixedAvl, IndexedKeys>>
 "rod sort<strategy: optimised, merge: tree<naive, keys: copied>>"	RodSort<Optimised, TreeMerge<Naive, CopiedKeys>>
+"rod sort<strategy: optimised, merge: tree<naive, keys: indexed>>"	RodSort<Optimised, TreeMerge<Naive, IndexedKeys>>
 "rod sort<strategy: root-parity, merge: aux>"	RodSort<RootParity, AuxMerge>
 "rod sort<strategy: root-parity, merge: insertion>"	RodSort<RootParity, InsertionMerge>
 "rod sort<strategy: root-parity, merge: tournament>"	RodSort<RootParity, TournamentMerge>
 "rod sort<strategy: root-parity, merge: tree<avl: 1, keys: copied>>"	RodSort<RootParity, TreeMerge<Avl<1>, CopiedKeys>>
+"rod sort<strategy: root-parity, merge: tree<avl: 1, keys: indexed>>"	RodSort<RootParity, TreeMerge<Avl<1>, IndexedKeys>>
 "rod sort<strategy: root-parity, merge: tree<avl: 16, keys: copied>>"	RodSort<RootParity, TreeMerge<Avl<16>, CopiedKeys>>
+"rod sort<strategy: root-parity, merge: tree<avl: 16, keys: indexed>>"	RodSort<RootParity, TreeMerge<Avl<16>, IndexedKeys>>
 "rod sort<strategy: root-parity, merge: tree<avl: 2, keys: copied>>"	RodSort<RootParity, TreeMerge<Avl<2>, CopiedKeys>>
+"rod sort<strategy: root-parity, merge: tree<avl: 2, keys: indexed>>"	RodSort<RootParity, TreeMerge<Avl<2>, IndexedKeys>>
 "rod sort<strategy: root-parity, merge: tree<avl: 32, keys: copied>>"	RodSort<RootParity, TreeMerge<Avl<32>, CopiedKeys>>
+"rod sort<strategy: root-parity, merge: tree<avl: 32, keys: indexed>>"	RodSort<RootParity, TreeMerge<Avl<32>, IndexedKeys>>
 "rod sort<strategy: root-parity, merge: tree<avl: 4, keys: copied>>"	RodSort<RootParity, TreeMerge<Avl<4>, CopiedKeys>>
+"rod sort<strategy: root-parity, merge: tree<avl: 4, keys: indexed>>"	RodSort<RootParity, TreeMerge<Avl<4>, IndexedKeys>>
 "rod sort<strategy: root-parity, merge: tree<avl: 8, keys: copied>>"	RodSort<RootParity, TreeMerge<Avl<8>, CopiedKeys>>
+"rod sort<strategy: root-parity, merge: tree<avl: 8, keys: indexed>>"	RodSort<RootParity, TreeMerge<Avl<8>, IndexedKeys>>
 "rod sort<strategy: root-parity, merge: tree<avl: fixed 1, keys: copied>>"	RodSort<RootParity, TreeMerge<FixedAvl, CopiedKeys>>
+"rod sort<strategy: root-parity, merge: tree<avl: fixed 1, keys: indexed>>"	RodSort<RootParity, TreeMerge<FixedAvl, IndexedKeys>>
 "rod sort<strategy: root-parity, merge: tree<naive, keys: copied>>"	RodSort<RootParity, TreeMerge<Naive, CopiedKeys>>
+"rod sort<strategy: root-parity, merge: tree<naive, keys: indexed>>"	RodSort<RootParity, TreeMerge<Naive, IndexedKeys>>
 "rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<AuxiliaryRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<block cycle>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<bridge>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<BridgeRotation>, false>
