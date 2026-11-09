@@ -9,12 +9,12 @@
 //   BottomUp  4 SmallSort × 2 PP × 2 EE = 16
 //   Naive     4 SmallSort               =  4
 //   Natural   2 PP × 2 EE               =  4    (classic subtotal = 40)
-//   TopDownRot   4 SmallSort × (2 strategies × 11 rotations) = 88
-//   BottomUpRot  4 SmallSort × (2 strategies × 11 rotations) = 88   (rotation = 176)
+//   TopDownRot   4 SmallSort × (2 strategies × 12 rotations) = 96
+//   BottomUpRot  4 SmallSort × (2 strategies × 12 rotations) = 96   (rotation = 192)
 //
 // `rmerge = _` fans over the RotationMerge role (mrm_naive | mrm_smaller_side),
 // and each of those has its own `rot` sub-slot the enumerator expands over all
-// 11 Rotation components. The rotation queries pass the literal `early_exit = false`.
+// 12 Rotation components. The rotation queries pass the literal `early_exit = false`.
 
 TopDownMergeSorts:  SortingAlgorithm = SortingAlgorithm<TopDownMergeSort<small_sort = _, ping_pong = _, early_exit = _>>
 BottomUpMergeSorts: SortingAlgorithm = SortingAlgorithm<BottomUpMergeSort<small_sort = _, ping_pong = _, early_exit = _>>

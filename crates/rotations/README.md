@@ -5,6 +5,7 @@ needs through `scratch_size`, and provides the `Rotation` role, which is both
 the slot of a rotation merge and the first class rotation entry.
 
 - `rotation_auxiliary`: copy the smaller side to a buffer.
+- `rotation_block_cycle`: Gries-Mills with each run of block swaps fused into one cyclic shift.
 - `rotation_bridge`: buffer sized to the difference of the sides.
 - `rotation_contrev`: conjoined triple reversal.
 - `rotation_drill`: grail, piston and helix loops combined.

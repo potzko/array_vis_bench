@@ -830,6 +830,7 @@ dependencies = [
  "reverse_storage_lib",
  "rod_sort_lib",
  "rotation_auxiliary",
+ "rotation_block_cycle",
  "rotation_bridge",
  "rotation_contrev",
  "rotation_drill",
