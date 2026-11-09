@@ -554,6 +554,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rotation_block_cycle"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
 name = "rotation_bridge"
 version = "0.1.0"
 dependencies = [
