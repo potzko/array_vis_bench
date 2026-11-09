@@ -21,16 +21,29 @@ impl<Seq: GapSequence> ShellSort<Seq> {
         let gaps = Seq::gaps(arr.len());
         for &gap in &gaps {
             for i in gap..arr.len() {
-                let mut ii = i;
-                while ii >= gap {
-                    if !logger.cond_swap_lt(arr, ii, ii - gap) {
-                        break;
-                    }
-                    ii -= gap;
-                }
+                insert_into_chain(arr, i, gap, logger);
             }
         }
     }
+}
+
+/// Inserts `arr[i]` into the sorted chain below it, `i - gap`, `i - 2 gap`,
+/// and so on. Holds the element and shifts each larger predecessor up one gap,
+/// so moving d places costs d + 1 writes where swapping cost 2d, for the same
+/// comparisons.
+pub fn insert_into_chain<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    i: usize,
+    gap: usize,
+    logger: &mut U,
+) {
+    let held = arr[i];
+    let mut slot = i;
+    while slot >= gap && !logger.cmp_le_data(arr, slot - gap, held) {
+        logger.write(arr, slot, slot - gap);
+        slot -= gap;
+    }
+    if slot != i { logger.write_data(arr, slot, held); }
 }
 
 array_vis_bench_traits::direct_sort!(ShellSort<Seq>; Seq: GapSequence);
@@ -77,5 +90,38 @@ mod annotation_tests {
     #[test]
     fn shell_sort_in_place() {
         assert!(<ShellSort<ClassicGaps> as HasSpace>::SPACE.is_in_place());
+    }
+}
+
+#[cfg(test)]
+mod kernel_tests {
+    use std::marker::PhantomData;
+
+    use super::*;
+    use crate::ShellSortOrdered;
+    use sort_logger::{SortLog, VisualizerLogger};
+
+    // A single gap of 1, so either driver is a plain insertion sort.
+    struct Ones;
+    impl GapSequence for Ones {
+        const NAME: &'static str = "ones";
+        const BIG_O: &'static str = "O(N^2)";
+        fn gaps(_: usize) -> Vec<usize> { vec![1] }
+    }
+
+    #[test]
+    fn a_pass_writes_once_per_place_an_element_moves() {
+        // A reversed run of five: the element at index i moves i places, i
+        // shifts and one write of the held element, and nothing swaps.
+        let sorts: [fn(&mut [u32], &mut VisualizerLogger<u32>); 2] = [ShellSort::<Ones>::sort, ShellSortOrdered::<Ones>::sort];
+        for sort in sorts {
+            let mut arr = [5, 4, 3, 2, 1];
+            let mut logger = VisualizerLogger { type_ghost: PhantomData, log: Vec::new() };
+            sort(&mut arr, &mut logger);
+            assert_eq!(arr, [1, 2, 3, 4, 5]);
+            let swaps = logger.log.iter().filter(|e| matches!(e, SortLog::Swap { .. })).count();
+            let writes = logger.log.iter().filter(|e| matches!(e, SortLog::WriteInArr { .. } | SortLog::WriteData { .. })).count();
+            assert_eq!((swaps, writes), (0, 10 + 4));
+        }
     }
 }

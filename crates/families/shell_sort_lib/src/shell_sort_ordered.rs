@@ -5,6 +5,7 @@ use array_vis_bench_traits::Complexity;
 use sort_logger::SortLogger;
 
 use crate::sequences::GapSequence;
+use crate::shell_sort::insert_into_chain;
 
 /// Shell sort variant that completes each gap-subsequence before advancing.
 ///
@@ -22,16 +23,8 @@ impl<Seq: GapSequence> ShellSortOrdered<Seq> {
         let gaps = Seq::gaps(arr.len());
         for &gap in &gaps {
             for start in 0..gap {
-                let mut i = start + gap;
-                while i < arr.len() {
-                    let mut ii = i;
-                    while ii >= gap + start {
-                        if !logger.cond_swap_lt(arr, ii, ii - gap) {
-                            break;
-                        }
-                        ii -= gap;
-                    }
-                    i += gap;
+                for i in (start + gap..arr.len()).step_by(gap) {
+                    insert_into_chain(arr, i, gap, logger);
                 }
             }
         }

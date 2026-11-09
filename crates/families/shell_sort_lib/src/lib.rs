@@ -12,5 +12,5 @@ pub use sequences::{
     Ciura, ClassicGaps, GapSequence, Hibbard, Knuth, Optimized256, Pratt, Sedgewick,
     SedgewickBranching, Tokuda,
 };
-pub use shell_sort::ShellSort;
+pub use shell_sort::{insert_into_chain, ShellSort};
 pub use shell_sort_ordered::ShellSortOrdered;
