@@ -34,6 +34,6 @@ rotation merges only) and logs each fall with a `mark`.
 Its catalog component is declared in `block_merge.spec`, the buffer, size and keys fillers in
 `scratchspace_lib`'s fragment.
 
-Query `block_merge.avbs` builds: `BlockMergeSorts`, 286 entries: thirteen
+Query `block_merge.avbs` builds: `BlockMergeSorts`, 312 entries: thirteen
 buffers (in the array or external by six sizes, or none) by two key shapes by
-eleven rotations.
+twelve rotations.

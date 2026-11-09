@@ -86,7 +86,9 @@
 "beap sort<dir: min reverse, build: iterative>"	BeapSortClassicOf<MinReverse, Iterative>
 "binary insertion: 16"	InsertionSmallSort<BinaryInsertion, 16>
 "binary insertion: 32"	InsertionSmallSort<BinaryInsertion, 32>
+"block cycle"	BlockCycleRotation
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: block cycle>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: bridge>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, BridgeRotation>
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: contrev>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, ContrevRotation>
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: drill>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, DrillRotation>
@@ -98,6 +100,7 @@
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, ReversalRotation>
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, TrinityRotation>
 "block sort<buffer: external<2 sqrt>, keys: none, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: block cycle>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, BlockCycleRotation>
 "block sort<buffer: external<2 sqrt>, keys: none, rotation: bridge>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, BridgeRotation>
 "block sort<buffer: external<2 sqrt>, keys: none, rotation: contrev>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, ContrevRotation>
 "block sort<buffer: external<2 sqrt>, keys: none, rotation: drill>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, DrillRotation>
@@ -109,6 +112,7 @@
 "block sort<buffer: external<2 sqrt>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, ReversalRotation>
 "block sort<buffer: external<2 sqrt>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, TrinityRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: external<512>, keys: in array, rotation: block cycle>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, BridgeRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, ContrevRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: drill>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, DrillRotation>
@@ -120,6 +124,7 @@
 "block sort<buffer: external<512>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, ReversalRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, TrinityRotation>
 "block sort<buffer: external<512>, keys: none, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: external<512>, keys: none, rotation: block cycle>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, BlockCycleRotation>
 "block sort<buffer: external<512>, keys: none, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, BridgeRotation>
 "block sort<buffer: external<512>, keys: none, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, ContrevRotation>
 "block sort<buffer: external<512>, keys: none, rotation: drill>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, DrillRotation>
@@ -131,6 +136,7 @@
 "block sort<buffer: external<512>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, ReversalRotation>
 "block sort<buffer: external<512>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, TrinityRotation>
 "block sort<buffer: external<half>, keys: in array, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: external<half>, keys: in array, rotation: block cycle>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: external<half>, keys: in array, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, BridgeRotation>
 "block sort<buffer: external<half>, keys: in array, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, ContrevRotation>
 "block sort<buffer: external<half>, keys: in array, rotation: drill>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, DrillRotation>
@@ -142,6 +148,7 @@
 "block sort<buffer: external<half>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, ReversalRotation>
 "block sort<buffer: external<half>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, TrinityRotation>
 "block sort<buffer: external<half>, keys: none, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: external<half>, keys: none, rotation: block cycle>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, BlockCycleRotation>
 "block sort<buffer: external<half>, keys: none, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, BridgeRotation>
 "block sort<buffer: external<half>, keys: none, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, ContrevRotation>
 "block sort<buffer: external<half>, keys: none, rotation: drill>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, DrillRotation>
@@ -153,6 +160,7 @@
 "block sort<buffer: external<half>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, ReversalRotation>
 "block sort<buffer: external<half>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, TrinityRotation>
 "block sort<buffer: external<log>, keys: in array, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: block cycle>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: external<log>, keys: in array, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, BridgeRotation>
 "block sort<buffer: external<log>, keys: in array, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, ContrevRotation>
 "block sort<buffer: external<log>, keys: in array, rotation: drill>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, DrillRotation>
@@ -164,6 +172,7 @@
 "block sort<buffer: external<log>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, ReversalRotation>
 "block sort<buffer: external<log>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, TrinityRotation>
 "block sort<buffer: external<log>, keys: none, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: external<log>, keys: none, rotation: block cycle>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, BlockCycleRotation>
 "block sort<buffer: external<log>, keys: none, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, BridgeRotation>
 "block sort<buffer: external<log>, keys: none, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, ContrevRotation>
 "block sort<buffer: external<log>, keys: none, rotation: drill>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, DrillRotation>
@@ -175,6 +184,7 @@
 "block sort<buffer: external<log>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, ReversalRotation>
 "block sort<buffer: external<log>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, TrinityRotation>
 "block sort<buffer: external<sixteenth>, keys: in array, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: block cycle>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: external<sixteenth>, keys: in array, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, BridgeRotation>
 "block sort<buffer: external<sixteenth>, keys: in array, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, ContrevRotation>
 "block sort<buffer: external<sixteenth>, keys: in array, rotation: drill>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, DrillRotation>
@@ -186,6 +196,7 @@
 "block sort<buffer: external<sixteenth>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, ReversalRotation>
 "block sort<buffer: external<sixteenth>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, TrinityRotation>
 "block sort<buffer: external<sixteenth>, keys: none, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: block cycle>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, BlockCycleRotation>
 "block sort<buffer: external<sixteenth>, keys: none, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, BridgeRotation>
 "block sort<buffer: external<sixteenth>, keys: none, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, ContrevRotation>
 "block sort<buffer: external<sixteenth>, keys: none, rotation: drill>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, DrillRotation>
@@ -197,6 +208,7 @@
 "block sort<buffer: external<sixteenth>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, ReversalRotation>
 "block sort<buffer: external<sixteenth>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, TrinityRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: external<sqrt>, keys: in array, rotation: block cycle>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, BridgeRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, ContrevRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: drill>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, DrillRotation>
@@ -208,6 +220,7 @@
 "block sort<buffer: external<sqrt>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, ReversalRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, TrinityRotation>
 "block sort<buffer: external<sqrt>, keys: none, rotation: auxiliary>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: external<sqrt>, keys: none, rotation: block cycle>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, BlockCycleRotation>
 "block sort<buffer: external<sqrt>, keys: none, rotation: bridge>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, BridgeRotation>
 "block sort<buffer: external<sqrt>, keys: none, rotation: contrev>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, ContrevRotation>
 "block sort<buffer: external<sqrt>, keys: none, rotation: drill>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, DrillRotation>
@@ -219,6 +232,7 @@
 "block sort<buffer: external<sqrt>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, ReversalRotation>
 "block sort<buffer: external<sqrt>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, TrinityRotation>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: block cycle>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: bridge>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, BridgeRotation>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: contrev>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, ContrevRotation>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: drill>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, DrillRotation>
@@ -230,6 +244,7 @@
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, ReversalRotation>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, TrinityRotation>
 "block sort<buffer: in array<2 sqrt>, keys: none, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: block cycle>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, BlockCycleRotation>
 "block sort<buffer: in array<2 sqrt>, keys: none, rotation: bridge>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, BridgeRotation>
 "block sort<buffer: in array<2 sqrt>, keys: none, rotation: contrev>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, ContrevRotation>
 "block sort<buffer: in array<2 sqrt>, keys: none, rotation: drill>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, DrillRotation>
@@ -241,6 +256,7 @@
 "block sort<buffer: in array<2 sqrt>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<2 sqrt>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, TrinityRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: in array<512>, keys: in array, rotation: block cycle>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, BridgeRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, ContrevRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: drill>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, DrillRotation>
@@ -252,6 +268,7 @@
 "block sort<buffer: in array<512>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, ReversalRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, TrinityRotation>
 "block sort<buffer: in array<512>, keys: none, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: in array<512>, keys: none, rotation: block cycle>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, BlockCycleRotation>
 "block sort<buffer: in array<512>, keys: none, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, BridgeRotation>
 "block sort<buffer: in array<512>, keys: none, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, ContrevRotation>
 "block sort<buffer: in array<512>, keys: none, rotation: drill>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, DrillRotation>
@@ -263,6 +280,7 @@
 "block sort<buffer: in array<512>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<512>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, TrinityRotation>
 "block sort<buffer: in array<half>, keys: in array, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: in array<half>, keys: in array, rotation: block cycle>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: in array<half>, keys: in array, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, BridgeRotation>
 "block sort<buffer: in array<half>, keys: in array, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, ContrevRotation>
 "block sort<buffer: in array<half>, keys: in array, rotation: drill>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, DrillRotation>
@@ -274,6 +292,7 @@
 "block sort<buffer: in array<half>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, ReversalRotation>
 "block sort<buffer: in array<half>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, TrinityRotation>
 "block sort<buffer: in array<half>, keys: none, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: in array<half>, keys: none, rotation: block cycle>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, BlockCycleRotation>
 "block sort<buffer: in array<half>, keys: none, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, BridgeRotation>
 "block sort<buffer: in array<half>, keys: none, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, ContrevRotation>
 "block sort<buffer: in array<half>, keys: none, rotation: drill>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, DrillRotation>
@@ -285,6 +304,7 @@
 "block sort<buffer: in array<half>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<half>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, TrinityRotation>
 "block sort<buffer: in array<log>, keys: in array, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: block cycle>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: in array<log>, keys: in array, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, BridgeRotation>
 "block sort<buffer: in array<log>, keys: in array, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, ContrevRotation>
 "block sort<buffer: in array<log>, keys: in array, rotation: drill>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, DrillRotation>
@@ -296,6 +316,7 @@
 "block sort<buffer: in array<log>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, ReversalRotation>
 "block sort<buffer: in array<log>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, TrinityRotation>
 "block sort<buffer: in array<log>, keys: none, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: block cycle>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, BlockCycleRotation>
 "block sort<buffer: in array<log>, keys: none, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, BridgeRotation>
 "block sort<buffer: in array<log>, keys: none, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, ContrevRotation>
 "block sort<buffer: in array<log>, keys: none, rotation: drill>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, DrillRotation>
@@ -307,6 +328,7 @@
 "block sort<buffer: in array<log>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<log>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, TrinityRotation>
 "block sort<buffer: in array<sixteenth>, keys: in array, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: block cycle>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: in array<sixteenth>, keys: in array, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, BridgeRotation>
 "block sort<buffer: in array<sixteenth>, keys: in array, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, ContrevRotation>
 "block sort<buffer: in array<sixteenth>, keys: in array, rotation: drill>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, DrillRotation>
@@ -318,6 +340,7 @@
 "block sort<buffer: in array<sixteenth>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, ReversalRotation>
 "block sort<buffer: in array<sixteenth>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, TrinityRotation>
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: block cycle>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, BlockCycleRotation>
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, BridgeRotation>
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, ContrevRotation>
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: drill>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, DrillRotation>
@@ -329,6 +352,7 @@
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, TrinityRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: in array<sqrt>, keys: in array, rotation: block cycle>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, BridgeRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, ContrevRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: drill>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, DrillRotation>
@@ -340,6 +364,7 @@
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, ReversalRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: auxiliary>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, AuxiliaryRotation>
+"block sort<buffer: in array<sqrt>, keys: none, rotation: block cycle>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, BlockCycleRotation>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: bridge>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, BridgeRotation>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: contrev>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, ContrevRotation>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: drill>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, DrillRotation>
@@ -351,6 +376,7 @@
 "block sort<buffer: in array<sqrt>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, TrinityRotation>
 "block sort<buffer: none, keys: in array, rotation: auxiliary>"	BlockMergeSort<NoBuffer, InArrayKeys, AuxiliaryRotation>
+"block sort<buffer: none, keys: in array, rotation: block cycle>"	BlockMergeSort<NoBuffer, InArrayKeys, BlockCycleRotation>
 "block sort<buffer: none, keys: in array, rotation: bridge>"	BlockMergeSort<NoBuffer, InArrayKeys, BridgeRotation>
 "block sort<buffer: none, keys: in array, rotation: contrev>"	BlockMergeSort<NoBuffer, InArrayKeys, ContrevRotation>
 "block sort<buffer: none, keys: in array, rotation: drill>"	BlockMergeSort<NoBuffer, InArrayKeys, DrillRotation>
@@ -362,6 +388,7 @@
 "block sort<buffer: none, keys: in array, rotation: reversal>"	BlockMergeSort<NoBuffer, InArrayKeys, ReversalRotation>
 "block sort<buffer: none, keys: in array, rotation: trinity>"	BlockMergeSort<NoBuffer, InArrayKeys, TrinityRotation>
 "block sort<buffer: none, keys: none, rotation: auxiliary>"	BlockMergeSort<NoBuffer, NoKeys, AuxiliaryRotation>
+"block sort<buffer: none, keys: none, rotation: block cycle>"	BlockMergeSort<NoBuffer, NoKeys, BlockCycleRotation>
 "block sort<buffer: none, keys: none, rotation: bridge>"	BlockMergeSort<NoBuffer, NoKeys, BridgeRotation>
 "block sort<buffer: none, keys: none, rotation: contrev>"	BlockMergeSort<NoBuffer, NoKeys, ContrevRotation>
 "block sort<buffer: none, keys: none, rotation: drill>"	BlockMergeSort<NoBuffer, NoKeys, DrillRotation>
@@ -395,6 +422,7 @@
 "bottom-up merge sort<small: size: 2, pp=true, ee=false>"	BottomUpMergeSort<Size2SmallSort, true, false>
 "bottom-up merge sort<small: size: 2, pp=true, ee=true>"	BottomUpMergeSort<Size2SmallSort, true, true>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<AuxiliaryRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: naive<block cycle>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<BlockCycleRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<bridge>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<BridgeRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<contrev>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<ContrevRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<drill>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<DrillRotation>, false>
@@ -406,6 +434,7 @@
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<reversal>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<trinity>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<TrinityRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<auxiliary>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<AuxiliaryRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<block cycle>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<BlockCycleRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<bridge>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<BridgeRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<contrev>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<ContrevRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<drill>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<DrillRotation>, false>
@@ -417,6 +446,7 @@
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<TrinityRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<auxiliary>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<AuxiliaryRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: naive<block cycle>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<BlockCycleRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<bridge>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<BridgeRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<contrev>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<ContrevRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<drill>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<DrillRotation>, false>
@@ -428,6 +458,7 @@
 "bottom-up rotation merge sort<small: network: 16, merge: naive<reversal>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<trinity>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<TrinityRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<auxiliary>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<AuxiliaryRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: smaller-side<block cycle>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<BlockCycleRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<bridge>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<BridgeRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<contrev>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<ContrevRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<drill>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<DrillRotation>, false>
@@ -439,6 +470,7 @@
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<reversal>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<trinity>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<auxiliary>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<AuxiliaryRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: naive<block cycle>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<BlockCycleRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<bridge>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<BridgeRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<contrev>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<ContrevRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<drill>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<DrillRotation>, false>
@@ -450,6 +482,7 @@
 "bottom-up rotation merge sort<small: size: 1, merge: naive<reversal>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<trinity>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<TrinityRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<auxiliary>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<AuxiliaryRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: smaller-side<block cycle>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<BlockCycleRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<bridge>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<BridgeRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<contrev>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<ContrevRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<drill>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<DrillRotation>, false>
@@ -461,6 +494,7 @@
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<reversal>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<trinity>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<auxiliary>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<AuxiliaryRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: naive<block cycle>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<BlockCycleRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<bridge>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<BridgeRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<contrev>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<ContrevRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<drill>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<DrillRotation>, false>
@@ -472,6 +506,7 @@
 "bottom-up rotation merge sort<small: size: 2, merge: naive<reversal>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<trinity>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<TrinityRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: smaller-side<auxiliary>>"	BottomUpRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<AuxiliaryRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: smaller-side<block cycle>>"	BottomUpRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<BlockCycleRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: smaller-side<bridge>>"	BottomUpRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<BridgeRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: smaller-side<contrev>>"	BottomUpRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<ContrevRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: smaller-side<drill>>"	BottomUpRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<DrillRotation>, false>
@@ -1218,6 +1253,7 @@
 "naive merge sort<small: size: 1>"	NaiveMergeSort<Size1SmallSort>
 "naive merge sort<small: size: 2>"	NaiveMergeSort<Size2SmallSort>
 "naive<auxiliary>"	NaiveRotationMerge<AuxiliaryRotation>
+"naive<block cycle>"	NaiveRotationMerge<BlockCycleRotation>
 "naive<bridge>"	NaiveRotationMerge<BridgeRotation>
 "naive<contrev>"	NaiveRotationMerge<ContrevRotation>
 "naive<drill>"	NaiveRotationMerge<DrillRotation>
@@ -1731,6 +1767,7 @@
 "rod sort<strategy: root-parity, merge: insertion>"	RodSort<RootParity, InsertionMerge>
 "rod sort<strategy: root-parity, merge: tournament>"	RodSort<RootParity, TournamentMerge>
 "rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<AuxiliaryRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: naive<block cycle>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<bridge>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<BridgeRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<contrev>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<ContrevRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<drill>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<DrillRotation>, false>
@@ -1742,6 +1779,7 @@
 "rotation merge sort<small: insertion: 32, merge: naive<reversal>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<trinity>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<TrinityRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: smaller-side<auxiliary>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<AuxiliaryRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: smaller-side<block cycle>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: smaller-side<bridge>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<BridgeRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: smaller-side<contrev>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<ContrevRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: smaller-side<drill>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<DrillRotation>, false>
@@ -1753,6 +1791,7 @@
 "rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<TrinityRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<auxiliary>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<AuxiliaryRotation>, false>
+"rotation merge sort<small: network: 16, merge: naive<block cycle>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<bridge>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<BridgeRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<contrev>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<ContrevRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<drill>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<DrillRotation>, false>
@@ -1764,6 +1803,7 @@
 "rotation merge sort<small: network: 16, merge: naive<reversal>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<trinity>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<TrinityRotation>, false>
 "rotation merge sort<small: network: 16, merge: smaller-side<auxiliary>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<AuxiliaryRotation>, false>
+"rotation merge sort<small: network: 16, merge: smaller-side<block cycle>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: network: 16, merge: smaller-side<bridge>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<BridgeRotation>, false>
 "rotation merge sort<small: network: 16, merge: smaller-side<contrev>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<ContrevRotation>, false>
 "rotation merge sort<small: network: 16, merge: smaller-side<drill>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<DrillRotation>, false>
@@ -1775,6 +1815,7 @@
 "rotation merge sort<small: network: 16, merge: smaller-side<reversal>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: network: 16, merge: smaller-side<trinity>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<auxiliary>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<AuxiliaryRotation>, false>
+"rotation merge sort<small: size: 1, merge: naive<block cycle>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<bridge>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<BridgeRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<contrev>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<ContrevRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<drill>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<DrillRotation>, false>
@@ -1786,6 +1827,7 @@
 "rotation merge sort<small: size: 1, merge: naive<reversal>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<trinity>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<TrinityRotation>, false>
 "rotation merge sort<small: size: 1, merge: smaller-side<auxiliary>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<AuxiliaryRotation>, false>
+"rotation merge sort<small: size: 1, merge: smaller-side<block cycle>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: size: 1, merge: smaller-side<bridge>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<BridgeRotation>, false>
 "rotation merge sort<small: size: 1, merge: smaller-side<contrev>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<ContrevRotation>, false>
 "rotation merge sort<small: size: 1, merge: smaller-side<drill>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<DrillRotation>, false>
@@ -1797,6 +1839,7 @@
 "rotation merge sort<small: size: 1, merge: smaller-side<reversal>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: size: 1, merge: smaller-side<trinity>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<auxiliary>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<AuxiliaryRotation>, false>
+"rotation merge sort<small: size: 2, merge: naive<block cycle>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<bridge>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<BridgeRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<contrev>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<ContrevRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<drill>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<DrillRotation>, false>
@@ -1808,6 +1851,7 @@
 "rotation merge sort<small: size: 2, merge: naive<reversal>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<trinity>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<TrinityRotation>, false>
 "rotation merge sort<small: size: 2, merge: smaller-side<auxiliary>>"	TopDownRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<AuxiliaryRotation>, false>
+"rotation merge sort<small: size: 2, merge: smaller-side<block cycle>>"	TopDownRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: size: 2, merge: smaller-side<bridge>>"	TopDownRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<BridgeRotation>, false>
 "rotation merge sort<small: size: 2, merge: smaller-side<contrev>>"	TopDownRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<ContrevRotation>, false>
 "rotation merge sort<small: size: 2, merge: smaller-side<drill>>"	TopDownRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<DrillRotation>, false>
@@ -1859,6 +1903,7 @@
 "slow sort potzko"	SlowSortPotzko
 "slow sort"	SlowSort
 "smaller-side<auxiliary>"	SmallerSideRotationMerge<AuxiliaryRotation>
+"smaller-side<block cycle>"	SmallerSideRotationMerge<BlockCycleRotation>
 "smaller-side<bridge>"	SmallerSideRotationMerge<BridgeRotation>
 "smaller-side<contrev>"	SmallerSideRotationMerge<ContrevRotation>
 "smaller-side<drill>"	SmallerSideRotationMerge<DrillRotation>

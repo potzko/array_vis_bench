@@ -44,13 +44,14 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 
 ## Current catalog
 
-1588 entries are emitted from the build at the tip of this branch.
+1931 entries are emitted from the build at the tip of this branch.
 
 | family | entries | notes |
 |---|---|---|
 | quick sorts | 408 | 2 drivers x 51 partitions x 4 small sorts |
 | heap sorts | 400 | 16 classic + 360 quick build + 24 dual build |
-| merge sorts | 216 | 40 classic + 176 rotation based |
+| block merge sorts | 312 | 13 buffers x 2 key shapes x 12 rotations, the WikiSort and GrailSort shapes among them |
+| merge sorts | 232 | 40 classic + 192 rotation based |
 | fun sorts | 195 | slow, stooge, cyclent, quick surrender, random shell, bad heap |
 | beap sorts | 80 | 2 classic + 72 quick build + 6 dual build |
 | quick select | 56 | recursive and iterative, pivoted and heap extract |
@@ -61,12 +62,11 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 | bubble sorts | 6 | 3 base + 3 odd even |
 | comb sorts | 6 | 6 shrink ratios |
 | weak heap sorts | 4 | 2 directions x 2 bit storages |
-| block merge sorts | 6 | 3 buffers x 2 key shapes, the WikiSort and GrailSort shapes among them |
 | scratchspace nightmare sorts | 3 | 3 backings |
 | insertion sorts | 2 | linear and binary |
 | tree sorts | 2 | avl and naive trees over one node store |
 | cycle sort | 1 | |
-| first class kinds | 122 | 11 rotations, 7 small sorts, 67 partitions, 25 merges, 12 scratchspace workflows |
+| first class kinds | 125 | 12 rotations, 7 small sorts, 67 partitions, 27 merges, 12 scratchspace workflows |
 
 Every count is pinned by a golden test in `spec_catalog`, so a solver or
 emit regression that drops a variant fails the build's own tests.
