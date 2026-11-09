@@ -106,8 +106,8 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
 11. Done: rod sort axes. A tournament merge that makes every strategy
     N log N and the strategy's gap chain as a Shell sequence, after two speed
     fixes to the merges; the tuned strategy was dropped, `log-parity` beats
-    every constant setting. Open: the hold and shift kernel for the shell
-    family, which the rod gap entries need to beat the recursion. See
+    every constant setting. The shell family took the hold and shift kernel
+    after, which put the rod gap entries ahead of the recursion. See
     [implementation_plans/rod_sort_axes.md](implementation_plans/rod_sort_axes.md).
 
 ## Concept cleanups, 2026-10-20 review
