@@ -1,7 +1,8 @@
 # Tree sort family catalog fragment, owned by tree_sort_lib and gathered by
 # `spec_catalog` through `[package.metadata.array_vis_bench] spec = "tree.spec"`.
 # One driver over the Tree axis, the rule that keeps the search tree in shape.
-# The AVL tree is declared once per slack, since the spec has no integer enumeration.
+# The AVL tree is declared once per slack, since the spec has no integer enumeration,
+# and `FixedAvl` is the classic one written for slack 1 alone.
 
 component tree_sort
   type      TreeSort<{tree}>
@@ -44,6 +45,12 @@ end
 component tree_avl32
   type     Avl<32>
   label    avl: 32
+  provides Tree
+end
+
+component tree_fixed_avl
+  type     FixedAvl
+  label    avl: fixed 1
   provides Tree
 end
 

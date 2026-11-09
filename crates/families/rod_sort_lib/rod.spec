@@ -4,7 +4,7 @@
 # Two-axis (uncoupled): one `RodSort<{strategy},{merge}>` driver whose two slots
 # the query fills exhaustively. `strategy` ranges over the 6 BranchingStrategy
 # impls, `merge` over the RodMerge fillers, three merges plus the tree merge
-# over each of the tree sort family's 7 trees -> 6 x 10 = 60 entries. RodSort already
+# over each of the tree sort family's 8 trees -> 6 x 11 = 66 entries. RodSort already
 # has a unique type-head + inherent `sort` + composable trait impls, so it is
 # queried directly (no driver wrapper). Component names are prefixed `rod_` for
 # global uniqueness across the merged registry (Classic/Parity3/etc. clash with

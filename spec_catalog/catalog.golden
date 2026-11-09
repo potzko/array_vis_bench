@@ -1741,6 +1741,7 @@ Sort	rod sort<strategy: 3-parity, merge: tree<avl: 2>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: 3-parity, merge: tree<avl: 32>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: 3-parity, merge: tree<avl: 4>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: 3-parity, merge: tree<avl: 8>>	1.1 1.1 1.1 1.0 false
+Sort	rod sort<strategy: 3-parity, merge: tree<avl: fixed 1>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: 3-parity, merge: tree<naive>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: classic, merge: aux>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: classic, merge: insertion>	2.0 1.1 2.0 0.1 false
@@ -1751,6 +1752,7 @@ Sort	rod sort<strategy: classic, merge: tree<avl: 2>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: classic, merge: tree<avl: 32>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: classic, merge: tree<avl: 4>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: classic, merge: tree<avl: 8>>	1.1 1.1 1.1 1.0 false
+Sort	rod sort<strategy: classic, merge: tree<avl: fixed 1>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: classic, merge: tree<naive>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: fibonacci, merge: aux>	1.2 1.2 1.2 1.0 false
 Sort	rod sort<strategy: fibonacci, merge: insertion>	2.0 1.1 2.0 0.1 false
@@ -1761,6 +1763,7 @@ Sort	rod sort<strategy: fibonacci, merge: tree<avl: 2>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: fibonacci, merge: tree<avl: 32>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: fibonacci, merge: tree<avl: 4>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: fibonacci, merge: tree<avl: 8>>	1.1 1.1 1.1 1.0 false
+Sort	rod sort<strategy: fibonacci, merge: tree<avl: fixed 1>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: fibonacci, merge: tree<naive>>	1.2 1.1 1.1 1.0 false
 Sort	rod sort<strategy: log-parity, merge: aux>	1.2 1.2 1.2 1.0 false
 Sort	rod sort<strategy: log-parity, merge: insertion>	2.0 1.1 2.0 0.1 false
@@ -1771,6 +1774,7 @@ Sort	rod sort<strategy: log-parity, merge: tree<avl: 2>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: log-parity, merge: tree<avl: 32>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: log-parity, merge: tree<avl: 4>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: log-parity, merge: tree<avl: 8>>	1.1 1.1 1.1 1.0 false
+Sort	rod sort<strategy: log-parity, merge: tree<avl: fixed 1>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: log-parity, merge: tree<naive>>	1.2 1.1 1.1 1.0 false
 Sort	rod sort<strategy: optimised, merge: aux>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: optimised, merge: insertion>	2.0 1.1 2.0 0.1 false
@@ -1781,6 +1785,7 @@ Sort	rod sort<strategy: optimised, merge: tree<avl: 2>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: optimised, merge: tree<avl: 32>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: optimised, merge: tree<avl: 4>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: optimised, merge: tree<avl: 8>>	1.1 1.1 1.1 1.0 false
+Sort	rod sort<strategy: optimised, merge: tree<avl: fixed 1>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: optimised, merge: tree<naive>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: root-parity, merge: aux>	1.0Sqrt 1.0Sqrt 1.0Sqrt 1.0 false
 Sort	rod sort<strategy: root-parity, merge: insertion>	2.0 1.1 2.0 0.1 false
@@ -1791,6 +1796,7 @@ Sort	rod sort<strategy: root-parity, merge: tree<avl: 2>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: root-parity, merge: tree<avl: 32>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: root-parity, merge: tree<avl: 4>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: root-parity, merge: tree<avl: 8>>	1.1 1.1 1.1 1.0 false
+Sort	rod sort<strategy: root-parity, merge: tree<avl: fixed 1>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: root-parity, merge: tree<naive>>	1.0Sqrt 1.1 1.1 1.0 false
 Sort	rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
@@ -1926,6 +1932,7 @@ Sort	tree sort<avl: 2>	1.1 1.1 1.1 1.0 true
 Sort	tree sort<avl: 32>	1.1 1.1 1.1 1.0 true
 Sort	tree sort<avl: 4>	1.1 1.1 1.1 1.0 true
 Sort	tree sort<avl: 8>	1.1 1.1 1.1 1.0 true
+Sort	tree sort<avl: fixed 1>	1.1 1.1 1.1 1.0 true
 Sort	tree sort<naive>	2.0 1.1 1.1 1.0 true
 Sort	weak heap sort<dir: max forward, storage: bit storage>	1.1 1.1 1.1 1.0 false
 Sort	weak heap sort<dir: max forward, storage: byte storage>	1.1 1.1 1.1 1.0 false

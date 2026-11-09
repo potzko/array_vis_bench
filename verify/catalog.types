@@ -1721,6 +1721,7 @@
 "rod sort<strategy: 3-parity, merge: tree<avl: 32>>"	RodSort<Parity3, TreeMerge<Avl<32>>>
 "rod sort<strategy: 3-parity, merge: tree<avl: 4>>"	RodSort<Parity3, TreeMerge<Avl<4>>>
 "rod sort<strategy: 3-parity, merge: tree<avl: 8>>"	RodSort<Parity3, TreeMerge<Avl<8>>>
+"rod sort<strategy: 3-parity, merge: tree<avl: fixed 1>>"	RodSort<Parity3, TreeMerge<FixedAvl>>
 "rod sort<strategy: 3-parity, merge: tree<naive>>"	RodSort<Parity3, TreeMerge<Naive>>
 "rod sort<strategy: classic, merge: aux>"	RodSort<Classic, AuxMerge>
 "rod sort<strategy: classic, merge: insertion>"	RodSort<Classic, InsertionMerge>
@@ -1731,6 +1732,7 @@
 "rod sort<strategy: classic, merge: tree<avl: 32>>"	RodSort<Classic, TreeMerge<Avl<32>>>
 "rod sort<strategy: classic, merge: tree<avl: 4>>"	RodSort<Classic, TreeMerge<Avl<4>>>
 "rod sort<strategy: classic, merge: tree<avl: 8>>"	RodSort<Classic, TreeMerge<Avl<8>>>
+"rod sort<strategy: classic, merge: tree<avl: fixed 1>>"	RodSort<Classic, TreeMerge<FixedAvl>>
 "rod sort<strategy: classic, merge: tree<naive>>"	RodSort<Classic, TreeMerge<Naive>>
 "rod sort<strategy: fibonacci, merge: aux>"	RodSort<Fibonacci, AuxMerge>
 "rod sort<strategy: fibonacci, merge: insertion>"	RodSort<Fibonacci, InsertionMerge>
@@ -1741,6 +1743,7 @@
 "rod sort<strategy: fibonacci, merge: tree<avl: 32>>"	RodSort<Fibonacci, TreeMerge<Avl<32>>>
 "rod sort<strategy: fibonacci, merge: tree<avl: 4>>"	RodSort<Fibonacci, TreeMerge<Avl<4>>>
 "rod sort<strategy: fibonacci, merge: tree<avl: 8>>"	RodSort<Fibonacci, TreeMerge<Avl<8>>>
+"rod sort<strategy: fibonacci, merge: tree<avl: fixed 1>>"	RodSort<Fibonacci, TreeMerge<FixedAvl>>
 "rod sort<strategy: fibonacci, merge: tree<naive>>"	RodSort<Fibonacci, TreeMerge<Naive>>
 "rod sort<strategy: log-parity, merge: aux>"	RodSort<LogParity, AuxMerge>
 "rod sort<strategy: log-parity, merge: insertion>"	RodSort<LogParity, InsertionMerge>
@@ -1751,6 +1754,7 @@
 "rod sort<strategy: log-parity, merge: tree<avl: 32>>"	RodSort<LogParity, TreeMerge<Avl<32>>>
 "rod sort<strategy: log-parity, merge: tree<avl: 4>>"	RodSort<LogParity, TreeMerge<Avl<4>>>
 "rod sort<strategy: log-parity, merge: tree<avl: 8>>"	RodSort<LogParity, TreeMerge<Avl<8>>>
+"rod sort<strategy: log-parity, merge: tree<avl: fixed 1>>"	RodSort<LogParity, TreeMerge<FixedAvl>>
 "rod sort<strategy: log-parity, merge: tree<naive>>"	RodSort<LogParity, TreeMerge<Naive>>
 "rod sort<strategy: optimised, merge: aux>"	RodSort<Optimised, AuxMerge>
 "rod sort<strategy: optimised, merge: insertion>"	RodSort<Optimised, InsertionMerge>
@@ -1761,6 +1765,7 @@
 "rod sort<strategy: optimised, merge: tree<avl: 32>>"	RodSort<Optimised, TreeMerge<Avl<32>>>
 "rod sort<strategy: optimised, merge: tree<avl: 4>>"	RodSort<Optimised, TreeMerge<Avl<4>>>
 "rod sort<strategy: optimised, merge: tree<avl: 8>>"	RodSort<Optimised, TreeMerge<Avl<8>>>
+"rod sort<strategy: optimised, merge: tree<avl: fixed 1>>"	RodSort<Optimised, TreeMerge<FixedAvl>>
 "rod sort<strategy: optimised, merge: tree<naive>>"	RodSort<Optimised, TreeMerge<Naive>>
 "rod sort<strategy: root-parity, merge: aux>"	RodSort<RootParity, AuxMerge>
 "rod sort<strategy: root-parity, merge: insertion>"	RodSort<RootParity, InsertionMerge>
@@ -1771,6 +1776,7 @@
 "rod sort<strategy: root-parity, merge: tree<avl: 32>>"	RodSort<RootParity, TreeMerge<Avl<32>>>
 "rod sort<strategy: root-parity, merge: tree<avl: 4>>"	RodSort<RootParity, TreeMerge<Avl<4>>>
 "rod sort<strategy: root-parity, merge: tree<avl: 8>>"	RodSort<RootParity, TreeMerge<Avl<8>>>
+"rod sort<strategy: root-parity, merge: tree<avl: fixed 1>>"	RodSort<RootParity, TreeMerge<FixedAvl>>
 "rod sort<strategy: root-parity, merge: tree<naive>>"	RodSort<RootParity, TreeMerge<Naive>>
 "rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<AuxiliaryRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<bridge>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<BridgeRotation>, false>
@@ -1925,6 +1931,7 @@
 "tree sort<avl: 32>"	TreeSort<Avl<32>>
 "tree sort<avl: 4>"	TreeSort<Avl<4>>
 "tree sort<avl: 8>"	TreeSort<Avl<8>>
+"tree sort<avl: fixed 1>"	TreeSort<FixedAvl>
 "tree sort<naive>"	TreeSort<Naive>
 "trinity"	TrinityRotation
 "weak heap sort<dir: max forward, storage: bit storage>"	HeapSort<WeakHeapSort<MaxForward, BitStorage>>

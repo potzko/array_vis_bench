@@ -14,7 +14,9 @@ siblings differ by more than its slack, 1 for the classic AVL tree and 2, 4,
 8, 16 or 32 for a tree that rotates less often and grows taller, `naive` does
 nothing. The avl tree keeps its heights modulo the width of the rank field,
 so the one word layout holds a slack of 32, whose tallest tree outgrows 7
-bits. One to four words of extra space per element, by length, stable.
+bits. `fixed_avl` is the classic tree written for slack 1 alone, without the
+wrapped heights or the parameter, which sorts a few percent faster than
+`avl: 1` on small arrays and builds the same tree. One to four words of extra space per element, by length, stable.
 
 Its catalog components are declared in `tree.spec`.
 
