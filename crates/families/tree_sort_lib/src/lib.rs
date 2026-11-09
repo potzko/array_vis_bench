@@ -26,4 +26,17 @@ pub(crate) mod test_input {
         };
         std::iter::repeat_with(step).take(len).collect()
     }
+
+    // `$check::<SLACK, $arg...>()` for each slack the catalog builds a tree with.
+    macro_rules! each_slack {
+        ($check:ident $(, $arg:ty)*) => {{
+            $check::<1 $(, $arg)*>();
+            $check::<2 $(, $arg)*>();
+            $check::<4 $(, $arg)*>();
+            $check::<8 $(, $arg)*>();
+            $check::<16 $(, $arg)*>();
+            $check::<32 $(, $arg)*>();
+        }};
+    }
+    pub(crate) use each_slack;
 }

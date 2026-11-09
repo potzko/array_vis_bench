@@ -178,7 +178,7 @@ mod tests {
     fn a_sort_creates_each_scratch_once_not_per_merge() {
         // 4096 under a branch of 32 is 33 merges, against one aux and one index buffer.
         assert_eq!(buffers_created(RodSort::<Optimised, AuxMerge>::sort), 2);
-        assert_eq!(buffers_created(RodSort::<Optimised, TreeMerge<Avl>>::sort), 2);
+        assert_eq!(buffers_created(RodSort::<Optimised, TreeMerge<Avl<1>>>::sort), 2);
         assert_eq!(buffers_created(RodSort::<Optimised, InsertionMerge>::sort), 0);
     }
 
@@ -198,7 +198,7 @@ mod tests {
         let sorts: [fn(&mut [usize], &mut NoOpLogger); 4] = [
             RodSort::<Narrowing, AuxMerge>::sort,
             RodSort::<Narrowing, TournamentMerge>::sort,
-            RodSort::<Narrowing, TreeMerge<Avl>>::sort,
+            RodSort::<Narrowing, TreeMerge<Avl<1>>>::sort,
             RodSort::<Narrowing, TreeMerge<Naive>>::sort,
         ];
         for sort in sorts {

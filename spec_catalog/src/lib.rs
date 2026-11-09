@@ -692,10 +692,10 @@ mod tests {
         #[test]
         fn inherited_complexity_matches_the_concrete_type() {
             let avl = find("tree sort<avl>");
-            assert_eq!(avl.worst, <TreeSort<Avl> as HasTimeBounds>::WORST);
+            assert_eq!(avl.worst, <TreeSort<Avl<1>> as HasTimeBounds>::WORST);
             assert_eq!(avl.worst, Complexity::N_LOG_N);
-            assert_eq!(avl.space, <TreeSort<Avl> as HasSpace>::SPACE);
-            assert_eq!(avl.stable, <TreeSort<Avl> as HasStability>::STABLE);
+            assert_eq!(avl.space, <TreeSort<Avl<1>> as HasSpace>::SPACE);
+            assert_eq!(avl.stable, <TreeSort<Avl<1>> as HasStability>::STABLE);
             let naive = find("tree sort<naive>");
             assert_eq!(naive.worst, <TreeSort<Naive> as HasTimeBounds>::WORST);
             assert_eq!(naive.worst, Complexity::N_SQUARED);

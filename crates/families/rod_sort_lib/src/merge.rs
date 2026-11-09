@@ -522,7 +522,7 @@ mod tests {
         for chains in 2..=40usize {
             let n = 20 * chains + 7;
             let height = (1.4405 * ((chains + 2) as f64).log2()) as usize;
-            let compares = tree_merged::<Avl>(&mut sorted_chains(n, chains), chains);
+            let compares = tree_merged::<Avl<1>>(&mut sorted_chains(n, chains), chains);
             assert!(compares <= n * height, "{chains} chains took {compares} compares");
         }
     }

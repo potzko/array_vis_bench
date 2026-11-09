@@ -79,7 +79,7 @@ impl<B: Tree> HasStability for TreeSort<B> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_input::pseudo_random;
+    use crate::test_input::{each_slack, pseudo_random};
     use crate::{Avl, Naive};
     use sort_logger::NoOpLogger;
 
@@ -108,8 +108,10 @@ mod tests {
         assert_sorts_everything::<B, Whole>();
     }
 
+    fn assert_avl_sorts<const SLACK: usize>() { assert_sorts_in_every_layout::<Avl<SLACK>>(); }
+
     #[test]
-    fn the_avl_tree_sorts() { assert_sorts_in_every_layout::<Avl>(); }
+    fn the_avl_tree_sorts_at_every_slack() { each_slack!(assert_avl_sorts); }
 
     #[test]
     fn the_naive_tree_sorts() { assert_sorts_in_every_layout::<Naive>(); }
@@ -118,7 +120,8 @@ mod tests {
     #[test]
     fn sort_takes_the_layout_that_reaches_the_array() {
         for n in [Packed::REACH, Packed::REACH + 1, 1_000_000] {
-            assert_sorted_by(pseudo_random(n, 1 << 30), |arr| TreeSort::<Avl>::sort(arr, &mut NoOpLogger));
+            assert_sorted_by(pseudo_random(n, 1 << 30), |arr| TreeSort::<Avl<1>>::sort(arr, &mut NoOpLogger));
+            assert_sorted_by(pseudo_random(n, 1 << 30), |arr| TreeSort::<Avl<32>>::sort(arr, &mut NoOpLogger));
             assert_sorted_by(pseudo_random(n, 1 << 30), |arr| TreeSort::<Naive>::sort(arr, &mut NoOpLogger));
         }
     }
@@ -144,21 +147,31 @@ mod tests {
         assert!(arr.windows(2).all(in_order), "{arr:?}");
     }
 
+    fn assert_avl_stable<const SLACK: usize>() {
+        assert_stable::<Avl<SLACK>, Packed>();
+        assert_stable::<Avl<SLACK>, Halves>();
+        assert_stable::<Avl<SLACK>, Whole>();
+    }
+
     #[test]
-    fn both_trees_keep_equal_keys_in_input_order_in_every_layout() {
-        assert_stable::<Avl, Packed>();
-        assert_stable::<Avl, Halves>();
-        assert_stable::<Avl, Whole>();
+    fn every_tree_keeps_equal_keys_in_input_order_in_every_layout() {
+        each_slack!(assert_avl_stable);
         assert_stable::<Naive, Packed>();
         assert_stable::<Naive, Halves>();
         assert_stable::<Naive, Whole>();
     }
 
+    fn assert_avl_is_n_log_n<const SLACK: usize>() {
+        let bounds = [<TreeSort<Avl<SLACK>> as HasTimeBounds>::WORST, <TreeSort<Avl<SLACK>> as HasTimeBounds>::BEST];
+        assert_eq!(bounds, [Complexity::N_LOG_N; 2]);
+        assert_eq!(<TreeSort<Avl<SLACK>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+    }
+
     #[test]
     fn annotations_come_from_the_tree() {
-        assert_eq!(<TreeSort<Avl> as HasTimeBounds>::WORST, Complexity::N_LOG_N);
+        each_slack!(assert_avl_is_n_log_n);
         assert_eq!(<TreeSort<Naive> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
         assert_eq!(<TreeSort<Naive> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
-        assert!(!<TreeSort<Avl> as HasSpace>::SPACE.is_in_place());
+        assert!(!<TreeSort<Avl<1>> as HasSpace>::SPACE.is_in_place());
     }
 }
