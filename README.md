@@ -57,14 +57,14 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 | quick heap sorts | 34 | 16 classic + 16 deferred + 2 set quick select |
 | shell sorts | 30 | 9 gap sequences and 6 rod gap chains x 2 drivers |
 | circle sorts | 17 | |
-| rod sorts | 30 | 6 branching strategies x 5 merges, two of them over the tree sort trees |
+| rod sorts | 60 | 6 branching strategies x 10 merges, seven of them over the tree sort trees |
 | bubble sorts | 6 | 3 base + 3 odd even |
 | comb sorts | 6 | 6 shrink ratios |
 | weak heap sorts | 4 | 2 directions x 2 bit storages |
 | block merge sorts | 6 | 3 buffers x 2 key shapes, the WikiSort and GrailSort shapes among them |
 | scratchspace nightmare sorts | 3 | 3 backings |
 | insertion sorts | 2 | linear and binary |
-| tree sorts | 2 | avl and naive trees over one node store |
+| tree sorts | 7 | avl trees of slack 1, 2, 4, 8, 16 and 32, and naive, over one node store |
 | cycle sort | 1 | |
 | first class kinds | 122 | 11 rotations, 7 small sorts, 67 partitions, 25 merges, 12 scratchspace workflows |
 
