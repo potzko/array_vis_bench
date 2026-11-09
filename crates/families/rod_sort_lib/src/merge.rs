@@ -24,17 +24,17 @@
 //! The top-level merge needs an output of size N (jump=1, virtual_len=N).
 //! Every shallower merge needs strictly less. The recursion is sequential,
 //! so one [`Scratch`] suffices for the entire sort and is allocated once at
-//! the top, see [`super::rod_sort::RodSort::sort`]: the output and a key per
-//! chain in one element buffer, the chain heads and a tree over them in one
-//! index buffer, each section at a fixed place and shown as an array of its
-//! own. [`InsertionMerge`] asks for none, so it allocates nothing.
+//! the top, see [`super::rod_sort::RodSort::sort`]: the output in a row of
+//! its own, a key per chain, the chain heads and a tree over them side by
+//! side in another, each section at a fixed place and drawn to its own scale.
+//! [`InsertionMerge`] asks for none, so it allocates nothing.
 
 use std::marker::PhantomData;
 
 use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::HasSpace;
 use shell_sort_lib::insert_into_chain;
-use sort_logger::{split_sections, SortLogger};
+use sort_logger::{arr_name, split_sections, SortLogger};
 use tree_sort_lib::{Layout, Nodes, Packed, Tree};
 
 /// The lengths of a [`Scratch`]'s sections.
@@ -47,17 +47,13 @@ pub struct Sections {
 }
 
 impl Sections {
-    /// The element buffer's sections, the output then the keys.
-    pub fn elems(self) -> [usize; 2] { [self.out, self.keys] }
-
     /// The index buffer's sections, the heads then the tree.
     pub fn words(self) -> [usize; 2] { [self.heads, self.tree] }
 }
 
 /// The scratch every merge of a sort shares: the output and a key per chain,
-/// the chain heads and a tree over them. The driver creates it once as two
-/// buffers in sections, so the visualiser shows each section as an array of
-/// its own.
+/// the chain heads and a tree over them, created once by
+/// [`with_new_scratch`].
 pub struct Scratch<'a, T> {
     pub out: &'a mut [T],
     pub keys: &'a mut [T],
@@ -65,13 +61,23 @@ pub struct Scratch<'a, T> {
     pub tree: &'a mut [usize],
 }
 
-impl<'a, T> Scratch<'a, T> {
-    /// `elems` and `words` cut into the sections `sections` lays them out in.
-    pub fn over(elems: &'a mut [T], words: &'a mut [usize], sections: Sections) -> Self {
-        let [out, keys] = split_sections(elems, sections.elems());
-        let [heads, tree] = split_sections(words, sections.words());
-        Scratch { out, keys, heads, tree }
-    }
+/// Runs `body` on scratch of `sections` created through the logger and freed
+/// after it: the output in a row of its own, and the keys, the heads and the
+/// tree side by side in another, each drawn to its own scale.
+pub fn with_new_scratch<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    sections: Sections,
+    logger: &mut U,
+    body: impl FnOnce(&mut Scratch<T>, &mut U),
+) {
+    let mut out = logger.create_aux_arr_split_t(&[sections.out]);
+    let mut keys = logger.create_aux_arr_split_t(&[sections.keys]);
+    let mut words = logger.create_aux_arr_split(&sections.words());
+    if !keys.is_empty() && !words.is_empty() { logger.draw_beside(arr_name!(words), arr_name!(keys)); }
+    let [heads, tree] = split_sections(&mut words, sections.words());
+    body(&mut Scratch { out: &mut out, keys: &mut keys, heads, tree }, logger);
+    logger.free_aux_arr_split(&words, &sections.words());
+    logger.free_aux_arr_split_t(&keys, &[sections.keys]);
+    logger.free_aux_arr_split_t(&out, &[sections.out]);
 }
 
 pub trait RodMerge {
@@ -239,13 +245,10 @@ fn with_scratch<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         let (keys, heads, tree) = (&mut scratch.keys[..need.keys], &mut scratch.heads[..need.heads], &mut scratch.tree[..need.tree]);
         body(&mut Scratch { out, keys, heads, tree }, logger);
     } else {
-        let own = Sections { out: 0, ..need };
-        let mut elems = logger.create_aux_arr_split_t(&own.elems());
-        let mut words = logger.create_aux_arr_split(&own.words());
-        let Scratch { keys, heads, tree, .. } = Scratch::over(&mut elems, &mut words, own);
-        body(&mut Scratch { out, keys, heads, tree }, logger);
-        logger.free_aux_arr_split(&words, &own.words());
-        logger.free_aux_arr_split_t(&elems, &own.elems());
+        with_new_scratch(Sections { out: 0, ..need }, logger, |own, logger| {
+            let Scratch { keys, heads, tree, .. } = own;
+            body(&mut Scratch { out, keys, heads, tree }, logger)
+        });
     }
 }
 
@@ -495,11 +498,10 @@ mod tests {
 
     // One merge through `M` of `chains` chains of `arr`, returning its compares.
     fn merged<M: RodMerge>(arr: &mut [usize], chains: usize) -> usize {
-        let sections = M::sections(arr.len(), chains);
-        let mut elems = vec![0; sections.elems().iter().sum()];
-        let mut words = vec![0; sections.words().iter().sum()];
         let mut compares = Compares(0);
-        M::merge(arr, &mut Scratch::over(&mut elems, &mut words, sections), 1, chains, 0, &mut compares);
+        with_new_scratch(M::sections(arr.len(), chains), &mut compares, |scratch, logger| {
+            M::merge(arr, scratch, 1, chains, 0, logger)
+        });
         assert!(arr.windows(2).all(|pair| pair[0] <= pair[1]), "{chains} chains left unsorted");
         compares.0
     }

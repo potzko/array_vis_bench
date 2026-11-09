@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use super::merge::{insertion_sort_jump, AuxMerge, InsertionMerge, RodMerge, Scratch, TournamentMerge, TreeMerge};
+use super::merge::{insertion_sort_jump, with_new_scratch, AuxMerge, InsertionMerge, RodMerge, Scratch, TournamentMerge, TreeMerge};
 use tree_sort_lib::Tree;
 use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
@@ -37,12 +37,7 @@ impl<S: BranchingStrategy, M: RodMerge> RodSort<S, M> {
         if n < 2 {
             return;
         }
-        let sections = M::sections(n, S::branch(n));
-        let mut elems = logger.create_aux_arr_split_t(&sections.elems());
-        let mut words = logger.create_aux_arr_split(&sections.words());
-        Self::sort_rec(arr, 1, &mut Scratch::over(&mut elems, &mut words, sections), logger);
-        logger.free_aux_arr_split(&words, &sections.words());
-        logger.free_aux_arr_split_t(&elems, &sections.elems());
+        with_new_scratch(M::sections(n, S::branch(n)), logger, |scratch, logger| Self::sort_rec(arr, 1, scratch, logger));
     }
 
     fn sort_rec<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -164,26 +159,36 @@ mod tests {
     use sort_logger::{NoOpLogger, SortLog, VisualizerLogger};
     use tree_sort_lib::{Avl, Naive};
 
-    // The length of every array a sort of 4096 creates, in order.
-    fn arrays_created(sort: fn(&mut [usize], &mut VisualizerLogger<usize>)) -> Vec<usize> {
+    // The lengths of the arrays a sort of 4096 creates, row by row as the
+    // visualiser draws them.
+    fn rows_created(sort: fn(&mut [usize], &mut VisualizerLogger<usize>)) -> Vec<Vec<usize>> {
         let mut arr: Vec<usize> = (0..4096).rev().collect();
         let mut logger = VisualizerLogger { type_ghost: PhantomData, log: Vec::new() };
         sort(&mut arr, &mut logger);
-        let created = logger.log.iter().filter_map(|e| match e {
-            SortLog::CreateAuxArrT { length, .. } | SortLog::CreateAuxArr { length, .. } => Some(*length),
-            _ => None,
-        });
-        created.collect()
+        let mut rows: Vec<Vec<(usize, usize)>> = Vec::new();
+        let row_of = |rows: &Vec<Vec<(usize, usize)>>, name| rows.iter().position(|row| row.iter().any(|&(n, _)| n == name));
+        for event in &logger.log {
+            match *event {
+                SortLog::CreateAuxArrT { name, length } | SortLog::CreateAuxArr { name, length } => rows.push(vec![(name, length)]),
+                SortLog::Beside { name, of } => {
+                    let (from, to) = (row_of(&rows, name).unwrap(), row_of(&rows, of).unwrap());
+                    let moved = std::mem::take(&mut rows[from]);
+                    rows[to].extend(moved);
+                }
+                _ => {}
+            }
+        }
+        rows.into_iter().filter(|row| !row.is_empty()).map(|row| row.into_iter().map(|(_, length)| length).collect()).collect()
     }
 
     #[test]
-    fn a_sort_creates_each_scratch_section_once_as_an_array_of_its_own() {
+    fn a_sort_creates_its_scratch_once_with_the_output_in_a_row_and_the_rest_in_another() {
         // 4096 under a branch of 32 is 33 merges, against one array per section:
-        // the output and the keys, then the heads and the tree.
-        assert_eq!(arrays_created(RodSort::<Optimised, AuxMerge>::sort), [4096, 32]);
-        assert_eq!(arrays_created(RodSort::<Optimised, TournamentMerge>::sort), [4096, 32, 32]);
-        assert_eq!(arrays_created(RodSort::<Optimised, TreeMerge<Avl<1>>>::sort), [4096, 32, 32, 32]);
-        assert_eq!(arrays_created(RodSort::<Optimised, InsertionMerge>::sort), []);
+        // the output, then the keys, the heads and the tree side by side.
+        assert_eq!(rows_created(RodSort::<Optimised, AuxMerge>::sort), [vec![4096], vec![32]]);
+        assert_eq!(rows_created(RodSort::<Optimised, TournamentMerge>::sort), [vec![4096], vec![32, 32]]);
+        assert_eq!(rows_created(RodSort::<Optimised, TreeMerge<Avl<1>>>::sort), [vec![4096], vec![32, 32, 32]]);
+        assert!(rows_created(RodSort::<Optimised, InsertionMerge>::sort).is_empty());
     }
 
     // Wide on short chains and narrow on long ones, so the scratch sized from
