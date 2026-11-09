@@ -175,8 +175,21 @@ sorts went from 18 to 30, nine sequences and six rod gap chains by two
 drivers. The catalog went from 1868 to 1886. The full gate's timing baseline
 gains rows for the new entries by hand, never by `--bless`.
 
-## Follow up
+## Done after: the shell kernel
 
-The hold and shift kernel for `ShellSort` and `ShellSortOrdered`: the same
-comparisons, fewer writes, writes instead of swaps on screen, and the rod gap
-entries ahead of the recursion they mirror.
+`ShellSort` and `ShellSortOrdered` hold the element and shift, through one
+`insert_into_chain` that rod sort's strided insertion calls as well. The
+comparisons are the same and the screen shows writes where it showed swaps. At
+2^20, before and after, against rod sort's own recursion:
+
+| entry | before | after | recursion |
+|---|---|---|---|
+| `shell sort<sequence: rod<optimised>>` | 259 | 149 | 205 |
+| `shell sort<sequence: rod<log-parity>>` | 200 | 127 | 176 |
+| `shell sort<sequence: rod<fibonacci>>` | 201 | 131 | 136 |
+| `shell sort<sequence: rod<classic>>` | 800 | 362 | |
+| `shell sort<sequence: ciura>` | 115 | 115 | |
+
+The rod gap entries now lead the recursion they mirror. Ciura does not move:
+its passes shift most elements one place, where a swap and a shift both cost
+two writes, so the kernel only pays where elements travel far.
