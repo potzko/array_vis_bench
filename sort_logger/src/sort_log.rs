@@ -100,4 +100,10 @@ pub enum SortLog<T: Copy + PartialEq + Eq> {
         kind: RegionKind,
         held: bool,
     },
+    /// Draw the row holding the array `name` in the row of the array `of`, the
+    /// arrays of a row side by side, each to its own scale.
+    Beside {
+        name: usize,
+        of: usize,
+    },
 }

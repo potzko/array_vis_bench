@@ -224,6 +224,7 @@ impl Visualizer for Mp4Visualizer {
                     SortLog::CreateAuxArr { .. } => split_points.push(ii),
                     SortLog::CreateAuxArrT { .. } => split_points.push(ii),
                     SortLog::FreeAuxArr { .. } => split_points.push(ii),
+                    SortLog::Beside { .. } => split_points.push(ii),
                     _ => {}
                 }
             }
@@ -248,6 +249,10 @@ impl Visualizer for Mp4Visualizer {
                     }
                     SortLog::FreeAuxArr { name } => {
                         store.remove(name);
+                        redistribute(&mut store, &screen_view, &mut fb);
+                    }
+                    SortLog::Beside { name, of } => {
+                        store.beside(name, of);
                         redistribute(&mut store, &screen_view, &mut fb);
                     }
                     _ => {}
@@ -281,22 +286,37 @@ impl Visualizer for Mp4Visualizer {
     }
 }
 
-/// Re-layout the framebuffer after every Create/Free split point. All
-/// live arrays tile the screen vertically, uniformly, in creation order
-/// (oldest at the bottom). If no array is live, the screen is BLACK.
+/// Re-layout the framebuffer after every Create/Free/Beside split point.
+/// The rows of live arrays tile the screen vertically, uniformly, in
+/// creation order (oldest at the bottom), and the arrays of a row split its
+/// width by their lengths, each drawn to its own scale. If no array is live,
+/// the screen is BLACK.
 fn redistribute(store: &mut ArrStore, screen_view: &SubImg, fb: &mut Framebuffer) {
     screen_view.rect(fb, 0, 0, screen_view.width, screen_view.height, BLACK);
-    let n = store.len();
-    if n == 0 {
+    let mut rows: Vec<(usize, Vec<&mut ArrActions>)> = Vec::new();
+    for arr in store.iter_creation_order_mut() {
+        match rows.iter_mut().find(|(row, _)| *row == arr.row) {
+            Some((_, members)) => members.push(arr),
+            None => rows.push((arr.row, vec![arr])),
+        }
+    }
+    if rows.is_empty() {
         return;
     }
-    let views = get_views(screen_view, n as u32);
-    // `views` is returned top-to-bottom (views[0] is the top tile). We
+    let bands = get_views(screen_view, rows.len() as u32);
+    // `bands` is returned top-to-bottom (bands[0] is the top tile). We
     // want oldest-first to sit at the BOTTOM, so pair newest-first with
     // the top tiles.
-    for (arr, view) in store.iter_creation_order_mut().into_iter().rev().zip(views.into_iter()) {
-        arr.set_view(view);
-        arr.force_full_redraw(fb);
+    for ((_, members), band) in rows.into_iter().rev().zip(bands) {
+        let total = members.iter().map(|arr| arr.arr.len()).sum::<usize>().max(1);
+        let edge = |cells: usize| (cells * band.width as usize / total) as u32;
+        let mut cells = 0;
+        for arr in members {
+            let start = edge(cells);
+            cells += arr.arr.len();
+            arr.set_view(band.make_sub_img(start, 0, edge(cells) - start, band.height));
+            arr.force_full_redraw(fb);
+        }
     }
 }
 
@@ -345,6 +365,15 @@ impl ArrStore {
     fn remove(&mut self, name: usize) {
         self.arrs.remove(&name);
         self.order.retain(|&n| n != name);
+    }
+
+    // Moves the row holding the array `name` into the row of the array `of`,
+    // both by base address; an event naming an array that is not live changes
+    // nothing.
+    fn beside(&mut self, name: usize, of: usize) {
+        let row_of = |name| self.arrs.get(&name).map(|a| a.row);
+        let (Some(from), Some(to)) = (row_of(name), row_of(of)) else { return };
+        self.arrs.values_mut().filter(|a| a.row == from).for_each(|a| a.row = to);
     }
 
     fn len(&self) -> usize {
@@ -441,6 +470,7 @@ impl ArrStore {
                         }
                     }
                 }
+                SortLog::Beside { name, of } => self.beside(*name, *of),
                 _ => {}
             }
         }
@@ -508,6 +538,9 @@ struct ArrActions {
 
     view: SubImg,
     name: usize,
+    /// The row the array is drawn in, named by the base address of the array
+    /// that started it: its own unless it was placed beside another.
+    row: usize,
     max: f64,
 }
 
@@ -540,6 +573,7 @@ impl ArrActions {
             diff_keys: Vec::new(),
             view: SubImg { x: 0, y: 0, width: 0, height: 0 },
             name,
+            row: name,
             max,
         };
         a.set_view(view);
@@ -843,6 +877,25 @@ mod tests {
             SortLog::WriteDataU { name: tree, ind: 1, data: 1 << 60 },
         ];
         assert_eq!(compute_array_scales(&log), [9.0, (1usize << 60) as f64]);
+    }
+
+    #[test]
+    fn arrays_beside_each_other_share_a_band_split_by_their_lengths() {
+        let screen = SubImg { x: 0, y: 0, width: 12, height: 8 };
+        let mut store = ArrStore::new();
+        for (name, len) in [(0x1000, 8), (0x2000, 2), (0x3000, 1), (0x4000, 3)] {
+            store.insert(ArrActions::new(vec![1; len], screen, name, 1.0));
+        }
+        // a row of two joins the row of a third whole
+        let beside = |name, of| SortLog::Beside { name, of };
+        store.update(&[beside(0x4000, 0x3000), beside(0x3000, 0x2000)], &mut Framebuffer::new(12, 8));
+        redistribute(&mut store, &screen, &mut Framebuffer::new(12, 8));
+        let view = |name| { let v = &store.arrs[&name].view; (v.x, v.y, v.width, v.height) };
+        // the oldest row at the bottom, each array drawn to its own scale
+        assert_eq!(view(0x1000), (0, 4, 12, 4));
+        assert_eq!(view(0x2000), (0, 0, 4, 4));
+        assert_eq!(view(0x3000), (4, 0, 2, 4));
+        assert_eq!(view(0x4000), (6, 0, 6, 4));
     }
 
     #[test]
