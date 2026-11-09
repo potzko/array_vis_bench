@@ -5,11 +5,17 @@
 //! between the two windows, run as a ring, so the near window lands in place
 //! too: four moves a column put two elements where piston's three put one.
 //!
-//! - `optimized_piston`: the algorithm over a given buffer.
-//! - `OptimizedPistonRotation`: the catalog rotation, with a 256 cell buffer.
+//! - `optimized_piston`: the algorithm over a given buffer, cycling two or
+//!   three windows a pass.
+//! - `OptimizedPiston`: the catalog rotation, over its windows and buffer.
+//! - `OptimizedPistonRotation`: two windows and a 256 cell buffer.
 
 use sort_logger::{RegionKind, SortLogger};
 use array_vis_bench_traits::role::rotation::{buf_rotate_left_using, forward_block_swap, Rotation};
+
+/// The optimized piston cycling `WINDOWS` whole windows a pass, finishing
+/// through a buffer of `BUFFER` cells, none for a rotation fully in place.
+pub struct OptimizedPiston<const WINDOWS: usize, const BUFFER: usize>;
 
 // A pass moves runs of at most the smaller side or the ring, whichever is
 // shorter, and short runs move an element at a time. The original finishes
@@ -18,12 +24,15 @@ use array_vis_bench_traits::role::rotation::{buf_rotate_left_using, forward_bloc
 // 128 took 0.133 and 256 took 0.120. 512 took 0.088, but a range of a
 // thousand then always fits and never runs in place. From ten thousand on
 // the size made no difference.
-const BUFFER: usize = 256;
+pub type OptimizedPistonRotation = OptimizedPiston<2, 256>;
 
-pub struct OptimizedPistonRotation;
-
-impl Rotation for OptimizedPistonRotation {
-    const NAME: &'static str = "optimized piston";
+impl<const WINDOWS: usize, const BUFFER: usize> Rotation for OptimizedPiston<WINDOWS, BUFFER> {
+    const NAME: &'static str = match (WINDOWS, BUFFER) {
+        (2, 0) => "optimized piston<in place>",
+        (2, _) => "optimized piston",
+        (_, 0) => "optimized piston<3 windows, in place>",
+        _ => "optimized piston<3 windows>",
+    };
 
     // A range never needs more than its own length.
     #[inline]
@@ -38,20 +47,22 @@ impl Rotation for OptimizedPistonRotation {
         logger: &mut U,
     ) {
         let cells = scratch.len().min(BUFFER);
-        optimized_piston(arr, split_ind, &mut scratch[..cells], logger);
+        optimized_piston::<T, U, WINDOWS>(arr, split_ind, &mut scratch[..cells], logger);
     }
 }
 
-/// Rotate `arr` by `split`, finishing through `buffer` the first range whose
-/// smaller side or difference of sides fits it. With an empty buffer every
-/// pass runs in place, `2n - g` moves when `n / g` is even and `2n - 2g` when
-/// it is odd, for `g` the gcd of the sides.
-pub fn optimized_piston<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+/// Rotate `arr` by `split`, cycling `WINDOWS` whole windows a pass, and
+/// finishing through `buffer` the first range whose smaller side or
+/// difference of sides fits it. With an empty buffer every pass runs in
+/// place, and two windows take `2n - g` moves when `n / g` is even and
+/// `2n - 2g` when it is odd, for `g` the gcd of the sides.
+pub fn optimized_piston<T: Ord + Copy, U: ?Sized + SortLogger<T>, const WINDOWS: usize>(
     arr: &mut [T],
     split: usize,
     buffer: &mut [T],
     logger: &mut U,
 ) {
+    const { assert!(WINDOWS == 2 || WINDOWS == 3, "a pass cycles two or three windows") };
     let (mut lo, mut mid, mut hi) = (0, split, arr.len());
     while lo < mid && mid < hi {
         let (a, b) = (mid - lo, hi - mid);
@@ -63,7 +74,7 @@ pub fn optimized_piston<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
             finish(&mut arr[lo..hi], a, buffer, logger);
             return;
         }
-        (lo, mid, hi) = pass(arr, lo, mid, hi, logger);
+        (lo, mid, hi) = pass::<T, U, WINDOWS>(arr, lo, mid, hi, buffer.len(), logger);
     }
 }
 
@@ -80,30 +91,48 @@ pub fn optimized_piston<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 /// at the left end when that side is, and laps then run from the left ends;
 /// otherwise they run from the right.
 ///
-/// The columns of one lap touch three disjoint runs, so a lap may run in any
+/// With three windows, and room for it, the larger side's `s` cells next to
+/// the near window join the cycle between it and the ring and land in place
+/// too: five moves a column for three elements. A ring of at most `cells`
+/// would run laps too short to pay, so the pass leaves those cells to the
+/// buffer. With two windows the caller has finished any such range already.
+///
+/// The columns of one lap touch disjoint runs, so a lap may run in any
 /// order, and every lap runs ascending: LLVM vectorises none of the
 /// descending loops here. A hundred thousand `u32` split at `n - n / 5`, two
 /// right smaller passes, took 0.26 ns per element with laps descending and
 /// 0.063 ascending, `u64` 0.28 and 0.13; over all splits 0.20 and 0.079,
 /// `u64` 0.25 and 0.15.
-fn pass<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+fn pass<T: Ord + Copy, U: ?Sized + SortLogger<T>, const WINDOWS: usize>(
     arr: &mut [T],
     lo: usize,
     mid: usize,
     hi: usize,
+    cells: usize,
     logger: &mut U,
 ) -> (usize, usize, usize) {
     let up = mid - lo < hi - mid;
-    let (s, ring) = ((mid - lo).min(hi - mid), (mid - lo).abs_diff(hi - mid));
-    let (at, end) = (lo + s, hi - s);
+    let (s, o) = ((mid - lo).min(hi - mid), (mid - lo).abs_diff(hi - mid));
+    let next = if WINDOWS == 3 && o >= s { s } else { 0 };
+    let ring = if o - next > cells { o - next } else { 0 };
+    let (near, far) = if up { (lo, hi - s) } else { (hi - s, lo) };
+    let beside = if up { near + s } else { near - s };
+    let (at, end) = if up { (lo + s + next, hi - s) } else { (lo + s, hi - s - next) };
+    if ring == 0 {
+        cycle(arr, near, beside, far, s, logger);
+        return if up { (at - s, at, end) } else { (at, end, end + s) };
+    }
     let used = ring.min(s);
     let held = if up { at } else { end - used };
     logger.hold_region(arr, held, used, RegionKind::Buffer);
     let (mut j, mut w) = (0, 0);
     while j < s {
         w = ring.min(s - j);
-        let back = s - j - w;
-        if up { cycle(arr, lo + j, at, end + j, w, logger) } else { cycle(arr, end + back, end - w, lo + back, w, logger) }
+        let (col, slot) = if up { (j, at) } else { (s - j - w, end - w) };
+        match next {
+            0 => cycle(arr, near + col, slot, far + col, w, logger),
+            _ => cycle4(arr, near + col, beside + col, slot, far + col, w, logger),
+        }
         j += w;
     }
     logger.release_region(arr, held, used, RegionKind::Buffer);
@@ -111,15 +140,25 @@ fn pass<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     if up { (at, at + turn, end) } else { (at, end - turn, end) }
 }
 
-/// Over `w` columns of the runs at `near`, `ring` and `far`, the near run
-/// receives the ring's elements, the ring the far ones and the far run the
-/// near ones.
-fn cycle<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], near: usize, ring: usize, far: usize, w: usize, logger: &mut U) {
+/// Over `w` columns of the runs at `x`, `y` and `z`, each run receives the
+/// next one's elements and `z` receives those of `x`.
+fn cycle<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], x: usize, y: usize, z: usize, w: usize, logger: &mut U) {
     for i in 0..w {
-        let t = arr[near + i];
-        logger.write(arr, near + i, ring + i);
-        logger.write(arr, ring + i, far + i);
-        logger.write_data(arr, far + i, t);
+        let t = arr[x + i];
+        logger.write(arr, x + i, y + i);
+        logger.write(arr, y + i, z + i);
+        logger.write_data(arr, z + i, t);
+    }
+}
+
+/// `cycle` over four runs.
+fn cycle4<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], x: usize, y: usize, z: usize, v: usize, w: usize, logger: &mut U) {
+    for i in 0..w {
+        let t = arr[x + i];
+        logger.write(arr, x + i, y + i);
+        logger.write(arr, y + i, z + i);
+        logger.write(arr, z + i, v + i);
+        logger.write_data(arr, v + i, t);
     }
 }
 
@@ -218,17 +257,17 @@ fn bridge_down<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], a: usize
     }
 }
 
-impl array_vis_bench_traits::HasSpace for OptimizedPistonRotation {
+impl<const WINDOWS: usize, const BUFFER: usize> array_vis_bench_traits::HasSpace for OptimizedPiston<WINDOWS, BUFFER> {
     const SPACE: array_vis_bench_traits::Complexity =
         array_vis_bench_traits::Complexity::CONST;
 }
 
-impl array_vis_bench_traits::HasTimeBounds for OptimizedPistonRotation {
+impl<const WINDOWS: usize, const BUFFER: usize> array_vis_bench_traits::HasTimeBounds for OptimizedPiston<WINDOWS, BUFFER> {
     const WORST: array_vis_bench_traits::Complexity = array_vis_bench_traits::Complexity::N1;
     const BEST: array_vis_bench_traits::Complexity = array_vis_bench_traits::Complexity::N1;
     const AVERAGE: array_vis_bench_traits::Complexity = array_vis_bench_traits::Complexity::N1;
 }
-impl array_vis_bench_traits::HasStability for OptimizedPistonRotation {
+impl<const WINDOWS: usize, const BUFFER: usize> array_vis_bench_traits::HasStability for OptimizedPiston<WINDOWS, BUFFER> {
     const STABLE: bool = false;
 }
 
@@ -266,17 +305,22 @@ mod tests {
         }).sum()
     }
 
-    #[test]
-    fn every_split_rotates_with_and_without_a_buffer() {
+    fn rotates_every_split<const WINDOWS: usize>() {
         for n in 0..100 {
             for split in 0..=n {
                 for cells in [0, 1, 2, 3, 7, 64] {
                     let mut arr: Vec<u32> = (0..n as u32).collect();
-                    optimized_piston(&mut arr, split, &mut vec![0; cells], &mut NoOpLogger);
-                    assert_eq!(arr, rotated(n, split), "n={n} split={split} cells={cells}");
+                    optimized_piston::<_, _, WINDOWS>(&mut arr, split, &mut vec![0; cells], &mut NoOpLogger);
+                    assert_eq!(arr, rotated(n, split), "windows={WINDOWS} n={n} split={split} cells={cells}");
                 }
             }
         }
+    }
+
+    #[test]
+    fn every_split_rotates_with_and_without_a_buffer() {
+        rotates_every_split::<2>();
+        rotates_every_split::<3>();
     }
 
     #[test]
@@ -284,43 +328,66 @@ mod tests {
         for n in 1..120 {
             for split in 0..=n {
                 let g = gcd(split, n - split);
-                let want = if (n / g) % 2 == 0 { 2 * n - g } else { 2 * n - 2 * g };
+                let want = if (n / g).is_multiple_of(2) { 2 * n - g } else { 2 * n - 2 * g };
                 let mut arr: Vec<u32> = (0..n as u32).collect();
                 let mut log = logger();
-                optimized_piston(&mut arr, split, &mut [], &mut log);
+                optimized_piston::<_, _, 2>(&mut arr, split, &mut [], &mut log);
                 assert_eq!(assignments(&log), want, "n={n} split={split}");
             }
         }
+    }
+
+    // The description simulates three windows and the ring at 1.78n moves
+    // over all splits of a thousand, never more than 2n.
+    #[test]
+    fn three_windows_in_place_average_one_point_seven_eight_n() {
+        let moves = |n: usize, split: usize| {
+            let mut arr: Vec<u32> = (0..n as u32).collect();
+            let mut log = logger();
+            optimized_piston::<_, _, 3>(&mut arr, split, &mut [], &mut log);
+            assignments(&log)
+        };
+        for n in 1..120 {
+            for split in 0..=n { assert!(moves(n, split) <= 2 * n, "n={n} split={split}"); }
+        }
+        let total: usize = (1..1000).map(|split| moves(1000, split)).sum();
+        assert_eq!((total as f64 / 999.0 / 10.0).round(), 178.0);
     }
 
     // The description's worked examples: the array and the next range after
     // the first pass.
     #[test]
     fn first_passes_match_the_worked_examples() {
-        let cases: [(usize, usize, Vec<u32>, (usize, usize, usize)); 4] = [
-            (8, 13, [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 8, 9].into_iter().chain(13..21).collect(), (8, 11, 13)),
+        let cases = [
+            (8, 13, [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 8, 9].into_iter().chain(13..21).collect::<Vec<u32>>(), (8, 11, 13)),
             (13, 8, [0, 1, 2, 3, 4, 5, 6, 7, 11, 12, 8, 9, 10].into_iter().chain(13..21).collect(), (8, 10, 13)),
             (4, 11, vec![0, 1, 2, 3, 7, 8, 9, 10, 4, 5, 6, 11, 12, 13, 14], (4, 8, 11)),
             (9, 4, vec![0, 1, 2, 3, 8, 4, 5, 6, 7, 9, 10, 11, 12], (4, 5, 9)),
         ];
         for (a, b, want, next) in cases {
             let mut arr = labelled(a, b);
-            assert_eq!(pass(&mut arr, 0, a, a + b, &mut NoOpLogger), next, "({a}, {b})");
+            assert_eq!(pass::<_, _, 2>(&mut arr, 0, a, a + b, 0, &mut NoOpLogger), next, "({a}, {b})");
             assert_eq!(arr, want, "({a}, {b})");
         }
     }
 
-    #[test]
-    fn the_catalog_rotation_finishes_in_its_scratch_without_allocating() {
+    fn finishes_in_its_scratch<R: Rotation>() {
         for n in [0, 1, 2, 3, 100, 256, 257, 513, 771, 772, 1031] {
             for split in 0..=n {
                 let mut arr: Vec<u32> = (0..n as u32).collect();
-                let mut scratch = vec![0; OptimizedPistonRotation::scratch_size(n)];
+                let mut scratch = vec![0; R::scratch_size(n)];
                 let mut log = logger();
-                OptimizedPistonRotation::rotate(&mut arr, split, &mut scratch, &mut log);
-                assert_eq!(arr, rotated(n, split), "n={n} split={split}");
-                assert!(!log.log.iter().any(|e| matches!(e, SortLog::CreateAuxArrT { .. })));
+                R::rotate(&mut arr, split, &mut scratch, &mut log);
+                assert_eq!(arr, rotated(n, split), "{} n={n} split={split}", R::NAME);
+                assert!(!log.log.iter().any(|e| matches!(e, SortLog::CreateAuxArrT { .. })), "{}", R::NAME);
             }
         }
+    }
+
+    #[test]
+    fn the_catalog_rotations_finish_in_their_scratch_without_allocating() {
+        finishes_in_its_scratch::<OptimizedPistonRotation>();
+        finishes_in_its_scratch::<OptimizedPiston<2, 0>>();
+        finishes_in_its_scratch::<OptimizedPiston<3, 256>>();
     }
 }
