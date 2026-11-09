@@ -833,6 +833,19 @@ mod tests {
     }
 
     #[test]
+    fn each_section_of_one_buffer_is_scaled_as_an_array_of_its_own() {
+        // heads under 10 in the first section, packed tree nodes near 2^60 after
+        let tree = 0x1000 + 3 * size_of::<usize>();
+        let log = [
+            SortLog::CreateAuxArr { name: 0x1000, length: 3 },
+            SortLog::CreateAuxArr { name: tree, length: 2 },
+            SortLog::WriteDataU { name: 0x1000, ind: 2, data: 9 },
+            SortLog::WriteDataU { name: tree, ind: 1, data: 1 << 60 },
+        ];
+        assert_eq!(compute_array_scales(&log), [9.0, (1usize << 60) as f64]);
+    }
+
+    #[test]
     fn a_region_reaches_the_array_it_names_by_address_and_clips_to_it() {
         let (mut store, mut fb) = eight_bars();
         // an event for the sub slice that starts at index 4 of the array

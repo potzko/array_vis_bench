@@ -14,14 +14,35 @@
 use crate::arr_name;
 use crate::sort_log::{RegionKind, SortLog};
 
-/// Generate the four-method int-typed aux-array family
-/// (`$log` / `$create` / `$free` / `$write_data`) for one concrete integer
-/// element type `$ty`. All variants share the same `SortLog` events
-/// (`CreateAuxArr` / `FreeAuxArr` / `WriteDataU` with `data as usize`), so the
-/// visualiser handles any integer width uniformly. Each expansion produces
-/// non-generic methods, preserving trait dyn-compatibility.
+/// `buf` cut into the sections a `create_aux_arr_split*` call laid it out in,
+/// one slice per section length.
+pub fn split_sections<T, const K: usize>(mut buf: &mut [T], sections: [usize; K]) -> [&mut [T]; K] {
+    sections.map(|len| {
+        let (section, rest) = std::mem::take(&mut buf).split_at_mut(len);
+        buf = rest;
+        section
+    })
+}
+
+// The start and length of each section of a buffer laid out as `sections`,
+// leaving out an empty one: it would be named by where it starts, which is
+// the next section's name too.
+fn nonempty(sections: &[usize]) -> impl Iterator<Item = (usize, usize)> + '_ {
+    sections
+        .iter()
+        .scan(0, |start, &len| { *start += len; Some((*start - len, len)) })
+        .filter(|&(_, len)| len > 0)
+}
+
+/// Generate the six-method int-typed aux-array family
+/// (`$log` / `$create` / `$create_split` / `$free` / `$free_split` /
+/// `$write_data`) for one concrete integer element type `$ty`. All variants
+/// share the same `SortLog` events (`CreateAuxArr` / `FreeAuxArr` /
+/// `WriteDataU` with `data as usize`), so the visualiser handles any integer
+/// width uniformly. Each expansion produces non-generic methods, preserving
+/// trait dyn-compatibility.
 macro_rules! int_aux_family {
-    ($ty:ty, $log:ident, $create:ident, $free:ident, $write_data:ident) => {
+    ($ty:ty, $log:ident, $create:ident, $create_split:ident, $free:ident, $free_split:ident, $write_data:ident) => {
         #[inline(always)]
         fn $log(&mut self, arr: &[$ty]) {
             self.log(SortLog::CreateAuxArr {
@@ -35,11 +56,24 @@ macro_rules! int_aux_family {
             self.$log(&ret);
             ret
         }
+        /// One allocation of the `sections` laid end to end, announced as an
+        /// array per non empty section, so the visualiser shows and scales each
+        /// on its own. Cut it with [`split_sections`].
+        #[inline(always)]
+        fn $create_split(&mut self, sections: &[usize]) -> Vec<$ty> {
+            let ret = vec![0 as $ty; sections.iter().sum()];
+            for (start, len) in nonempty(sections) { self.$log(&ret[start..start + len]); }
+            ret
+        }
         #[inline(always)]
         fn $free(&mut self, arr: &[$ty]) {
             self.log(SortLog::FreeAuxArr {
                 name: arr_name!(arr),
             })
+        }
+        #[inline(always)]
+        fn $free_split(&mut self, arr: &[$ty], sections: &[usize]) {
+            for (start, _) in nonempty(sections) { self.$free(&arr[start..]); }
         }
         #[inline(always)]
         fn $write_data(&mut self, arr: &mut [$ty], ind: usize, data: $ty) {
@@ -113,16 +147,31 @@ pub trait SortLogger<T: Copy + Ord> {
         }
         ret
     }
+    /// One allocation of the `sections` laid end to end, announced as an array
+    /// per non empty section, so the visualiser shows and scales each on its
+    /// own. Cut it with [`split_sections`].
+    #[inline(always)]
+    fn create_aux_arr_split_t(&mut self, sections: &[usize]) -> Vec<T> {
+        let len = sections.iter().sum();
+        let mut ret = Vec::<T>::with_capacity(len);
+        unsafe { ret.set_len(len) }
+        for (start, len) in nonempty(sections) { self.log_aux_arr_t(&ret[start..start + len]); }
+        ret
+    }
     #[inline(always)]
     fn free_aux_arr_t(&mut self, arr: &[T]) {
         self.log(SortLog::FreeAuxArr {
             name: arr_name!(arr),
         })
     }
+    #[inline(always)]
+    fn free_aux_arr_split_t(&mut self, arr: &[T], sections: &[usize]) {
+        for (start, _) in nonempty(sections) { self.free_aux_arr_t(&arr[start..]); }
+    }
     // Integer-typed aux array families. Adding a new width is one line:
     //     int_aux_family!(u16, log_aux_arr_u16, create_aux_arr_u16, ...);
-    int_aux_family!(usize, log_aux_arr_u, create_aux_arr, free_aux_arr, write_data_u);
-    int_aux_family!(u8, log_aux_arr_u8, create_aux_arr_u8, free_aux_arr_u8, write_data_u8);
+    int_aux_family!(usize, log_aux_arr_u, create_aux_arr, create_aux_arr_split, free_aux_arr, free_aux_arr_split, write_data_u);
+    int_aux_family!(u8, log_aux_arr_u8, create_aux_arr_u8, create_aux_arr_split_u8, free_aux_arr_u8, free_aux_arr_split_u8, write_data_u8);
 
     /*----------------
         Cmps
@@ -517,6 +566,36 @@ mod tests {
                 SortLog::Region { name, start: 2, len: 3, kind: RegionKind::Keys, held: false },
             ]
         );
+    }
+
+    #[test]
+    fn a_buffer_in_sections_is_created_and_freed_as_an_array_per_section() {
+        let mut log = VisualizerLogger::<usize> { type_ghost: PhantomData, log: Vec::new() };
+        let words = log.create_aux_arr_split(&[3, 0, 2]);
+        let elems = log.create_aux_arr_split_t(&[4]);
+        log.free_aux_arr_split(&words, &[3, 0, 2]);
+        log.free_aux_arr_split_t(&elems, &[4]);
+        // the empty section is left out, its name would be the next one's
+        let (base, tail, whole) = (words.as_ptr() as usize, words[3..].as_ptr() as usize, elems.as_ptr() as usize);
+        assert_eq!(words, [0; 5]);
+        assert_eq!(
+            log.log,
+            [
+                SortLog::CreateAuxArr { name: base, length: 3 },
+                SortLog::CreateAuxArr { name: tail, length: 2 },
+                SortLog::CreateAuxArrT { name: whole, length: 4 },
+                SortLog::FreeAuxArr { name: base },
+                SortLog::FreeAuxArr { name: tail },
+                SortLog::FreeAuxArr { name: whole },
+            ]
+        );
+    }
+
+    #[test]
+    fn a_buffer_splits_into_the_sections_it_was_created_with() {
+        let mut buf = [1, 2, 3, 4, 5];
+        let [head, empty, tail] = crate::split_sections(&mut buf, [3, 0, 2]);
+        assert_eq!((&*head, &*empty, &*tail), (&[1, 2, 3][..], &[][..], &[4, 5][..]));
     }
 
     #[test]

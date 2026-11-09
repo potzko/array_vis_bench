@@ -28,4 +28,4 @@ mod sort_logger;
 
 pub use loggers::{NoOpLogger, VisualizerLogger};
 pub use sort_log::{RegionKind, SortLog};
-pub use sort_logger::SortLogger;
+pub use sort_logger::{split_sections, SortLogger};
