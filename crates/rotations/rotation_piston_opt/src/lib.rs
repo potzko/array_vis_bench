@@ -9,7 +9,7 @@
 //! - `OptimizedPistonRotation`: the catalog rotation, with a 256 cell buffer.
 
 use sort_logger::{RegionKind, SortLogger};
-use array_vis_bench_traits::role::rotation::{buf_rotate_left_using, buf_rotate_right_using, forward_block_swap, Rotation};
+use array_vis_bench_traits::role::rotation::{buf_rotate_left_using, forward_block_swap, Rotation};
 
 // A pass moves runs of at most the smaller side or the ring, whichever is
 // shorter, and short runs move an element at a time. The original finishes
@@ -125,26 +125,20 @@ fn cycle<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], near: usize, r
 fn finish<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], a: usize, buffer: &mut [T], logger: &mut U) {
     let n = arr.len();
     let b = n - a;
-    if a.min(b) <= buffer.len() {
-        if a < b {
-            buf_rotate_left_using(arr, a, buffer, logger);
-        } else {
-            buf_rotate_right_using(arr, a, buffer, logger);
-        }
-        return;
-    }
-    // Each step moves a left element up by `b` and a right one down by `a`.
-    // The cell a step fills held an element the buffer took or one an earlier
-    // step moved, so the walk descends when the left side is the smaller one.
-    if a < b {
+    if a < b && a <= buffer.len() {
+        buf_rotate_left_using(arr, a, buffer, logger);
+    } else if b < a && b <= buffer.len() {
+        logger.copy_range(arr, a, buffer, 0, b);
+        shift_up(arr, a, b, logger);
+        logger.copy_range(buffer, 0, arr, 0, b);
+    } else if a < b {
         let o = b - a;
         logger.copy_range(arr, n - o, buffer, 0, o);
-        for i in (0..a).rev() {
-            logger.write(arr, b + i, i);
-            logger.write(arr, i, a + i);
-        }
+        bridge_down(arr, a, b, logger);
         logger.copy_range(buffer, 0, arr, a, o);
     } else {
+        // Step `i` moves a left element up by `b` and a right one down by
+        // `a`, into cells the buffer emptied or an earlier step read.
         let o = a - b;
         logger.copy_range(arr, b, buffer, 0, o);
         for i in 0..b {
@@ -152,6 +146,71 @@ fn finish<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], a: usize, buf
             logger.write(arr, i, a + i);
         }
         logger.copy_range(buffer, 0, arr, 2 * b, o);
+    }
+}
+
+// Moving part of a range up an element at a time has to run from the top
+// down, and LLVM vectorises no descending loop here. So such a move runs in
+// pieces from the top, each ascending: as long as the distance moved when
+// that is `CHUNK` or more, so a piece never overwrites its own source, else
+// `BLOCK` cells read whole before any is written. A thousand `u32` over all
+// splits took 0.152 ns per element moved an element at a time and 0.123 in
+// pieces, `u64` 0.168 and 0.138; split one short of the middle, a bridge two
+// cells wide, `u32` took 0.217 and 0.120, `u64` 0.217 and 0.145. Blocks
+// are indexed where clippy asks for an iterator, which took that bridge 0.204.
+const CHUNK: usize = 32;
+const BLOCK: usize = 8;
+
+/// Move `arr[..len]` up by `by`.
+#[allow(clippy::needless_range_loop)]
+fn shift_up<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], len: usize, by: usize, logger: &mut U) {
+    let mut x = len;
+    if by >= CHUNK {
+        while x > 0 {
+            let w = by.min(x);
+            x -= w;
+            for i in x..x + w { logger.write(arr, i + by, i); }
+        }
+        return;
+    }
+    while x >= BLOCK {
+        x -= BLOCK;
+        let block: [T; BLOCK] = arr[x..x + BLOCK].try_into().unwrap();
+        // One check of the whole run spares the writes theirs.
+        let _ = &arr[x + by..x + by + BLOCK];
+        for i in 0..BLOCK { logger.write_data(arr, x + by + i, block[i]); }
+    }
+    for i in (0..x).rev() { logger.write(arr, i + by, i); }
+}
+
+/// The bridge with the left side smaller: step `i` moves `arr[i]` up by `b`
+/// and `arr[a + i]` down to `i`. The cell step `i` fills is the one step
+/// `i + b - a` reads, so the steps run from the top.
+#[allow(clippy::needless_range_loop)]
+fn bridge_down<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], a: usize, b: usize, logger: &mut U) {
+    let (o, mut x) = (b - a, a);
+    if o >= CHUNK {
+        while x > 0 {
+            let w = o.min(x);
+            x -= w;
+            for i in x..x + w {
+                logger.write(arr, b + i, i);
+                logger.write(arr, i, a + i);
+            }
+        }
+        return;
+    }
+    while x >= BLOCK {
+        x -= BLOCK;
+        let lefts: [T; BLOCK] = arr[x..x + BLOCK].try_into().unwrap();
+        let rights: [T; BLOCK] = arr[a + x..a + x + BLOCK].try_into().unwrap();
+        let _ = &arr[b + x..b + x + BLOCK];
+        for i in 0..BLOCK { logger.write_data(arr, b + x + i, lefts[i]); }
+        for i in 0..BLOCK { logger.write_data(arr, x + i, rights[i]); }
+    }
+    for i in (0..x).rev() {
+        logger.write(arr, b + i, i);
+        logger.write(arr, i, a + i);
     }
 }
 
