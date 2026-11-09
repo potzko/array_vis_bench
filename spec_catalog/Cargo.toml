@@ -70,7 +70,7 @@ small_sort_deferred_insertion = { path = "../crates/small_sorts/small_sort_defer
 rod_sort_lib = { path = "../crates/families/rod_sort_lib" }
 circle_sort_lib = { path = "../crates/families/circle_sort_lib" }
 
-# Building stones: merge family + its 13 rotation leaves.
+# Building stones: merge family + its 15 rotation leaves.
 # (rotation_reversal already linked above.)
 merge_sort_lib = { path = "../crates/families/merge_sort_lib" }
 rotation_juggling = { path = "../crates/rotations/rotation_juggling" }
