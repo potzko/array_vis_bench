@@ -73,8 +73,15 @@ pub fn optimized_piston<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 /// the near window. Each slot is refilled once a lap of the ring's length, so
 /// a far element waits exactly the distance it sits from its place, and the
 /// near window always receives its own. The near window is the smaller side,
-/// at the left end when that side is, and columns then run from the left ends;
-/// otherwise both run from the right.
+/// at the left end when that side is, and laps then run from the left ends;
+/// otherwise they run from the right.
+///
+/// The columns of one lap touch three disjoint runs, so a lap may run in any
+/// order, and every lap runs ascending: LLVM vectorises none of the
+/// descending loops here. A hundred thousand `u32` split at `n - n / 5`, two
+/// right smaller passes, took 0.26 ns per element with laps descending and
+/// 0.063 ascending, `u64` 0.28 and 0.13; over all splits 0.20 and 0.079,
+/// `u64` 0.25 and 0.15.
 fn pass<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
@@ -91,12 +98,8 @@ fn pass<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     let (mut j, mut w) = (0, 0);
     while j < s {
         w = ring.min(s - j);
-        if up {
-            for i in 0..w { column(arr, lo + j + i, at + i, end + j + i, logger); }
-        } else {
-            let back = s - j - w;
-            for i in (0..w).rev() { column(arr, end + back + i, end - w + i, lo + back + i, logger); }
-        }
+        let back = s - j - w;
+        if up { cycle(arr, lo + j, at, end + j, w, logger) } else { cycle(arr, end + back, end - w, lo + back, w, logger) }
         j += w;
     }
     logger.release_region(arr, held, used, RegionKind::Buffer);
@@ -104,13 +107,16 @@ fn pass<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     if up { (at, at + turn, end) } else { (at, end - turn, end) }
 }
 
-/// `near` receives the ring's element, the ring the far one, `far` the near one.
-#[inline(always)]
-fn column<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], near: usize, ring: usize, far: usize, logger: &mut U) {
-    let t = arr[near];
-    logger.write(arr, near, ring);
-    logger.write(arr, ring, far);
-    logger.write_data(arr, far, t);
+/// Over `w` columns of the runs at `near`, `ring` and `far`, the near run
+/// receives the ring's elements, the ring the far ones and the far run the
+/// near ones.
+fn cycle<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], near: usize, ring: usize, far: usize, w: usize, logger: &mut U) {
+    for i in 0..w {
+        let t = arr[near + i];
+        logger.write(arr, near + i, ring + i);
+        logger.write(arr, ring + i, far + i);
+        logger.write_data(arr, far + i, t);
+    }
 }
 
 /// Rotate `arr` by `a` through `buffer`: the smaller side through the buffer
