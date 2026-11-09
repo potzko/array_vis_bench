@@ -80,7 +80,7 @@ impl<B: Tree> HasStability for TreeSort<B> {
 mod tests {
     use super::*;
     use crate::test_input::{each_slack, pseudo_random};
-    use crate::{Avl, Naive};
+    use crate::{Avl, FixedAvl, Naive};
     use sort_logger::NoOpLogger;
 
     fn assert_sorted_by(mut arr: Vec<usize>, sort: impl Fn(&mut [usize])) {
@@ -114,6 +114,9 @@ mod tests {
     fn the_avl_tree_sorts_at_every_slack() { each_slack!(assert_avl_sorts); }
 
     #[test]
+    fn the_fixed_avl_tree_sorts() { assert_sorts_in_every_layout::<FixedAvl>(); }
+
+    #[test]
     fn the_naive_tree_sorts() { assert_sorts_in_every_layout::<Naive>(); }
 
     // Either side of 2^19 elements `sort` takes the one word layout or the next.
@@ -122,6 +125,7 @@ mod tests {
         for n in [Packed::REACH, Packed::REACH + 1, 1_000_000] {
             assert_sorted_by(pseudo_random(n, 1 << 30), |arr| TreeSort::<Avl<1>>::sort(arr, &mut NoOpLogger));
             assert_sorted_by(pseudo_random(n, 1 << 30), |arr| TreeSort::<Avl<32>>::sort(arr, &mut NoOpLogger));
+            assert_sorted_by(pseudo_random(n, 1 << 30), |arr| TreeSort::<FixedAvl>::sort(arr, &mut NoOpLogger));
             assert_sorted_by(pseudo_random(n, 1 << 30), |arr| TreeSort::<Naive>::sort(arr, &mut NoOpLogger));
         }
     }
@@ -156,6 +160,9 @@ mod tests {
     #[test]
     fn every_tree_keeps_equal_keys_in_input_order_in_every_layout() {
         each_slack!(assert_avl_stable);
+        assert_stable::<FixedAvl, Packed>();
+        assert_stable::<FixedAvl, Halves>();
+        assert_stable::<FixedAvl, Whole>();
         assert_stable::<Naive, Packed>();
         assert_stable::<Naive, Halves>();
         assert_stable::<Naive, Whole>();
@@ -170,6 +177,7 @@ mod tests {
     #[test]
     fn annotations_come_from_the_tree() {
         each_slack!(assert_avl_is_n_log_n);
+        assert_eq!(<TreeSort<FixedAvl> as HasTimeBounds>::WORST, Complexity::N_LOG_N);
         assert_eq!(<TreeSort<Naive> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
         assert_eq!(<TreeSort<Naive> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
         assert!(!<TreeSort<Avl<1>> as HasSpace>::SPACE.is_in_place());

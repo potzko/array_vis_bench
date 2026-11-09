@@ -1883,6 +1883,7 @@
 "tree sort<avl: 32>"	TreeSort<Avl<32>>
 "tree sort<avl: 4>"	TreeSort<Avl<4>>
 "tree sort<avl: 8>"	TreeSort<Avl<8>>
+"tree sort<avl: fixed 1>"	TreeSort<FixedAvl>
 "tree sort<naive>"	TreeSort<Naive>
 "trinity"	TrinityRotation
 "weak heap sort<dir: max forward, storage: bit storage>"	HeapSort<WeakHeapSort<MaxForward, BitStorage>>

@@ -1884,6 +1884,7 @@ Sort	tree sort<avl: 2>	1.1 1.1 1.1 1.0 true
 Sort	tree sort<avl: 32>	1.1 1.1 1.1 1.0 true
 Sort	tree sort<avl: 4>	1.1 1.1 1.1 1.0 true
 Sort	tree sort<avl: 8>	1.1 1.1 1.1 1.0 true
+Sort	tree sort<avl: fixed 1>	1.1 1.1 1.1 1.0 true
 Sort	tree sort<naive>	2.0 1.1 1.1 1.0 true
 Sort	weak heap sort<dir: max forward, storage: bit storage>	1.1 1.1 1.1 1.0 false
 Sort	weak heap sort<dir: max forward, storage: byte storage>	1.1 1.1 1.1 1.0 false

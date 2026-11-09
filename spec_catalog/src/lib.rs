@@ -125,7 +125,7 @@ mod tests {
         assert_eq!(COUNT_INSERTION, 2, "insertion family");
         assert_eq!(COUNT_QUICK, 408, "quick family (2 × [5×5 single + 26 dual] partitions × 4 small)");
         assert_eq!(COUNT_CYCLE, 1, "cycle family");
-        assert_eq!(COUNT_TREE, 7, "tree family (avl at 6 slacks + naive)");
+        assert_eq!(COUNT_TREE, 8, "tree family (avl at 6 slacks + fixed avl + naive)");
         assert_eq!(COUNT_BLOCK_MERGE, 286, "block merge family (13 buffers x 2 key shapes x 11 rotations)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
@@ -222,7 +222,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 1891, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 1892, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -678,7 +678,7 @@ mod tests {
         fn emits_every_tree_and_each_runs() {
             let es = entries();
             assert_eq!(es.len(), COUNT_TREE, "emitted entry count drifted from the solver");
-            assert_eq!(COUNT_TREE, 7, "avl at 6 slacks + naive");
+            assert_eq!(COUNT_TREE, 8, "avl at 6 slacks + fixed avl + naive");
             let cfg = RunConfig { size: 64, seed: 1 };
             for e in &es {
                 assert_eq!(e.category, Category::Sort, "`{}` not Sort", e.name);
@@ -694,7 +694,8 @@ mod tests {
             let mut names: Vec<&str> = entries().iter().map(|e| e.name).filter(|name| name.contains("avl")).collect();
             names.sort_by_key(|name| name.len());
             let want: Vec<String> = [1, 2, 4, 8, 16, 32].map(|slack| format!("tree sort<avl: {slack}>")).into();
-            assert_eq!(names, want);
+            assert_eq!(names[..6], want);
+            assert_eq!(names[6], "tree sort<avl: fixed 1>");
         }
 
         #[test]
