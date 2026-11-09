@@ -11,7 +11,7 @@ component tree_sort
 end
 
 component tree_avl
-  type     Avl
+  type     Avl<1>
   label    avl
   provides Tree
 end
