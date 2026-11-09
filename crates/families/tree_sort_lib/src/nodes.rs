@@ -17,10 +17,11 @@ const WORD: usize = usize::BITS as usize;
 
 // How the four fields of a node sit in the words of the side array. A missing
 // link is the index `n`, so a layout holds `REACH` nodes at most, the largest
-// `n` its link fields can name. The rank holds an AVL height, and stays 0 for a
-// tree that never reads it.
+// `n` its link fields can name. The rank is the tree's own balance data,
+// `RANK_BITS` wide, and stays 0 for a tree that never reads it.
 pub trait Layout {
     const REACH: usize;
+    const RANK_BITS: usize;
 
     // Words of side array for `n` nodes.
     fn words(n: usize) -> usize;
@@ -51,14 +52,15 @@ pub trait Layout {
 // one word, a single logged write each.
 pub struct Packed;
 const PACKED_BITS: usize = 19;
-const RANK_BITS: usize = 7;
+const PACKED_RANK_BITS: usize = 7;
 
 impl Packed {
-    fn width(field: usize) -> usize { if field == RANK { RANK_BITS } else { PACKED_BITS } }
+    fn width(field: usize) -> usize { if field == RANK { PACKED_RANK_BITS } else { PACKED_BITS } }
 }
 
 impl Layout for Packed {
     const REACH: usize = (1 << PACKED_BITS) - 1;
+    const RANK_BITS: usize = PACKED_RANK_BITS;
 
     fn words(n: usize) -> usize { n }
 
@@ -102,6 +104,7 @@ impl<const WORDS: usize, const BITS: usize> Fields<WORDS, BITS> {
 
 impl<const WORDS: usize, const BITS: usize> Layout for Fields<WORDS, BITS> {
     const REACH: usize = Self::MASK;
+    const RANK_BITS: usize = BITS;
 
     fn words(n: usize) -> usize { n.checked_mul(WORDS).expect("the node words of the array overflow usize") }
 
@@ -262,6 +265,25 @@ mod tests {
 
     #[test]
     fn whole_holds_a_word_in_every_field() { assert_round_trips::<Whole>(1 << 20, usize::MAX); }
+
+    // The widest rank a layout claims to hold sits in the word beside links as
+    // wide as it reaches, and reads back whole.
+    fn assert_holds_its_widest_rank<L: Layout>(n: usize) {
+        let widest = usize::MAX >> (usize::BITS as usize - L::RANK_BITS);
+        let (mut meta, mut logger) = (vec![0; L::words(n)], NoOpLogger);
+        L::put::<usize, _>(&mut meta, &mut logger, 1, [L::REACH, L::REACH, L::REACH, widest]);
+        assert_eq!(node::<L>(&meta, 1), [L::REACH, L::REACH, L::REACH, widest]);
+        L::set::<usize, _>(&mut meta, &mut logger, 1, RANK, 0);
+        assert_eq!(node::<L>(&meta, 1), [L::REACH, L::REACH, L::REACH, 0]);
+    }
+
+    #[test]
+    fn every_layout_holds_the_widest_rank_it_claims() {
+        assert_eq!([Packed::RANK_BITS, Halves::RANK_BITS, Whole::RANK_BITS], [7, 32, 64]);
+        assert_holds_its_widest_rank::<Packed>(4);
+        assert_holds_its_widest_rank::<Halves>(4);
+        assert_holds_its_widest_rank::<Whole>(4);
+    }
 
     #[test]
     fn the_reaches_chain_from_a_word_to_any_length() {
