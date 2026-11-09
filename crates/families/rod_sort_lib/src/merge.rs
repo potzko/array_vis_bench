@@ -27,6 +27,7 @@
 
 use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::HasSpace;
+use shell_sort_lib::insert_into_chain;
 use sort_logger::SortLogger;
 
 pub trait RodMerge {
@@ -334,22 +335,14 @@ fn two_way_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 /// Strided insertion sort: sort `arr` viewed as a stride-`jump` virtual
 /// array. Reused for the base case and the intermediate pass — those see
 /// unsorted strided data, not merge structure, so they always run this.
-///
-/// Holds the element and shifts the larger chain predecessors up one slot
-/// each, so moving d places costs d + 1 writes where swapping cost 2d.
+/// Each step is the shell sorts' hold and shift insertion into the chain.
 pub(crate) fn insertion_sort_jump<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     jump: usize,
     logger: &mut U,
 ) {
     for i in (jump..arr.len()).step_by(jump) {
-        let held = arr[i];
-        let mut slot = i;
-        while slot >= jump && !logger.cmp_le_data(arr, slot - jump, held) {
-            logger.write(arr, slot, slot - jump);
-            slot -= jump;
-        }
-        if slot != i { logger.write_data(arr, slot, held); }
+        insert_into_chain(arr, i, jump, logger);
     }
 }
 
