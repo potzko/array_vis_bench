@@ -42,7 +42,8 @@ impl<B: Tree> TreeSort<B> {
     pub fn sort_in<T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout>(arr: &mut [T], logger: &mut U) {
         let n = arr.len();
         if n < 2 { return; }
-        let mut nodes = Nodes::<T, U, L>::new(arr, logger);
+        let mut meta = logger.create_aux_arr(L::words(n));
+        let mut nodes = Nodes::<T, U, L>::over(arr, &mut meta, logger);
         for i in 0..n {
             nodes.attach(i, B::LEAF_RANK);
             B::inserted(&mut nodes, i);
@@ -52,7 +53,7 @@ impl<B: Tree> TreeSort<B> {
             B::removed(&mut nodes, parent);
             nodes.place(least, k);
         }
-        nodes.free();
+        logger.free_aux_arr(&meta);
     }
 }
 

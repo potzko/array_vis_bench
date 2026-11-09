@@ -122,7 +122,7 @@ impl<const WORDS: usize, const BITS: usize> Layout for Fields<WORDS, BITS> {
 // the missing link. Every write to either goes through the logger.
 pub struct Nodes<'a, T, U: ?Sized, L> {
     arr: &'a mut [T],
-    meta: Vec<usize>,
+    meta: &'a mut [usize],
     pub nil: usize,
     pub root: usize,
     logger: &'a mut U,
@@ -130,14 +130,22 @@ pub struct Nodes<'a, T, U: ?Sized, L> {
 }
 
 impl<'a, T: Ord + Copy, U: ?Sized + SortLogger<T>, L: Layout> Nodes<'a, T, U, L> {
-    pub fn new(arr: &'a mut [T], logger: &'a mut U) -> Self {
+    // A tree over the values in `arr` whose nodes live in `meta`, at least
+    // `L::words(arr.len())` words, which the caller creates through the logger
+    // and frees once the tree is done with.
+    pub fn over(arr: &'a mut [T], meta: &'a mut [usize], logger: &'a mut U) -> Self {
         let n = arr.len();
         assert!(n <= L::REACH, "a layout of reach {} cannot hold {n} nodes", L::REACH);
-        let meta = logger.create_aux_arr(L::words(n));
+        assert!(meta.len() >= L::words(n), "{} words cannot hold the nodes of {n}", meta.len());
         Nodes { arr, meta, nil: n, root: n, logger, layout: PhantomData }
     }
 
-    pub fn free(&mut self) { self.logger.free_aux_arr(&self.meta); }
+    // The logger, for a caller that logs its own work between tree operations.
+    pub fn logger(&mut self) -> &mut U { self.logger }
+
+    // A new key for node `i`, which must be out of the tree until it is
+    // attached again.
+    pub fn set_key(&mut self, i: usize, key: T) { self.logger.write_data(self.arr, i, key); }
 
     pub fn link(&self, i: usize, side: usize) -> usize { L::get(&self.meta, i, side) }
 
@@ -260,15 +268,36 @@ mod tests {
         assert_eq!([Packed::REACH, Halves::REACH, Whole::REACH], [(1 << 19) - 1, u32::MAX as usize, usize::MAX]);
     }
 
+    // A priority queue's round, which tree sort never plays: the least node
+    // leaves, takes a new key and goes back in, so the keys come out merged.
+    #[test]
+    fn a_node_unlinked_as_the_least_goes_back_in_under_a_new_key() {
+        let mut keys = vec![5usize, 1, 4, 2, 3];
+        let mut shadow = keys.clone();
+        let mut meta = vec![0; Packed::words(keys.len())];
+        let mut logger = NoOpLogger;
+        let mut nodes = Nodes::<_, _, Packed>::over(&mut keys, &mut meta, &mut logger);
+        (0..5).for_each(|i| nodes.attach(i, 0));
+        let mut out = Vec::new();
+        for _ in 0..10 {
+            let (least, _) = nodes.unlink_min();
+            out.push(shadow[least]);
+            shadow[least] += 10;
+            nodes.set_key(least, shadow[least]);
+            nodes.attach(least, 0);
+        }
+        assert_eq!(out, [1, 2, 3, 4, 5, 11, 12, 13, 14, 15]);
+    }
+
     #[test]
     #[should_panic(expected = "cannot hold")]
     fn a_layout_refuses_an_array_past_its_reach() {
-        Nodes::<usize, _, Packed>::new(&mut vec![0; Packed::REACH + 1], &mut NoOpLogger);
+        Nodes::<usize, _, Packed>::over(&mut vec![0; Packed::REACH + 1], &mut [], &mut NoOpLogger);
     }
 
     #[test]
     #[should_panic(expected = "node words")]
     fn a_length_whose_node_words_overflow_usize_is_refused() {
-        Nodes::<(), _, Whole>::new(&mut vec![(); 1 << 62], &mut NoOpLogger);
+        Nodes::<(), _, Whole>::over(&mut vec![(); 1 << 62], &mut [], &mut NoOpLogger);
     }
 }

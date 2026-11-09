@@ -108,8 +108,8 @@ mod tests {
     fn assert_stays_avl<L: Layout>() {
         let mut arr = pseudo_random(300, 40);
         let n = arr.len();
-        let mut logger = NoOpLogger;
-        let mut nodes = Nodes::<_, _, L>::new(&mut arr, &mut logger);
+        let (mut meta, mut logger) = (vec![0; L::words(n)], NoOpLogger);
+        let mut nodes = Nodes::<_, _, L>::over(&mut arr, &mut meta, &mut logger);
         for i in 0..n {
             nodes.attach(i, Avl::LEAF_RANK);
             Avl::inserted(&mut nodes, i);

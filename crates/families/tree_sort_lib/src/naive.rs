@@ -36,8 +36,8 @@ mod tests {
 
     fn assert_a_right_path_with_no_rank<L: Layout>() {
         let mut arr: Vec<usize> = (0..64).collect();
-        let mut logger = NoOpLogger;
-        let mut nodes = Nodes::<_, _, L>::new(&mut arr, &mut logger);
+        let (mut meta, mut logger) = (vec![0; L::words(64)], NoOpLogger);
+        let mut nodes = Nodes::<_, _, L>::over(&mut arr, &mut meta, &mut logger);
         for i in 0..64 {
             nodes.attach(i, Naive::LEAF_RANK);
             Naive::inserted(&mut nodes, i);
