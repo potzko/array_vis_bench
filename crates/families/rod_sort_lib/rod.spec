@@ -3,7 +3,7 @@
 #
 # Two-axis (uncoupled): one `RodSort<{strategy},{merge}>` driver whose two slots
 # the query fills exhaustively. `strategy` ranges over the 6 BranchingStrategy
-# impls, `merge` over the 3 RodMerge impls -> 6 x 3 = 18 entries. RodSort already
+# impls, `merge` over the 5 RodMerge fillers -> 6 x 5 = 30 entries. RodSort already
 # has a unique type-head + inherent `sort` + composable trait impls, so it is
 # queried directly (no driver wrapper). Component names are prefixed `rod_` for
 # global uniqueness across the merged registry (Classic/Parity3/etc. clash with
@@ -58,7 +58,7 @@ component rod_fibonacci
   provides RodBranching
 end
 
-# ════════════════════════ MERGE MODES (3) ═══════════════════════
+# ════════════════════════ MERGE MODES (5) ═══════════════════════
 # labels match RodMerge::NAME.
 component rod_insertion
   type     InsertionMerge
@@ -76,6 +76,14 @@ component rod_tournament
   type     TournamentMerge
   label    tournament
   provides RodMerge
+end
+
+# The tree sort family's trees as the merge's priority queue, one filler each.
+component rod_tree
+  type     TreeMerge<{tree}>
+  label    tree<{tree}>
+  provides RodMerge
+  slot     tree Tree
 end
 
 # A strategy's gap chain as a Shell sort gap sequence, so the shell drivers'

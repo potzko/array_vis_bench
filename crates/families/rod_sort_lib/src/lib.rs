@@ -1,6 +1,6 @@
 //! Rod sort family — `RodSort<S, M>` plus the `BranchingStrategy` trait
-//! and its six concrete strategies, and three `RodMerge` variants
-//! (insertion / aux / tournament). The catalog emits every (strategy x merge) pair from
+//! and its six concrete strategies, and four `RodMerge` variants
+//! (insertion / aux / tournament / tree over the tree sort family's trees). The catalog emits every (strategy x merge) pair from
 //! `rod.spec` and `rod.avbs`.
 
 pub mod gaps;
@@ -11,7 +11,7 @@ pub mod shell_branching;
 mod testing;
 
 pub use gaps::RodGaps;
-pub use merge::{AuxMerge, InsertionMerge, RodMerge, TournamentMerge};
+pub use merge::{AuxMerge, InsertionMerge, RodMerge, TournamentMerge, TreeMerge};
 pub use rod_sort::RodSort;
 pub use shell_branching::{
     BranchingStrategy, Classic, Fibonacci, LogParity, Optimised, Parity3, RootParity,

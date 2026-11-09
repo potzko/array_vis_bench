@@ -543,6 +543,7 @@ dependencies = [
  "array_vis_bench_traits",
  "shell_sort_lib",
  "sort_logger",
+ "tree_sort_lib",
 ]
 
 [[package]]

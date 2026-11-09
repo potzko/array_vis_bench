@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 
-use super::merge::{insertion_sort_jump, AuxMerge, InsertionMerge, RodMerge, TournamentMerge};
+use super::merge::{insertion_sort_jump, AuxMerge, InsertionMerge, RodMerge, TournamentMerge, TreeMerge};
+use tree_sort_lib::Tree;
 use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use sort_logger::SortLogger;
@@ -37,7 +38,8 @@ impl<S: BranchingStrategy, M: RodMerge> RodSort<S, M> {
         if n < 2 {
             return;
         }
-        let (aux_len, index_len) = (M::aux_size(n), M::index_size(S::branch(n)));
+        let top_branch = S::branch(n);
+        let (aux_len, index_len) = (M::aux_size(n, top_branch), M::index_size(top_branch));
         let mut aux = if aux_len > 0 { logger.create_aux_arr_t(aux_len) } else { Vec::new() };
         let mut index = if index_len > 0 { logger.create_aux_arr(index_len) } else { Vec::new() };
         Self::sort_rec(arr, 1, &mut aux, &mut index, logger);
@@ -120,6 +122,25 @@ impl<S: BranchingStrategy> HasTimeBounds for RodSort<S, TournamentMerge> {
     const AVERAGE: Complexity = Complexity::N_LOG_N;
 }
 
+// A tree whose own sort is N log N keeps its depth logarithmic in the chains it
+// holds, so each output costs O(log k) and the levels sum to N log N. A tree
+// that can grow into a path pays up to k per output, the scan's N times the
+// path branching, and as little as one compare per level at best. On random
+// heads either stays logarithmic.
+impl<S: BranchingStrategy, B: Tree + HasTimeBounds> HasTimeBounds for RodSort<S, TreeMerge<B>> {
+    const WORST: Complexity = if Complexity::N_LOG_N.at_least(B::WORST) {
+        Complexity::N_LOG_N
+    } else {
+        Complexity::product(Complexity::N1, S::PATH_BRANCHING)
+    };
+    const BEST: Complexity = if Complexity::N_LOG_N.at_least(B::WORST) {
+        Complexity::N_LOG_N
+    } else {
+        Complexity::product(Complexity::N1, S::DEPTH)
+    };
+    const AVERAGE: Complexity = Complexity::N_LOG_N;
+}
+
 impl<S, M> HasSpace for RodSort<S, M>
 where
     S: BranchingStrategy,
@@ -144,6 +165,7 @@ mod tests {
     use super::*;
     use crate::{Classic, Optimised};
     use sort_logger::{NoOpLogger, SortLog, VisualizerLogger};
+    use tree_sort_lib::{Avl, Naive};
 
     fn buffers_created(sort: fn(&mut [usize], &mut VisualizerLogger<usize>)) -> usize {
         let mut arr: Vec<usize> = (0..4096).rev().collect();
@@ -156,6 +178,7 @@ mod tests {
     fn a_sort_creates_each_scratch_once_not_per_merge() {
         // 4096 under a branch of 32 is 33 merges, against one aux and one index buffer.
         assert_eq!(buffers_created(RodSort::<Optimised, AuxMerge>::sort), 2);
+        assert_eq!(buffers_created(RodSort::<Optimised, TreeMerge<Avl>>::sort), 2);
         assert_eq!(buffers_created(RodSort::<Optimised, InsertionMerge>::sort), 0);
     }
 
@@ -172,8 +195,12 @@ mod tests {
 
     #[test]
     fn a_merge_handed_too_little_index_scratch_brings_its_own() {
-        let sorts: [fn(&mut [usize], &mut NoOpLogger); 2] =
-            [RodSort::<Narrowing, AuxMerge>::sort, RodSort::<Narrowing, TournamentMerge>::sort];
+        let sorts: [fn(&mut [usize], &mut NoOpLogger); 4] = [
+            RodSort::<Narrowing, AuxMerge>::sort,
+            RodSort::<Narrowing, TournamentMerge>::sort,
+            RodSort::<Narrowing, TreeMerge<Avl>>::sort,
+            RodSort::<Narrowing, TreeMerge<Naive>>::sort,
+        ];
         for sort in sorts {
             let mut arr: Vec<usize> = (0..500).map(|i| i * 7919 % 500).collect();
             sort(&mut arr, &mut NoOpLogger);

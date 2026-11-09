@@ -15,6 +15,9 @@
 //! - [`TournamentMerge`]: the same buffer round trip with the chain heads in
 //!   a loser tree, so at most ceil(log2 branch) compares per element per
 //!   pass, and N log N whatever the strategy.
+//! - [`TreeMerge`]: the same round trip with the chain heads in a search tree
+//!   of the tree sort family, least out and next head in, as balanced as the
+//!   tree it is given.
 //!
 //! ## Aux buffer ownership
 //!
@@ -25,17 +28,21 @@
 //! are one index buffer the same way, sized by the top level's branch.
 //! [`InsertionMerge`] asks for neither, so it allocates nothing.
 
+use std::marker::PhantomData;
+
 use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::HasSpace;
 use sort_logger::SortLogger;
+use tree_sort_lib::{Layout, Nodes, Packed, Tree};
 
 pub trait RodMerge {
     const NAME: &'static str;
 
-    /// Aux elements the merges of a sort over `n` need, allocated once by the
-    /// driver and shared by every merge. 0 for a merge that works in place.
+    /// Aux elements the merges of a sort over `n` need, whose top level has
+    /// `branch` chains, allocated once by the driver and shared by every merge.
+    /// 0 for a merge that works in place.
     #[inline]
-    fn aux_size(_n: usize) -> usize {
+    fn aux_size(_n: usize, _branch: usize) -> usize {
         0
     }
 
@@ -100,7 +107,7 @@ impl RodMerge for AuxMerge {
     const NAME: &'static str = "aux";
 
     #[inline]
-    fn aux_size(n: usize) -> usize {
+    fn aux_size(n: usize, _branch: usize) -> usize {
         n
     }
 
@@ -139,7 +146,7 @@ impl RodMerge for TournamentMerge {
     const NAME: &'static str = "tournament";
 
     #[inline]
-    fn aux_size(n: usize) -> usize {
+    fn aux_size(n: usize, _branch: usize) -> usize {
         n
     }
 
@@ -167,6 +174,50 @@ impl RodMerge for TournamentMerge {
         with_index::<T, U>(index, Self::index_size(chains), logger, |index, logger| match chains {
             2 => two_way_merge(arr, aux, &mut index[..2], jump, logger),
             _ => tournament_merge(arr, aux, index, jump, branch, logger),
+        });
+    }
+}
+
+pub struct TreeMerge<B: Tree>(PhantomData<B>);
+impl<B: Tree> RodMerge for TreeMerge<B> {
+    const NAME: &'static str = "tree";
+
+    // The output, then a key per chain.
+    #[inline]
+    fn aux_size(n: usize, branch: usize) -> usize {
+        n + branch
+    }
+
+    // The heads, then the tree's nodes.
+    #[inline]
+    fn index_size(branch: usize) -> usize {
+        branch + Packed::words(branch)
+    }
+
+    #[inline]
+    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        aux: &mut [T],
+        index: &mut [usize],
+        jump: usize,
+        branch: usize,
+        _inter: usize,
+        logger: &mut U,
+    ) {
+        let virtual_len = arr.len().div_ceil(jump);
+        if branch <= 1 || virtual_len <= 1 {
+            return;
+        }
+        let chains = branch.min(virtual_len);
+        let (out, rest) = aux.split_at_mut(virtual_len);
+        with_index::<T, U>(index, Self::index_size(chains), logger, |index, logger| {
+            if rest.len() >= chains {
+                tree_merge::<B, T, U>(arr, out, &mut rest[..chains], index, jump, branch, logger);
+            } else {
+                let mut keys = logger.create_aux_arr_t(chains);
+                tree_merge::<B, T, U>(arr, out, &mut keys, index, jump, branch, logger);
+                logger.free_aux_arr_t(&keys);
+            }
         });
     }
 }
@@ -331,6 +382,48 @@ fn two_way_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     }
 }
 
+// Merges the chains into `out` through a search tree of the tree family, then
+// copies `out` back at stride `jump`. Node `s` is chain `s`, keyed by a copy of
+// its head in `keys`: the least node comes out, and unless its chain is spent
+// it goes back in under the chain's next head. `index` holds the heads, then
+// the nodes.
+fn tree_merge<B: Tree, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    out: &mut [T],
+    keys: &mut [T],
+    index: &mut [usize],
+    jump: usize,
+    branch: usize,
+    logger: &mut U,
+) {
+    let len = out.len();
+    let (heads, meta) = index.split_at_mut(keys.len());
+    for s in 0..heads.len() {
+        logger.write_data_u(heads, s, s);
+        logger.write_accross(arr, s * jump, keys, s);
+    }
+    let mut nodes = Nodes::<T, U, Packed>::over(keys, meta, logger);
+    for s in 0..heads.len() {
+        nodes.attach(s, B::LEAF_RANK);
+        B::inserted(&mut nodes, s);
+    }
+    for write_idx in 0..len {
+        let (s, parent) = nodes.unlink_min();
+        B::removed(&mut nodes, parent);
+        let next = heads[s] + branch;
+        nodes.logger().write_accross(arr, heads[s] * jump, out, write_idx);
+        nodes.logger().write_data_u(heads, s, next);
+        if next < len {
+            nodes.set_key(s, arr[next * jump]);
+            nodes.attach(s, B::LEAF_RANK);
+            B::inserted(&mut nodes, s);
+        }
+    }
+    for write_idx in 0..len {
+        logger.write_accross(out, write_idx, arr, write_idx * jump);
+    }
+}
+
 /// Strided insertion sort: sort `arr` viewed as a stride-`jump` virtual
 /// array. Reused for the base case and the intermediate pass — those see
 /// unsorted strided data, not merge structure, so they always run this.
@@ -366,6 +459,9 @@ impl HasSpace for AuxMerge {
 impl HasSpace for TournamentMerge {
     const SPACE: Complexity = Complexity::N1;
 }
+impl<B: Tree> HasSpace for TreeMerge<B> {
+    const SPACE: Complexity = Complexity::N1;
+}
 
 #[cfg(test)]
 mod tests {
@@ -374,6 +470,7 @@ mod tests {
     use super::*;
     use crate::testing::Compares;
     use sort_logger::{SortLog, VisualizerLogger};
+    use tree_sort_lib::{Avl, Naive};
 
     #[test]
     fn strided_insertion_writes_once_per_place_an_element_moves() {
@@ -404,7 +501,7 @@ mod tests {
         for chains in 2..=40usize {
             let n = 20 * chains + 7;
             let mut arr = sorted_chains(n, chains);
-            let mut aux = vec![0; TournamentMerge::aux_size(n)];
+            let mut aux = vec![0; TournamentMerge::aux_size(n, chains)];
             let mut index = vec![0; TournamentMerge::index_size(chains)];
             let mut compares = Compares(0);
             TournamentMerge::merge(&mut arr, &mut aux, &mut index, 1, chains, 0, &mut compares);
@@ -412,5 +509,40 @@ mod tests {
             let rounds = chains.next_power_of_two().trailing_zeros() as usize;
             assert!(compares.0 <= n * rounds + chains, "{chains} chains took {} compares", compares.0);
         }
+    }
+
+    // One tree merge over `chains` chains of `arr`, returning its compares.
+    fn tree_merged<B: Tree>(arr: &mut [usize], chains: usize) -> usize {
+        let n = arr.len();
+        let mut aux = vec![0; TreeMerge::<B>::aux_size(n, chains)];
+        let mut index = vec![0; TreeMerge::<B>::index_size(chains)];
+        let mut compares = Compares(0);
+        TreeMerge::<B>::merge(arr, &mut aux, &mut index, 1, chains, 0, &mut compares);
+        assert!(arr.windows(2).all(|pair| pair[0] <= pair[1]), "{chains} chains left unsorted");
+        compares.0
+    }
+
+    #[test]
+    fn an_avl_tree_merge_compares_at_most_its_height_per_attach() {
+        // Every output attaches one node, and an AVL tree of k nodes is under
+        // 1.4405 log2(k + 2) levels tall.
+        for chains in 2..=40usize {
+            let n = 20 * chains + 7;
+            let height = (1.4405 * ((chains + 2) as f64).log2()) as usize;
+            let compares = tree_merged::<Avl>(&mut sorted_chains(n, chains), chains);
+            assert!(compares <= n * height, "{chains} chains took {compares} compares");
+        }
+    }
+
+    #[test]
+    fn a_naive_tree_merge_sorts_and_degrades_to_a_scan_on_presorted_chains() {
+        for chains in 2..=40usize {
+            tree_merged::<Naive>(&mut sorted_chains(20 * chains + 7, chains), chains);
+        }
+        // Presorted, every next head is past all the others, so the tree is a
+        // right path and each attach walks it.
+        let (n, chains) = (20 * 16 + 7, 16);
+        let compares = tree_merged::<Naive>(&mut (0..n).collect::<Vec<_>>(), chains);
+        assert!(compares >= (n - chains) * (chains - 1), "{compares} compares");
     }
 }
