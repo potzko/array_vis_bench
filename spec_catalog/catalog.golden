@@ -10,6 +10,7 @@ Merge	naive<grail>	2.0 1.0 2.0 0.0 true
 Merge	naive<gries-mills>	2.0 1.0 2.0 0.0 true
 Merge	naive<helix>	2.0 1.0 2.0 0.0 true
 Merge	naive<juggling>	2.0 1.0 2.0 0.0 true
+Merge	naive<optimized piston>	2.0 1.0 2.0 0.0 true
 Merge	naive<piston>	2.0 1.0 2.0 0.0 true
 Merge	naive<reversal>	2.0 1.0 2.0 0.0 true
 Merge	naive<trinity>	2.0 1.0 2.0 0.0 true
@@ -22,6 +23,7 @@ Merge	smaller-side<grail>	1.2 1.0 1.2 0.0 true
 Merge	smaller-side<gries-mills>	1.2 1.0 1.2 0.0 true
 Merge	smaller-side<helix>	1.2 1.0 1.2 0.0 true
 Merge	smaller-side<juggling>	1.2 1.0 1.2 0.0 true
+Merge	smaller-side<optimized piston>	1.2 1.0 1.2 0.0 true
 Merge	smaller-side<piston>	1.2 1.0 1.2 0.0 true
 Merge	smaller-side<reversal>	1.2 1.0 1.2 0.0 true
 Merge	smaller-side<trinity>	1.2 1.0 1.2 0.0 true
@@ -157,6 +159,7 @@ Rotation	grail	1.0 1.0 1.0 0.0 false
 Rotation	gries-mills	1.0 1.0 1.0 0.0 false
 Rotation	helix	1.0 1.0 1.0 0.0 false
 Rotation	juggling	1.0 1.0 1.0 0.0 false
+Rotation	optimized piston	1.0 1.0 1.0 0.0 false
 Rotation	piston	1.0 1.0 1.0 0.0 false
 Rotation	reversal	1.0 1.0 1.0 0.0 false
 Rotation	trinity	1.0 1.0 1.0 0.0 false
@@ -270,6 +273,7 @@ Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: grail>	1.1 1
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: gries-mills>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: helix>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: juggling>	1.1 1.0 1.1 0.0Sqrt true
+Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: optimized piston>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: piston>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: reversal>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: trinity>	1.1 1.0 1.1 0.0Sqrt true
@@ -282,6 +286,7 @@ Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: grail>	1.2 1.0 1
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: gries-mills>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: helix>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: juggling>	1.2 1.0 1.2 0.0Sqrt true
+Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: optimized piston>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: piston>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: reversal>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: trinity>	1.2 1.0 1.2 0.0Sqrt true
@@ -294,6 +299,7 @@ Sort	block sort<buffer: external<512>, keys: in array, rotation: grail>	1.2 1.0 
 Sort	block sort<buffer: external<512>, keys: in array, rotation: gries-mills>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: helix>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: juggling>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: external<512>, keys: in array, rotation: optimized piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: reversal>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: trinity>	1.2 1.0 1.2 0.0 true
@@ -306,6 +312,7 @@ Sort	block sort<buffer: external<512>, keys: none, rotation: grail>	1.2 1.0 1.2 
 Sort	block sort<buffer: external<512>, keys: none, rotation: gries-mills>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: helix>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: juggling>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: external<512>, keys: none, rotation: optimized piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: reversal>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: trinity>	1.2 1.0 1.2 0.0 true
@@ -318,6 +325,7 @@ Sort	block sort<buffer: external<half>, keys: in array, rotation: grail>	1.1 1.0
 Sort	block sort<buffer: external<half>, keys: in array, rotation: gries-mills>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: helix>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: juggling>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: external<half>, keys: in array, rotation: optimized piston>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: piston>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: reversal>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: trinity>	1.1 1.0 1.1 1.0 true
@@ -330,6 +338,7 @@ Sort	block sort<buffer: external<half>, keys: none, rotation: grail>	1.2 1.0 1.2
 Sort	block sort<buffer: external<half>, keys: none, rotation: gries-mills>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: helix>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: juggling>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<half>, keys: none, rotation: optimized piston>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: piston>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: reversal>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: trinity>	1.2 1.0 1.2 1.0 true
@@ -342,6 +351,7 @@ Sort	block sort<buffer: external<log>, keys: in array, rotation: grail>	1.2 1.0 
 Sort	block sort<buffer: external<log>, keys: in array, rotation: gries-mills>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: helix>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: juggling>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<log>, keys: in array, rotation: optimized piston>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: piston>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: reversal>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: trinity>	1.2 1.0 1.2 0.1 true
@@ -354,6 +364,7 @@ Sort	block sort<buffer: external<log>, keys: none, rotation: grail>	1.2 1.0 1.2 
 Sort	block sort<buffer: external<log>, keys: none, rotation: gries-mills>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: helix>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: juggling>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<log>, keys: none, rotation: optimized piston>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: piston>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: reversal>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: trinity>	1.2 1.0 1.2 0.1 true
@@ -366,6 +377,7 @@ Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: grail>	1.
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: gries-mills>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: helix>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: juggling>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: optimized piston>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: piston>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: reversal>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: trinity>	1.1 1.0 1.1 1.0 true
@@ -378,6 +390,7 @@ Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: grail>	1.2 1.
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: gries-mills>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: helix>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: juggling>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: optimized piston>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: piston>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: reversal>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: trinity>	1.2 1.0 1.2 1.0 true
@@ -390,6 +403,7 @@ Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: grail>	1.1 1.0
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: gries-mills>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: helix>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: juggling>	1.1 1.0 1.1 0.0Sqrt true
+Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: optimized piston>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: piston>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: reversal>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: trinity>	1.1 1.0 1.1 0.0Sqrt true
@@ -402,6 +416,7 @@ Sort	block sort<buffer: external<sqrt>, keys: none, rotation: grail>	1.2 1.0 1.2
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: gries-mills>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: helix>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: juggling>	1.2 1.0 1.2 0.0Sqrt true
+Sort	block sort<buffer: external<sqrt>, keys: none, rotation: optimized piston>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: piston>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: reversal>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: trinity>	1.2 1.0 1.2 0.0Sqrt true
@@ -414,6 +429,7 @@ Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: grail>	1.1 1
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: gries-mills>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: helix>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: juggling>	1.1 1.0 1.1 0.0 true
+Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: optimized piston>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: piston>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: reversal>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: trinity>	1.1 1.0 1.1 0.0 true
@@ -426,6 +442,7 @@ Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: grail>	1.2 1.0 1
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: gries-mills>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: helix>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: juggling>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: optimized piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: reversal>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: trinity>	1.2 1.0 1.2 0.0 true
@@ -438,6 +455,7 @@ Sort	block sort<buffer: in array<512>, keys: in array, rotation: grail>	1.2 1.0 
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: gries-mills>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: helix>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: juggling>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<512>, keys: in array, rotation: optimized piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: reversal>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: trinity>	1.2 1.0 1.2 0.0 true
@@ -450,6 +468,7 @@ Sort	block sort<buffer: in array<512>, keys: none, rotation: grail>	1.2 1.0 1.2 
 Sort	block sort<buffer: in array<512>, keys: none, rotation: gries-mills>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: helix>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: juggling>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<512>, keys: none, rotation: optimized piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: reversal>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: trinity>	1.2 1.0 1.2 0.0 true
@@ -462,6 +481,7 @@ Sort	block sort<buffer: in array<half>, keys: in array, rotation: grail>	2.0 1.1
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: gries-mills>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: helix>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: juggling>	2.0 1.1 2.0 0.0 true
+Sort	block sort<buffer: in array<half>, keys: in array, rotation: optimized piston>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: piston>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: reversal>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: trinity>	2.0 1.1 2.0 0.0 true
@@ -474,6 +494,7 @@ Sort	block sort<buffer: in array<half>, keys: none, rotation: grail>	2.0 1.1 2.0
 Sort	block sort<buffer: in array<half>, keys: none, rotation: gries-mills>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: helix>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: juggling>	2.0 1.1 2.0 0.0 true
+Sort	block sort<buffer: in array<half>, keys: none, rotation: optimized piston>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: piston>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: reversal>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: trinity>	2.0 1.1 2.0 0.0 true
@@ -486,6 +507,7 @@ Sort	block sort<buffer: in array<log>, keys: in array, rotation: grail>	1.2 1.0 
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: gries-mills>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: helix>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: juggling>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<log>, keys: in array, rotation: optimized piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: reversal>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: trinity>	1.2 1.0 1.2 0.0 true
@@ -498,6 +520,7 @@ Sort	block sort<buffer: in array<log>, keys: none, rotation: grail>	1.2 1.0 1.2 
 Sort	block sort<buffer: in array<log>, keys: none, rotation: gries-mills>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: helix>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: juggling>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<log>, keys: none, rotation: optimized piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: reversal>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: trinity>	1.2 1.0 1.2 0.0 true
@@ -510,6 +533,7 @@ Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: grail>	2.
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: gries-mills>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: helix>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: juggling>	2.0 1.1 2.0 0.0 true
+Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: optimized piston>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: piston>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: reversal>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: trinity>	2.0 1.1 2.0 0.0 true
@@ -522,6 +546,7 @@ Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: grail>	2.0 1.
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: gries-mills>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: helix>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: juggling>	2.0 1.1 2.0 0.0 true
+Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: optimized piston>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: piston>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: reversal>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: trinity>	2.0 1.1 2.0 0.0 true
@@ -534,6 +559,7 @@ Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: grail>	1.1 1.0
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: gries-mills>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: helix>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: juggling>	1.1 1.0 1.1 0.0 true
+Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: optimized piston>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: piston>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity>	1.1 1.0 1.1 0.0 true
@@ -546,6 +572,7 @@ Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: grail>	1.2 1.0 1.2
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: gries-mills>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: helix>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: juggling>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: optimized piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: reversal>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: trinity>	1.2 1.0 1.2 0.0 true
@@ -558,6 +585,7 @@ Sort	block sort<buffer: none, keys: in array, rotation: grail>	1.2 1.0 1.2 0.0 t
 Sort	block sort<buffer: none, keys: in array, rotation: gries-mills>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: helix>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: juggling>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: none, keys: in array, rotation: optimized piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: reversal>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: trinity>	1.2 1.0 1.2 0.0 true
@@ -570,6 +598,7 @@ Sort	block sort<buffer: none, keys: none, rotation: grail>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: none, rotation: gries-mills>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: none, rotation: helix>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: none, rotation: juggling>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: none, keys: none, rotation: optimized piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: none, rotation: piston>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: none, rotation: reversal>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: none, rotation: trinity>	1.2 1.0 1.2 0.0 true
@@ -598,6 +627,7 @@ Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<grail>>	2.
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<optimized piston>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
@@ -610,6 +640,7 @@ Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<gra
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<optimized piston>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
@@ -622,6 +653,7 @@ Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<grail>>	2.0 
 Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<helix>>	2.0 1.0 2.0 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<juggling>>	2.0 1.0 2.0 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<optimized piston>>	2.0 1.0 2.0 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<piston>>	2.0 1.0 2.0 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<reversal>>	2.0 1.0 2.0 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<trinity>>	2.0 1.0 2.0 0.0 false
@@ -634,6 +666,7 @@ Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<grail
 Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<optimized piston>>	1.2 1.0 1.2 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 false
@@ -646,6 +679,7 @@ Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<grail>>	2.0 1.0 
 Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<optimized piston>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
@@ -658,6 +692,7 @@ Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<grail>>	1
 Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<optimized piston>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
@@ -670,6 +705,7 @@ Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<grail>>	2.0 1.0 
 Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<optimized piston>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
@@ -682,6 +718,7 @@ Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<grail>>	1
 Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<optimized piston>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
@@ -1844,6 +1881,7 @@ Sort	rotation merge sort<small: insertion: 32, merge: naive<grail>>	2.0 1.0 2.0 
 Sort	rotation merge sort<small: insertion: 32, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: naive<optimized piston>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
@@ -1856,6 +1894,7 @@ Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<grail>>	1.2 1
 Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<optimized piston>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
@@ -1868,6 +1907,7 @@ Sort	rotation merge sort<small: network: 16, merge: naive<grail>>	2.0 1.0 2.0 0.
 Sort	rotation merge sort<small: network: 16, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: naive<helix>>	2.0 1.0 2.0 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: naive<juggling>>	2.0 1.0 2.0 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: naive<optimized piston>>	2.0 1.0 2.0 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: naive<piston>>	2.0 1.0 2.0 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: naive<reversal>>	2.0 1.0 2.0 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: naive<trinity>>	2.0 1.0 2.0 0.0 false
@@ -1880,6 +1920,7 @@ Sort	rotation merge sort<small: network: 16, merge: smaller-side<grail>>	1.2 1.0
 Sort	rotation merge sort<small: network: 16, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: smaller-side<optimized piston>>	1.2 1.0 1.2 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 false
@@ -1892,6 +1933,7 @@ Sort	rotation merge sort<small: size: 1, merge: naive<grail>>	2.0 1.0 2.0 0.0 tr
 Sort	rotation merge sort<small: size: 1, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: naive<optimized piston>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
@@ -1904,6 +1946,7 @@ Sort	rotation merge sort<small: size: 1, merge: smaller-side<grail>>	1.2 1.0 1.2
 Sort	rotation merge sort<small: size: 1, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: smaller-side<optimized piston>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
@@ -1916,6 +1959,7 @@ Sort	rotation merge sort<small: size: 2, merge: naive<grail>>	2.0 1.0 2.0 0.0 tr
 Sort	rotation merge sort<small: size: 2, merge: naive<gries-mills>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: naive<helix>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: naive<juggling>>	2.0 1.0 2.0 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: naive<optimized piston>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: naive<piston>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: naive<reversal>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: naive<trinity>>	2.0 1.0 2.0 0.0 true
@@ -1928,6 +1972,7 @@ Sort	rotation merge sort<small: size: 2, merge: smaller-side<grail>>	1.2 1.0 1.2
 Sort	rotation merge sort<small: size: 2, merge: smaller-side<gries-mills>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: smaller-side<helix>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: smaller-side<juggling>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: smaller-side<optimized piston>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true

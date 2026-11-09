@@ -96,6 +96,7 @@
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: helix>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, HelixRotation>
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: juggling>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, JugglingRotation>
+"block sort<buffer: external<2 sqrt>, keys: in array, rotation: optimized piston>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: piston>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, PistonRotation>
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, ReversalRotation>
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, TrinityRotation>
@@ -108,6 +109,7 @@
 "block sort<buffer: external<2 sqrt>, keys: none, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, GriesMillsRotation>
 "block sort<buffer: external<2 sqrt>, keys: none, rotation: helix>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, HelixRotation>
 "block sort<buffer: external<2 sqrt>, keys: none, rotation: juggling>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, JugglingRotation>
+"block sort<buffer: external<2 sqrt>, keys: none, rotation: optimized piston>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: external<2 sqrt>, keys: none, rotation: piston>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, PistonRotation>
 "block sort<buffer: external<2 sqrt>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, ReversalRotation>
 "block sort<buffer: external<2 sqrt>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, NoKeys, TrinityRotation>
@@ -120,6 +122,7 @@
 "block sort<buffer: external<512>, keys: in array, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: helix>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, HelixRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, JugglingRotation>
+"block sort<buffer: external<512>, keys: in array, rotation: optimized piston>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: piston>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, PistonRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, ReversalRotation>
 "block sort<buffer: external<512>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, TrinityRotation>
@@ -132,6 +135,7 @@
 "block sort<buffer: external<512>, keys: none, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, GriesMillsRotation>
 "block sort<buffer: external<512>, keys: none, rotation: helix>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, HelixRotation>
 "block sort<buffer: external<512>, keys: none, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, JugglingRotation>
+"block sort<buffer: external<512>, keys: none, rotation: optimized piston>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: external<512>, keys: none, rotation: piston>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, PistonRotation>
 "block sort<buffer: external<512>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, ReversalRotation>
 "block sort<buffer: external<512>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Fixed<512>>, NoKeys, TrinityRotation>
@@ -144,6 +148,7 @@
 "block sort<buffer: external<half>, keys: in array, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: external<half>, keys: in array, rotation: helix>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, HelixRotation>
 "block sort<buffer: external<half>, keys: in array, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, JugglingRotation>
+"block sort<buffer: external<half>, keys: in array, rotation: optimized piston>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: external<half>, keys: in array, rotation: piston>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, PistonRotation>
 "block sort<buffer: external<half>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, ReversalRotation>
 "block sort<buffer: external<half>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Half>, InArrayKeys, TrinityRotation>
@@ -156,6 +161,7 @@
 "block sort<buffer: external<half>, keys: none, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, GriesMillsRotation>
 "block sort<buffer: external<half>, keys: none, rotation: helix>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, HelixRotation>
 "block sort<buffer: external<half>, keys: none, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, JugglingRotation>
+"block sort<buffer: external<half>, keys: none, rotation: optimized piston>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: external<half>, keys: none, rotation: piston>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, PistonRotation>
 "block sort<buffer: external<half>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, ReversalRotation>
 "block sort<buffer: external<half>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Half>, NoKeys, TrinityRotation>
@@ -168,6 +174,7 @@
 "block sort<buffer: external<log>, keys: in array, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: external<log>, keys: in array, rotation: helix>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, HelixRotation>
 "block sort<buffer: external<log>, keys: in array, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, JugglingRotation>
+"block sort<buffer: external<log>, keys: in array, rotation: optimized piston>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: external<log>, keys: in array, rotation: piston>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, PistonRotation>
 "block sort<buffer: external<log>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, ReversalRotation>
 "block sort<buffer: external<log>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Log>, InArrayKeys, TrinityRotation>
@@ -180,6 +187,7 @@
 "block sort<buffer: external<log>, keys: none, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, GriesMillsRotation>
 "block sort<buffer: external<log>, keys: none, rotation: helix>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, HelixRotation>
 "block sort<buffer: external<log>, keys: none, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, JugglingRotation>
+"block sort<buffer: external<log>, keys: none, rotation: optimized piston>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: external<log>, keys: none, rotation: piston>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, PistonRotation>
 "block sort<buffer: external<log>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, ReversalRotation>
 "block sort<buffer: external<log>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Log>, NoKeys, TrinityRotation>
@@ -192,6 +200,7 @@
 "block sort<buffer: external<sixteenth>, keys: in array, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: external<sixteenth>, keys: in array, rotation: helix>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, HelixRotation>
 "block sort<buffer: external<sixteenth>, keys: in array, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, JugglingRotation>
+"block sort<buffer: external<sixteenth>, keys: in array, rotation: optimized piston>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: external<sixteenth>, keys: in array, rotation: piston>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, PistonRotation>
 "block sort<buffer: external<sixteenth>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, ReversalRotation>
 "block sort<buffer: external<sixteenth>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Sixteenth>, InArrayKeys, TrinityRotation>
@@ -204,6 +213,7 @@
 "block sort<buffer: external<sixteenth>, keys: none, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, GriesMillsRotation>
 "block sort<buffer: external<sixteenth>, keys: none, rotation: helix>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, HelixRotation>
 "block sort<buffer: external<sixteenth>, keys: none, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, JugglingRotation>
+"block sort<buffer: external<sixteenth>, keys: none, rotation: optimized piston>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: external<sixteenth>, keys: none, rotation: piston>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, PistonRotation>
 "block sort<buffer: external<sixteenth>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, ReversalRotation>
 "block sort<buffer: external<sixteenth>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, TrinityRotation>
@@ -216,6 +226,7 @@
 "block sort<buffer: external<sqrt>, keys: in array, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: helix>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, HelixRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, JugglingRotation>
+"block sort<buffer: external<sqrt>, keys: in array, rotation: optimized piston>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: piston>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, PistonRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, ReversalRotation>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, TrinityRotation>
@@ -228,6 +239,7 @@
 "block sort<buffer: external<sqrt>, keys: none, rotation: gries-mills>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, GriesMillsRotation>
 "block sort<buffer: external<sqrt>, keys: none, rotation: helix>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, HelixRotation>
 "block sort<buffer: external<sqrt>, keys: none, rotation: juggling>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, JugglingRotation>
+"block sort<buffer: external<sqrt>, keys: none, rotation: optimized piston>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: external<sqrt>, keys: none, rotation: piston>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, PistonRotation>
 "block sort<buffer: external<sqrt>, keys: none, rotation: reversal>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, ReversalRotation>
 "block sort<buffer: external<sqrt>, keys: none, rotation: trinity>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, TrinityRotation>
@@ -240,6 +252,7 @@
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: helix>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, HelixRotation>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: juggling>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, JugglingRotation>
+"block sort<buffer: in array<2 sqrt>, keys: in array, rotation: optimized piston>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: piston>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, PistonRotation>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, ReversalRotation>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, TrinityRotation>
@@ -252,6 +265,7 @@
 "block sort<buffer: in array<2 sqrt>, keys: none, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, GriesMillsRotation>
 "block sort<buffer: in array<2 sqrt>, keys: none, rotation: helix>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, HelixRotation>
 "block sort<buffer: in array<2 sqrt>, keys: none, rotation: juggling>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, JugglingRotation>
+"block sort<buffer: in array<2 sqrt>, keys: none, rotation: optimized piston>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: in array<2 sqrt>, keys: none, rotation: piston>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, PistonRotation>
 "block sort<buffer: in array<2 sqrt>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<2 sqrt>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, NoKeys, TrinityRotation>
@@ -264,6 +278,7 @@
 "block sort<buffer: in array<512>, keys: in array, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: helix>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, HelixRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, JugglingRotation>
+"block sort<buffer: in array<512>, keys: in array, rotation: optimized piston>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: piston>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, PistonRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, ReversalRotation>
 "block sort<buffer: in array<512>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, InArrayKeys, TrinityRotation>
@@ -276,6 +291,7 @@
 "block sort<buffer: in array<512>, keys: none, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, GriesMillsRotation>
 "block sort<buffer: in array<512>, keys: none, rotation: helix>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, HelixRotation>
 "block sort<buffer: in array<512>, keys: none, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, JugglingRotation>
+"block sort<buffer: in array<512>, keys: none, rotation: optimized piston>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: in array<512>, keys: none, rotation: piston>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, PistonRotation>
 "block sort<buffer: in array<512>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<512>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Fixed<512>>, NoKeys, TrinityRotation>
@@ -288,6 +304,7 @@
 "block sort<buffer: in array<half>, keys: in array, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: in array<half>, keys: in array, rotation: helix>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, HelixRotation>
 "block sort<buffer: in array<half>, keys: in array, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, JugglingRotation>
+"block sort<buffer: in array<half>, keys: in array, rotation: optimized piston>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: in array<half>, keys: in array, rotation: piston>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, PistonRotation>
 "block sort<buffer: in array<half>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, ReversalRotation>
 "block sort<buffer: in array<half>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, TrinityRotation>
@@ -300,6 +317,7 @@
 "block sort<buffer: in array<half>, keys: none, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, GriesMillsRotation>
 "block sort<buffer: in array<half>, keys: none, rotation: helix>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, HelixRotation>
 "block sort<buffer: in array<half>, keys: none, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, JugglingRotation>
+"block sort<buffer: in array<half>, keys: none, rotation: optimized piston>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: in array<half>, keys: none, rotation: piston>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, PistonRotation>
 "block sort<buffer: in array<half>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<half>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Half>, NoKeys, TrinityRotation>
@@ -312,6 +330,7 @@
 "block sort<buffer: in array<log>, keys: in array, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: in array<log>, keys: in array, rotation: helix>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, HelixRotation>
 "block sort<buffer: in array<log>, keys: in array, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, JugglingRotation>
+"block sort<buffer: in array<log>, keys: in array, rotation: optimized piston>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: in array<log>, keys: in array, rotation: piston>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, PistonRotation>
 "block sort<buffer: in array<log>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, ReversalRotation>
 "block sort<buffer: in array<log>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Log>, InArrayKeys, TrinityRotation>
@@ -324,6 +343,7 @@
 "block sort<buffer: in array<log>, keys: none, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, GriesMillsRotation>
 "block sort<buffer: in array<log>, keys: none, rotation: helix>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, HelixRotation>
 "block sort<buffer: in array<log>, keys: none, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, JugglingRotation>
+"block sort<buffer: in array<log>, keys: none, rotation: optimized piston>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: in array<log>, keys: none, rotation: piston>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, PistonRotation>
 "block sort<buffer: in array<log>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<log>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Log>, NoKeys, TrinityRotation>
@@ -336,6 +356,7 @@
 "block sort<buffer: in array<sixteenth>, keys: in array, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: in array<sixteenth>, keys: in array, rotation: helix>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, HelixRotation>
 "block sort<buffer: in array<sixteenth>, keys: in array, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, JugglingRotation>
+"block sort<buffer: in array<sixteenth>, keys: in array, rotation: optimized piston>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: in array<sixteenth>, keys: in array, rotation: piston>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, PistonRotation>
 "block sort<buffer: in array<sixteenth>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, ReversalRotation>
 "block sort<buffer: in array<sixteenth>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, TrinityRotation>
@@ -348,6 +369,7 @@
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, GriesMillsRotation>
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: helix>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, HelixRotation>
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, JugglingRotation>
+"block sort<buffer: in array<sixteenth>, keys: none, rotation: optimized piston>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: piston>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, PistonRotation>
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, TrinityRotation>
@@ -360,6 +382,7 @@
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: helix>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, HelixRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, JugglingRotation>
+"block sort<buffer: in array<sqrt>, keys: in array, rotation: optimized piston>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: piston>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, PistonRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, ReversalRotation>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation>
@@ -372,6 +395,7 @@
 "block sort<buffer: in array<sqrt>, keys: none, rotation: gries-mills>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, GriesMillsRotation>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: helix>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, HelixRotation>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: juggling>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, JugglingRotation>
+"block sort<buffer: in array<sqrt>, keys: none, rotation: optimized piston>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: piston>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, PistonRotation>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: reversal>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, ReversalRotation>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: trinity>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, TrinityRotation>
@@ -384,6 +408,7 @@
 "block sort<buffer: none, keys: in array, rotation: gries-mills>"	BlockMergeSort<NoBuffer, InArrayKeys, GriesMillsRotation>
 "block sort<buffer: none, keys: in array, rotation: helix>"	BlockMergeSort<NoBuffer, InArrayKeys, HelixRotation>
 "block sort<buffer: none, keys: in array, rotation: juggling>"	BlockMergeSort<NoBuffer, InArrayKeys, JugglingRotation>
+"block sort<buffer: none, keys: in array, rotation: optimized piston>"	BlockMergeSort<NoBuffer, InArrayKeys, OptimizedPistonRotation>
 "block sort<buffer: none, keys: in array, rotation: piston>"	BlockMergeSort<NoBuffer, InArrayKeys, PistonRotation>
 "block sort<buffer: none, keys: in array, rotation: reversal>"	BlockMergeSort<NoBuffer, InArrayKeys, ReversalRotation>
 "block sort<buffer: none, keys: in array, rotation: trinity>"	BlockMergeSort<NoBuffer, InArrayKeys, TrinityRotation>
@@ -396,6 +421,7 @@
 "block sort<buffer: none, keys: none, rotation: gries-mills>"	BlockMergeSort<NoBuffer, NoKeys, GriesMillsRotation>
 "block sort<buffer: none, keys: none, rotation: helix>"	BlockMergeSort<NoBuffer, NoKeys, HelixRotation>
 "block sort<buffer: none, keys: none, rotation: juggling>"	BlockMergeSort<NoBuffer, NoKeys, JugglingRotation>
+"block sort<buffer: none, keys: none, rotation: optimized piston>"	BlockMergeSort<NoBuffer, NoKeys, OptimizedPistonRotation>
 "block sort<buffer: none, keys: none, rotation: piston>"	BlockMergeSort<NoBuffer, NoKeys, PistonRotation>
 "block sort<buffer: none, keys: none, rotation: reversal>"	BlockMergeSort<NoBuffer, NoKeys, ReversalRotation>
 "block sort<buffer: none, keys: none, rotation: trinity>"	BlockMergeSort<NoBuffer, NoKeys, TrinityRotation>
@@ -430,6 +456,7 @@
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<gries-mills>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<GriesMillsRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<helix>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<HelixRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<juggling>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<JugglingRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: naive<optimized piston>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<OptimizedPistonRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<piston>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<PistonRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<reversal>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<trinity>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<TrinityRotation>, false>
@@ -442,6 +469,7 @@
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<gries-mills>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<GriesMillsRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<helix>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<HelixRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<juggling>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<JugglingRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<optimized piston>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<OptimizedPistonRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<PistonRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<TrinityRotation>, false>
@@ -454,6 +482,7 @@
 "bottom-up rotation merge sort<small: network: 16, merge: naive<gries-mills>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<GriesMillsRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<helix>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<HelixRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<juggling>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<JugglingRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: naive<optimized piston>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<OptimizedPistonRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<piston>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<PistonRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<reversal>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<trinity>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<TrinityRotation>, false>
@@ -466,6 +495,7 @@
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<gries-mills>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<GriesMillsRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<helix>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<HelixRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<juggling>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<JugglingRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: smaller-side<optimized piston>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<OptimizedPistonRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<piston>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<PistonRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<reversal>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<trinity>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
@@ -478,6 +508,7 @@
 "bottom-up rotation merge sort<small: size: 1, merge: naive<gries-mills>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<GriesMillsRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<helix>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<HelixRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<juggling>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<JugglingRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: naive<optimized piston>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<OptimizedPistonRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<piston>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<PistonRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<reversal>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<trinity>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<TrinityRotation>, false>
@@ -490,6 +521,7 @@
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<gries-mills>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<GriesMillsRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<helix>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<HelixRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<juggling>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<JugglingRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: smaller-side<optimized piston>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<OptimizedPistonRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<piston>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<PistonRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<reversal>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<trinity>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
@@ -502,6 +534,7 @@
 "bottom-up rotation merge sort<small: size: 2, merge: naive<gries-mills>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<GriesMillsRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<helix>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<HelixRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<juggling>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<JugglingRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: naive<optimized piston>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<OptimizedPistonRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<piston>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<PistonRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<reversal>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<trinity>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<TrinityRotation>, false>
@@ -514,6 +547,7 @@
 "bottom-up rotation merge sort<small: size: 2, merge: smaller-side<gries-mills>>"	BottomUpRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<GriesMillsRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: smaller-side<helix>>"	BottomUpRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<HelixRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: smaller-side<juggling>>"	BottomUpRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<JugglingRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: smaller-side<optimized piston>>"	BottomUpRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<OptimizedPistonRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: smaller-side<piston>>"	BottomUpRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<PistonRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: smaller-side<reversal>>"	BottomUpRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: smaller-side<trinity>>"	BottomUpRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
@@ -1261,6 +1295,7 @@
 "naive<gries-mills>"	NaiveRotationMerge<GriesMillsRotation>
 "naive<helix>"	NaiveRotationMerge<HelixRotation>
 "naive<juggling>"	NaiveRotationMerge<JugglingRotation>
+"naive<optimized piston>"	NaiveRotationMerge<OptimizedPistonRotation>
 "naive<piston>"	NaiveRotationMerge<PistonRotation>
 "naive<reversal>"	NaiveRotationMerge<ReversalRotation>
 "naive<trinity>"	NaiveRotationMerge<TrinityRotation>
@@ -1272,6 +1307,7 @@
 "odd-even bubble sort<small: insertion: 32>"	OddEvenBubbleSort<InsertionSmallSort<LinearInsertion, 32>>
 "odd-even bubble sort<small: network: 16>"	OddEvenBubbleSort<Network16SmallSort>
 "odd-even bubble sort<small: size: 2>"	OddEvenBubbleSort<Size2SmallSort>
+"optimized piston"	OptimizedPistonRotation
 "park-loop<full>"	ParkLoop<FullScratch>
 "park-loop<none>"	ParkLoop<NoScratch>
 "park-loop<sqrt>"	ParkLoop<SqrtScratch>
@@ -1823,6 +1859,7 @@
 "rotation merge sort<small: insertion: 32, merge: naive<gries-mills>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<GriesMillsRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<helix>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<HelixRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<juggling>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<JugglingRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: naive<optimized piston>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<OptimizedPistonRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<piston>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<PistonRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<reversal>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<trinity>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<TrinityRotation>, false>
@@ -1835,6 +1872,7 @@
 "rotation merge sort<small: insertion: 32, merge: smaller-side<gries-mills>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<GriesMillsRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: smaller-side<helix>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<HelixRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: smaller-side<juggling>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<JugglingRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: smaller-side<optimized piston>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<OptimizedPistonRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<PistonRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<TrinityRotation>, false>
@@ -1847,6 +1885,7 @@
 "rotation merge sort<small: network: 16, merge: naive<gries-mills>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<GriesMillsRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<helix>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<HelixRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<juggling>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<JugglingRotation>, false>
+"rotation merge sort<small: network: 16, merge: naive<optimized piston>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<OptimizedPistonRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<piston>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<PistonRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<reversal>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<trinity>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<TrinityRotation>, false>
@@ -1859,6 +1898,7 @@
 "rotation merge sort<small: network: 16, merge: smaller-side<gries-mills>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<GriesMillsRotation>, false>
 "rotation merge sort<small: network: 16, merge: smaller-side<helix>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<HelixRotation>, false>
 "rotation merge sort<small: network: 16, merge: smaller-side<juggling>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<JugglingRotation>, false>
+"rotation merge sort<small: network: 16, merge: smaller-side<optimized piston>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<OptimizedPistonRotation>, false>
 "rotation merge sort<small: network: 16, merge: smaller-side<piston>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<PistonRotation>, false>
 "rotation merge sort<small: network: 16, merge: smaller-side<reversal>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: network: 16, merge: smaller-side<trinity>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
@@ -1871,6 +1911,7 @@
 "rotation merge sort<small: size: 1, merge: naive<gries-mills>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<GriesMillsRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<helix>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<HelixRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<juggling>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<JugglingRotation>, false>
+"rotation merge sort<small: size: 1, merge: naive<optimized piston>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<OptimizedPistonRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<piston>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<PistonRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<reversal>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<trinity>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<TrinityRotation>, false>
@@ -1883,6 +1924,7 @@
 "rotation merge sort<small: size: 1, merge: smaller-side<gries-mills>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<GriesMillsRotation>, false>
 "rotation merge sort<small: size: 1, merge: smaller-side<helix>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<HelixRotation>, false>
 "rotation merge sort<small: size: 1, merge: smaller-side<juggling>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<JugglingRotation>, false>
+"rotation merge sort<small: size: 1, merge: smaller-side<optimized piston>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<OptimizedPistonRotation>, false>
 "rotation merge sort<small: size: 1, merge: smaller-side<piston>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<PistonRotation>, false>
 "rotation merge sort<small: size: 1, merge: smaller-side<reversal>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: size: 1, merge: smaller-side<trinity>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
@@ -1895,6 +1937,7 @@
 "rotation merge sort<small: size: 2, merge: naive<gries-mills>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<GriesMillsRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<helix>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<HelixRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<juggling>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<JugglingRotation>, false>
+"rotation merge sort<small: size: 2, merge: naive<optimized piston>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<OptimizedPistonRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<piston>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<PistonRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<reversal>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<trinity>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<TrinityRotation>, false>
@@ -1907,6 +1950,7 @@
 "rotation merge sort<small: size: 2, merge: smaller-side<gries-mills>>"	TopDownRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<GriesMillsRotation>, false>
 "rotation merge sort<small: size: 2, merge: smaller-side<helix>>"	TopDownRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<HelixRotation>, false>
 "rotation merge sort<small: size: 2, merge: smaller-side<juggling>>"	TopDownRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<JugglingRotation>, false>
+"rotation merge sort<small: size: 2, merge: smaller-side<optimized piston>>"	TopDownRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<OptimizedPistonRotation>, false>
 "rotation merge sort<small: size: 2, merge: smaller-side<piston>>"	TopDownRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<PistonRotation>, false>
 "rotation merge sort<small: size: 2, merge: smaller-side<reversal>>"	TopDownRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: size: 2, merge: smaller-side<trinity>>"	TopDownRotationMergeSort<Size2SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
@@ -1959,6 +2003,7 @@
 "smaller-side<gries-mills>"	SmallerSideRotationMerge<GriesMillsRotation>
 "smaller-side<helix>"	SmallerSideRotationMerge<HelixRotation>
 "smaller-side<juggling>"	SmallerSideRotationMerge<JugglingRotation>
+"smaller-side<optimized piston>"	SmallerSideRotationMerge<OptimizedPistonRotation>
 "smaller-side<piston>"	SmallerSideRotationMerge<PistonRotation>
 "smaller-side<reversal>"	SmallerSideRotationMerge<ReversalRotation>
 "smaller-side<trinity>"	SmallerSideRotationMerge<TrinityRotation>
