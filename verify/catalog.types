@@ -1877,7 +1877,12 @@
 "three-way<median of medians>"	Pivoted<ThreeWay, MedianOfMedians>
 "three-way<middle>"	Pivoted<ThreeWay, MiddleElement>
 "three-way<ninther>"	Pivoted<ThreeWay, Ninther>
-"tree sort<avl>"	TreeSort<Avl>
+"tree sort<avl: 16>"	TreeSort<Avl<16>>
+"tree sort<avl: 1>"	TreeSort<Avl<1>>
+"tree sort<avl: 2>"	TreeSort<Avl<2>>
+"tree sort<avl: 32>"	TreeSort<Avl<32>>
+"tree sort<avl: 4>"	TreeSort<Avl<4>>
+"tree sort<avl: 8>"	TreeSort<Avl<8>>
 "tree sort<naive>"	TreeSort<Naive>
 "trinity"	TrinityRotation
 "weak heap sort<dir: max forward, storage: bit storage>"	HeapSort<WeakHeapSort<MaxForward, BitStorage>>

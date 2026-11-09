@@ -125,7 +125,7 @@ mod tests {
         assert_eq!(COUNT_INSERTION, 2, "insertion family");
         assert_eq!(COUNT_QUICK, 408, "quick family (2 × [5×5 single + 26 dual] partitions × 4 small)");
         assert_eq!(COUNT_CYCLE, 1, "cycle family");
-        assert_eq!(COUNT_TREE, 2, "tree family (avl + naive)");
+        assert_eq!(COUNT_TREE, 7, "tree family (avl at 6 slacks + naive)");
         assert_eq!(COUNT_BLOCK_MERGE, 286, "block merge family (13 buffers x 2 key shapes x 11 rotations)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
@@ -222,7 +222,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 1886, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 1891, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -678,7 +678,7 @@ mod tests {
         fn emits_every_tree_and_each_runs() {
             let es = entries();
             assert_eq!(es.len(), COUNT_TREE, "emitted entry count drifted from the solver");
-            assert_eq!(COUNT_TREE, 2, "avl + naive");
+            assert_eq!(COUNT_TREE, 7, "avl at 6 slacks + naive");
             let cfg = RunConfig { size: 64, seed: 1 };
             for e in &es {
                 assert_eq!(e.category, Category::Sort, "`{}` not Sort", e.name);
@@ -690,12 +690,23 @@ mod tests {
         }
 
         #[test]
+        fn the_avl_tree_has_an_entry_for_each_slack() {
+            let mut names: Vec<&str> = entries().iter().map(|e| e.name).filter(|name| name.contains("avl")).collect();
+            names.sort_by_key(|name| name.len());
+            let want: Vec<String> = [1, 2, 4, 8, 16, 32].map(|slack| format!("tree sort<avl: {slack}>")).into();
+            assert_eq!(names, want);
+        }
+
+        #[test]
         fn inherited_complexity_matches_the_concrete_type() {
-            let avl = find("tree sort<avl>");
+            let avl = find("tree sort<avl: 1>");
             assert_eq!(avl.worst, <TreeSort<Avl<1>> as HasTimeBounds>::WORST);
             assert_eq!(avl.worst, Complexity::N_LOG_N);
             assert_eq!(avl.space, <TreeSort<Avl<1>> as HasSpace>::SPACE);
             assert_eq!(avl.stable, <TreeSort<Avl<1>> as HasStability>::STABLE);
+            let loosest = find("tree sort<avl: 32>");
+            assert_eq!(loosest.worst, <TreeSort<Avl<32>> as HasTimeBounds>::WORST);
+            assert_eq!(loosest.worst, Complexity::N_LOG_N, "a larger slack changes the constant, not the bound");
             let naive = find("tree sort<naive>");
             assert_eq!(naive.worst, <TreeSort<Naive> as HasTimeBounds>::WORST);
             assert_eq!(naive.worst, Complexity::N_SQUARED);
@@ -706,11 +717,11 @@ mod tests {
         #[test]
         fn registered_under_tree_sorts_with_the_tree_facet() {
             let variants = navigation::variants();
-            let v = variants.iter().find(|v| v.name == "tree sort<avl>").expect("registered");
+            let v = variants.iter().find(|v| v.name == "tree sort<avl: 1>").expect("registered");
             assert_eq!(v.category, vec!["sorts", "tree sorts"], "got {:?}", v.category);
             let axes: Vec<(&str, &str)> =
                 v.axes.iter().map(|a| (a.role.as_str(), a.value.as_str())).collect();
-            assert_eq!(axes, vec![("Tree", "avl")]);
+            assert_eq!(axes, vec![("Tree", "avl: 1")]);
             assert_eq!(v.label_template.as_deref(), Some("tree sort<{Tree}>"));
         }
     }
