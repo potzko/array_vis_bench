@@ -188,7 +188,8 @@ pub struct Step<'a> {
 /// parameter order), never two axes in one list. Candidates with different
 /// heads branch by head first, because one axis list cannot hold two heads:
 /// the merge kinds share a menu, and the buffer axis of the auxiliary merges
-/// would hide the rotation merges, which have no such axis.
+/// would hide the rotation merges, which have no such axis. Values or entries
+/// that share a stem are one branch, see `gather`.
 pub fn step<'a>(cands: &[&'a VariantDesc], depth: usize, chosen: &Chosen) -> Step<'a> {
     let mut cat_order: Vec<String> = Vec::new();
     let mut cat_groups: HashMap<String, Vec<&VariantDesc>> = HashMap::new();
@@ -214,10 +215,10 @@ pub fn step<'a>(cands: &[&'a VariantDesc], depth: usize, chosen: &Chosen) -> Ste
             let branch = Choice::Branch { label: key.clone(), cands: cat_groups[key].clone(), depth: depth + 1, chosen: chosen.clone() };
             now.choices.push(branch);
         }
-        now.choices.extend(faceted.iter().copied().filter(|v| resolved(v)).map(Choice::Leaf));
+        now.choices.extend(leaves(faceted.iter().copied().filter(|v| resolved(v)), depth, chosen));
         return now;
     }
-    now.choices.extend(faceted.iter().copied().filter(|v| resolved(v)).map(Choice::Leaf));
+    now.choices.extend(leaves(faceted.iter().copied().filter(|v| resolved(v)), depth, chosen));
     let axis_vars: Vec<&VariantDesc> = faceted.iter().copied().filter(|v| !resolved(v)).collect();
     let heads = head_groups(&axis_vars);
     if heads.len() > 1 {
@@ -226,7 +227,7 @@ pub fn step<'a>(cands: &[&'a VariantDesc], depth: usize, chosen: &Chosen) -> Ste
         }
         return now;
     }
-    let Some((path, role, val_order, val_groups)) = next_facet(&axis_vars, &chosen_paths) else { return now };
+    let Some((path, role, val_order, mut val_groups)) = next_facet(&axis_vars, &chosen_paths) else { return now };
     // Every still unfixed axis other than the one in focus, in pre order, shown
     // as holes so the partial type names all remaining parameters.
     for v in &axis_vars {
@@ -245,13 +246,96 @@ pub fn step<'a>(cands: &[&'a VariantDesc], depth: usize, chosen: &Chosen) -> Ste
             if cands.iter().all(|v| v.label_template.as_deref() == Some(first)) { now.label_template = Some(first); }
         }
     }
-    for val in &val_order {
-        let mut sub = chosen.clone();
-        sub.push(Pick { path: path.clone(), role: role.clone(), value: val.clone() });
-        now.choices.push(Choice::Branch { label: val.clone(), cands: val_groups[val].clone(), depth, chosen: sub });
+    let values = val_order.into_iter().map(|val| { let cands = val_groups.remove(&val).unwrap_or_default(); (val, cands) });
+    for gathered in gather(values.collect()) {
+        now.choices.push(match gathered {
+            Gathered::One(val, cands) => {
+                let mut sub = chosen.clone();
+                sub.push(Pick { path: path.clone(), role: role.clone(), value: val.clone() });
+                Choice::Branch { label: val, cands, depth, chosen: sub }
+            }
+            Gathered::Stem(stem, members) => {
+                let cands = members.into_iter().flat_map(|(_, cands)| cands).collect();
+                Choice::Branch { label: stem, cands, depth, chosen: chosen.clone() }
+            }
+        });
     }
     now.axis = Some((path, role));
     now
+}
+
+// The entries `vs` as choices, those sharing a stem gathered into a branch.
+fn leaves<'a>(vs: impl Iterator<Item = &'a VariantDesc>, depth: usize, chosen: &Chosen) -> Vec<Choice<'a>> {
+    let gathered = gather(vs.map(|v| (v.name.clone(), v)).collect());
+    gathered
+        .into_iter()
+        .map(|g| match g {
+            Gathered::One(_, v) => Choice::Leaf(v),
+            Gathered::Stem(stem, members) => {
+                Choice::Branch { label: stem, cands: members.into_iter().map(|(_, v)| v).collect(), depth, chosen: chosen.clone() }
+            }
+        })
+        .collect()
+}
+
+// A labelled item standing alone, or the items under a stem they share.
+enum Gathered<T> {
+    One(String, T),
+    Stem(String, Vec<(String, T)>),
+}
+
+// Labelled items, those sharing a stem, a label's text before its first `<`
+// or `:`, gathered under it when that shortens the list. A family's settings
+// (`avl: 1`, `avl: 2`) or variants (`optimized piston<in place>`) are then one
+// choice, the way a filler with slots of its own is, and once the picker is
+// inside it they are listed with their numbers in order. A group stands where
+// its first member did.
+fn gather<T>(items: Vec<(String, T)>) -> Vec<Gathered<T>> {
+    let mut groups: Vec<(String, Vec<(String, T)>)> = Vec::new();
+    for (label, item) in items {
+        let stem = stem_of(&label).to_string();
+        match groups.iter_mut().find(|(s, _)| *s == stem) {
+            Some((_, members)) => members.push((label, item)),
+            None => groups.push((stem, vec![(label, item)])),
+        }
+    }
+    groups.iter_mut().for_each(|(_, members)| members.sort_by_cached_key(|(label, _)| natural(label)));
+    let single = |members: Vec<(String, T)>| members.into_iter().map(|(label, item)| Gathered::One(label, item));
+    match groups.len() {
+        1 => groups.into_iter().flat_map(|(_, members)| single(members)).collect(),
+        _ => groups
+            .into_iter()
+            .flat_map(|(stem, members)| match members.len() {
+                1 => single(members).collect::<Vec<_>>(),
+                _ => vec![Gathered::Stem(stem, members)],
+            })
+            .collect(),
+    }
+}
+
+fn stem_of(label: &str) -> &str {
+    label.find(['<', ':']).map_or(label, |at| label[..at].trim_end())
+}
+
+// A run of a label, digits ordering before text where the two meet.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+enum Run {
+    Number(u64),
+    Text(String),
+}
+
+// A label as runs of digits and text, so `avl: 2` orders before `avl: 16`.
+fn natural(label: &str) -> Vec<Run> {
+    let mut runs = Vec::new();
+    let mut rest = label;
+    while let Some(first) = rest.chars().next() {
+        let digits = first.is_ascii_digit();
+        let end = rest.find(|c: char| c.is_ascii_digit() != digits).unwrap_or(rest.len());
+        let (run, tail) = rest.split_at(end);
+        runs.push(if digits { Run::Number(run.parse().unwrap_or(u64::MAX)) } else { Run::Text(run.to_string()) });
+        rest = tail;
+    }
+    runs
 }
 
 // The candidates grouped by head, the text of the label template before its
@@ -417,6 +501,43 @@ mod picker_tests {
             .map(|c| match c { Choice::Branch { label, .. } => label.clone(), Choice::Leaf(v) => v.name.clone() })
             .collect();
         assert_eq!(heads, ["auxiliary", "naive", "smaller-side"]);
+    }
+
+    // The labels of the choices past the menu over `cands`, with `chosen` fixed.
+    fn labels(cands: &[&VariantDesc], chosen: &Chosen) -> Vec<String> {
+        let choices = step(cands, 2, chosen).choices;
+        choices.iter().map(|c| match c { Choice::Branch { label, .. } => label.clone(), Choice::Leaf(v) => v.name.clone() }).collect()
+    }
+
+    // The choice labelled `label` past the menu, as a branch's candidates and fixed axes.
+    fn branch<'a>(cands: &[&'a VariantDesc], label: &str) -> (Vec<&'a VariantDesc>, Chosen) {
+        let choices = step(cands, 2, &Vec::new()).choices;
+        let found = choices.into_iter().find_map(|c| match c {
+            Choice::Branch { label: l, cands, chosen, .. } if l == label => Some((cands, chosen)),
+            _ => None,
+        });
+        found.unwrap_or_else(|| panic!("no branch {label}"))
+    }
+
+    #[test]
+    fn values_sharing_a_stem_are_one_choice_listing_them_by_number() {
+        let trees = ["avl: 1", "avl: 16", "avl: 2", "naive", "avl: fixed 1"].map(|value| var(value, &[("Tree", value, "tree")]));
+        let cands: Vec<&VariantDesc> = trees.iter().collect();
+        assert_eq!(labels(&cands, &Vec::new()), ["avl", "naive"]);
+        let (avl, chosen) = branch(&cands, "avl");
+        assert!(chosen.is_empty(), "the stem fixed the axis: {chosen:?}");
+        assert_eq!(labels(&avl, &chosen), ["avl: 1", "avl: 2", "avl: 16", "avl: fixed 1"]);
+        assert_eq!(reachable(&cands).len(), trees.len());
+    }
+
+    #[test]
+    fn entries_sharing_a_stem_are_one_choice_too() {
+        let rotations = ["piston", "optimized piston<in place>", "optimized piston", "optimized piston<3 windows>"].map(|name| var(name, &[]));
+        let cands: Vec<&VariantDesc> = rotations.iter().collect();
+        assert_eq!(labels(&cands, &Vec::new()), ["piston", "optimized piston"]);
+        let (optimized, chosen) = branch(&cands, "optimized piston");
+        assert_eq!(labels(&optimized, &chosen), ["optimized piston", "optimized piston<3 windows>", "optimized piston<in place>"]);
+        assert_eq!(reachable(&cands).len(), rotations.len());
     }
 
     /// A single (leaf) pivot has no sub slots, so navigation goes straight from
