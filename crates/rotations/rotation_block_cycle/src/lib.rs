@@ -1,18 +1,16 @@
 //! Block cycle rotation (Blomer and Bux, 2026). Gries-Mills swaps the smaller
 //! side past the larger one block at a time; block cycle fuses every swap of
-//! such a run into one cyclic shift of the blocks, moved a batch of adjacent
-//! columns at a time through a small buffer, and finishes with a buffered
-//! rotation once the smaller side fits that buffer.
+//! such a run into one cyclic shift of the blocks, moved a buffer's width of
+//! adjacent columns at a time, and finishes with a buffered rotation once the
+//! smaller side fits that buffer.
 //!
-//! - `block_cycle`: the algorithm over a given buffer and batch width.
-//! - `BlockCycleRotation`: the catalog rotation, the paper's 256 cell buffer
-//!   and 32 byte batches.
+//! - `block_cycle`: the algorithm over a given buffer.
+//! - `BlockCycleRotation`: the catalog rotation, the paper's 256 cell buffer.
 
 use sort_logger::SortLogger;
 use array_vis_bench_traits::role::rotation::{buf_rotate_left_using, buf_rotate_right_using, Rotation};
 
 const BUFFER: usize = 256;
-const BATCH_BYTES: usize = 32;
 
 pub struct BlockCycleRotation;
 
@@ -32,13 +30,12 @@ impl Rotation for BlockCycleRotation {
         logger: &mut U,
     ) {
         let cells = scratch.len().min(BUFFER);
-        let batch = (BATCH_BYTES / std::mem::size_of::<T>().max(1)).clamp(1, cells.max(1));
-        block_cycle(arr, split_ind, &mut scratch[..cells], batch, logger);
+        block_cycle(arr, split_ind, &mut scratch[..cells], logger);
     }
 }
 
-/// Rotate `arr` by `split`, cycling `batch` columns at a time through
-/// `buffer`. Needs `1 <= batch <= buffer.len()` once both sides outgrow it.
+/// Rotate `arr` by `split` through `buffer`, which needs a cell or more once
+/// both sides outgrow it.
 ///
 /// With `k` the smaller side, the larger side holds `m` whole blocks of
 /// length `k` next to it. Cycling the smaller block past all of them puts
@@ -49,7 +46,6 @@ pub fn block_cycle<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     split: usize,
     buffer: &mut [T],
-    batch: usize,
     logger: &mut U,
 ) {
     let (mut lo, mut mid, mut hi) = (0, split, arr.len());
@@ -65,11 +61,11 @@ pub fn block_cycle<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         }
         if left <= right {
             let blocks = right / left;
-            cycle_blocks(arr, |ind| lo + ind * left, left, blocks, buffer, batch, logger);
+            cycle_blocks(arr, |ind| lo + ind * left, left, blocks, buffer, logger);
             (lo, mid) = (lo + blocks * left, mid + blocks * left);
         } else {
             let blocks = left / right;
-            cycle_blocks(arr, |ind| hi - right - ind * right, right, blocks, buffer, batch, logger);
+            cycle_blocks(arr, |ind| hi - right - ind * right, right, blocks, buffer, logger);
             (mid, hi) = (mid - blocks * right, hi - blocks * right);
         }
     }
@@ -77,19 +73,23 @@ pub fn block_cycle<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 
 /// Move block `ind + 1` into block `ind` for every `ind < blocks`, and block
 /// 0 into block `blocks`, where block `ind` is the `len` elements from
-/// `start(ind)`. Each pass carries `batch` adjacent columns of every block,
-/// so it reads and writes runs of `batch` cells rather than single ones.
+/// `start(ind)`. Each pass carries as many adjacent columns of every block as
+/// the buffer holds, so it moves runs of cells rather than single ones.
+///
+/// The paper moves 32 bytes a pass. Here, element by element through the
+/// logger, one million `u32` over six splits took 0.79 ns per element at 8
+/// columns a pass, 0.27 at 128 and 0.23 at the whole 256 cell buffer, and
+/// `u64` 0.37 at 128 and 0.36 at 256: the short runs did not vectorise.
 fn cycle_blocks<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     start: impl Fn(usize) -> usize,
     len: usize,
     blocks: usize,
     buffer: &mut [T],
-    batch: usize,
     logger: &mut U,
 ) {
-    for col in (0..len).step_by(batch) {
-        let width = batch.min(len - col);
+    for col in (0..len).step_by(buffer.len()) {
+        let width = buffer.len().min(len - col);
         logger.copy_range(arr, start(0) + col, buffer, 0, width);
         for ind in 0..blocks {
             let (dst, src) = (start(ind) + col, start(ind + 1) + col);
@@ -150,15 +150,13 @@ mod tests {
     }
 
     #[test]
-    fn every_split_rotates_for_every_buffer_and_batch() {
-        for n in 0..48 {
+    fn every_split_rotates_for_every_buffer() {
+        for n in 0..64 {
             for split in 0..=n {
-                for cells in 1..=6 {
-                    for batch in 1..=cells {
-                        let mut arr: Vec<u32> = (0..n as u32).collect();
-                        block_cycle(&mut arr, split, &mut vec![0; cells], batch, &mut NoOpLogger);
-                        assert_eq!(arr, rotated(n, split), "n={n} split={split} cells={cells} batch={batch}");
-                    }
+                for cells in 1..=8 {
+                    let mut arr: Vec<u32> = (0..n as u32).collect();
+                    block_cycle(&mut arr, split, &mut vec![0; cells], &mut NoOpLogger);
+                    assert_eq!(arr, rotated(n, split), "n={n} split={split} cells={cells}");
                 }
             }
         }
@@ -171,7 +169,7 @@ mod tests {
                 for cells in 1..=5 {
                     let mut arr: Vec<u32> = (0..n as u32).collect();
                     let mut log = logger();
-                    block_cycle(&mut arr, split, &mut vec![0; cells], cells.div_ceil(2), &mut log);
+                    block_cycle(&mut arr, split, &mut vec![0; cells], &mut log);
                     assert_eq!(moves(&log), paper_moves(n, split, cells), "n={n} split={split} cells={cells}");
                 }
             }
