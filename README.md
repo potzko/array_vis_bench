@@ -115,7 +115,9 @@ Helper scripts:
 
 Work happens on a branch off `dev`, usually in a worktree under
 `.claude/worktrees/`, and lands on `dev` as a fast forward by
-`./promote.sh BRANCH`. `dev` takes a tree that passed
+`./promote.sh BRANCH`. The fold is the only place a gate runs: never run
+`./verify.sh` on a work branch by hand, it only lengthens the feedback loop.
+`dev` takes a tree that passed
 `./verify.sh --portable`, which runs anywhere; `main` takes one that passed
 the full `./verify.sh` on the machine the baselines were taken on, and moves
 only by `./promote.sh main`. The pre-push hook in
