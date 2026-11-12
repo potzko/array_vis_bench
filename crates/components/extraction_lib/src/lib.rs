@@ -140,7 +140,11 @@ impl<P: StablePartition> Extraction for PartitionExtraction<P> {
             split = rank_of(arr, lo, lo + sample, pivot, log);
             let selection = (split - lo) + (end - lo - sample);
             if selection < want {
-                let next = ((rank + 1) * target / selection.max(1)).max(rank + 1).min(sample - 1);
+                // At most a doubling of the rank: a selection far short of the
+                // target says the sample's low end is sparse, and the proportional
+                // step would gather many times the target, which the sliding
+                // partition pays for by its square.
+                let next = ((rank + 1) * target / selection.max(1)).clamp(rank + 1, 2 * rank + 2).min(sample - 1);
                 if next == rank { break; }
                 rank = next;
                 region = (end, hi);
@@ -275,6 +279,25 @@ mod tests {
             let lowest_rest = arr[want..].iter().map(|x| x.key).min().unwrap();
             assert!(highest_key < lowest_rest, "round {round}: n={n} want={want}: the keys reach {highest_key} and the rest starts at {lowest_rest}");
         }
+    }
+
+    // A sample whose second element is far below the rest reads as a target
+    // rank of one, and the first partition gathers next to nothing. Growing the
+    // rank in proportion would then jump to the sample's top and gather the
+    // whole array, which the sliding partition pays for by its square; a
+    // doubling at most keeps the rounds cheap.
+    #[test]
+    fn a_sparse_low_end_of_the_sample_does_not_gather_the_array() {
+        const N: usize = 1 << 16;
+        const WANT: usize = 256;
+        let mut rng = Rng(0x10E);
+        let mut arr = random(&mut rng, N, N);
+        arr[0].key = 0;
+        arr[1].key = 1;
+        let mut tally = Tally::default();
+        let found = PartitionExtraction::<SlidingPartition>::extract::<ReversalRotation, _, _>(&mut arr, 0, N, WANT, &mut [], &mut tally);
+        assert_eq!(found, WANT);
+        assert!(tally.moves < 10 * N, "{} moves for {N} elements", tally.moves);
     }
 
     #[test]
