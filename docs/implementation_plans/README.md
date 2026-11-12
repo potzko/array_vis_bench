@@ -9,6 +9,7 @@ priority order.
 - `drop_slot_defaults_and_project.md`: three unused grammar features removed, done, kept as the record.
 - `entry_owned_flags.md`: the cap and nondeterminism lists became entry fields, done, kept as the record.
 - `entry_owned_navigation.md`: the picker data became entry fields and the second registry went, done, kept as the record.
+- `extraction_axis.md`: the extraction and stable partition axes of the block merge sort, with the measurement that settles the sorted prefix over the partition, done, kept as the record.
 - `enumeration_strategies.md`: `finite` shipped; `affine`, `sample`, `spread` and the rest fill sugar are open.
 - `full_merge_partition_roles.md`: the unification of the partition roles, done, kept as the record.
 - `instruction_counts.md`: an instruction count gate under callgrind for the three pairs and one entry per kind, exact baselines; not started.

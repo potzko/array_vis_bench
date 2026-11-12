@@ -44,13 +44,13 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 
 ## Current catalog
 
-2168 entries are emitted from the build at the tip of this branch.
+2195 entries are emitted from the build at the tip of this branch.
 
 | family | entries | notes |
 |---|---|---|
 | quick sorts | 408 | 2 drivers x 51 partitions x 4 small sorts |
 | heap sorts | 400 | 16 classic + 360 quick build + 24 dual build |
-| block merge sorts | 390 | 13 buffers x 2 key shapes x 15 rotations, the WikiSort and GrailSort shapes among them |
+| block merge sorts | 417 | 13 buffers x 2 key shapes x 15 rotations carving by the scan, the WikiSort and GrailSort shapes among them, plus 27 over the other three extractions |
 | merge sorts | 280 | 40 classic + 240 rotation based |
 | fun sorts | 195 | slow, stooge, cyclent, quick surrender, random shell, bad heap |
 | beap sorts | 80 | 2 classic + 72 quick build + 6 dual build |

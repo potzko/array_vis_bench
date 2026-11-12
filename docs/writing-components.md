@@ -580,7 +580,9 @@ Every method is generic over `<T: Ord + Copy, U: ?Sized + SortLogger<T>>`.
 | `RotationMerge` | `fn scratch_size(n)`, `fn merge(arr, mid, scratch, logger)` | Merge two adjacent sorted runs in place using a rotation. |
 | `Scratchspace` | `const NAME`, `fn aux_size(n)`, `acquire`/`release`/`park`/`place`/`block_swap`/`relocate`/`roll` | Bounded-buffer contract for block-merge sorts (WikiSort/GrailSort). |
 | `Auxiliary` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn scratch_size(n)`, `fn internal_size(n)` | How much scratch a merge is handed (-> in-place vs buffered), external and carved from the array. |
-| `Keys` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn key_count(blocks)`, `extract`/`tag_block`/`find_block`/`restore` | The key region that tags the blocks of a block merge (the movement imitation buffer). |
+| `Keys` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn key_count(blocks)`, `tag_block`/`find_block`/`restore` | The key region that tags the blocks of a block merge (the movement imitation buffer). |
+| `Extraction` | `const NAME`, `fn extract(arr, lo, hi, want, scratch, logger) -> usize` | How a block merge sort carves its keys and buffer: distinct first occurrences gathered sorted at the front, the rest in order among equals. |
+| `StablePartition` | `const NAME`, `const MOVES`, `fn partition(arr, lo, hi, pivot, scratch, logger) -> usize` | The elements below a pivot brought to the front, each side keeping its order. |
 
 ### 6.2 Annotation traits , the Big-O that composes itself
 
