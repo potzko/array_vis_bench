@@ -8,10 +8,11 @@
 //!
 //! The axis has two shapes. In array keys carve the region from the array's own
 //! distinct elements, `O(1)` space. No keys is the shape that never rolls a
-//! block, so it has nothing to tag. `extract_distinct` and `sort_region` are the
-//! shared mechanics, public because the `Extraction` fillers build on them and
-//! an in array buffer is carved the same way. Extraction moves its keys by
-//! rotations, of whichever `Rotation` the caller runs.
+//! block, so it has nothing to tag. `extract_distinct`, `sort_region` and
+//! `heap_sort_region` are the shared mechanics, public because the `Extraction`
+//! fillers build on them and an in array buffer is carved and sorted back the
+//! same way. Extraction moves its keys by rotations, of whichever `Rotation`
+//! the caller runs.
 
 use crate::Complexity;
 use crate::Rotation;
@@ -138,12 +139,46 @@ pub fn sort_region<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     }
 }
 
+/// Heap sort `arr[lo..hi]`, unstable, every comparison and swap logged: `O(c log c)`
+/// for `c` cells where `sort_region` is `O(c^2)`.
+pub fn heap_sort_region<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    lo: usize,
+    hi: usize,
+    log: &mut U,
+) {
+    let n = hi - lo;
+    for parent in (0..n / 2).rev() { sift_down(arr, lo, parent, n, log); }
+    for last in (1..n).rev() {
+        log.swap(arr, lo, lo + last);
+        sift_down(arr, lo, 0, last, log);
+    }
+}
+
+// Sift the cell `root` of the max heap `arr[lo..lo + len]` down by swapping it
+// with its larger child, the cells counted from `lo`.
+fn sift_down<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    lo: usize,
+    mut root: usize,
+    len: usize,
+    log: &mut U,
+) {
+    while 2 * root + 1 < len {
+        let mut child = 2 * root + 1;
+        if child + 1 < len && log.cmp_lt(arr, lo + child, lo + child + 1) { child += 1; }
+        if !log.cmp_lt(arr, lo + root, lo + child) { return; }
+        log.swap(arr, lo + root, lo + child);
+        root = child;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::reverse;
     use core::cmp::Ordering;
-    use sort_logger::NoOpLogger;
+    use sort_logger::{NoOpLogger, SortLog};
 
     // Ordered by `key` alone, so `tag` shows where an element came from.
     #[derive(Clone, Copy, Debug)]
@@ -269,5 +304,80 @@ mod tests {
         sort_region(&mut arr, 1, 7, &mut NoOpLogger);
         let got: Vec<(u32, u32)> = arr.iter().map(|x| (x.key, x.tag)).collect();
         assert_eq!(got, [(9, 0), (1, 3), (2, 4), (3, 1), (3, 2), (3, 5), (8, 6), (0, 7)]);
+    }
+
+    #[test]
+    fn heap_sort_region_sorts_its_range_and_leaves_the_rest() {
+        let mut arr = items(&[9, 7, 3, 8, 1, 6, 2, 5, 0, 4, 10]);
+        heap_sort_region(&mut arr, 2, 9, &mut NoOpLogger);
+        assert_eq!(keys_of(&arr), [9, 7, 0, 1, 2, 3, 5, 6, 8, 4, 10]);
+    }
+
+    #[test]
+    fn heap_sort_region_matches_a_sort_on_random_ranges() {
+        let mut state: u64 = 0xBEEF;
+        let mut next = |m: usize| {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            (state >> 33) as usize % m
+        };
+        for round in 0..300 {
+            let n = next(50);
+            let (lo, hi) = (next(n + 1), next(n + 1));
+            let (lo, hi) = (lo.min(hi), lo.max(hi));
+            let arr0 = items(&(0..n).map(|_| next(n + 3) as u32).collect::<Vec<_>>());
+            let mut arr = arr0.clone();
+            heap_sort_region(&mut arr, lo, hi, &mut NoOpLogger);
+            let mut want = arr0.clone();
+            want[lo..hi].sort_by_key(|x| x.key);
+            assert_eq!(keys_of(&arr), keys_of(&want), "round {round}: n={n} lo={lo} hi={hi}");
+            let tags = |a: &[Item]| a.iter().map(|x| x.tag).collect::<std::collections::BTreeSet<_>>();
+            assert_eq!(tags(&arr[lo..hi]), tags(&arr0[lo..hi]), "round {round}: an element of the range was lost");
+            assert!(arr[..lo].iter().zip(&arr0).all(|(a, b)| a.tag == b.tag), "round {round}: moved below the range");
+            assert!(arr[hi..].iter().zip(&arr0[hi..]).all(|(a, b)| a.tag == b.tag), "round {round}: moved above the range");
+        }
+    }
+
+    #[test]
+    fn heap_sort_region_takes_an_empty_region_and_a_single_cell() {
+        let mut arr = items(&[3, 1, 2]);
+        heap_sort_region(&mut arr, 1, 1, &mut NoOpLogger);
+        heap_sort_region(&mut arr, 1, 2, &mut NoOpLogger);
+        heap_sort_region(&mut arr, 3, 3, &mut NoOpLogger);
+        assert_eq!(keys_of(&arr), [3, 1, 2]);
+        heap_sort_region(&mut [] as &mut [Item], 0, 0, &mut NoOpLogger);
+    }
+
+    // Counts the swaps and the comparisons inside the array.
+    #[derive(Default)]
+    struct Count {
+        swaps: usize,
+        cmps: usize,
+    }
+    impl<T: Copy + Ord> SortLogger<T> for Count {
+        fn log(&mut self, event: SortLog<T>) {
+            match event {
+                SortLog::Swap { .. } => self.swaps += 1,
+                SortLog::CmpInArr { .. } => self.cmps += 1,
+                _ => {}
+            }
+        }
+    }
+
+    // An insertion sort of 4096 distinct values moves them about four million times.
+    #[test]
+    fn heap_sort_region_swaps_and_compares_n_log_n_times() {
+        let n = 4096;
+        let mut state: u64 = 0xC0FFEE;
+        let mut keys: Vec<u32> = (0..n as u32).collect();
+        for i in (1..n).rev() {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            keys.swap(i, (state >> 33) as usize % (i + 1));
+        }
+        let mut arr = items(&keys);
+        let mut count = Count::default();
+        heap_sort_region(&mut arr, 0, n, &mut count);
+        assert_eq!(keys_of(&arr), (0..n as u32).collect::<Vec<_>>());
+        assert!(count.swaps < 2 * n * 12, "swaps {}", count.swaps);
+        assert!(count.cmps < 3 * n * 12, "comparisons {}", count.cmps);
     }
 }
