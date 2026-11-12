@@ -1,0 +1,16 @@
+# The tagged_heap_sort_lib crate: `TaggedHeapSort`, a stable heap sort whose
+# extra data is a tag per element that has jumped, and the catalog fragment and
+# query of the family.
+[package]
+name = "tagged_heap_sort_lib"
+version = "0.1.0"
+edition = "2021"
+description = "Tagged heap sort, `TaggedHeapSort`: a stable heap sort in a pre-order layout, built by selection so that equal elements keep their order as their positions, with a tag only for the element a pop moves from the end of the array to the root, since that move is the one that loses an order. Types only; the spec catalog emits the entries."
+
+[lib]
+name = "tagged_heap_sort_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
