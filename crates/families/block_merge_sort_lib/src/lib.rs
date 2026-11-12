@@ -11,7 +11,7 @@
 use core::marker::PhantomData;
 
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
-use array_vis_bench_traits::role::keys::{first_not_below, sort_region};
+use array_vis_bench_traits::role::keys::{first_not_below, heap_sort_region, sort_region};
 use array_vis_bench_traits::role::{Auxiliary, Extraction, Keys, Rotation};
 use array_vis_bench_traits::Complexity;
 use scratchspace_lib::bufferless_merge;
@@ -43,10 +43,10 @@ const MIN_KEYS: usize = 4;
 // A merge costs `O(n)` when blocks roll and a buffer holds each, and the rotation
 // merge's `O(n log n)` when either is missing. `log n` levels of merges, so the
 // bound of the weaker of the two axes times `log n`. A buffer of `c` cells carved
-// from the array adds `c^2` for sorting it back in and sliding it home, which
-// only a buffer growing faster than `sqrt(n)` makes count. No extraction costs
-// more than that: the scan is `n + c^2`, the prefix sort less, and a partition
-// of the whole array `n log n` moves at most.
+// from the array adds `c^2` for carving it and sliding it home, which only a
+// buffer growing faster than `sqrt(n)` makes count. No extraction costs more
+// than that: the scan is `n + c^2`, the prefix sort less, and a partition of the
+// whole array `n log n` moves at most.
 impl<B: Auxiliary, K: Keys, R: Rotation, E: Extraction> HasTimeBounds for BlockMergeSort<B, K, R, E> {
     const WORST: Complexity = Complexity::sum(
         Complexity::product(Complexity::LOG_N, Complexity::sum(K::MERGE_WORST, B::MERGE_WORST)),
@@ -65,7 +65,9 @@ impl<B: Auxiliary, K: Keys, R: Rotation + HasSpace, E: Extraction> HasSpace for 
 
 // Every local merge and the final redistribution keep an equal key of the left
 // run ahead, the carved elements are the first occurrence of their values and
-// the rest keep their order among equals, and the run sort is an insertion sort.
+// the rest keep their order among equals, the run sort is an insertion sort,
+// and the buffer, distinct, is put back in order by an unstable heap sort that
+// has no equal elements to reorder.
 impl<B: Auxiliary, K: Keys, R: Rotation, E: Extraction> HasStability for BlockMergeSort<B, K, R, E> {
     const STABLE: bool = true;
 }
@@ -113,11 +115,14 @@ impl<B: Auxiliary, K: Keys, R: Rotation, E: Extraction> BlockMergeSort<B, K, R, 
             log.free_aux_arr_t(&ext);
         }
 
-        // The keys come back in order, the buffer is scrambled by the swaps, and
-        // the carved elements are one sorted run, which is slid into the rest.
+        // The keys come back nearly sorted, so their insertion sort is linear. The
+        // buffer is scrambled by the swaps, and its cells are distinct, so an
+        // unstable sort of it loses no order: a heap sort costs `c log c` for the
+        // `c^2` of an insertion sort. The carved elements are then one sorted
+        // run, which is slid into the rest.
         K::restore(arr, 0, keys, log);
         if keys > 0 { log.release_region(arr, 0, keys, RegionKind::Keys); }
-        sort_region(arr, keys, keys + buffer, log);
+        heap_sort_region(arr, keys, keys + buffer, log);
         if buffer > 0 { log.release_region(arr, keys, buffer, RegionKind::Buffer); }
         slide_merge::<R, T, U>(arr, 0, found, n, &mut scratch, log);
         if rotation_cells > 0 { log.free_aux_arr_t(&scratch); }
