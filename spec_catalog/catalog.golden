@@ -1472,6 +1472,18 @@ Sort	heap sort<arity: ternary, dir: min reverse, build: recursive>	1.1 1.1 1.1 0
 Sort	index heap sort	1.1 1.1 1.1 1.0 true
 Sort	insertion sort<strategy: binary>	2.0 1.0 2.0 0.0 true
 Sort	insertion sort<strategy: linear>	2.0 1.0 2.0 0.0 true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
 Sort	merge sort<small: insertion: 32, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: insertion: 32, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: insertion: 32, pp=true, ee=false>	1.1 1.1 1.1 1.0 true

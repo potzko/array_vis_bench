@@ -1356,6 +1356,18 @@
 "left-right<median of medians>"	Pivoted<LeftRightPartition, MedianOfMedians>
 "left-right<middle>"	Pivoted<LeftRightPartition, MiddleElement>
 "left-right<ninther>"	Pivoted<LeftRightPartition, Ninther>
+"level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: external<512>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: external<half>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Half>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: external<log>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Log>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sixteenth>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: external<sqrt>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: in array<512>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: in array<half>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Half>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: in array<log>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Log>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sixteenth>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sqrt>, RotationPartition, ReversalRotation>
 "merge sort<small: insertion: 32, pp=false, ee=false>"	TopDownMergeSort<InsertionSmallSort<LinearInsertion, 32>, false, false>
 "merge sort<small: insertion: 32, pp=false, ee=true>"	TopDownMergeSort<InsertionSmallSort<LinearInsertion, 32>, false, true>
 "merge sort<small: insertion: 32, pp=true, ee=false>"	TopDownMergeSort<InsertionSmallSort<LinearInsertion, 32>, true, false>

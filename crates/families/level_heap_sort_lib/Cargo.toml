@@ -22,3 +22,9 @@ scratchspace_lib = { path = "../../components/scratchspace_lib" }
 rotation_reversal = { path = "../../rotations/rotation_reversal" }
 rotation_trinity = { path = "../../rotations/rotation_trinity" }
 rotation_auxiliary = { path = "../../rotations/rotation_auxiliary" }
+
+# Catalog fragment and query, owned by this crate and gathered by
+# `spec_catalog` through the dependency graph.
+[package.metadata.array_vis_bench]
+spec  = "level_heap.spec"
+query = "level_heap.avbs"

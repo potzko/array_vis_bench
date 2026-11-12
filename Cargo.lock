@@ -855,6 +855,7 @@ dependencies = [
  "heap_sort_lib",
  "index_heap_sort_lib",
  "insertion_sort_lib",
+ "level_heap_sort_lib",
  "linkme",
  "merge_sort_lib",
  "partition_block",
