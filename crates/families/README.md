@@ -14,6 +14,7 @@ local fillers, and the `.avbs` query that builds the family.
 - `heap_sort_lib`: the heap machinery and the classic, quick build and dual build heap sorts.
 - `index_heap_sort_lib`: index heap sort, a heap of indices keyed by element then index, stable at one word per element.
 - `insertion_sort_lib`: insertion sort over a strategy.
+- `level_sort_lib`: level sort, the level ordered heap by stable selection refined into a stable in place sort, over a stable partition and a rotation.
 - `merge_sort_lib`: classic and rotation merge sorts, the merge kinds.
 - `quick_heap_sort_lib`: the quick heap hybrid and the set quick select family.
 - `quick_select_lib`: recursive and iterative quick select.
