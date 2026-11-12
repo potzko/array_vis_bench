@@ -582,7 +582,7 @@ Every method is generic over `<T: Ord + Copy, U: ?Sized + SortLogger<T>>`.
 | `Auxiliary` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn scratch_size(n)`, `fn internal_size(n)` | How much scratch a merge is handed (-> in-place vs buffered), external and carved from the array. |
 | `Keys` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn key_count(blocks)`, `tag_block`/`find_block`/`restore` | The key region that tags the blocks of a block merge (the movement imitation buffer). |
 | `Extraction` | `const NAME`, `fn extract(arr, lo, hi, want, scratch, logger) -> usize` | How a block merge sort carves its keys and buffer: distinct first occurrences gathered sorted at the front, the rest in order among equals. |
-| `StablePartition` | `const NAME`, `const MOVES`, `fn partition(arr, lo, hi, pivot, scratch, logger) -> usize` | The elements below a pivot brought to the front, each side keeping its order. |
+| `StablePartition` | `const NAME`, `const MOVES`, `fn partition`, `fn partition_at_most`, `fn partition_three_way(arr, lo, hi, pivot, scratch, logger)` | The elements below a pivot, or not above it, brought to the front, each side keeping its order; the two together split three ways. |
 
 ### 6.2 Annotation traits , the Big-O that composes itself
 
