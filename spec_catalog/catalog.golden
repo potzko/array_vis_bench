@@ -1472,18 +1472,186 @@ Sort	heap sort<arity: ternary, dir: min reverse, build: recursive>	1.1 1.1 1.1 0
 Sort	index heap sort	1.1 1.1 1.1 1.0 true
 Sort	insertion sort<strategy: binary>	2.0 1.0 2.0 0.0 true
 Sort	insertion sort<strategy: linear>	2.0 1.0 2.0 0.0 true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: drill>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: grail>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: helix>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: piston>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: drill>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: grail>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: helix>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: piston>	2.0 1.1 1.1 0.0 true
 Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: drill>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: grail>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: helix>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: piston>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: drill>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: grail>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: helix>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: piston>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: drill>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: grail>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: helix>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: piston>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: drill>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: grail>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: helix>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: piston>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: drill>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: grail>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: helix>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: piston>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: drill>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: grail>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: helix>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: piston>	2.0 1.1 1.1 0.0 true
 Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: drill>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: grail>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: helix>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: piston>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: drill>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: grail>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: helix>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: piston>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: drill>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: grail>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: helix>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: piston>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: drill>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: grail>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: helix>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: piston>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0Sqrt true
 Sort	merge sort<small: insertion: 32, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: insertion: 32, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: insertion: 32, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
