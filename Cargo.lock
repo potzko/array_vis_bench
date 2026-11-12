@@ -883,6 +883,7 @@ dependencies = [
  "sort_logger",
  "spec_core",
  "spec_emit",
+ "tagged_heap_sort_lib",
  "tree_sort_lib",
  "weak_heap_sort_lib",
 ]
