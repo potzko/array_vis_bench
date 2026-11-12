@@ -25,32 +25,56 @@ impl StablePartition for RotationPartition {
         scratch: &mut [T],
         log: &mut U,
     ) -> usize {
-        let n = hi - lo;
-        if n == 0 { return lo; }
-        if n == 1 { return lo + usize::from(log.cmp_lt_data(arr, lo, pivot)); }
-        if n <= scratch.len() { return buffered(arr, lo, hi, pivot, scratch, log); }
-        let mid = lo + n / 2;
-        let left = Self::partition::<R, T, U>(arr, lo, mid, pivot, scratch, log);
-        let right = Self::partition::<R, T, U>(arr, mid, hi, pivot, scratch, log);
-        rotate_region::<R, T, U>(arr, left, mid, right, scratch, log);
-        left + (right - mid)
+        by_rotation::<R, T, U, _>(arr, lo, hi, &move |log: &mut U, arr: &[T], i| log.cmp_lt_data(arr, i, pivot), scratch, log)
     }
+
+    fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        lo: usize,
+        hi: usize,
+        pivot: T,
+        scratch: &mut [T],
+        log: &mut U,
+    ) -> usize {
+        by_rotation::<R, T, U, _>(arr, lo, hi, &move |log: &mut U, arr: &[T], i| !log.cmp_gt_data(arr, i, pivot), scratch, log)
+    }
+}
+
+// `matches` says whether the element at an index is one of those to bring to
+// the front, by one logged comparison against the pivot.
+fn by_rotation<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
+    arr: &mut [T],
+    lo: usize,
+    hi: usize,
+    matches: &F,
+    scratch: &mut [T],
+    log: &mut U,
+) -> usize {
+    let n = hi - lo;
+    if n == 0 { return lo; }
+    if n == 1 { return lo + usize::from(matches(log, arr, lo)); }
+    if n <= scratch.len() { return buffered(arr, lo, hi, matches, scratch, log); }
+    let mid = lo + n / 2;
+    let left = by_rotation::<R, T, U, F>(arr, lo, mid, matches, scratch, log);
+    let right = by_rotation::<R, T, U, F>(arr, mid, hi, matches, scratch, log);
+    rotate_region::<R, T, U>(arr, left, mid, right, scratch, log);
+    left + (right - mid)
 }
 
 // One pass from the right: a match goes out to the scratch and an element that
 // stays shifts right by the matches passed, so the matches' slots open at the
 // front and the scratch empties into them in order. `n + m` moves for `m` matches.
-fn buffered<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+fn buffered<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
     arr: &mut [T],
     lo: usize,
     hi: usize,
-    pivot: T,
+    matches: &F,
     scratch: &mut [T],
     log: &mut U,
 ) -> usize {
     let mut out = 0;
     for i in (lo..hi).rev() {
-        if log.cmp_lt_data(arr, i, pivot) {
+        if matches(log, arr, i) {
             log.write_accross(arr, i, scratch, out);
             out += 1;
         } else if out > 0 {
@@ -78,17 +102,39 @@ impl StablePartition for SlidingPartition {
         scratch: &mut [T],
         log: &mut U,
     ) -> usize {
-        // The block is arr[first..first + found], the scan is at i.
-        let (mut first, mut found) = (lo, 0);
-        for i in lo..hi {
-            if !log.cmp_lt_data(arr, i, pivot) { continue; }
-            rotate_region::<R, T, U>(arr, first, first + found, i, scratch, log);
-            first = i - found;
-            found += 1;
-        }
-        rotate_region::<R, T, U>(arr, lo, first, first + found, scratch, log);
-        lo + found
+        by_sliding::<R, T, U, _>(arr, lo, hi, &move |log: &mut U, arr: &[T], i| log.cmp_lt_data(arr, i, pivot), scratch, log)
     }
+
+    fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        lo: usize,
+        hi: usize,
+        pivot: T,
+        scratch: &mut [T],
+        log: &mut U,
+    ) -> usize {
+        by_sliding::<R, T, U, _>(arr, lo, hi, &move |log: &mut U, arr: &[T], i| !log.cmp_gt_data(arr, i, pivot), scratch, log)
+    }
+}
+
+fn by_sliding<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
+    arr: &mut [T],
+    lo: usize,
+    hi: usize,
+    matches: &F,
+    scratch: &mut [T],
+    log: &mut U,
+) -> usize {
+    // The block is arr[first..first + found], the scan is at i.
+    let (mut first, mut found) = (lo, 0);
+    for i in lo..hi {
+        if !matches(log, arr, i) { continue; }
+        rotate_region::<R, T, U>(arr, first, first + found, i, scratch, log);
+        first = i - found;
+        found += 1;
+    }
+    rotate_region::<R, T, U>(arr, lo, first, first + found, scratch, log);
+    lo + found
 }
 
 #[cfg(test)]
@@ -100,12 +146,20 @@ mod tests {
     use rotation_trinity::TrinityRotation;
     use sort_logger::{NoOpLogger, SortLog, SortLogger};
 
-    // The expected outcome, spelled out: the elements below the pivot in order,
-    // then the rest in order.
-    fn reference(arr: &[Item], pivot: u32) -> Vec<(u32, u32)> {
+    // The expected outcome, spelled out: the elements the predicate picks in
+    // order, then the rest in order; and for the three way split, below, equal
+    // and above, each in order.
+    fn reference(arr: &[Item], picked: impl Fn(u32) -> bool) -> Vec<(u32, u32)> {
+        let first = arr.iter().filter(|x| picked(x.key));
+        let rest = arr.iter().filter(|x| !picked(x.key));
+        first.chain(rest).map(|x| (x.key, x.tag)).collect()
+    }
+
+    fn three_way(arr: &[Item], pivot: u32) -> Vec<(u32, u32)> {
         let below = arr.iter().filter(|x| x.key < pivot);
-        let rest = arr.iter().filter(|x| x.key >= pivot);
-        below.chain(rest).map(|x| (x.key, x.tag)).collect()
+        let equal = arr.iter().filter(|x| x.key == pivot);
+        let above = arr.iter().filter(|x| x.key > pivot);
+        below.chain(equal).chain(above).map(|x| (x.key, x.tag)).collect()
     }
 
     // Counts comparisons, to pin one per element.
@@ -130,14 +184,23 @@ mod tests {
             let pivot = rng.next(values + 2) as u32;
             let mut arr = arr0.clone();
             let mut scratch = vec![item(0); cells.unwrap_or(R::scratch_size(n))];
+            let below = arr0[lo..].iter().filter(|x| x.key < pivot).count();
+            let not_above = arr0[lo..].iter().filter(|x| x.key <= pivot).count();
+            let name = format!("{}, {}: round {round}: n={n} values={values} pivot={pivot} lo={lo}", P::NAME, R::NAME);
             let mut log = Cmps::default();
             let split = P::partition::<R, _, _>(&mut arr, lo, n, item(pivot), &mut scratch, &mut log);
-            let want = reference(&arr0[lo..], pivot);
-            let below = want.iter().take_while(|p| p.0 < pivot).count();
-            assert_eq!(pairs(&arr[..lo]), pairs(&arr0[..lo]), "{}: round {round} touched the prefix", P::NAME);
-            assert_eq!(pairs(&arr[lo..]), want, "{}, {}: round {round}: n={n} values={values} pivot={pivot} lo={lo}", P::NAME, R::NAME);
-            assert_eq!(split, lo + below, "{}: round {round}: the split is off", P::NAME);
-            assert_eq!(log.0, n - lo, "{}: round {round}: more than one comparison per element", P::NAME);
+            assert_eq!(pairs(&arr[..lo]), pairs(&arr0[..lo]), "{name}: touched the prefix");
+            assert_eq!(pairs(&arr[lo..]), reference(&arr0[lo..], |k| k < pivot), "{name}: below");
+            assert_eq!(split, lo + below, "{name}: the split is off");
+            assert_eq!(log.0, n - lo, "{name}: more than one comparison per element");
+            let mut arr = arr0.clone();
+            let split = P::partition_at_most::<R, _, _>(&mut arr, lo, n, item(pivot), &mut scratch, &mut NoOpLogger);
+            assert_eq!(pairs(&arr[lo..]), reference(&arr0[lo..], |k| k <= pivot), "{name}: not above");
+            assert_eq!(split, lo + not_above, "{name}: the at most split is off");
+            let mut arr = arr0.clone();
+            let (equal, above) = P::partition_three_way::<R, _, _>(&mut arr, lo, n, item(pivot), &mut scratch, &mut NoOpLogger);
+            assert_eq!(pairs(&arr[lo..]), three_way(&arr0[lo..], pivot), "{name}: three way");
+            assert_eq!((equal, above), (lo + below, lo + not_above), "{name}: the three way splits are off");
         }
     }
 

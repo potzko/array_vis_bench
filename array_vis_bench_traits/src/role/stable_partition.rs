@@ -27,4 +27,30 @@ pub trait StablePartition {
         scratch: &mut [T],
         log: &mut U,
     ) -> usize;
+
+    /// The same with the elements not above `pivot` first.
+    fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        lo: usize,
+        hi: usize,
+        pivot: T,
+        scratch: &mut [T],
+        log: &mut U,
+    ) -> usize;
+
+    /// Below, equal to and above `pivot`, each part in order: where the equal
+    /// part begins and where the above part begins. A selection needs the equal
+    /// part to stop in, since a region of one value never shrinks otherwise.
+    fn partition_three_way<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        lo: usize,
+        hi: usize,
+        pivot: T,
+        scratch: &mut [T],
+        log: &mut U,
+    ) -> (usize, usize) {
+        let equal = Self::partition::<R, T, U>(arr, lo, hi, pivot, scratch, log);
+        let above = Self::partition_at_most::<R, T, U>(arr, equal, hi, pivot, scratch, log);
+        (equal, above)
+    }
 }

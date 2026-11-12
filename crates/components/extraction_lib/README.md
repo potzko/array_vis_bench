@@ -20,7 +20,9 @@ end of the sort, where keys below the rest slide back in without a move, and
 its price is the partition of the whole array.
 
 A stable partition brings the elements of a region below a pivot value to its
-front, each side keeping its order. `RotationPartition` halves the region,
+front, each side keeping its order, or the elements not above it, and the two
+together split a region three ways, below, equal and above, which a stable
+selection needs so that a region of one value has somewhere to stop. `RotationPartition` halves the region,
 partitions each half and rotates the middle, with a one pass buffered
 partition for a region the rotation's scratch holds: `O(n)` comparisons,
 `O(n log n)` moves, `O(n log (n / s))` with `s` cells of scratch.
