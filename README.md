@@ -44,7 +44,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 
 ## Current catalog
 
-2195 entries are emitted from the build at the tip of this branch.
+2196 entries are emitted from the build at the tip of this branch.
 
 | family | entries | notes |
 |---|---|---|
@@ -65,6 +65,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 | scratchspace nightmare sorts | 3 | 3 backings |
 | insertion sorts | 2 | linear and binary |
 | tree sorts | 8 | avl trees of slack 1, 2, 4, 8, 16 and 32, a fixed slack 1 avl and naive, over one node store |
+| index heap sorts | 1 | a heap of indices, the index the secondary key, stable at one word per element |
 | cycle sort | 1 | |
 | first class kinds | 134 | 15 rotations, 7 small sorts, 67 partitions, 33 merges, 12 scratchspace workflows |
 
