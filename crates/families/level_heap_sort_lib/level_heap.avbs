@@ -1,6 +1,6 @@
 // Level heap family, query owned by level_heap_sort_lib. Every buffer with
-// cells, in the array or outside it by six sizes, by the rotation partition
-// and every rotation, 180 entries: the curve of space against time, and the
+// cells, in the array or outside it by seven sizes, by the rotation partition
+// and every rotation, 210 entries: the curve of space against time, and the
 // rotations that keep the space where it is.
 
 LevelHeapSorts: SortingAlgorithm = SortingAlgorithm<LevelHeapSort<

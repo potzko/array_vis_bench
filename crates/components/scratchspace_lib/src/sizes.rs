@@ -1,6 +1,6 @@
 //! The `BufferSize` fillers, the sizes a block merge sort's buffer comes in.
 //! `Sqrt` is what WikiSort carves and GrailSort's dynamic buffer allocates, room
-//! for a block of any merge, and `TwoSqrt` is twice that. `Log` and
+//! for a block of any merge, and `TwoSqrt` is twice that. `Log`, `TenLog` and
 //! `Fixed<CELLS>` fall behind the blocks, 512 being the static buffer of both
 //! sorts. `Half` is the size of a plain merge sort's buffer and `Sixteenth` a
 //! linear one an eighth as big.
@@ -31,6 +31,15 @@ impl BufferSize for Log {
     const GROWTH: Complexity = Complexity::LOG_N;
 
     fn cells(n: usize) -> usize { n.checked_ilog2().unwrap_or(0) as usize }
+}
+
+/// Ten times `log2(n)` cells: a logarithm wide enough to hold the small
+/// levels of a sort that heaps them, still outgrown by the blocks.
+pub struct TenLog;
+impl BufferSize for TenLog {
+    const GROWTH: Complexity = Complexity::LOG_N;
+
+    fn cells(n: usize) -> usize { 10 * Log::cells(n) }
 }
 
 /// `CELLS` cells whatever the length, so the blocks of a large merge outgrow it.
@@ -68,6 +77,7 @@ mod tests {
         assert_eq!([0, 99, 10_000].map(Half::cells), [0, 50, 5000]);
         assert_eq!([0, 99, 10_000].map(TwoSqrt::cells), [0, 18, 200]);
         assert_eq!([0, 1, 99, 10_000].map(Log::cells), [0, 0, 6, 13]);
+        assert_eq!([0, 1, 99, 10_000].map(TenLog::cells), [0, 0, 60, 130]);
         assert_eq!([0, 99, 10_000].map(Sixteenth::cells), [0, 7, 625]);
     }
 
@@ -78,5 +88,6 @@ mod tests {
         assert!([Sqrt::GROWTH, TwoSqrt::GROWTH, Half::GROWTH, Sixteenth::GROWTH].iter().all(|g| g.at_least(Complexity::SQRT_N)));
         assert!(!Fixed::<512>::GROWTH.at_least(Complexity::SQRT_N));
         assert!(!Log::GROWTH.at_least(Complexity::SQRT_N));
+        assert!(!TenLog::GROWTH.at_least(Complexity::SQRT_N));
     }
 }

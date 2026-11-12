@@ -87,6 +87,36 @@
 "binary insertion: 16"	InsertionSmallSort<BinaryInsertion, 16>
 "binary insertion: 32"	InsertionSmallSort<BinaryInsertion, 32>
 "block cycle"	BlockCycleRotation
+"block sort<buffer: external<10 log>, keys: in array, rotation: auxiliary, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, AuxiliaryRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: block cycle, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, BlockCycleRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: bridge, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, BridgeRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: contrev, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, ContrevRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: drill, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, DrillRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: grail, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, GrailRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: gries-mills, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, GriesMillsRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: helix, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, HelixRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: juggling, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, JugglingRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: optimized piston, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, OptimizedPistonRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, OptimizedPiston<3, 256>, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: optimized piston<in place>, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, OptimizedPiston<2, 0>, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: piston, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, PistonRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: reversal, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, ReversalRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: in array, rotation: trinity, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, InArrayKeys, TrinityRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: auxiliary, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, AuxiliaryRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: block cycle, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, BlockCycleRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: bridge, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, BridgeRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: contrev, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, ContrevRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: drill, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, DrillRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: grail, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, GrailRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: gries-mills, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, GriesMillsRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: helix, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, HelixRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: juggling, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, JugglingRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: optimized piston, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, OptimizedPistonRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: optimized piston<3 windows>, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, OptimizedPiston<3, 256>, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: optimized piston<in place>, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, OptimizedPiston<2, 0>, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: piston, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, PistonRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: reversal, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, ReversalRotation, ScanExtraction>
+"block sort<buffer: external<10 log>, keys: none, rotation: trinity, extraction: scan>"	BlockMergeSort<ExternalBuffer<TenLog>, NoKeys, TrinityRotation, ScanExtraction>
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: auxiliary, extraction: scan>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, AuxiliaryRotation, ScanExtraction>
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: block cycle, extraction: scan>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, BlockCycleRotation, ScanExtraction>
 "block sort<buffer: external<2 sqrt>, keys: in array, rotation: bridge, extraction: scan>"	BlockMergeSort<ExternalBuffer<TwoSqrt>, InArrayKeys, BridgeRotation, ScanExtraction>
@@ -276,6 +306,36 @@
 "block sort<buffer: external<sqrt>, keys: none, rotation: piston, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, PistonRotation, ScanExtraction>
 "block sort<buffer: external<sqrt>, keys: none, rotation: reversal, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, ReversalRotation, ScanExtraction>
 "block sort<buffer: external<sqrt>, keys: none, rotation: trinity, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, TrinityRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: auxiliary, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, AuxiliaryRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: block cycle, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, BlockCycleRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: bridge, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, BridgeRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: contrev, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, ContrevRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: drill, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, DrillRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: grail, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, GrailRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: gries-mills, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, GriesMillsRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: helix, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, HelixRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: juggling, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, JugglingRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: optimized piston, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, OptimizedPistonRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, OptimizedPiston<3, 256>, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: optimized piston<in place>, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, OptimizedPiston<2, 0>, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: piston, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, PistonRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: reversal, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, ReversalRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: in array, rotation: trinity, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, InArrayKeys, TrinityRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: auxiliary, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, AuxiliaryRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: block cycle, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, BlockCycleRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: bridge, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, BridgeRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: contrev, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, ContrevRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: drill, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, DrillRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: grail, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, GrailRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: gries-mills, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, GriesMillsRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: helix, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, HelixRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: juggling, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, JugglingRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: optimized piston, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, OptimizedPistonRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: optimized piston<3 windows>, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, OptimizedPiston<3, 256>, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: optimized piston<in place>, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, OptimizedPiston<2, 0>, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: piston, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, PistonRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: reversal, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, ReversalRotation, ScanExtraction>
+"block sort<buffer: in array<10 log>, keys: none, rotation: trinity, extraction: scan>"	BlockMergeSort<InArrayBuffer<TenLog>, NoKeys, TrinityRotation, ScanExtraction>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: auxiliary, extraction: scan>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, AuxiliaryRotation, ScanExtraction>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: block cycle, extraction: scan>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, BlockCycleRotation, ScanExtraction>
 "block sort<buffer: in array<2 sqrt>, keys: in array, rotation: bridge, extraction: scan>"	BlockMergeSort<InArrayBuffer<TwoSqrt>, InArrayKeys, BridgeRotation, ScanExtraction>
@@ -1356,6 +1416,21 @@
 "left-right<median of medians>"	Pivoted<LeftRightPartition, MedianOfMedians>
 "left-right<middle>"	Pivoted<LeftRightPartition, MiddleElement>
 "left-right<ninther>"	Pivoted<LeftRightPartition, Ninther>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, AuxiliaryRotation>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, BlockCycleRotation>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, BridgeRotation>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: contrev>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, ContrevRotation>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: drill>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, DrillRotation>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: grail>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, GrailRotation>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: gries-mills>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, GriesMillsRotation>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: helix>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, HelixRotation>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: juggling>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, JugglingRotation>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: optimized piston<3 windows>>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, OptimizedPiston<3, 256>>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: optimized piston<in place>>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, OptimizedPiston<2, 0>>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: optimized piston>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, OptimizedPistonRotation>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: piston>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, PistonRotation>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: external<10 log>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, BridgeRotation>
@@ -1446,6 +1521,21 @@
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: piston>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, PistonRotation>
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, AuxiliaryRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, BlockCycleRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, BridgeRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: contrev>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, ContrevRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: drill>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, DrillRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: grail>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, GrailRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: gries-mills>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, GriesMillsRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: helix>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, HelixRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: juggling>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, JugglingRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: optimized piston<3 windows>>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, OptimizedPiston<3, 256>>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: optimized piston<in place>>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, OptimizedPiston<2, 0>>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: optimized piston>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, OptimizedPistonRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: piston>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, PistonRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, ReversalRotation>
+"level heap sort<buffer: in array<10 log>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, BridgeRotation>

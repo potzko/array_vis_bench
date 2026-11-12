@@ -128,8 +128,8 @@ mod tests {
         assert_eq!(COUNT_TREE, 8, "tree family (avl at 6 slacks + fixed avl + naive)");
         assert_eq!(COUNT_INDEX_HEAP, 1, "index heap family");
         assert_eq!(COUNT_TAGGED_HEAP, 1, "tagged heap family");
-        assert_eq!(COUNT_LEVEL_HEAP, 180, "level heap family (12 buffers with cells x 15 rotations)");
-        assert_eq!(COUNT_BLOCK_MERGE, 417, "block merge family (13 buffers x 2 key shapes x 15 rotations by the scan, plus 3 shapes x 3 rotations x 3 other extractions)");
+        assert_eq!(COUNT_LEVEL_HEAP, 210, "level heap family (14 buffers with cells x 15 rotations)");
+        assert_eq!(COUNT_BLOCK_MERGE, 477, "block merge family (15 buffers x 2 key shapes x 15 rotations by the scan, plus 3 shapes x 3 rotations x 3 other extractions)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
         assert_eq!(COUNT_ROD, 114, "rod family (6 branching x [3 merges + the tree merge over 8 trees x 2 key stores])");
@@ -225,7 +225,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 2377, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 2467, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -747,11 +747,11 @@ mod tests {
         }
 
         #[test]
-        fn emits_thirteen_buffers_by_two_key_shapes_by_every_rotation_that_run() {
+        fn emits_fifteen_buffers_by_two_key_shapes_by_every_rotation_that_run() {
             let es = entries();
             assert_eq!(es.len(), COUNT_BLOCK_MERGE, "count drifted");
-            assert_eq!(COUNT_BLOCK_MERGE, 390 + 27);
-            assert_eq!(es.iter().filter(|e| e.name.ends_with(", extraction: scan>")).count(), 390);
+            assert_eq!(COUNT_BLOCK_MERGE, 450 + 27);
+            assert_eq!(es.iter().filter(|e| e.name.ends_with(", extraction: scan>")).count(), 450);
             let cfg = RunConfig { size: 64, seed: 1 };
             for e in &es {
                 assert_eq!(e.category, Category::Sort);
@@ -763,7 +763,7 @@ mod tests {
 
         #[test]
         fn wiki_sort_and_grail_sort_are_among_the_entries() {
-            let sizes = ["2 sqrt", "512", "half", "log", "sixteenth", "sqrt"];
+            let sizes = ["10 log", "2 sqrt", "512", "half", "log", "sixteenth", "sqrt"];
             let mut want: Vec<String> = ["external", "in array"]
                 .iter()
                 .flat_map(|at| sizes.iter().map(move |size| format!("{at}<{size}>")))
