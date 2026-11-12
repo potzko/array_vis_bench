@@ -39,14 +39,16 @@ fn main() {
         .exec()
         .expect("cargo metadata");
 
-    // ── spec_catalog's dependency closure (so we ignore unrelated members) ──
+    // ── the dependency closure of the crate being built (so we ignore unrelated
+    // members, and so a smaller manifest with this script is a smaller catalog) ──
     let resolve = metadata.resolve.as_ref().expect("cargo metadata resolve graph");
+    let own_name = env::var("CARGO_PKG_NAME").unwrap();
     let root_id = metadata
         .packages
         .iter()
-        .find(|p| p.name == "spec_catalog")
+        .find(|p| p.name == own_name)
         .map(|p| p.id.clone())
-        .expect("spec_catalog present in metadata");
+        .expect("the catalog crate present in metadata");
     let node_by_id: HashMap<_, _> = resolve.nodes.iter().map(|n| (n.id.clone(), n)).collect();
     let mut in_graph: HashSet<_> = HashSet::new();
     let mut stack = vec![root_id];
