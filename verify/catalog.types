@@ -2175,6 +2175,7 @@
 "smaller-side<trinity>"	SmallerSideRotationMerge<TrinityRotation>
 "stooge sort<insertion: 32>"	StoogeSort<InsertionSmallSort<LinearInsertion, 32>>
 "stooge sort<network: 16>"	StoogeSort<Network16SmallSort>
+"tagged heap sort"	TaggedHeapSort
 "three-way<first>"	Pivoted<ThreeWay, FirstElement>
 "three-way<last>"	Pivoted<ThreeWay, LastElement>
 "three-way<median of 3>"	Pivoted<ThreeWay, MedianOfThree>

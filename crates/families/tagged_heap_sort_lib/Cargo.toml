@@ -14,3 +14,9 @@ path = "src/lib.rs"
 [dependencies]
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 sort_logger = { path = "../../../sort_logger" }
+
+# Catalog fragment and query, owned by this crate and gathered by
+# `spec_catalog` through the dependency graph.
+[package.metadata.array_vis_bench]
+spec  = "tagged_heap.spec"
+query = "tagged_heap.avbs"

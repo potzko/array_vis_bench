@@ -1,0 +1,4 @@
+// Tagged heap family, query owned by tagged_heap_sort_lib. No axis: the concrete
+// `TaggedHeapSort` resolves to one entry.
+
+TaggedHeapSorts: SortingAlgorithm = SortingAlgorithm<TaggedHeapSort>

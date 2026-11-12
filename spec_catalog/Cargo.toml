@@ -41,6 +41,9 @@ tree_sort_lib = { path = "../crates/families/tree_sort_lib" }
 # Building stone: index heap family, the stable heap sort.
 index_heap_sort_lib = { path = "../crates/families/index_heap_sort_lib" }
 
+# Building stone: tagged heap family.
+tagged_heap_sort_lib = { path = "../crates/families/tagged_heap_sort_lib" }
+
 # Building stone: block merge family (its buffer and keys fillers are in
 # scratchspace_lib, its extractions and stable partitions in extraction_lib).
 block_merge_sort_lib = { path = "../crates/families/block_merge_sort_lib" }

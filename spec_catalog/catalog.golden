@@ -2182,6 +2182,7 @@ Sort	slow sort	0.0Exponential 0.0Exponential 0.0Exponential 0.1 false
 Sort	slow sort potzko	0.0Exponential 0.0Exponential 0.0Exponential 0.1 false
 Sort	stooge sort<insertion: 32>	2.0Sqrt 2.0Sqrt 2.0Sqrt 0.1 false
 Sort	stooge sort<network: 16>	2.0Sqrt 2.0Sqrt 2.0Sqrt 0.1 false
+Sort	tagged heap sort	1.1 1.1 1.1 1.0 true
 Sort	tree sort<avl: 16>	1.1 1.1 1.1 1.0 true
 Sort	tree sort<avl: 1>	1.1 1.1 1.1 1.0 true
 Sort	tree sort<avl: 2>	1.1 1.1 1.1 1.0 true
