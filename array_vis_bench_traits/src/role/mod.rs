@@ -7,6 +7,7 @@
 pub mod auxiliary;
 pub mod buffer_size;
 pub mod direct_sort;
+pub mod extraction;
 pub mod keys;
 pub mod merge;
 pub mod partition;
@@ -20,6 +21,7 @@ pub mod stable_partition;
 pub use auxiliary::Auxiliary;
 pub use buffer_size::BufferSize;
 pub use direct_sort::DirectSort;
+pub use extraction::Extraction;
 pub use keys::Keys;
 pub use merge::{run_rotation_merge, RotationMerge};
 pub use partition::{with_partition_scratch, PartitionScheme, PartitionVisitor};

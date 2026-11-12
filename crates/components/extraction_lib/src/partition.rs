@@ -94,42 +94,11 @@ impl StablePartition for SlidingPartition {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use core::cmp::Ordering;
+    use crate::test_util::{item, items, pairs, Item, Rng};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
     use sort_logger::{NoOpLogger, SortLog, SortLogger};
-
-    // Ordered by `key` alone, so `tag` shows where an element came from.
-    #[derive(Clone, Copy, Debug)]
-    struct Item {
-        key: u32,
-        tag: u32,
-    }
-    impl PartialEq for Item {
-        fn eq(&self, other: &Self) -> bool { self.key == other.key }
-    }
-    impl Eq for Item {}
-    impl PartialOrd for Item {
-        fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
-    }
-    impl Ord for Item {
-        fn cmp(&self, other: &Self) -> Ordering { self.key.cmp(&other.key) }
-    }
-
-    fn items(keys: &[u32]) -> Vec<Item> {
-        keys.iter().zip(0u32..).map(|(&key, tag)| Item { key, tag }).collect()
-    }
-
-    fn pairs(arr: &[Item]) -> Vec<(u32, u32)> { arr.iter().map(|x| (x.key, x.tag)).collect() }
-
-    struct Rng(u64);
-    impl Rng {
-        fn next(&mut self, m: usize) -> usize {
-            self.0 = self.0.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-            (self.0 >> 33) as usize % m
-        }
-    }
 
     // The expected outcome, spelled out: the elements below the pivot in order,
     // then the rest in order.
@@ -160,9 +129,9 @@ mod tests {
             let lo = rng.next(3).min(n - 1);
             let pivot = rng.next(values + 2) as u32;
             let mut arr = arr0.clone();
-            let mut scratch = vec![Item { key: 0, tag: 0 }; cells.unwrap_or(R::scratch_size(n))];
+            let mut scratch = vec![item(0); cells.unwrap_or(R::scratch_size(n))];
             let mut log = Cmps::default();
-            let split = P::partition::<R, _, _>(&mut arr, lo, n, Item { key: pivot, tag: 0 }, &mut scratch, &mut log);
+            let split = P::partition::<R, _, _>(&mut arr, lo, n, item(pivot), &mut scratch, &mut log);
             let want = reference(&arr0[lo..], pivot);
             let below = want.iter().take_while(|p| p.0 < pivot).count();
             assert_eq!(pairs(&arr[..lo]), pairs(&arr0[..lo]), "{}: round {round} touched the prefix", P::NAME);
@@ -198,11 +167,11 @@ mod tests {
     #[test]
     fn an_empty_region_and_an_unmoved_one_cost_nothing() {
         let mut arr = items(&[3, 1, 2]);
-        let empty = RotationPartition::partition::<ReversalRotation, _, _>(&mut arr, 2, 2, Item { key: 9, tag: 0 }, &mut [], &mut NoOpLogger);
+        let empty = RotationPartition::partition::<ReversalRotation, _, _>(&mut arr, 2, 2, item(9), &mut [], &mut NoOpLogger);
         assert_eq!(empty, 2);
-        let all = SlidingPartition::partition::<ReversalRotation, _, _>(&mut arr, 0, 3, Item { key: 9, tag: 0 }, &mut [], &mut NoOpLogger);
+        let all = SlidingPartition::partition::<ReversalRotation, _, _>(&mut arr, 0, 3, item(9), &mut [], &mut NoOpLogger);
         assert_eq!((all, pairs(&arr)), (3, vec![(3, 0), (1, 1), (2, 2)]));
-        let none = SlidingPartition::partition::<ReversalRotation, _, _>(&mut arr, 0, 3, Item { key: 0, tag: 0 }, &mut [], &mut NoOpLogger);
+        let none = SlidingPartition::partition::<ReversalRotation, _, _>(&mut arr, 0, 3, item(0), &mut [], &mut NoOpLogger);
         assert_eq!((none, pairs(&arr)), (0, vec![(3, 0), (1, 1), (2, 2)]));
     }
 }

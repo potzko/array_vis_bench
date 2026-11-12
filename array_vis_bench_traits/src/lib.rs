@@ -27,7 +27,7 @@ pub mod role;
 pub use complexity::{Complexity, Special};
 pub use composable::{HasSpace, HasStability, HasTimeBounds, PivotQuality};
 pub use role::{
-    with_partition_scratch, DeferredSmallSort, DirectSort, DualPivotSelector, InsertionStrategy, NoPivot,
+    with_partition_scratch, DeferredSmallSort, DirectSort, DualPivotSelector, Extraction, InsertionStrategy, NoPivot,
     NonTrivialSmallSort, PartitionScheme, PartitionVisitor, PivotInput, PivotSelector, QuickSelect,
     Keys, Rotation, RotationMerge, Scratchspace, ScratchspaceRun, SetSizeSmallSort, SmallSort,
     SmallSortAdapter, StablePartition,
