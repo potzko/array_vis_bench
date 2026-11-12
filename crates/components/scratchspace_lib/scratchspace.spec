@@ -146,6 +146,12 @@ component size_log
   provides BufferSize
 end
 
+component size_ten_log
+  type     TenLog
+  label    10 log
+  provides BufferSize
+end
+
 component size_512
   type     Fixed<512>
   label    512

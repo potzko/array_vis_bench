@@ -270,6 +270,36 @@ Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-r
 Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
 Sort	beap sort<dir: max forward, build: iterative>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
 Sort	beap sort<dir: min reverse, build: iterative>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: auxiliary, extraction: scan>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: block cycle, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: bridge, extraction: scan>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: contrev, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: drill, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: grail, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: gries-mills, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: helix, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: juggling, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: optimized piston, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: optimized piston<in place>, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: piston, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: reversal, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: trinity, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: auxiliary, extraction: scan>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: block cycle, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: bridge, extraction: scan>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: contrev, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: drill, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: grail, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: gries-mills, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: helix, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: juggling, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: optimized piston, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: optimized piston<3 windows>, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: optimized piston<in place>, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: piston, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: reversal, extraction: scan>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: trinity, extraction: scan>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: auxiliary, extraction: scan>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: block cycle, extraction: scan>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: bridge, extraction: scan>	1.1 1.0 1.1 1.0 true
@@ -459,6 +489,36 @@ Sort	block sort<buffer: external<sqrt>, keys: none, rotation: optimized piston<i
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: piston, extraction: scan>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: reversal, extraction: scan>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: trinity, extraction: scan>	1.2 1.0 1.2 0.0Sqrt true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: auxiliary, extraction: scan>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: block cycle, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: bridge, extraction: scan>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: contrev, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: drill, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: grail, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: gries-mills, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: helix, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: juggling, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: optimized piston, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: optimized piston<in place>, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: piston, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: reversal, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: trinity, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: auxiliary, extraction: scan>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: block cycle, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: bridge, extraction: scan>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: contrev, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: drill, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: grail, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: gries-mills, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: helix, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: juggling, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: optimized piston, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: optimized piston<3 windows>, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: optimized piston<in place>, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: piston, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: reversal, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: trinity, extraction: scan>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: auxiliary, extraction: scan>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: block cycle, extraction: scan>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: bridge, extraction: scan>	1.1 1.0 1.1 1.0 true
@@ -1472,6 +1532,21 @@ Sort	heap sort<arity: ternary, dir: min reverse, build: recursive>	1.1 1.1 1.1 0
 Sort	index heap sort	1.1 1.1 1.1 1.0 true
 Sort	insertion sort<strategy: binary>	2.0 1.0 2.0 0.0 true
 Sort	insertion sort<strategy: linear>	2.0 1.0 2.0 0.0 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: drill>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: grail>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: helix>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: piston>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1562,6 +1637,21 @@ Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: opti
 Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: piston>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: contrev>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: drill>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: grail>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: helix>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: juggling>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: piston>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
