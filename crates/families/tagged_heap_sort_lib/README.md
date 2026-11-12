@@ -18,6 +18,9 @@ order is still known: it was the last of its untagged equals, and among
 jumpers of one value the newer is the earlier. A min heap, pops written to the
 end, and one reversal at the finish leave equals in their original order.
 
+A cell is held as a stamped region for as long as its stamp is in the map,
+so the visualiser paints the jumpers.
+
 The build is `O(n log n)` comparisons and moves, the pops `O(n log n)`, and
 the tags live in a map from cell to stamp that holds the jumpers still in the
 heap: a fraction of `n` on random data, all of it in the worst case, so the

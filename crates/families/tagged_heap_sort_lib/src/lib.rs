@@ -11,21 +11,45 @@ use std::hash::{BuildHasherDefault, Hasher};
 
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::Complexity;
-use sort_logger::SortLogger;
+use sort_logger::{RegionKind, SortLogger};
 
 #[cfg(test)]
 pub mod test_util;
 
-/// The jumpers' stamps by cell. A jumper is the element a pop moved from the
-/// array's end to the root: it was the last of its untagged equals, so it is
-/// later than all of them, and among jumpers of one value a newer stamp is the
-/// earlier element, since the older jumper was the latest when the newer one
-/// was still untagged.
-type Tags = HashMap<usize, usize, BuildHasherDefault<CellHasher>>;
+/// The jumpers' stamps by cell, each held as a stamped region of one cell for
+/// as long as it is in the map, so the logger sees who carries a stamp. A
+/// jumper is the element a pop moved from the array's end to the root: it was
+/// the last of its untagged equals, so it is later than all of them, and among
+/// jumpers of one value a newer stamp is the earlier element, since the older
+/// jumper was the latest when the newer one was still untagged.
+#[derive(Debug, Default)]
+pub struct Tags(HashMap<usize, usize, BuildHasherDefault<CellHasher>>);
+
+impl Tags {
+    fn hold<T: Ord + Copy, U: ?Sized + SortLogger<T>>(&mut self, arr: &[T], cell: usize, stamp: usize, log: &mut U) {
+        self.0.insert(cell, stamp);
+        log.hold_region(arr, cell, 1, RegionKind::Stamped);
+    }
+
+    fn drop<T: Ord + Copy, U: ?Sized + SortLogger<T>>(&mut self, arr: &[T], cell: usize, log: &mut U) -> Option<usize> {
+        let stamp = self.0.remove(&cell);
+        if stamp.is_some() { log.release_region(arr, cell, 1, RegionKind::Stamped); }
+        stamp
+    }
+
+    fn get(&self, cell: usize) -> Option<usize> { self.0.get(&cell).copied() }
+
+    /// The cells that carry a stamp.
+    pub fn cells(&self) -> impl Iterator<Item = usize> + '_ { self.0.keys().copied() }
+
+    pub fn len(&self) -> usize { self.0.len() }
+
+    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+}
 
 // A cell is one word, so one multiplication spreads it, folded so that the low
 // bits the table indexes by carry the high bits' mixing.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct CellHasher(u64);
 impl Hasher for CellHasher {
     fn finish(&self) -> u64 { self.0 }
@@ -58,15 +82,16 @@ fn run<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: FnMut(&[T], usize, &Tags)>(a
     // end; the element from the end becomes a jumper, keeping an old stamp or
     // taking a new one, and sinks from the root over the live cells.
     for end in (1..n).rev() {
-        log.swap(arr, 0, end);
-        tags.remove(&0);
-        let tag = tags.remove(&end).unwrap_or_else(|| {
+        tags.drop(arr, 0, log);
+        let tag = tags.drop(arr, end, log).unwrap_or_else(|| {
             stamp += 1;
             stamp
         });
+        log.swap(arr, 0, end);
         sift_down(arr, n, end, tag, &mut tags, log);
         after_pop(arr, end, &tags);
     }
+    tags.drop(arr, 0, log);
     log.reverse(arr);
 }
 
@@ -137,17 +162,17 @@ fn sift_down<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], n: usize, 
         let (c, cm) = if take_right { (r, right) } else { (l, left) };
         if !smaller_than_jumper(arr, c, p, tag, tags, log) { break; }
         log.swap(arr, p, c);
-        if let Some(t) = tags.remove(&c) { tags.insert(p, t); }
+        if let Some(t) = tags.drop(arr, c, log) { tags.hold(arr, p, t, log); }
         (p, m) = (c, cm);
     }
-    tags.insert(p, tag);
+    tags.hold(arr, p, tag, log);
 }
 
 // The order the heap keeps between two cells: by value, then by `tie`.
 fn smaller<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], a: usize, b: usize, tags: &Tags, log: &mut U) -> bool {
     if log.cmp_lt(arr, a, b) { return true; }
     if log.cmp_lt(arr, b, a) { return false; }
-    tie(a, tags.get(&a).copied(), b, tags.get(&b).copied())
+    tie(a, tags.get(a), b, tags.get(b))
 }
 
 // The same order between the cell `c` and the jumper of stamp `tag` at `p`,
@@ -155,7 +180,7 @@ fn smaller<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], a: usize, b: usi
 fn smaller_than_jumper<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], c: usize, p: usize, tag: usize, tags: &Tags, log: &mut U) -> bool {
     if log.cmp_lt(arr, c, p) { return true; }
     if log.cmp_lt(arr, p, c) { return false; }
-    tie(c, tags.get(&c).copied(), p, Some(tag))
+    tie(c, tags.get(c), p, Some(tag))
 }
 
 // Equal values: an untagged element before a tagged one, untagged ones by cell,
@@ -172,7 +197,7 @@ fn tie(a: usize, tag_a: Option<usize>, b: usize, tag_b: Option<usize>) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_util::{items, pairs, Item, Replay, Rng, Tally};
+    use crate::test_util::{items, pairs, Held, Item, Replay, Rng, Tally};
     use array_vis_bench_traits::DirectSort;
     use sort_logger::NoOpLogger;
 
@@ -209,9 +234,9 @@ mod tests {
     fn is_a_stable_min_heap(arr: &[Item], end: usize, tags: &Tags) -> bool {
         let mut stack = vec![(0usize, arr.len(), Vec::<u32>::new())];
         while let Some((p, m, tagged_above)) = stack.pop() {
-            if !tags.contains_key(&p) && tagged_above.contains(&arr[p].key) { return false; }
+            if tags.get(p).is_none() && tagged_above.contains(&arr[p].key) { return false; }
             let mut above = tagged_above;
-            if tags.contains_key(&p) { above.push(arr[p].key); }
+            if tags.get(p).is_some() { above.push(arr[p].key); }
             let left = left_size(m);
             for (c, cm) in [(p + 1, left), (p + 1 + left, m - 1 - left)] {
                 if cm == 0 || c >= end { continue; }
@@ -220,7 +245,7 @@ mod tests {
             }
         }
         let mut last = HashMap::new();
-        (0..end).filter(|c| !tags.contains_key(c)).all(|c| {
+        (0..end).filter(|&c| tags.get(c).is_none()).all(|c| {
             let x = arr[c];
             last.insert(x.key, x.tag).is_none_or(|t| t < x.tag)
         })
@@ -261,6 +286,28 @@ mod tests {
         let mut peak = 0;
         run(&mut arr, &mut NoOpLogger, |_, _, tags| peak = peak.max(tags.len()));
         assert!(peak < n / 2, "peak {peak} tags for {n} elements");
+    }
+
+    // The logger sees a stamped region of one cell held exactly while the map
+    // holds that cell's stamp, and none is left held at the end.
+    #[test]
+    fn the_stamped_cells_are_held_as_the_map_holds_them() {
+        let mut rng = Rng(0x5EA1);
+        for n in [2usize, 3, 8, 31, 64, 257] {
+            for kind in 0..KINDS {
+                let mut arr = input(kind, n, &mut rng);
+                let held = Held::default();
+                let mut seen = held.clone();
+                run(&mut arr, &mut seen, |_, _, tags| {
+                    let mut map: Vec<usize> = tags.cells().collect();
+                    map.sort();
+                    let mut region: Vec<usize> = held.cells();
+                    region.sort();
+                    assert_eq!(region, map, "kind {kind}, n={n}");
+                });
+                assert!(held.cells().is_empty(), "kind {kind}, n={n}: a stamp was left held");
+            }
+        }
     }
 
     #[test]

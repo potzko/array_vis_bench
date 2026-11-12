@@ -1,11 +1,14 @@
 //! Test helpers shared by the module tests: `Item`, ordered by `key` alone so
 //! the `tag` shows which of several equal keys is which, a small generator,
-//! a tally of comparisons and moves, and a replay logger that shows no move
-//! went unlogged.
+//! a tally of comparisons and moves, a replay logger that shows no move went
+//! unlogged, and a logger that keeps the cells held as stamped regions.
 
 use core::cmp::Ordering;
+use std::cell::RefCell;
+use std::collections::HashSet;
+use std::rc::Rc;
 
-use sort_logger::{SortLog, SortLogger};
+use sort_logger::{RegionKind, SortLog, SortLogger};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Item {
@@ -83,6 +86,23 @@ impl SortLogger<usize> for Replay {
                 self.copy[ind + off] = data;
             }
             _ => {}
+        }
+    }
+}
+
+/// Keeps the cells currently held as stamped regions, shared between the logger
+/// the sort writes to and the test that reads it back mid sort.
+#[derive(Clone, Default)]
+pub struct Held(Rc<RefCell<HashSet<usize>>>);
+impl Held {
+    pub fn cells(&self) -> Vec<usize> { self.0.borrow().iter().copied().collect() }
+}
+impl<T: Copy + Ord> SortLogger<T> for Held {
+    fn log(&mut self, event: SortLog<T>) {
+        if let SortLog::Region { start, len, kind: RegionKind::Stamped, held, .. } = event {
+            assert_eq!(len, 1, "a stamped region is one cell");
+            let changed = if held { self.0.borrow_mut().insert(start) } else { self.0.borrow_mut().remove(&start) };
+            assert!(changed, "cell {start} {} twice", if held { "held" } else { "released" });
         }
     }
 }
