@@ -1,5 +1,15 @@
 // Block merge family, query owned by block_merge_sort_lib. Thirteen buffers (in
 // the array or external, by six sizes, or none) by two key shapes by fifteen
-// rotations, every one carving by the scan, 390 entries.
+// rotations, every one carving by the scan, 390 entries. Then the extraction
+// study: the other three extractions over the WikiSort, dynamic GrailSort and
+// bufferless shapes with in array keys, by the reversal, trinity and auxiliary
+// rotations, 27 entries.
 
 BlockMergeSorts: SortingAlgorithm = SortingAlgorithm<BlockMergeSort<buffer = _, keys = _, rot = _, extract = _ where ( ScanExtraction )>>
+
+BlockMergeExtractions: SortingAlgorithm = SortingAlgorithm<BlockMergeSort<
+    buffer = _ where ( InArrayBuffer<Sqrt> | ExternalBuffer<Sqrt> | bb_none ),
+    keys = _ where ( InArrayKeys ),
+    rot = _ where ( ReversalRotation | TrinityRotation | AuxiliaryRotation ),
+    extract = _ - { ScanExtraction }
+>>

@@ -237,6 +237,9 @@
 "block sort<buffer: external<sixteenth>, keys: none, rotation: piston, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, PistonRotation, ScanExtraction>
 "block sort<buffer: external<sixteenth>, keys: none, rotation: reversal, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, ReversalRotation, ScanExtraction>
 "block sort<buffer: external<sixteenth>, keys: none, rotation: trinity, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sixteenth>, NoKeys, TrinityRotation, ScanExtraction>
+"block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<rotation>>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation, PartitionExtraction<RotationPartition>>
+"block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<sliding>>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation, PartitionExtraction<SlidingPartition>>
+"block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: prefix sort>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation, PrefixSortExtraction>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation, ScanExtraction>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: block cycle, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, BlockCycleRotation, ScanExtraction>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: bridge, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, BridgeRotation, ScanExtraction>
@@ -250,7 +253,13 @@
 "block sort<buffer: external<sqrt>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, OptimizedPiston<3, 256>, ScanExtraction>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: optimized piston<in place>, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, OptimizedPiston<2, 0>, ScanExtraction>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: piston, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, PistonRotation, ScanExtraction>
+"block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: partition<rotation>>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, ReversalRotation, PartitionExtraction<RotationPartition>>
+"block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: partition<sliding>>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, ReversalRotation, PartitionExtraction<SlidingPartition>>
+"block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: prefix sort>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, ReversalRotation, PrefixSortExtraction>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, ReversalRotation, ScanExtraction>
+"block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: partition<rotation>>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, TrinityRotation, PartitionExtraction<RotationPartition>>
+"block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: partition<sliding>>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, TrinityRotation, PartitionExtraction<SlidingPartition>>
+"block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: prefix sort>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, TrinityRotation, PrefixSortExtraction>
 "block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, TrinityRotation, ScanExtraction>
 "block sort<buffer: external<sqrt>, keys: none, rotation: auxiliary, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, AuxiliaryRotation, ScanExtraction>
 "block sort<buffer: external<sqrt>, keys: none, rotation: block cycle, extraction: scan>"	BlockMergeSort<ExternalBuffer<Sqrt>, NoKeys, BlockCycleRotation, ScanExtraction>
@@ -417,6 +426,9 @@
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: piston, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, PistonRotation, ScanExtraction>
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: reversal, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, ReversalRotation, ScanExtraction>
 "block sort<buffer: in array<sixteenth>, keys: none, rotation: trinity, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, TrinityRotation, ScanExtraction>
+"block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<rotation>>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation, PartitionExtraction<RotationPartition>>
+"block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<sliding>>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation, PartitionExtraction<SlidingPartition>>
+"block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: prefix sort>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation, PrefixSortExtraction>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation, ScanExtraction>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: block cycle, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, BlockCycleRotation, ScanExtraction>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: bridge, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, BridgeRotation, ScanExtraction>
@@ -430,7 +442,13 @@
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, OptimizedPiston<3, 256>, ScanExtraction>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: optimized piston<in place>, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, OptimizedPiston<2, 0>, ScanExtraction>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: piston, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, PistonRotation, ScanExtraction>
+"block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: partition<rotation>>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, ReversalRotation, PartitionExtraction<RotationPartition>>
+"block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: partition<sliding>>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, ReversalRotation, PartitionExtraction<SlidingPartition>>
+"block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: prefix sort>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, ReversalRotation, PrefixSortExtraction>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, ReversalRotation, ScanExtraction>
+"block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: partition<rotation>>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation, PartitionExtraction<RotationPartition>>
+"block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: partition<sliding>>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation, PartitionExtraction<SlidingPartition>>
+"block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: prefix sort>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation, PrefixSortExtraction>
 "block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation, ScanExtraction>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: auxiliary, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, AuxiliaryRotation, ScanExtraction>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: block cycle, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, BlockCycleRotation, ScanExtraction>
@@ -447,6 +465,9 @@
 "block sort<buffer: in array<sqrt>, keys: none, rotation: piston, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, PistonRotation, ScanExtraction>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: reversal, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, ReversalRotation, ScanExtraction>
 "block sort<buffer: in array<sqrt>, keys: none, rotation: trinity, extraction: scan>"	BlockMergeSort<InArrayBuffer<Sqrt>, NoKeys, TrinityRotation, ScanExtraction>
+"block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: partition<rotation>>"	BlockMergeSort<NoBuffer, InArrayKeys, AuxiliaryRotation, PartitionExtraction<RotationPartition>>
+"block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: partition<sliding>>"	BlockMergeSort<NoBuffer, InArrayKeys, AuxiliaryRotation, PartitionExtraction<SlidingPartition>>
+"block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: prefix sort>"	BlockMergeSort<NoBuffer, InArrayKeys, AuxiliaryRotation, PrefixSortExtraction>
 "block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: scan>"	BlockMergeSort<NoBuffer, InArrayKeys, AuxiliaryRotation, ScanExtraction>
 "block sort<buffer: none, keys: in array, rotation: block cycle, extraction: scan>"	BlockMergeSort<NoBuffer, InArrayKeys, BlockCycleRotation, ScanExtraction>
 "block sort<buffer: none, keys: in array, rotation: bridge, extraction: scan>"	BlockMergeSort<NoBuffer, InArrayKeys, BridgeRotation, ScanExtraction>
@@ -460,7 +481,13 @@
 "block sort<buffer: none, keys: in array, rotation: optimized piston<3 windows>, extraction: scan>"	BlockMergeSort<NoBuffer, InArrayKeys, OptimizedPiston<3, 256>, ScanExtraction>
 "block sort<buffer: none, keys: in array, rotation: optimized piston<in place>, extraction: scan>"	BlockMergeSort<NoBuffer, InArrayKeys, OptimizedPiston<2, 0>, ScanExtraction>
 "block sort<buffer: none, keys: in array, rotation: piston, extraction: scan>"	BlockMergeSort<NoBuffer, InArrayKeys, PistonRotation, ScanExtraction>
+"block sort<buffer: none, keys: in array, rotation: reversal, extraction: partition<rotation>>"	BlockMergeSort<NoBuffer, InArrayKeys, ReversalRotation, PartitionExtraction<RotationPartition>>
+"block sort<buffer: none, keys: in array, rotation: reversal, extraction: partition<sliding>>"	BlockMergeSort<NoBuffer, InArrayKeys, ReversalRotation, PartitionExtraction<SlidingPartition>>
+"block sort<buffer: none, keys: in array, rotation: reversal, extraction: prefix sort>"	BlockMergeSort<NoBuffer, InArrayKeys, ReversalRotation, PrefixSortExtraction>
 "block sort<buffer: none, keys: in array, rotation: reversal, extraction: scan>"	BlockMergeSort<NoBuffer, InArrayKeys, ReversalRotation, ScanExtraction>
+"block sort<buffer: none, keys: in array, rotation: trinity, extraction: partition<rotation>>"	BlockMergeSort<NoBuffer, InArrayKeys, TrinityRotation, PartitionExtraction<RotationPartition>>
+"block sort<buffer: none, keys: in array, rotation: trinity, extraction: partition<sliding>>"	BlockMergeSort<NoBuffer, InArrayKeys, TrinityRotation, PartitionExtraction<SlidingPartition>>
+"block sort<buffer: none, keys: in array, rotation: trinity, extraction: prefix sort>"	BlockMergeSort<NoBuffer, InArrayKeys, TrinityRotation, PrefixSortExtraction>
 "block sort<buffer: none, keys: in array, rotation: trinity, extraction: scan>"	BlockMergeSort<NoBuffer, InArrayKeys, TrinityRotation, ScanExtraction>
 "block sort<buffer: none, keys: none, rotation: auxiliary, extraction: scan>"	BlockMergeSort<NoBuffer, NoKeys, AuxiliaryRotation, ScanExtraction>
 "block sort<buffer: none, keys: none, rotation: block cycle, extraction: scan>"	BlockMergeSort<NoBuffer, NoKeys, BlockCycleRotation, ScanExtraction>
