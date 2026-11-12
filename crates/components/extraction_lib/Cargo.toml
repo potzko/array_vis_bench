@@ -1,0 +1,23 @@
+# The extraction_lib crate: how a block merge sort carves its keys and buffer, and the stable partitions one of the ways selects with.
+[package]
+name = "extraction_lib"
+version = "0.1.0"
+edition = "2021"
+description = "The Extraction fillers of a block merge sort, how it finds the distinct elements that key and buffer its merges: one scan, a sorted prefix under the scan, or a stable partition around an estimated pivot before the sort. The StablePartition fillers, by rotation or by a block riding behind the scan. Every move goes through the logger."
+
+[lib]
+name = "extraction_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
+scratchspace_lib = { path = "../scratchspace_lib" }
+
+[dev-dependencies]
+# Three rotations for the module tests: reversal, which needs no scratch,
+# trinity, whose scratch is fixed, and auxiliary, whose scratch grows with the
+# array.
+rotation_reversal = { path = "../../rotations/rotation_reversal" }
+rotation_trinity = { path = "../../rotations/rotation_trinity" }
+rotation_auxiliary = { path = "../../rotations/rotation_auxiliary" }

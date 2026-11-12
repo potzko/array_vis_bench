@@ -30,7 +30,7 @@ pub use role::{
     with_partition_scratch, DeferredSmallSort, DirectSort, DualPivotSelector, InsertionStrategy, NoPivot,
     NonTrivialSmallSort, PartitionScheme, PartitionVisitor, PivotInput, PivotSelector, QuickSelect,
     Keys, Rotation, RotationMerge, Scratchspace, ScratchspaceRun, SetSizeSmallSort, SmallSort,
-    SmallSortAdapter,
+    SmallSortAdapter, StablePartition,
 };
 pub use role::rotation::reverse;
 pub use role::small_sort::{insertion_sort_with, windowed_insertion_sort_with};

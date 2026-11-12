@@ -76,8 +76,9 @@ pub trait Keys {
     );
 }
 
-/// Left rotate `arr[lo..hi]` so that `arr[mid..hi]` comes first, by `R`.
-fn rotate_region<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+/// Left rotate `arr[lo..hi]` so that `arr[mid..hi]` comes first, by `R`. Nothing
+/// to do when either side is empty.
+pub fn rotate_region<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
     mid: usize,
