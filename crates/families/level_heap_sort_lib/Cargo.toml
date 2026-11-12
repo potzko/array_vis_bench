@@ -1,0 +1,24 @@
+# The level_heap_sort_lib crate: `LevelHeapSort`, a stable heap sort over a
+# buffer smaller than the array, the level ordered heap bounding what the
+# buffer must hold, and the catalog fragment and query of the family.
+[package]
+name = "level_heap_sort_lib"
+version = "0.1.0"
+edition = "2021"
+description = "Level heap sort, `LevelHeapSort<B, P, R>`: a stable heap sort through a buffer of elements, each level of the level ordered heap sorted out of place by a pre-order heap whose pops sink a hole instead of moving the last element, a level larger than the buffer levelled again; the buffer carved from the array or allocated, over a stable partition and a rotation. Types only; the spec catalog emits the entries."
+
+[lib]
+name = "level_heap_sort_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
+
+[dev-dependencies]
+# The stable partitions, the buffers and three rotations for the module tests.
+extraction_lib = { path = "../../components/extraction_lib" }
+scratchspace_lib = { path = "../../components/scratchspace_lib" }
+rotation_reversal = { path = "../../rotations/rotation_reversal" }
+rotation_trinity = { path = "../../rotations/rotation_trinity" }
+rotation_auxiliary = { path = "../../rotations/rotation_auxiliary" }
