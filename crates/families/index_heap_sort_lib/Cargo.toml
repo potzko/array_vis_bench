@@ -1,0 +1,14 @@
+# The index_heap_sort_lib crate: `IndexHeapSort`, a stable heap sort over a heap of indices.
+[package]
+name = "index_heap_sort_lib"
+version = "0.1.0"
+edition = "2021"
+description = "Index heap sort, `IndexHeapSort`: a heap sort over a heap of array indices keyed by the element and then by the index, so equal elements keep their order at one word per element. Types only; the spec catalog emits the entry."
+
+[lib]
+name = "index_heap_sort_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }

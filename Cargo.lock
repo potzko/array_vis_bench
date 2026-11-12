@@ -274,6 +274,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "index_heap_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "sort_logger",
+]
+
+[[package]]
 name = "insertion_sort_lib"
 version = "0.1.0"
 dependencies = [
