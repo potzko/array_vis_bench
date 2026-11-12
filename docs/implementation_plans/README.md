@@ -16,5 +16,5 @@ priority order.
 - `kind_trait.md`: one input shape, one driver and one emit template over a kinds table, done, kept as the record.
 - `one_timing_consumer.md`: the four timing surfaces became one benchmark consumer, done, kept as the record.
 - `rod_sort_axes.md`: the tournament merge and rod gaps as a Shell sequence, with why a transposed layout is not an axis and why a tuned strategy was dropped, done, kept as the record.
-- `stable_heap_sorts.md`: the index heap and the tagged heap, two stable heap sorts, and the level sort built and removed, with the measurements that rank them, done, kept as the record.
+- `stable_heap_sorts.md`: the index heap, the tagged heap and the level heap sort, the level sort built and removed, and the measurements that rank them, done, kept as the record.
 - `scratchspace_block_merge.md`: the scratchspace contract, the keys axis, the block merge sort family, the buffer region event and the bufferless rotation merge, all shipped, kept as the record.

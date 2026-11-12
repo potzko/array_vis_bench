@@ -85,6 +85,53 @@ That is the rotation partition as a `PartitionScheme` filler for the quick
 sort drivers, still unbuilt. The three way split the selection needed stays
 in the partition role.
 
+## The level heap sort
+
+The level ordered heap used as it should be, in `level_heap_sort_lib`,
+built after the level sort was removed. The jump is the only unsafe move of
+a heap, and out of place it is not needed: a pop takes the root and the hole
+sinks instead, the smaller live child rising, ties to the left, until it
+dies at a leaf, marked by one byte. In the pre-order layout both rising
+moves keep equals in order, and with the selection build so does the
+build, so the pops are stable with no stamp and no index; the price is a
+buffer to hold the heap and a mark per buffer cell. The levels are what
+make the buffer smaller than the array: a level's sorted output is its own
+cell range, so each level is swapped into the buffer, heaped and popped
+back, each dead leaf taking the buffer element the output cell held, and a
+level larger than the buffer is levelled again, the ranges halving with
+depth. A carved buffer is distinct and goes home as a block sort's does.
+`LevelHeapSort<B, P, R>` over the block buffers, the rotation partition and
+the reversal rotation, twelve entries under heap sorts.
+
+Best of five, random `usize` keys below eight times `n`:
+
+| sort | 2^18 | 2^20 | extra space |
+|---|---|---|---|
+| level heap, external half | 46 ms | 202 ms | n / 2 words, n / 2 bytes |
+| level heap, external sqrt | 86 ms | 385 ms | sqrt n words and bytes |
+| level heap, in array sqrt | 83 ms | 377 ms | sqrt n bytes |
+| level heap, in array log | 99 ms | 468 ms | log n bytes |
+| index heap | 42 ms | 274 ms | n words |
+| tagged heap | 80 ms | 447 ms | a map, n / 4 entries at peak |
+| bufferless block sort | 41 ms | 194 ms | none |
+| wiki block sort, in array sqrt | 18 ms | 81 ms | none |
+
+The half buffer matches the index heap at 2^18 and beats it at 2^20 with
+half the words. The square root shapes move about a hundred elements per
+element, two and a half times the half buffer's, and that is where the
+small buffers pay: the level build selects by stable partitions that rotate
+with no scratch, a depth of log of `n` over the buffer, and every depth
+partitions the whole range. The heaps themselves are a small part of the
+time. The in array half and sixteenth carve their buffer by the scan at the
+square, as the block sort's do, and are quadratic.
+
+Two cuts are open. The external buffer is free while a level is being
+built and could serve the partition as scratch, which makes a partition of
+a range at most twice the buffer one buffered pass; for a carved buffer the
+pass has to swap rather than write, since the buffer's elements are real.
+And the selection build of each level's heap is `m log m` comparisons where
+a heapify is linear, the same cost the tagged heap carried.
+
 ## Verdict
 
 - The index heap is the stable heap sort: about twice the unstable heap at
@@ -92,6 +139,9 @@ in the partition role.
   level with the bufferless block sort at 2^18 and behind it at 2^20.
 - The level sort was stable and in place at about twice the bufferless block
   sort, and a quicksort by another name, so it did not stay.
+- The level heap sort is the heap sort the level property was for: stable
+  with a buffer of any size, half the index heap's words at its speed, and a
+  curve down to log n bytes at about twice the time.
 - The tagged heap works, and every move but the jump is order safe, but it
   costs about four times the unstable heap. Its comparisons are higher
   because the selection build is `n log n` where a heapify is `2n`, and a
