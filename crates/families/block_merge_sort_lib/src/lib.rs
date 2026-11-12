@@ -1,8 +1,9 @@
-//! Block merge sort, `BlockMergeSort<Buffer, Keys, Rotation>`: a stable bottom up
-//! merge sort whose merges use a small buffer and a key region instead of an
-//! `O(n)` scratch array. `sort` carves distinct elements out of the array, sorts
-//! the rest by merging runs with `roll_merge`, then sorts the carved elements
-//! back in. Every rotation along the way is the `Rotation` axis.
+//! Block merge sort, `BlockMergeSort<Buffer, Keys, Rotation, Extraction>`: a
+//! stable bottom up merge sort whose merges use a small buffer and a key region
+//! instead of an `O(n)` scratch array. `sort` carves distinct elements out of
+//! the array by the `Extraction`, sorts the rest by merging runs with
+//! `roll_merge`, then sorts the carved elements back in. Every rotation along
+//! the way is the `Rotation` axis.
 //! `stash` is where a local merge parks its left run and `rolling` is the block
 //! merge. The family is declared in `block_merge.spec` and built by
 //! `block_merge.avbs`.
@@ -11,7 +12,7 @@ use core::marker::PhantomData;
 
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::role::keys::{first_not_below, sort_region};
-use array_vis_bench_traits::role::{Auxiliary, Keys, Rotation};
+use array_vis_bench_traits::role::{Auxiliary, Extraction, Keys, Rotation};
 use array_vis_bench_traits::Complexity;
 use scratchspace_lib::bufferless_merge;
 use sort_logger::{RegionKind, SortLogger};
@@ -26,10 +27,11 @@ use stash::Stash;
 mod test_util;
 
 /// `B` is the `Auxiliary` buffer that backs the local merges, `K` the `Keys`
-/// that tag the blocks and `R` the `Rotation` the sort rotates with. An in array
-/// buffer of `sqrt(n)` with in array keys is WikiSort, an external one of 512
-/// with in array keys is GrailSort with its static buffer.
-pub struct BlockMergeSort<B, K, R>(PhantomData<(B, K, R)>);
+/// that tag the blocks, `R` the `Rotation` the sort rotates with and `E` the
+/// `Extraction` that carves the keys and the buffer. An in array buffer of
+/// `sqrt(n)` with in array keys is WikiSort, an external one of 512 with in
+/// array keys is GrailSort with its static buffer, both carving by the scan.
+pub struct BlockMergeSort<B, K, R, E>(PhantomData<(B, K, R, E)>);
 
 // Runs of RUN elements are insertion sorted before the first merge, and an array
 // shorter than SMALL is one insertion sort.
@@ -41,9 +43,11 @@ const MIN_KEYS: usize = 4;
 // A merge costs `O(n)` when blocks roll and a buffer holds each, and the rotation
 // merge's `O(n log n)` when either is missing. `log n` levels of merges, so the
 // bound of the weaker of the two axes times `log n`. A buffer of `c` cells carved
-// from the array adds `c^2` for carving it and sorting it back in, which only a
-// buffer growing faster than `sqrt(n)` makes count.
-impl<B: Auxiliary, K: Keys, R: Rotation> HasTimeBounds for BlockMergeSort<B, K, R> {
+// from the array adds `c^2` for sorting it back in and sliding it home, which
+// only a buffer growing faster than `sqrt(n)` makes count. No extraction costs
+// more than that: the scan is `n + c^2`, the prefix sort less, and a partition
+// of the whole array `n log n` moves at most.
+impl<B: Auxiliary, K: Keys, R: Rotation, E: Extraction> HasTimeBounds for BlockMergeSort<B, K, R, E> {
     const WORST: Complexity = Complexity::sum(
         Complexity::product(Complexity::LOG_N, Complexity::sum(K::MERGE_WORST, B::MERGE_WORST)),
         Complexity::product(B::CARVED, B::CARVED),
@@ -55,18 +59,18 @@ impl<B: Auxiliary, K: Keys, R: Rotation> HasTimeBounds for BlockMergeSort<B, K, 
 }
 
 // A rotation that copies a side out costs its own space on top of the buffer's.
-impl<B: Auxiliary, K: Keys, R: Rotation + HasSpace> HasSpace for BlockMergeSort<B, K, R> {
+impl<B: Auxiliary, K: Keys, R: Rotation + HasSpace, E: Extraction> HasSpace for BlockMergeSort<B, K, R, E> {
     const SPACE: Complexity = Complexity::sum(Complexity::sum(B::MERGE_SPACE, K::MERGE_SPACE), R::SPACE);
 }
 
 // Every local merge and the final redistribution keep an equal key of the left
-// run ahead, the carved elements are the first occurrence of their values, and
-// the run sort is an insertion sort.
-impl<B: Auxiliary, K: Keys, R: Rotation> HasStability for BlockMergeSort<B, K, R> {
+// run ahead, the carved elements are the first occurrence of their values and
+// the rest keep their order among equals, and the run sort is an insertion sort.
+impl<B: Auxiliary, K: Keys, R: Rotation, E: Extraction> HasStability for BlockMergeSort<B, K, R, E> {
     const STABLE: bool = true;
 }
 
-impl<B: Auxiliary, K: Keys, R: Rotation> BlockMergeSort<B, K, R> {
+impl<B: Auxiliary, K: Keys, R: Rotation, E: Extraction> BlockMergeSort<B, K, R, E> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], log: &mut U) {
         let n = arr.len();
         if n < SMALL {
@@ -79,7 +83,7 @@ impl<B: Auxiliary, K: Keys, R: Rotation> BlockMergeSort<B, K, R> {
         // The keys come first in the carved region and the buffer behind them. A
         // block of `isqrt(n)` elements gives `n / isqrt(n)` blocks to tag.
         let (want_keys, want_buffer) = (K::key_count(n / n.isqrt() + 2), B::internal_size(n));
-        let found = K::extract::<R, T, U>(arr, 0, n, want_keys + want_buffer, &mut scratch, log);
+        let found = E::extract::<R, T, U>(arr, 0, n, want_keys + want_buffer, &mut scratch, log);
         let (keys, buffer) = settle(found, want_keys, want_buffer, log);
         if keys > 0 { log.hold_region(arr, 0, keys, RegionKind::Keys); }
         if buffer > 0 { log.hold_region(arr, keys, buffer, RegionKind::Buffer); }
@@ -120,7 +124,7 @@ impl<B: Auxiliary, K: Keys, R: Rotation> BlockMergeSort<B, K, R> {
     }
 }
 
-array_vis_bench_traits::direct_sort!(BlockMergeSort<B, K, R>; B: Auxiliary, K: Keys, R: Rotation);
+array_vis_bench_traits::direct_sort!(BlockMergeSort<B, K, R, E>; B: Auxiliary, K: Keys, R: Rotation, E: Extraction);
 
 // The ladder. An array with too few distinct elements cannot give all the keys
 // and the buffer, so the sort gives up the buffer first, then keys: it keeps what
@@ -242,6 +246,7 @@ mod tests {
     use super::*;
     use crate::test_util::{pairs, Item, Marks, Regions, Replay, Rng, Tally};
     use array_vis_bench_traits::DirectSort;
+    use extraction_lib::{PartitionExtraction, PrefixSortExtraction, RotationPartition, ScanExtraction, SlidingPartition};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
@@ -252,8 +257,9 @@ mod tests {
     };
     use sort_logger::{NoOpLogger, SortLog, VisualizerLogger};
 
-    // The shapes under test rotate by reversal unless a test names another rotation.
-    type Block<B, K> = BlockMergeSort<B, K, ReversalRotation>;
+    // The shapes under test rotate by reversal and carve by the scan unless a
+    // test names another rotation or extraction.
+    type Block<B, K> = BlockMergeSort<B, K, ReversalRotation, ScanExtraction>;
 
     // The shapes of input a sort sees, each with every key repeated `values` times
     // or so; `tag` records the original position.
@@ -306,9 +312,21 @@ mod tests {
     // run through the scratch the sort allocates once.
     #[test]
     fn any_rotation_sorts_stably() {
-        sorts_stably::<BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation>>("in array, in array, trinity");
-        sorts_stably::<BlockMergeSort<NoBuffer, InArrayKeys, TrinityRotation>>("none, in array, trinity");
-        sorts_stably::<BlockMergeSort<NoBuffer, NoKeys, AuxiliaryRotation>>("none, none, auxiliary");
+        sorts_stably::<BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation, ScanExtraction>>("in array, in array, trinity");
+        sorts_stably::<BlockMergeSort<NoBuffer, InArrayKeys, TrinityRotation, ScanExtraction>>("none, in array, trinity");
+        sorts_stably::<BlockMergeSort<NoBuffer, NoKeys, AuxiliaryRotation, ScanExtraction>>("none, none, auxiliary");
+    }
+    // Every extraction carves first occurrences and leaves the rest in order
+    // among equals, which is all the stability of the sort asks of it.
+    #[test]
+    fn any_extraction_sorts_stably() {
+        type Wiki<E> = BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, ReversalRotation, E>;
+        sorts_stably::<Wiki<PrefixSortExtraction>>("wiki, prefix sort");
+        sorts_stably::<Wiki<PartitionExtraction<RotationPartition>>>("wiki, partition by rotation");
+        sorts_stably::<Wiki<PartitionExtraction<SlidingPartition>>>("wiki, partition by sliding");
+        sorts_stably::<BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, TrinityRotation, PartitionExtraction<RotationPartition>>>("grail, trinity, partition by rotation");
+        sorts_stably::<BlockMergeSort<NoBuffer, InArrayKeys, AuxiliaryRotation, PartitionExtraction<RotationPartition>>>("none, auxiliary, partition by rotation");
+        sorts_stably::<BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, ReversalRotation, PrefixSortExtraction>>("sixteenth, none, prefix sort");
     }
     // With the buffer and the keys in the array, the rotation's scratch is the
     // one aux array of the run, however many rotations use it.
@@ -316,7 +334,7 @@ mod tests {
     fn the_auxiliary_rotation_allocates_its_scratch_once_per_sort() {
         let mut arr = input(0, 1000, &mut Rng(0x5EED));
         let mut log = VisualizerLogger { type_ghost: std::marker::PhantomData, log: Vec::new() };
-        BlockMergeSort::<InArrayBuffer<Sixteenth>, InArrayKeys, AuxiliaryRotation>::sort(&mut arr, &mut log);
+        BlockMergeSort::<InArrayBuffer<Sixteenth>, InArrayKeys, AuxiliaryRotation, ScanExtraction>::sort(&mut arr, &mut log);
         let created = log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArrT { .. } | SortLog::CreateAuxArr { .. }));
         assert_eq!(created.count(), 1);
     }
@@ -364,10 +382,10 @@ mod tests {
         moves_are_all_logged::<Block<InArrayBuffer<Sqrt>, NoKeys>>("in array, none");
         moves_are_all_logged::<Block<ExternalBuffer<Fixed<512>>, NoKeys>>("external 512, none");
         moves_are_all_logged::<Block<NoBuffer, NoKeys>>("none, none");
-        moves_are_all_logged::<BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, TrinityRotation>>("external 512, in array, trinity");
+        moves_are_all_logged::<BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, TrinityRotation, ScanExtraction>>("external 512, in array, trinity");
         moves_are_all_logged::<Block<InArrayBuffer<Half>, InArrayKeys>>("in array half, in array");
         moves_are_all_logged::<Block<ExternalBuffer<Sqrt>, InArrayKeys>>("external sqrt, in array");
-        moves_are_all_logged::<BlockMergeSort<NoBuffer, NoKeys, AuxiliaryRotation>>("none, none, auxiliary");
+        moves_are_all_logged::<BlockMergeSort<NoBuffer, NoKeys, AuxiliaryRotation, ScanExtraction>>("none, none, auxiliary");
     }
 
     // The marks a sort logged on `arr`.
@@ -533,8 +551,8 @@ mod tests {
         // a buffer that grows with the array is not in place, and nor is a rotation
         // that copies a side out
         assert!(!<Block<FullBuffer, NoKeys> as HasSpace>::SPACE.is_in_place());
-        assert!(!<BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation> as HasSpace>::SPACE.is_in_place());
-        assert!(<BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation> as HasSpace>::SPACE.is_in_place());
+        assert!(!<BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation, ScanExtraction> as HasSpace>::SPACE.is_in_place());
+        assert!(<BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, TrinityRotation, ScanExtraction> as HasSpace>::SPACE.is_in_place());
     }
 
     // The role reaches the inherent sort.

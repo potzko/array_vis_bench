@@ -17,7 +17,8 @@ scratchspace_lib = { path = "../../components/scratchspace_lib" }
 [dev-dependencies]
 # Three rotations for the module tests: reversal, which needs no scratch,
 # trinity, whose scratch is fixed, and auxiliary, whose scratch grows with the
-# array.
+# array. The extractions, so that each shape under test names one.
+extraction_lib = { path = "../../components/extraction_lib" }
 rotation_reversal = { path = "../../rotations/rotation_reversal" }
 rotation_trinity = { path = "../../rotations/rotation_trinity" }
 rotation_auxiliary = { path = "../../rotations/rotation_auxiliary" }

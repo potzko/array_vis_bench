@@ -9,8 +9,9 @@
 //! The axis has two shapes. In array keys carve the region from the array's own
 //! distinct elements, `O(1)` space. No keys is the shape that never rolls a
 //! block, so it has nothing to tag. `extract_distinct` and `sort_region` are the
-//! shared mechanics, public because an in array buffer is carved the same way.
-//! Extraction moves its keys by rotations, of whichever `Rotation` the caller runs.
+//! shared mechanics, public because the `Extraction` fillers build on them and
+//! an in array buffer is carved the same way. Extraction moves its keys by
+//! rotations, of whichever `Rotation` the caller runs.
 
 use crate::Complexity;
 use crate::Rotation;
@@ -30,23 +31,6 @@ pub trait Keys {
     /// Distinct elements wanted for a merge that rolls `blocks` blocks, `0` for
     /// a shape that never rolls.
     fn key_count(blocks: usize) -> usize;
-
-    /// Gather up to `want` distinct elements of `arr[lo..hi]` at its front, sorted,
-    /// the rest keeping their order, and return how many were found. The first
-    /// occurrence of each value is the one taken, so an element that stays is
-    /// never ahead of an equal one that left. An in array buffer is carved by the
-    /// same call, which is why the default is here and not in a backing. `scratch`
-    /// is the rotation's, `R::scratch_size` cells or more.
-    fn extract<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-        arr: &mut [T],
-        lo: usize,
-        hi: usize,
-        want: usize,
-        scratch: &mut [T],
-        log: &mut U,
-    ) -> usize {
-        extract_distinct::<R, T, U>(arr, lo, hi, want, scratch, log)
-    }
 
     /// Tag the block starting at `block` with the key at `key`: swap the key with
     /// the block's second element. Applied again it releases the tag.

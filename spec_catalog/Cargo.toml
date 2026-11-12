@@ -38,8 +38,10 @@ insertion_sort_lib = { path = "../crates/families/insertion_sort_lib" }
 # Building stone: tree family.
 tree_sort_lib = { path = "../crates/families/tree_sort_lib" }
 
-# Building stone: block merge family (its buffer and keys fillers are in scratchspace_lib).
+# Building stone: block merge family (its buffer and keys fillers are in
+# scratchspace_lib, its extractions and stable partitions in extraction_lib).
 block_merge_sort_lib = { path = "../crates/families/block_merge_sort_lib" }
+extraction_lib = { path = "../crates/components/extraction_lib" }
 
 # Building stones: cycle, bubble and comb families.
 cycle_sort_lib = { path = "../crates/families/cycle_sort_lib" }
