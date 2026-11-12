@@ -1,11 +1,15 @@
 //! How a block merge sort carves its keys and buffer, the `Extraction`
-//! fillers: `ScanExtraction` is the one scan of `extract_distinct`, and
+//! fillers: `ScanExtraction` is the one scan of `extract_distinct`,
 //! `PrefixSortExtraction` sorts a prefix first so that the scan sweeps it for
-//! free. `rotation_merge_sort` is the stable sort by rotations they share, and
+//! free, and `PartitionExtraction` selects the smallest values by a
+//! `StablePartition` around a pivot read off that prefix before sorting them.
+//! `rotation_merge_sort` is the stable sort by rotations they share, and
 //! `partition` holds the `StablePartition` fillers.
 
-use array_vis_bench_traits::role::keys::{extract_distinct, sort_region};
-use array_vis_bench_traits::role::{Extraction, Rotation};
+use core::marker::PhantomData;
+
+use array_vis_bench_traits::role::keys::{extract_distinct, rotate_region, sort_region};
+use array_vis_bench_traits::role::{Extraction, Rotation, StablePartition};
 use scratchspace_lib::bufferless_merge;
 use sort_logger::SortLogger;
 
@@ -84,6 +88,86 @@ impl Extraction for PrefixSortExtraction {
         rotation_merge_sort::<R, T, U>(arr, lo, lo + prefix, scratch, log);
         extract_distinct::<R, T, U>(arr, lo, hi, want, scratch, log)
     }
+}
+
+// The selection aims at OVERSHOOT times `want` elements and accepts up to SLACK
+// times that, moving the pivot along the sample up to ROUNDS times to get there.
+const OVERSHOOT: (usize, usize) = (3, 2);
+const SLACK: usize = 2;
+const ROUNDS: usize = 3;
+
+/// The keys taken from the smallest values. The prefix of `PREFIX` times `want`
+/// is sorted and read as a sample of the region: its element at the target's
+/// rank is the pivot, and `P` partitions the rest of the region by it, so the
+/// elements below it gather behind the prefix. A selection, the prefix's and
+/// the gathered elements below the pivot, outside the window, under `want` or
+/// over `SLACK` times the target, moves the pivot along the sample and
+/// partitions again, the remainder when too few and the gathered part when too
+/// many, `ROUNDS` times at most. The prefix's elements at the pivot and above
+/// then step over the gathered part, which is sorted and merged into the
+/// prefix's part below, and the scan compacts the first occurrences, carrying on
+/// into the rest if the selection ran short of distinct values. Stable for the
+/// prefix sort's reason, and because a partition keeps each side's order. The
+/// point is the end of the sort: keys below the rest slide back in without a
+/// move.
+pub struct PartitionExtraction<P>(PhantomData<P>);
+
+impl<P: StablePartition> Extraction for PartitionExtraction<P> {
+    const NAME: &'static str = "partition";
+
+    fn extract<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        lo: usize,
+        hi: usize,
+        want: usize,
+        scratch: &mut [T],
+        log: &mut U,
+    ) -> usize {
+        if want == 0 || lo >= hi { return 0; }
+        let n = hi - lo;
+        let sample = (want * PREFIX.0).div_ceil(PREFIX.1).min(n);
+        rotation_merge_sort::<R, T, U>(arr, lo, lo + sample, scratch, log);
+        let target = (want * OVERSHOOT.0).div_ceil(OVERSHOOT.1);
+        if target * 2 > n { return extract_distinct::<R, T, U>(arr, lo, hi, want, scratch, log); }
+        // The sample's elements below the pivot are arr[lo..split], the gathered
+        // ones arr[lo + sample..end], and `region` is what the next round
+        // partitions: the remainder past `end`, or the gathered part when cutting.
+        let (mut rank, mut end, mut split) = ((sample * target / n).min(sample - 1), lo + sample, lo);
+        let mut region = (lo + sample, hi);
+        for _ in 0..ROUNDS {
+            let pivot = arr[lo + rank];
+            end = P::partition::<R, T, U>(arr, region.0, region.1, pivot, scratch, log);
+            split = rank_of(arr, lo, lo + sample, pivot, log);
+            let selection = (split - lo) + (end - lo - sample);
+            if selection < want {
+                let next = ((rank + 1) * target / selection.max(1)).max(rank + 1).min(sample - 1);
+                if next == rank { break; }
+                rank = next;
+                region = (end, hi);
+            } else if selection > SLACK * target {
+                if rank == 0 { break; }
+                rank = (rank * target / selection).min(rank - 1);
+                region = (lo + sample, end);
+            } else {
+                break;
+            }
+        }
+        rotate_region::<R, T, U>(arr, split, lo + sample, end, scratch, log);
+        let gathered = end - (lo + sample);
+        rotation_merge_sort::<R, T, U>(arr, split, split + gathered, scratch, log);
+        bufferless_merge::<R, T, U>(arr, lo, split, split + gathered, scratch, log);
+        extract_distinct::<R, T, U>(arr, lo, hi, want, scratch, log)
+    }
+}
+
+/// First index of `arr[a..b]`, sorted, whose element is not below `pivot`.
+fn rank_of<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], a: usize, b: usize, pivot: T, log: &mut U) -> usize {
+    let (mut l, mut r) = (a, b);
+    while l < r {
+        let m = l + (r - l) / 2;
+        if log.cmp_lt_data(arr, m, pivot) { l = m + 1; } else { r = m; }
+    }
+    l
 }
 
 #[cfg(test)]
@@ -165,6 +249,32 @@ mod tests {
         carves_first_occurrences::<PrefixSortExtraction, ReversalRotation>();
         carves_first_occurrences::<PrefixSortExtraction, TrinityRotation>();
         carves_first_occurrences::<PrefixSortExtraction, AuxiliaryRotation>();
+    }
+
+    #[test]
+    fn the_partition_extractions_carve_first_occurrences() {
+        carves_first_occurrences::<PartitionExtraction<RotationPartition>, ReversalRotation>();
+        carves_first_occurrences::<PartitionExtraction<RotationPartition>, TrinityRotation>();
+        carves_first_occurrences::<PartitionExtraction<RotationPartition>, AuxiliaryRotation>();
+        carves_first_occurrences::<PartitionExtraction<SlidingPartition>, ReversalRotation>();
+        carves_first_occurrences::<PartitionExtraction<SlidingPartition>, AuxiliaryRotation>();
+    }
+
+    // The partition extraction's point: on distinct data the keys are the
+    // smallest values of the region, so nothing of the rest is below them.
+    #[test]
+    fn the_partition_extraction_takes_the_smallest_values() {
+        let mut rng = Rng(0x5A11);
+        for round in 0..20 {
+            let (n, want) = (2048 + rng.next(4096), 64 + rng.next(192));
+            let arr0 = random(&mut rng, n, 1 << 30);
+            let mut arr = arr0.clone();
+            let found = PartitionExtraction::<RotationPartition>::extract::<ReversalRotation, _, _>(&mut arr, 0, n, want, &mut [], &mut NoOpLogger);
+            assert_eq!(found, want);
+            let highest_key = arr[want - 1].key;
+            let lowest_rest = arr[want..].iter().map(|x| x.key).min().unwrap();
+            assert!(highest_key < lowest_rest, "round {round}: n={n} want={want}: the keys reach {highest_key} and the rest starts at {lowest_rest}");
+        }
     }
 
     #[test]
