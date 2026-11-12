@@ -21,6 +21,9 @@ pub enum RegionKind {
     Buffer,
     /// The key region: distinct elements that tag blocks while they roll.
     Keys,
+    /// A stamped cell: an element whose order among its equals is carried as
+    /// a stamp beside the array, for as long as it is.
+    Stamped,
 }
 
 /// One observable operation in a sort run.

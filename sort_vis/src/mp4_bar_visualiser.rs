@@ -58,6 +58,7 @@ const BLACK: [u8; 3] = [0x00, 0x00, 0x00];
 const GREEN: [u8; 3] = [0x00, 0xa0, 0x60];
 const BLUE:  [u8; 3] = [0x00, 0x30, 0xff];
 const AMBER: [u8; 3] = [0xe0, 0x90, 0x00];
+const ROSE:  [u8; 3] = [0xe0, 0x30, 0x80];
 
 fn get_views(view: &SubImg, amount: u32) -> Vec<SubImg> {
     let height = view.height / amount;
@@ -535,6 +536,7 @@ struct ArrActions {
     diff_colored: Vec<u32>,
     diff_buffer: Vec<u32>,
     diff_keys: Vec<u32>,
+    diff_stamped: Vec<u32>,
 
     view: SubImg,
     name: usize,
@@ -571,6 +573,7 @@ impl ArrActions {
             diff_colored: Vec::new(),
             diff_buffer: Vec::new(),
             diff_keys: Vec::new(),
+            diff_stamped: Vec::new(),
             view: SubImg { x: 0, y: 0, width: 0, height: 0 },
             name,
             row: name,
@@ -599,6 +602,7 @@ impl ArrActions {
         self.diff_colored = vec![0u32; big_h + 1];
         self.diff_buffer = vec![0u32; big_h + 1];
         self.diff_keys = vec![0u32; big_h + 1];
+        self.diff_stamped = vec![0u32; big_h + 1];
 
         // Per-index buffers.
         self.index_pixels_start = vec![0u32; n];
@@ -759,6 +763,7 @@ impl ArrActions {
         self.diff_colored[..h_plus_1].fill(0);
         self.diff_buffer[..h_plus_1].fill(0);
         self.diff_keys[..h_plus_1].fill(0);
+        self.diff_stamped[..h_plus_1].fill(0);
 
         // For each bar in this column, mark its top row in the diff buffers.
         // Walking diff_total down the column gives the running cover-count.
@@ -775,6 +780,7 @@ impl ArrActions {
                         match self.shade[i] {
                             Some(RegionKind::Buffer) => self.diff_buffer[top_row] += 1,
                             Some(RegionKind::Keys) => self.diff_keys[top_row] += 1,
+                            Some(RegionKind::Stamped) => self.diff_stamped[top_row] += 1,
                             None => {}
                         }
                     }
@@ -784,17 +790,24 @@ impl ArrActions {
 
         // Walk rows top to bottom, blending each pixel from the running counts.
         // Pixel = (white_count * WHITE + colored_count * GREEN + buffer_count *
-        // BLUE + keys_count * AMBER) / k. A compared bar is green even inside a region.
+        // BLUE + keys_count * AMBER + stamped_count * ROSE) / k. A compared bar is
+        // green even inside a region.
         let k_u32 = k as u32;
-        let (mut total, mut colored, mut buffer, mut keys) = (0u32, 0u32, 0u32, 0u32);
+        let (mut total, mut colored, mut buffer, mut keys, mut stamped) = (0u32, 0u32, 0u32, 0u32, 0u32);
         for y in 0..h as usize {
             total += self.diff_total[y];
             colored += self.diff_colored[y];
             buffer += self.diff_buffer[y];
             keys += self.diff_keys[y];
-            let white = total - colored - buffer - keys;
+            stamped += self.diff_stamped[y];
+            let white = total - colored - buffer - keys - stamped;
             let blend = |c: usize| {
-                (WHITE[c] as u32 * white + GREEN[c] as u32 * colored + BLUE[c] as u32 * buffer + AMBER[c] as u32 * keys) / k_u32
+                (WHITE[c] as u32 * white
+                    + GREEN[c] as u32 * colored
+                    + BLUE[c] as u32 * buffer
+                    + AMBER[c] as u32 * keys
+                    + ROSE[c] as u32 * stamped)
+                    / k_u32
             };
             let (r, g, b) = (blend(0), blend(1), blend(2));
             let off = off_base + y * stride;
@@ -850,6 +863,18 @@ mod tests {
         assert_eq!(pixel(&fb, 1, 7), AMBER);
         assert_eq!(pixel(&fb, 2, 7), BLUE);
         assert_ne!(AMBER, BLUE);
+    }
+
+    #[test]
+    fn a_stamped_cell_has_a_shade_of_its_own() {
+        let (mut store, mut fb) = eight_bars();
+        store.update(&[region(3, 1, RegionKind::Stamped, true), region(5, 1, RegionKind::Keys, true)], &mut fb);
+        assert_eq!(pixel(&fb, 2, 7), WHITE);
+        assert_eq!(pixel(&fb, 3, 7), ROSE);
+        assert_eq!(pixel(&fb, 4, 7), WHITE);
+        assert_eq!(pixel(&fb, 5, 7), AMBER);
+        store.update(&[region(3, 1, RegionKind::Stamped, false)], &mut fb);
+        assert_eq!(pixel(&fb, 3, 7), WHITE);
     }
 
     #[test]
