@@ -1469,6 +1469,7 @@ Sort	heap sort<arity: ternary, dir: max forward, build: iterative>	1.1 1.1 1.1 0
 Sort	heap sort<arity: ternary, dir: max forward, build: recursive>	1.1 1.1 1.1 0.1 false
 Sort	heap sort<arity: ternary, dir: min reverse, build: iterative>	1.1 1.1 1.1 0.1 false
 Sort	heap sort<arity: ternary, dir: min reverse, build: recursive>	1.1 1.1 1.1 0.1 false
+Sort	index heap sort	1.1 1.1 1.1 1.0 true
 Sort	insertion sort<strategy: binary>	2.0 1.0 2.0 0.0 true
 Sort	insertion sort<strategy: linear>	2.0 1.0 2.0 0.0 true
 Sort	merge sort<small: insertion: 32, pp=false, ee=false>	1.1 1.1 1.1 1.0 true

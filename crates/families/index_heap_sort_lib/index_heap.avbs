@@ -1,0 +1,4 @@
+// Index heap family, query owned by index_heap_sort_lib. Zero axis: the
+// concrete `IndexHeapSort` resolves to exactly one entry.
+
+IndexHeapSorts: SortingAlgorithm = SortingAlgorithm<IndexHeapSort>

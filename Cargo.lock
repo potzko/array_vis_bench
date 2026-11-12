@@ -840,6 +840,7 @@ dependencies = [
  "fun_sorts_lib",
  "gap_distribution_lib",
  "heap_sort_lib",
+ "index_heap_sort_lib",
  "insertion_sort_lib",
  "linkme",
  "merge_sort_lib",

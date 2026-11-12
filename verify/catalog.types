@@ -1338,6 +1338,7 @@
 "heap sort<arity: ternary, dir: min reverse, build: iterative>"	HeapSortClassicOf<Ternary, MinReverse, Iterative>
 "heap sort<arity: ternary, dir: min reverse, build: recursive>"	HeapSortClassicOf<Ternary, MinReverse, Recursive>
 "helix"	HelixRotation
+"index heap sort"	IndexHeapSort
 "insertion sort<strategy: binary>"	InsertionSort<BinaryInsertion>
 "insertion sort<strategy: linear>"	InsertionSort<LinearInsertion>
 "insertion: 16"	InsertionSmallSort<LinearInsertion, 16>

@@ -11,3 +11,7 @@ store, and the permutation is applied to the array by following its cycles, so
 an element is written once at most and the elements themselves are never
 swapped. `n log n` comparisons on every input, `n log n` word writes and at
 most `n` element writes, `n` words of extra space, stable.
+
+Its catalog component is declared in `index_heap.spec`.
+
+Query `index_heap.avbs` builds: `IndexHeapSorts`.
