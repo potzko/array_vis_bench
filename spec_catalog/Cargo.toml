@@ -41,9 +41,6 @@ tree_sort_lib = { path = "../crates/families/tree_sort_lib" }
 # Building stone: index heap family, the stable heap sort.
 index_heap_sort_lib = { path = "../crates/families/index_heap_sort_lib" }
 
-# Building stone: level family, the level ordered heap refined into a stable sort.
-level_sort_lib = { path = "../crates/families/level_sort_lib" }
-
 # Building stone: tagged heap family.
 tagged_heap_sort_lib = { path = "../crates/families/tagged_heap_sort_lib" }
 

@@ -1356,21 +1356,6 @@
 "left-right<median of medians>"	Pivoted<LeftRightPartition, MedianOfMedians>
 "left-right<middle>"	Pivoted<LeftRightPartition, MiddleElement>
 "left-right<ninther>"	Pivoted<LeftRightPartition, Ninther>
-"level sort<partition: rotation, rotation: auxiliary>"	LevelSort<RotationPartition, AuxiliaryRotation>
-"level sort<partition: rotation, rotation: block cycle>"	LevelSort<RotationPartition, BlockCycleRotation>
-"level sort<partition: rotation, rotation: bridge>"	LevelSort<RotationPartition, BridgeRotation>
-"level sort<partition: rotation, rotation: contrev>"	LevelSort<RotationPartition, ContrevRotation>
-"level sort<partition: rotation, rotation: drill>"	LevelSort<RotationPartition, DrillRotation>
-"level sort<partition: rotation, rotation: grail>"	LevelSort<RotationPartition, GrailRotation>
-"level sort<partition: rotation, rotation: gries-mills>"	LevelSort<RotationPartition, GriesMillsRotation>
-"level sort<partition: rotation, rotation: helix>"	LevelSort<RotationPartition, HelixRotation>
-"level sort<partition: rotation, rotation: juggling>"	LevelSort<RotationPartition, JugglingRotation>
-"level sort<partition: rotation, rotation: optimized piston<3 windows>>"	LevelSort<RotationPartition, OptimizedPiston<3, 256>>
-"level sort<partition: rotation, rotation: optimized piston<in place>>"	LevelSort<RotationPartition, OptimizedPiston<2, 0>>
-"level sort<partition: rotation, rotation: optimized piston>"	LevelSort<RotationPartition, OptimizedPistonRotation>
-"level sort<partition: rotation, rotation: piston>"	LevelSort<RotationPartition, PistonRotation>
-"level sort<partition: rotation, rotation: reversal>"	LevelSort<RotationPartition, ReversalRotation>
-"level sort<partition: rotation, rotation: trinity>"	LevelSort<RotationPartition, TrinityRotation>
 "merge sort<small: insertion: 32, pp=false, ee=false>"	TopDownMergeSort<InsertionSmallSort<LinearInsertion, 32>, false, false>
 "merge sort<small: insertion: 32, pp=false, ee=true>"	TopDownMergeSort<InsertionSmallSort<LinearInsertion, 32>, false, true>
 "merge sort<small: insertion: 32, pp=true, ee=false>"	TopDownMergeSort<InsertionSmallSort<LinearInsertion, 32>, true, false>

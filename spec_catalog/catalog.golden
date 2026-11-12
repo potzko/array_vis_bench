@@ -1472,21 +1472,6 @@ Sort	heap sort<arity: ternary, dir: min reverse, build: recursive>	1.1 1.1 1.1 0
 Sort	index heap sort	1.1 1.1 1.1 1.0 true
 Sort	insertion sort<strategy: binary>	2.0 1.0 2.0 0.0 true
 Sort	insertion sort<strategy: linear>	2.0 1.0 2.0 0.0 true
-Sort	level sort<partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
-Sort	level sort<partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0 true
-Sort	level sort<partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
-Sort	level sort<partition: rotation, rotation: contrev>	2.0 1.1 1.1 0.0 true
-Sort	level sort<partition: rotation, rotation: drill>	2.0 1.1 1.1 0.0 true
-Sort	level sort<partition: rotation, rotation: grail>	2.0 1.1 1.1 0.0 true
-Sort	level sort<partition: rotation, rotation: gries-mills>	2.0 1.1 1.1 0.0 true
-Sort	level sort<partition: rotation, rotation: helix>	2.0 1.1 1.1 0.0 true
-Sort	level sort<partition: rotation, rotation: juggling>	2.0 1.1 1.1 0.0 true
-Sort	level sort<partition: rotation, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.0 true
-Sort	level sort<partition: rotation, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.0 true
-Sort	level sort<partition: rotation, rotation: optimized piston>	2.0 1.1 1.1 0.0 true
-Sort	level sort<partition: rotation, rotation: piston>	2.0 1.1 1.1 0.0 true
-Sort	level sort<partition: rotation, rotation: reversal>	2.0 1.1 1.1 0.0 true
-Sort	level sort<partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0 true
 Sort	merge sort<small: insertion: 32, pp=false, ee=false>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: insertion: 32, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
 Sort	merge sort<small: insertion: 32, pp=true, ee=false>	1.1 1.1 1.1 1.0 true

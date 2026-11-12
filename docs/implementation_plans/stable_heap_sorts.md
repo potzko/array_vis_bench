@@ -56,12 +56,14 @@ tagged heap 25.7n and 56.3n, the classic heap 17.1n and 32.9n. The tagged
 heap's map peaks at 0.25n entries on random data, since a jumper cannot know
 it has no equals and stays tagged until it is popped itself.
 
-## The level sort
+## The level sort, built and removed
 
-The lazy refinement of the level ordered heap, built after the two heaps as
-`level_sort_lib`: stable selection at the power of two boundaries from the
-largest down, then each level halved by stable selection of its median down
-to insertion sorted runs. A stable selection is a quickselect over the three
+The lazy refinement of the level ordered heap was built as `level_sort_lib`
+and removed the same day, since its extraction is a quicksort and the heap
+is only the name of what its build leaves behind; the numbers stay as the
+record of what that route costs. Stable selection at the power of two
+boundaries from the largest down, then each level halved by stable selection
+of its median down to insertion sorted runs. A stable selection is a quickselect over the three
 way stable partition, a median of three compared in place as the pivot,
 stopping once the wanted boundary falls inside the pivot's equal group. No
 element ever passes an equal, so it is stable with nothing but the
@@ -80,15 +82,16 @@ one stable sort of the three that is in place, and the cheaper form of it is
 plain: one stable three way partition per level around a sampled pivot, no
 selection, which halves the comparisons at the price of unbalanced splits.
 That is the rotation partition as a `PartitionScheme` filler for the quick
-sort drivers, still unbuilt.
+sort drivers, still unbuilt. The three way split the selection needed stays
+in the partition role.
 
 ## Verdict
 
 - The index heap is the stable heap sort: about twice the unstable heap at
   2^18 and three times at 2^20, where the indirection stops fitting in cache,
   level with the bufferless block sort at 2^18 and behind it at 2^20.
-- The level sort is stable and in place at about twice the bufferless block
-  sort, and is the form the level ordered heap takes as a sort.
+- The level sort was stable and in place at about twice the bufferless block
+  sort, and a quicksort by another name, so it did not stay.
 - The tagged heap works, and every move but the jump is order safe, but it
   costs about four times the unstable heap. Its comparisons are higher
   because the selection build is `n log n` where a heapify is `2n`, and a

@@ -1,4 +1,0 @@
-// Level family, query owned by level_sort_lib. The rotation partition, the one
-// whose cost is bounded whatever the split, by every rotation, 15 entries.
-
-LevelSorts: SortingAlgorithm = SortingAlgorithm<LevelSort<part = _ where ( RotationPartition ), rot = _>>

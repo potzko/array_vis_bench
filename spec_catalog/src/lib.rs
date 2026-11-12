@@ -128,7 +128,6 @@ mod tests {
         assert_eq!(COUNT_TREE, 8, "tree family (avl at 6 slacks + fixed avl + naive)");
         assert_eq!(COUNT_INDEX_HEAP, 1, "index heap family");
         assert_eq!(COUNT_TAGGED_HEAP, 1, "tagged heap family");
-        assert_eq!(COUNT_LEVEL, 15, "level family (the rotation partition x 15 rotations)");
         assert_eq!(COUNT_BLOCK_MERGE, 417, "block merge family (13 buffers x 2 key shapes x 15 rotations by the scan, plus 3 shapes x 3 rotations x 3 other extractions)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
@@ -160,7 +159,7 @@ mod tests {
         assert_eq!(
             COUNT_TOTAL,
             COUNT_SHELL + COUNT_INSERTION + COUNT_QUICK + COUNT_CYCLE + COUNT_TREE + COUNT_INDEX_HEAP
-                + COUNT_TAGGED_HEAP + COUNT_LEVEL + COUNT_BLOCK_MERGE + COUNT_BUBBLE + COUNT_COMB
+                + COUNT_TAGGED_HEAP + COUNT_BLOCK_MERGE + COUNT_BUBBLE + COUNT_COMB
                 + COUNT_ROD + COUNT_CIRCLE + COUNT_MERGE + COUNT_HEAP + COUNT_WEAK + COUNT_BEAP
                 + COUNT_QUICK_HEAP + COUNT_QUICK_SELECT + COUNT_FUN_SORTS + COUNT_SCRATCHSPACE
                 + COUNT_KINDS,
@@ -225,7 +224,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 2212, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 2197, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
