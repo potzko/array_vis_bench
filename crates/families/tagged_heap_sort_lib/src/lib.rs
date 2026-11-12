@@ -7,6 +7,7 @@
 //! `tagged_heap.avbs`.
 
 use std::collections::HashMap;
+use std::hash::{BuildHasherDefault, Hasher};
 
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::Complexity;
@@ -20,7 +21,21 @@ pub mod test_util;
 /// later than all of them, and among jumpers of one value a newer stamp is the
 /// earlier element, since the older jumper was the latest when the newer one
 /// was still untagged.
-type Tags = HashMap<usize, usize>;
+type Tags = HashMap<usize, usize, BuildHasherDefault<CellHasher>>;
+
+// A cell is one word, so one multiplication spreads it, folded so that the low
+// bits the table indexes by carry the high bits' mixing.
+#[derive(Default)]
+pub struct CellHasher(u64);
+impl Hasher for CellHasher {
+    fn finish(&self) -> u64 { self.0 }
+    fn write(&mut self, bytes: &[u8]) { for &b in bytes { self.write_u64(b as u64) } }
+    fn write_usize(&mut self, cell: usize) { self.write_u64(cell as u64) }
+    fn write_u64(&mut self, cell: u64) {
+        let spread = (self.0 ^ cell).wrapping_mul(0x9E37_79B9_7F4A_7C15);
+        self.0 = spread ^ (spread >> 32);
+    }
+}
 
 /// Stable, `O(n log n)`, with a map holding a stamp per element that has jumped.
 pub struct TaggedHeapSort;
@@ -37,7 +52,7 @@ fn run<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: FnMut(&[T], usize, &Tags)>(a
     let n = arr.len();
     if n < 2 { return; }
     build(arr, 0, n, log);
-    let mut tags = Tags::new();
+    let mut tags = Tags::default();
     let mut stamp = 0;
     // The root is the earliest of the minima, see `smaller`, and goes to the
     // end; the element from the end becomes a jumper, keeping an old stamp or
@@ -49,8 +64,7 @@ fn run<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: FnMut(&[T], usize, &Tags)>(a
             stamp += 1;
             stamp
         });
-        tags.insert(0, tag);
-        sift_down(arr, n, end, &mut tags, log);
+        sift_down(arr, n, end, tag, &mut tags, log);
         after_pop(arr, end, &tags);
     }
     log.reverse(arr);
@@ -105,35 +119,49 @@ pub fn build<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], p: usize, 
     build(arr, p + 1 + left, m - 1 - left, log);
 }
 
-// Sink the jumper at the root over the live cells `arr[..end]` of the tree of
-// `n`. A tie between the children goes left, an adjacent cell; the right child
-// rises over the left subtree only when strictly smaller, or when the left
-// child is a tagged equal, whose subtree holds no untagged equal of it.
-fn sift_down<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], n: usize, end: usize, tags: &mut Tags, log: &mut U) {
+// Sink the jumper of stamp `tag` from the root over the live cells `arr[..end]`
+// of the tree of `n`, and record its stamp at the cell it stops in. A tie
+// between the children goes left, an adjacent cell; the right child rises over
+// the left subtree only when strictly smaller, or when the left child is a
+// tagged equal, whose subtree holds no untagged equal of it. Only a tagged
+// rising child touches the map on the way.
+fn sift_down<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], n: usize, end: usize, tag: usize, tags: &mut Tags, log: &mut U) {
     let (mut p, mut m) = (0, n);
     loop {
         let left = left_size(m);
         let l = p + 1;
-        if left == 0 || l >= end { return; }
+        if left == 0 || l >= end { break; }
         let r = l + left;
         let right = m - 1 - left;
-        let (c, cm) = if right > 0 && r < end && smaller(arr, r, l, tags, log) { (r, right) } else { (l, left) };
-        if !smaller(arr, c, p, tags, log) { return; }
+        let take_right = right > 0 && r < end && smaller(arr, r, l, tags, log);
+        let (c, cm) = if take_right { (r, right) } else { (l, left) };
+        if !smaller_than_jumper(arr, c, p, tag, tags, log) { break; }
         log.swap(arr, p, c);
-        let (tag_p, tag_c) = (tags.remove(&p), tags.remove(&c));
-        if let Some(t) = tag_p { tags.insert(c, t); }
-        if let Some(t) = tag_c { tags.insert(p, t); }
+        if let Some(t) = tags.remove(&c) { tags.insert(p, t); }
         (p, m) = (c, cm);
     }
+    tags.insert(p, tag);
 }
 
-// The order the heap keeps: by value, then an untagged element before a tagged
-// one, untagged ones by cell, which is their original order, and tagged ones
-// by stamp, the newer first.
+// The order the heap keeps between two cells: by value, then by `tie`.
 fn smaller<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], a: usize, b: usize, tags: &Tags, log: &mut U) -> bool {
     if log.cmp_lt(arr, a, b) { return true; }
     if log.cmp_lt(arr, b, a) { return false; }
-    match (tags.get(&a), tags.get(&b)) {
+    tie(a, tags.get(&a).copied(), b, tags.get(&b).copied())
+}
+
+// The same order between the cell `c` and the jumper of stamp `tag` at `p`,
+// whose stamp is not in the map while it sinks.
+fn smaller_than_jumper<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], c: usize, p: usize, tag: usize, tags: &Tags, log: &mut U) -> bool {
+    if log.cmp_lt(arr, c, p) { return true; }
+    if log.cmp_lt(arr, p, c) { return false; }
+    tie(c, tags.get(&c).copied(), p, Some(tag))
+}
+
+// Equal values: an untagged element before a tagged one, untagged ones by cell,
+// which is their original order, and tagged ones by stamp, the newer first.
+fn tie(a: usize, tag_a: Option<usize>, b: usize, tag_b: Option<usize>) -> bool {
+    match (tag_a, tag_b) {
         (None, None) => a < b,
         (None, Some(_)) => true,
         (Some(_), None) => false,
@@ -205,7 +233,7 @@ mod tests {
             for kind in 0..KINDS {
                 let mut arr = input(kind, n, &mut rng);
                 build(&mut arr, 0, n, &mut NoOpLogger);
-                assert!(is_a_stable_min_heap(&arr, n, &Tags::new()), "kind {kind}, n={n}: {:?}", pairs(&arr));
+                assert!(is_a_stable_min_heap(&arr, n, &Tags::default()), "kind {kind}, n={n}: {:?}", pairs(&arr));
             }
         }
     }
