@@ -1,13 +1,179 @@
-//! Level heap sort, `LevelHeapSort`: a stable heap sort through a buffer of
-//! elements. `heap_sort_into` sorts one region out of place: its elements go
-//! into the buffer, a pre-order min heap is built there by selection, and the
-//! pops come back in order by `sink_hole`, a hole sinking to a leaf that dies,
-//! so that no element ever crosses the heap. `left_size` is the layout.
+//! Level heap sort, `LevelHeapSort<B, P, R>`: a stable heap sort through a
+//! buffer of elements smaller than the array. `heap_sort_into` sorts one
+//! region out of place: its elements go into the buffer, a pre-order min heap
+//! is built there by selection, and the pops come back in order by
+//! `sink_hole`, a hole sinking to a leaf that dies, so that no element ever
+//! crosses the heap. `select` is the stable selection, `build_levels` the
+//! level ordered heap it leaves, and `sort_range` the recursion that levels a
+//! range too big for the buffer. `left_size` is the heap's layout. The family
+//! is declared in `level_heap.spec` and built by `level_heap.avbs`.
 
-use sort_logger::SortLogger;
+use core::marker::PhantomData;
+
+use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
+use array_vis_bench_traits::role::keys::{extract_distinct, heap_sort_region, slide_merge, sort_region};
+use array_vis_bench_traits::role::{Auxiliary, Rotation, StablePartition};
+use array_vis_bench_traits::Complexity;
+use sort_logger::{RegionKind, SortLogger};
 
 #[cfg(test)]
 pub mod test_util;
+
+// A range this short is left to the insertion sort.
+const RUN: usize = 8;
+
+/// `B` is the buffer, carved from the array or allocated beside it, `P` the
+/// `StablePartition` the level build selects with and `R` the `Rotation` it
+/// rotates with, whose scratch is the one other allocation of the sort.
+pub struct LevelHeapSort<B, P, R>(PhantomData<(B, P, R)>);
+
+impl<B: Auxiliary, P: StablePartition, R: Rotation> LevelHeapSort<B, P, R> {
+    pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], log: &mut U) {
+        let n = arr.len();
+        if n < 2 { return; }
+        let cells = R::scratch_size(n);
+        let mut scratch = if cells > 0 { log.create_aux_arr_t(cells) } else { Vec::new() };
+        let external = B::scratch_size(n);
+        // A carved buffer is the first distinct elements of the array, as many
+        // as the backing asks for or as there are; the rest is the range sorted.
+        let carved = if external > 0 { 0 } else { extract_distinct::<R, T, U>(arr, 0, n, B::internal_size(n), &mut scratch, log) };
+        if carved > 0 { log.hold_region(arr, 0, carved, RegionKind::Buffer); }
+        let mut ext = if external > 0 { log.create_aux_arr_t(external) } else { Vec::new() };
+        if external > 0 { log.hold_region(&ext, 0, external, RegionKind::Buffer); }
+        let mut dead = log.create_aux_arr_u8(external.max(carved));
+        if external > 0 {
+            sort_range::<P, R, T, U>(arr, 0, n, &mut ext, &mut dead, &mut scratch, log);
+            log.release_region(&ext, 0, external, RegionKind::Buffer);
+            log.free_aux_arr_t(&ext);
+        } else {
+            let (buffer, rest) = arr.split_at_mut(carved);
+            sort_range::<P, R, T, U>(rest, 0, n - carved, buffer, &mut dead, &mut scratch, log);
+        }
+        log.free_aux_arr_u8(&dead);
+        // The carved buffer is distinct, so an unstable sort puts it back in
+        // order, and it slides home ahead of its equals.
+        if carved > 0 {
+            heap_sort_region(arr, 0, carved, log);
+            log.release_region(arr, 0, carved, RegionKind::Buffer);
+            slide_merge::<R, T, U>(arr, 0, carved, n, &mut scratch, log);
+        }
+        if cells > 0 { log.free_aux_arr_t(&scratch); }
+    }
+}
+
+array_vis_bench_traits::direct_sort!(LevelHeapSort<B, P, R>; B: Auxiliary, P: StablePartition, R: Rotation);
+
+// The level build is a quickselect per boundary, quadratic at worst and linear
+// expected, over `log (n / buffer)` depths; the heaps cost `n log n` on every
+// input; a carved buffer adds its square to carve and slide home.
+impl<B: Auxiliary, P: StablePartition, R: Rotation> HasTimeBounds for LevelHeapSort<B, P, R> {
+    const WORST: Complexity = Complexity::N_SQUARED;
+    const BEST: Complexity = Complexity::N_LOG_N;
+    const AVERAGE: Complexity = Complexity::N_LOG_N;
+}
+
+// The buffer's cells outside the array, a dead mark per buffer cell, and the
+// rotation's scratch.
+impl<B: Auxiliary, P: StablePartition, R: Rotation + HasSpace> HasSpace for LevelHeapSort<B, P, R> {
+    const SPACE: Complexity = Complexity::sum(Complexity::sum(B::MERGE_SPACE, B::CARVED), R::SPACE);
+}
+
+// The level build keeps equals in order, each level is sorted by the stable
+// heap, a level of eight or fewer by the insertion sort, the carved buffer is
+// the first occurrence of its values, and it slides home ahead of its equals.
+impl<B: Auxiliary, P: StablePartition, R: Rotation> HasStability for LevelHeapSort<B, P, R> {
+    const STABLE: bool = true;
+}
+
+/// The level boundaries `2^k - 1` inside a range of `n`, ascending.
+pub fn boundaries(n: usize) -> impl Iterator<Item = usize> {
+    (1..).map(|k| (1 << k) - 1).take_while(move |&b| b < n)
+}
+
+/// Bring the `k` smallest elements of `arr[lo..hi]` to its front, ties to the
+/// earlier, equal elements keeping their order in both parts: a quickselect over
+/// the three way stable partition around a median of three, done as soon as the
+/// boundary falls inside the pivot's equal group, which the stable split leaves
+/// in order.
+pub fn select<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    lo: usize,
+    hi: usize,
+    k: usize,
+    scratch: &mut [T],
+    log: &mut U,
+) {
+    let (mut lo, mut hi, mut k) = (lo, hi, k);
+    while k > 0 && k < hi - lo {
+        let pivot = arr[median_of_three(arr, lo, lo + (hi - lo) / 2, hi - 1, log)];
+        let (equal, above) = P::partition_three_way::<R, T, U>(arr, lo, hi, pivot, scratch, log);
+        if lo + k < equal {
+            hi = equal;
+        } else if lo + k > above {
+            k -= above - lo;
+            lo = above;
+        } else {
+            return;
+        }
+    }
+}
+
+// The index of the median of three cells, compared in place.
+fn median_of_three<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], a: usize, b: usize, c: usize, log: &mut U) -> usize {
+    let (low, high) = if log.cmp_lt(arr, b, a) { (b, a) } else { (a, b) };
+    if log.cmp_lt(arr, c, low) {
+        low
+    } else if log.cmp_lt(arr, c, high) {
+        c
+    } else {
+        high
+    }
+}
+
+/// The level ordered heap of `arr[lo..hi]`: the smallest `2^k - 1` elements at
+/// its front for every boundary, from the largest down so that the prefixes
+/// halve, equal elements in original order throughout.
+pub fn build_levels<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    lo: usize,
+    hi: usize,
+    scratch: &mut [T],
+    log: &mut U,
+) {
+    let mut end = hi;
+    for b in boundaries(hi - lo).collect::<Vec<_>>().into_iter().rev() {
+        select::<P, R, T, U>(arr, lo, end, b, scratch, log);
+        end = lo + b;
+    }
+}
+
+/// Sort `arr[lo..hi]` stably: a short range by insertion, a range the buffer
+/// holds through the heap, and a larger one by levelling it and sorting each
+/// level the same way, so a range halves with every depth until the buffer
+/// holds it.
+pub fn sort_range<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    lo: usize,
+    hi: usize,
+    heap: &mut [T],
+    dead: &mut [u8],
+    scratch: &mut [T],
+    log: &mut U,
+) {
+    let m = hi - lo;
+    if m <= RUN {
+        sort_region(arr, lo, hi, log);
+    } else if m <= heap.len() {
+        heap_sort_into(arr, lo, hi, heap, dead, log);
+    } else {
+        build_levels::<P, R, T, U>(arr, lo, hi, scratch, log);
+        let mut start = lo;
+        for b in boundaries(m).map(|b| lo + b).chain([hi]) {
+            sort_range::<P, R, T, U>(arr, start, b, heap, dead, scratch, log);
+            start = b;
+        }
+    }
+}
 
 /// Size of the left subtree of a complete binary tree of `m` nodes: the full
 /// levels above the last one are split evenly, and the last level fills the
@@ -101,7 +267,18 @@ fn swap_across<T: Ord + Copy, U: ?Sized + SortLogger<T>>(a: &mut [T], i: usize, 
 mod tests {
     use super::*;
     use crate::test_util::{items, pairs, Item, Replay, Rng, Tally};
+    use array_vis_bench_traits::DirectSort;
+    use extraction_lib::RotationPartition;
+    use rotation_auxiliary::AuxiliaryRotation;
+    use rotation_reversal::ReversalRotation;
+    use rotation_trinity::TrinityRotation;
+    use scratchspace_lib::{ExternalBuffer, Fixed, Half, InArrayBuffer, Log, Sixteenth, Sqrt, TwoSqrt};
     use sort_logger::NoOpLogger;
+    use std::collections::{HashMap, HashSet};
+
+    // The shapes under test rotate by reversal and partition by rotation unless
+    // a test names others.
+    type Level<B> = LevelHeapSort<B, RotationPartition, ReversalRotation>;
 
     // The input shapes: every key repeated often, so that ties are the rule.
     fn input(kind: usize, n: usize, rng: &mut Rng) -> Vec<Item> {
@@ -165,6 +342,102 @@ mod tests {
                 assert_eq!(replay.main(), &arr[..], "a move went unlogged, n={n} values={values}");
             }
         }
+    }
+
+    // The tags of the `k` smallest of `arr`, ties to the earlier.
+    fn smallest(arr: &[Item], k: usize) -> HashSet<u32> {
+        let mut ranked = arr.to_vec();
+        ranked.sort_by_key(|x| x.key);
+        ranked[..k].iter().map(|x| x.tag).collect()
+    }
+
+    // Equal keys appear in original order: a partition keeps the order within
+    // each of its classes and a selection stops in an equal group.
+    fn equals_in_order(arr: &[Item]) -> bool {
+        let mut last = HashMap::new();
+        arr.iter().all(|x| last.insert(x.key, x.tag).is_none_or(|t| t < x.tag))
+    }
+
+    #[test]
+    fn the_levels_are_rank_intervals_with_equals_in_order() {
+        let mut rng = Rng(0x1E7E1);
+        for n in [1usize, 2, 3, 7, 8, 15, 16, 100, 257, 1000] {
+            for kind in 0..KINDS {
+                let arr0 = input(kind, n, &mut rng);
+                let mut arr = arr0.clone();
+                build_levels::<RotationPartition, ReversalRotation, _, _>(&mut arr, 0, n, &mut [], &mut NoOpLogger);
+                for hi in boundaries(n) {
+                    let got: HashSet<u32> = arr[..hi].iter().map(|x| x.tag).collect();
+                    assert_eq!(got, smallest(&arr0, hi), "kind {kind}, n={n}: the first {hi}");
+                    assert!(equals_in_order(&arr[..hi]) && equals_in_order(&arr[hi..]), "kind {kind}, n={n}: equals out of order at {hi}");
+                }
+            }
+        }
+    }
+
+    fn sorts_stably<S: DirectSort>(name: &str) {
+        let mut rng = Rng(0x5EED);
+        for n in [0usize, 1, 2, 3, 8, 9, 31, 32, 33, 64, 100, 257, 600, 1500, 3001] {
+            for kind in 0..KINDS {
+                let arr0 = input(kind, n, &mut rng);
+                let mut arr = arr0.clone();
+                S::sort(&mut arr, &mut NoOpLogger);
+                let mut want = arr0.clone();
+                want.sort_by_key(|x| x.key);
+                assert_eq!(pairs(&arr), pairs(&want), "{name}: kind {kind}, n={n}");
+            }
+        }
+    }
+
+    #[test]
+    fn every_buffer_sorts_stably() {
+        sorts_stably::<Level<InArrayBuffer<Sqrt>>>("in array sqrt");
+        sorts_stably::<Level<InArrayBuffer<TwoSqrt>>>("in array 2 sqrt");
+        sorts_stably::<Level<InArrayBuffer<Log>>>("in array log");
+        sorts_stably::<Level<InArrayBuffer<Fixed<512>>>>("in array 512");
+        sorts_stably::<Level<InArrayBuffer<Half>>>("in array half");
+        sorts_stably::<Level<InArrayBuffer<Sixteenth>>>("in array sixteenth");
+        sorts_stably::<Level<ExternalBuffer<Sqrt>>>("external sqrt");
+        sorts_stably::<Level<ExternalBuffer<Log>>>("external log");
+        sorts_stably::<Level<ExternalBuffer<Half>>>("external half");
+    }
+
+    // Every rotation of the sort is `R`'s; trinity and the auxiliary rotation
+    // run through the scratch the sort allocates once.
+    #[test]
+    fn any_rotation_sorts_stably() {
+        sorts_stably::<LevelHeapSort<InArrayBuffer<Sqrt>, RotationPartition, TrinityRotation>>("in array sqrt, trinity");
+        sorts_stably::<LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, AuxiliaryRotation>>("external sqrt, auxiliary");
+    }
+
+    fn moves_are_all_logged<S: DirectSort>(name: &str) {
+        let mut rng = Rng(0x10661);
+        for n in [32usize, 33, 100, 257, 600, 1500] {
+            for values in [1, 2, 5, 12, 40, 100_000] {
+                let mut arr: Vec<usize> = (0..n).map(|_| rng.next(values)).collect();
+                let mut replay = Replay::of(&arr);
+                S::sort(&mut arr, &mut replay);
+                assert!(arr.windows(2).all(|w| w[0] <= w[1]), "{name}: not sorted, n={n} values={values}");
+                assert_eq!(replay.main(), &arr[..], "{name}: a move went unlogged, n={n} values={values}");
+            }
+        }
+    }
+
+    #[test]
+    fn no_shape_moves_an_element_without_logging_it() {
+        moves_are_all_logged::<Level<InArrayBuffer<Sqrt>>>("in array sqrt");
+        moves_are_all_logged::<Level<ExternalBuffer<Log>>>("external log");
+        moves_are_all_logged::<LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, TrinityRotation>>("external sqrt, trinity");
+    }
+
+    #[test]
+    fn the_bounds_follow_from_the_buffer_and_the_rotation() {
+        assert_eq!(<Level<InArrayBuffer<Sqrt>> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
+        assert_eq!(<Level<InArrayBuffer<Sqrt>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+        assert_eq!(<Level<InArrayBuffer<Sqrt>> as HasSpace>::SPACE, Complexity::SQRT_N);
+        assert_eq!(<Level<ExternalBuffer<Half>> as HasSpace>::SPACE, Complexity::N1);
+        assert!(<Level<InArrayBuffer<Log>> as HasSpace>::SPACE.is_in_place());
+        assert!(<Level<InArrayBuffer<Sqrt>> as HasStability>::STABLE);
     }
 
     // The build is `m log m` comparisons and up to as many moves, the pops

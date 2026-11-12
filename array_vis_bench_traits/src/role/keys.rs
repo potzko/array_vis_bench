@@ -8,10 +8,10 @@
 //!
 //! The axis has two shapes. In array keys carve the region from the array's own
 //! distinct elements, `O(1)` space. No keys is the shape that never rolls a
-//! block, so it has nothing to tag. `extract_distinct`, `sort_region` and
-//! `heap_sort_region` are the shared mechanics, public because the `Extraction`
-//! fillers build on them and an in array buffer is carved and sorted back the
-//! same way. Extraction moves its keys by rotations, of whichever `Rotation`
+//! block, so it has nothing to tag. `extract_distinct`, `sort_region`,
+//! `heap_sort_region` and `slide_merge` are the shared mechanics, public because
+//! the `Extraction` fillers build on them and an in array buffer is carved,
+//! sorted back and slid home the same way by any sort that carves one. Extraction moves its keys by rotations, of whichever `Rotation`
 //! the caller runs.
 
 use crate::Complexity;
@@ -170,6 +170,31 @@ fn sift_down<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         if !log.cmp_lt(arr, lo + root, lo + child) { return; }
         log.swap(arr, lo + root, lo + child);
         root = child;
+    }
+}
+
+/// Merge the small sorted run `arr[lo..mid]` into `arr[mid..hi]`, an equal key
+/// of the small run first. The run slides right: each of its elements in turn
+/// finds the elements of the big run below it by one binary search and the run
+/// rotates past them, so an element of the big run moves once and the run costs
+/// `O(m^2)`. How a carved buffer goes home.
+pub fn slide_merge<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    lo: usize,
+    mid: usize,
+    hi: usize,
+    scratch: &mut [T],
+    log: &mut U,
+) {
+    let (mut start, mut end) = (lo, mid);
+    while start < end && end < hi {
+        let cut = first_not_below(arr, end, hi, start, log);
+        if cut > end {
+            R::rotate(&mut arr[start..cut], end - start, scratch, log);
+            start += cut - end;
+            end = cut;
+        }
+        start += 1;
     }
 }
 

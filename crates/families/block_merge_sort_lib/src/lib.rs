@@ -11,7 +11,7 @@
 use core::marker::PhantomData;
 
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
-use array_vis_bench_traits::role::keys::{first_not_below, heap_sort_region, sort_region};
+use array_vis_bench_traits::role::keys::{heap_sort_region, slide_merge, sort_region};
 use array_vis_bench_traits::role::{Auxiliary, Extraction, Keys, Rotation};
 use array_vis_bench_traits::Complexity;
 use scratchspace_lib::bufferless_merge;
@@ -220,30 +220,6 @@ fn block_size(la: usize, keys: usize) -> Option<usize> {
     if keys == 0 { return None; }
     let s = la.isqrt().max(la.div_ceil(keys));
     (s >= 2).then_some(s)
-}
-
-// Merge the small sorted run `arr[lo..mid]` into `arr[mid..hi]`, an equal key of
-// the small run first. The run slides right: each of its elements in turn finds
-// the elements of the big run below it by one binary search and the run rotates
-// past them, so an element of the big run moves once and the run costs `O(m^2)`.
-fn slide_merge<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-    arr: &mut [T],
-    lo: usize,
-    mid: usize,
-    hi: usize,
-    scratch: &mut [T],
-    log: &mut U,
-) {
-    let (mut start, mut end) = (lo, mid);
-    while start < end && end < hi {
-        let cut = first_not_below(arr, end, hi, start, log);
-        if cut > end {
-            R::rotate(&mut arr[start..cut], end - start, scratch, log);
-            start += cut - end;
-            end = cut;
-        }
-        start += 1;
-    }
 }
 
 #[cfg(test)]
