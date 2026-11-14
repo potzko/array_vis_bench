@@ -27,6 +27,12 @@ component smooth_sift_bottom_up
   provides SmoothSift
 end
 
+component smooth_sift_binary_search
+  type     BinarySearch
+  label    binary search
+  provides SmoothSift
+end
+
 component smooth_build_insert
   type     Insert
   label    insert

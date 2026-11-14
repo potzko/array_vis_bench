@@ -10,9 +10,9 @@ use sort_logger::{NoOpLogger, SortLog, SortLogger};
 
 use crate::heap::SmoothHeap;
 use crate::tree::{above, children};
-use crate::{Build, BottomUp, Forest, Heapify, Insert, LazyInsert, Leonardo, Pairs, Perfect, Shape, Sift, SmoothSort};
+use crate::{BinarySearch, Build, BottomUp, Forest, Heapify, Insert, LazyInsert, Leonardo, Pairs, Perfect, Shape, Sift, SmoothSort};
 
-// Calls `$check::<SmoothSort<D, S, F, B>>(name)` for each of the 24 types.
+// Calls `$check::<SmoothSort<D, S, F, B>>(name)` for each of the 36 types.
 macro_rules! every_sort {
     ($check:ident) => {
         every_sort!(@dir $check; MinReverse);
@@ -25,6 +25,7 @@ macro_rules! every_sort {
     (@shape $check:ident; $d:ty, $s:ty) => {
         every_sort!(@sift $check; $d, $s, Pairs);
         every_sort!(@sift $check; $d, $s, BottomUp);
+        every_sort!(@sift $check; $d, $s, BinarySearch);
     };
     (@sift $check:ident; $d:ty, $s:ty, $f:ty) => {
         every_sort!(@build $check; $d, $s, $f, Insert);
@@ -196,6 +197,11 @@ fn the_axes_move_the_comparisons_the_way_they_are_meant_to() {
     // The bottom up sift, one comparison a level on the way down.
     assert!(comparisons::<Max<Leonardo, BottomUp, Insert>>() < comparisons::<Max<Leonardo, Pairs, Insert>>());
     assert!(comparisons::<Max<Perfect, BottomUp, Heapify>>() < comparisons::<Max<Perfect, Pairs, Heapify>>());
+    // The binary search of the path costs more than the climb it replaces: the
+    // element that is sifted is nearly always one that belongs by the leaves, so
+    // the climb stops after a step or two and a search of the whole path cannot.
+    assert!(comparisons::<Max<Leonardo, BinarySearch, Insert>>() > comparisons::<Max<Leonardo, BottomUp, Insert>>());
+    assert!(comparisons::<Max<Leonardo, BinarySearch, Insert>>() < comparisons::<Max<Leonardo, Pairs, Insert>>());
     // The build that rectifies the roots least often, down to once a tree.
     assert!(comparisons::<Max<Leonardo, Pairs, Heapify>>() < comparisons::<Max<Leonardo, Pairs, LazyInsert>>());
     assert!(comparisons::<Max<Leonardo, Pairs, LazyInsert>>() < comparisons::<Max<Leonardo, Pairs, Insert>>());
