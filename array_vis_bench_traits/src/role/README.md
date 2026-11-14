@@ -6,6 +6,7 @@ Source of `array_vis_bench_traits`. The crate README one level up says what it i
 - `buffer_size.rs`: `BufferSize`, how many cells a block merge sort's buffer gets for an array of `n`.
 - `direct_sort.rs`: `DirectSort`, the full sort role, and `direct_sort!`, its one line impl.
 - `keys.rs`: `Keys`, the key region of a block merge, and `extract_distinct`, `sort_region`, `heap_sort_region` and `slide_merge`, its shared mechanics.
+- `marks.rs`: `Marks`, a flag per cell of a buffer, allocated or carved from the array.
 - `merge.rs`: `RotationMerge`, the merge role, and `run_rotation_merge`, its one-shot.
 - `mod.rs`: Role traits, one per axis a leaf component can implement.
 - `partition.rs`: `PartitionScheme`, partition algorithm role.
