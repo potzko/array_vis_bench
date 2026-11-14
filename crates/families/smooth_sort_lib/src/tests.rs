@@ -10,9 +10,9 @@ use sort_logger::{NoOpLogger, SortLog, SortLogger};
 
 use crate::heap::SmoothHeap;
 use crate::tree::{above, children};
-use crate::{Build, BottomUp, Forest, Insert, Leonardo, Pairs, Perfect, Shape, Sift, SmoothSort};
+use crate::{Build, BottomUp, Forest, Heapify, Insert, LazyInsert, Leonardo, Pairs, Perfect, Shape, Sift, SmoothSort};
 
-// Calls `$check::<SmoothSort<D, S, F, B>>(name)` for each of the eight types.
+// Calls `$check::<SmoothSort<D, S, F, B>>(name)` for each of the 24 types.
 macro_rules! every_sort {
     ($check:ident) => {
         every_sort!(@dir $check; MinReverse);
@@ -28,6 +28,8 @@ macro_rules! every_sort {
     };
     (@sift $check:ident; $d:ty, $s:ty, $f:ty) => {
         every_sort!(@build $check; $d, $s, $f, Insert);
+        every_sort!(@build $check; $d, $s, $f, LazyInsert);
+        every_sort!(@build $check; $d, $s, $f, Heapify);
     };
     (@build $check:ident; $d:ty, $s:ty, $f:ty, $b:ty) => {
         $check::<SmoothSort<$d, $s, $f, $b>, $d, $s, $f, $b>(stringify!($d, $s, $f, $b));
@@ -190,12 +192,15 @@ fn comparisons<A: DirectSort>() -> usize { counted::<A>(random_input()).cmps }
 
 #[test]
 fn the_axes_move_the_comparisons_the_way_they_are_meant_to() {
-    type Max<S, F> = SmoothSort<MaxForward, S, F, Insert>;
+    type Max<S, F, B> = SmoothSort<MaxForward, S, F, B>;
     // The bottom up sift, one comparison a level on the way down.
-    assert!(comparisons::<Max<Leonardo, BottomUp>>() < comparisons::<Max<Leonardo, Pairs>>());
-    assert!(comparisons::<Max<Perfect, BottomUp>>() < comparisons::<Max<Perfect, Pairs>>());
+    assert!(comparisons::<Max<Leonardo, BottomUp, Insert>>() < comparisons::<Max<Leonardo, Pairs, Insert>>());
+    assert!(comparisons::<Max<Perfect, BottomUp, Heapify>>() < comparisons::<Max<Perfect, Pairs, Heapify>>());
+    // The build that rectifies the roots least often, down to once a tree.
+    assert!(comparisons::<Max<Leonardo, Pairs, Heapify>>() < comparisons::<Max<Leonardo, Pairs, LazyInsert>>());
+    assert!(comparisons::<Max<Leonardo, Pairs, LazyInsert>>() < comparisons::<Max<Leonardo, Pairs, Insert>>());
     // The Leonardo trees, a root over uneven subtrees and fewer trees to walk.
-    assert!(comparisons::<Max<Leonardo, Pairs>>() < comparisons::<Max<Perfect, Pairs>>());
+    assert!(comparisons::<Max<Leonardo, Pairs, Insert>>() < comparisons::<Max<Perfect, Pairs, Insert>>());
 }
 
 // A reversed heap direction sorts the same elements the same way, the min heap

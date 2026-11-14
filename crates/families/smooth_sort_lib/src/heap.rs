@@ -1,7 +1,8 @@
 //! The operations on a forest of trees laid out in post order, whose roots
 //! ascend from the first to the last so that the last element outranks every
 //! other. `rectify` restores the order of the roots after the last one changed,
-//! `add` adds an element at the end, `remove_last` takes the last element off and sets its two
+//! `add` adds an element at the end, `heapify_tree` makes one whole tree a
+//! heap, and `remove_last` takes the last element off and sets its two
 //! subtrees among the roots.
 
 use core::marker::PhantomData;
@@ -44,6 +45,13 @@ impl<D: Direction, S: Shape, F: Sift> SmoothHeap<D, S, F> {
     pub fn add<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], forest: &mut Forest, at: usize, log: &mut U) {
         let order = forest.grow::<S>();
         F::sift::<D, S, T, U>(arr, at, order, log);
+    }
+
+    /// Makes the tree of `order` rooted at `root` a heap, its subtrees first.
+    pub fn heapify_tree<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], root: usize, order: usize, log: &mut U) {
+        let Some(pair) = children::<S>(root, order) else { return };
+        for (child, child_order) in pair { Self::heapify_tree(arr, child, child_order, log); }
+        F::sift::<D, S, T, U>(arr, root, order, log);
     }
 
     /// Takes the last element off a forest of `len` elements. It is the root of
