@@ -16,6 +16,7 @@ pub struct RotationPartition;
 impl StablePartition for RotationPartition {
     const NAME: &'static str = "rotation";
     const MOVES: Complexity = Complexity::N_LOG_N;
+    const MOVES_BUFFERED: Complexity = Complexity::N1;
 
     fn partition<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],

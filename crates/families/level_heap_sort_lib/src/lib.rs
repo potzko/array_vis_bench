@@ -69,14 +69,50 @@ impl<B: Auxiliary, M: Marks, P: StablePartition, R: Rotation> LevelHeapSort<B, M
 
 array_vis_bench_traits::direct_sort!(LevelHeapSort<B, M, P, R>; B: Auxiliary, M: Marks, P: StablePartition, R: Rotation);
 
-// The level build is a quickselect per boundary, quadratic at worst and linear
-// expected, over `log (n / buffer)` depths; the heaps cost `n log n` on every
-// input. What is carved adds its square to carve and to slide home, on
-// every input but one that has it in place already, as a sorted one does.
-impl<B: Auxiliary, M: Marks, P: StablePartition, R: Rotation> HasTimeBounds for LevelHeapSort<B, M, P, R> {
-    const WORST: Complexity = Complexity::N_SQUARED;
+// The time is moves and comparisons together, in four parts.
+//
+// The level build of a range of `m` is a quickselect per boundary, from the
+// largest down so that the ranges halve, and costs what one selection of the
+// whole range does. A selection is partitions of shrinking ranges: expected,
+// a constant number of passes worth of elements, so one partition's cost,
+// `partition()`; at worst a pass per element, since a pass sheds at least the
+// pivot's equals, so `m` times that. A partition is one comparison per
+// element but `P::MOVES` moves, `n log n` by rotation, unless the rotation's
+// scratch is linear and holds a constant fraction of any range, when it is
+// `P::MOVES_BUFFERED`.
+//
+// The build runs over every element once per depth, and a range halves with
+// each depth until the buffer holds it: `depths()`, a constant for a linear
+// buffer and `log n` for any smaller one. The bad selections of the worst
+// case shrink with depth instead, and sum to the first.
+//
+// The heaps are `m log m` comparisons and moves for a level of `m` on every
+// input, so `n log n` at most over the levels. What is carved adds its
+// square to carve and to slide home, on every input but one that has it in
+// place already.
+//
+// A sorted array is the best case: every pivot is the median and no rotation
+// has anything to move, so each depth is linear, and the heaps or the depths
+// make it `n log n`.
+impl<B: Auxiliary, M: Marks, P: StablePartition, R: Rotation + HasSpace> HasTimeBounds for LevelHeapSort<B, M, P, R> {
+    const WORST: Complexity = Complexity::product(Complexity::N1, partition::<P, R>());
     const BEST: Complexity = Complexity::N_LOG_N;
-    const AVERAGE: Complexity = Complexity::sum(Complexity::N_LOG_N, Complexity::product(carved::<B, M>(), carved::<B, M>()));
+    const AVERAGE: Complexity = Complexity::sum(
+        Complexity::sum(Complexity::product(partition::<P, R>(), depths::<B>()), Complexity::N_LOG_N),
+        Complexity::product(carved::<B, M>(), carved::<B, M>()),
+    );
+}
+
+// The moves of one partition of a range, through the rotation's scratch when
+// that is linear.
+const fn partition<P: StablePartition, R: Rotation + HasSpace>() -> Complexity {
+    if R::SPACE.at_least(Complexity::N1) { P::MOVES_BUFFERED } else { P::MOVES }
+}
+
+// The depths of levelling before the buffer holds a range, on an array with
+// the distinct elements the shape asks for.
+const fn depths<B: Auxiliary>() -> Complexity {
+    if Complexity::sum(B::MERGE_SPACE, B::CARVED).at_least(Complexity::N1) { Complexity::CONST } else { Complexity::LOG_N }
 }
 
 // The order of what is carved: the buffer's cells when it is in the array,
@@ -538,14 +574,34 @@ mod tests {
         moves_are_all_logged::<Level<InArrayBuffer<Sqrt>, BitMarks>>("in array sqrt, bits");
     }
 
+    // A partition without scratch moves `n log n`, and the level build runs
+    // one over every element at each of `log (n / buffer)` depths.
     #[test]
-    fn the_bounds_follow_from_the_buffer_and_the_rotation() {
-        assert_eq!(<Level<InArrayBuffer<Sqrt>> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
-        assert_eq!(<Level<InArrayBuffer<Sqrt>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+    fn a_small_buffer_over_an_in_place_rotation_is_n_log_squared() {
+        assert_eq!(<Level<InArrayBuffer<Sqrt>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_SQUARED);
+        assert_eq!(<Level<InArrayBuffer<TenLog>, InArrayMarks> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_SQUARED);
+        assert_eq!(<Level<ExternalBuffer<Fixed<512>>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_SQUARED);
+        assert_eq!(<Level<ExternalBuffer<Sqrt>, InArrayMarks> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_SQUARED);
+        assert_eq!(<Level<InArrayBuffer<Sqrt>> as HasTimeBounds>::WORST, Complexity::N_SQUARED_LOG_N);
+        assert_eq!(<Level<InArrayBuffer<Sqrt>> as HasTimeBounds>::BEST, Complexity::N_LOG_N);
         assert_eq!(<Level<InArrayBuffer<Sqrt>> as HasSpace>::SPACE, Complexity::SQRT_N);
         assert_eq!(<Level<ExternalBuffer<Half>> as HasSpace>::SPACE, Complexity::N1);
         assert!(<Level<InArrayBuffer<Log>> as HasSpace>::SPACE.is_in_place());
         assert!(<Level<InArrayBuffer<Sqrt>> as HasStability>::STABLE);
+    }
+
+    // A linear buffer is reached in a constant number of depths, and a
+    // rotation with linear scratch lends it to the partition, which is then
+    // one pass: either way a log is gone.
+    #[test]
+    fn a_linear_buffer_or_a_linear_scratch_is_n_log_n() {
+        type Buffered<B> = LevelHeapSort<B, ByteMarks, RotationPartition, AuxiliaryRotation>;
+        assert_eq!(<Level<ExternalBuffer<Half>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+        assert_eq!(<Level<ExternalBuffer<Sixteenth>, BitMarks> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+        assert_eq!(<Level<ExternalBuffer<Half>> as HasTimeBounds>::WORST, Complexity::N_SQUARED_LOG_N);
+        assert_eq!(<Buffered<InArrayBuffer<Sqrt>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+        assert_eq!(<Buffered<InArrayBuffer<TenLog>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+        assert_eq!(<Buffered<InArrayBuffer<Sqrt>> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
     }
 
     // What is carved costs its square on a shuffled array: a square root of
@@ -553,14 +609,33 @@ mod tests {
     // an external one once its marks are carved.
     #[test]
     fn the_average_carries_the_square_of_what_is_carved() {
-        assert_eq!(<Level<InArrayBuffer<Sqrt>, InArrayMarks> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
         assert_eq!(<Level<InArrayBuffer<Half>> as HasTimeBounds>::AVERAGE, Complexity::N_SQUARED);
         assert_eq!(<Level<InArrayBuffer<Sixteenth>, BitMarks> as HasTimeBounds>::AVERAGE, Complexity::N_SQUARED);
-        assert_eq!(<Level<ExternalBuffer<Half>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
         assert_eq!(<Level<ExternalBuffer<Half>, InArrayMarks> as HasTimeBounds>::AVERAGE, Complexity::N_SQUARED);
-        assert_eq!(<Level<ExternalBuffer<Sqrt>, InArrayMarks> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
         assert_eq!(<Level<InArrayBuffer<Half>> as HasTimeBounds>::BEST, Complexity::N_LOG_N);
     }
+
+    // Writes per `n log n` on shuffled keys: flat when the partition is one
+    // pass through the rotation's scratch, and climbing with the size when it
+    // rotates in place.
+    fn writes_per_n_log_n<S: DirectSort>(bits: usize) -> f64 {
+        let n = 1usize << bits;
+        let mut rng = Rng(0x6120 + bits as u64);
+        let mut arr: Vec<usize> = (0..n).map(|_| rng.next(8 * n)).collect();
+        let mut tally = Tally::default();
+        S::sort(&mut arr, &mut tally);
+        tally.moves as f64 / (n * bits) as f64
+    }
+
+    #[test]
+    fn the_moves_grow_as_the_bounds_say() {
+        type Buffered = LevelHeapSort<InArrayBuffer<Sqrt>, ByteMarks, RotationPartition, AuxiliaryRotation>;
+        let in_place = writes_per_n_log_n::<Level<InArrayBuffer<Sqrt>>>(16) / writes_per_n_log_n::<Level<InArrayBuffer<Sqrt>>>(10);
+        let buffered = writes_per_n_log_n::<Buffered>(16) / writes_per_n_log_n::<Buffered>(10);
+        assert!(in_place > 1.25, "in place {in_place}");
+        assert!(buffered < 1.1, "buffered {buffered}");
+    }
+
 
     // A byte per cell is the buffer's order wherever the buffer is, a bit per
     // cell the same but for a logarithm of them, and a carved mark is nothing.

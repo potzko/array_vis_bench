@@ -16,6 +16,10 @@ pub trait StablePartition {
     /// Worst case moves of a partition of `n` elements without scratch.
     const MOVES: Complexity;
 
+    /// The same with scratch for a constant fraction of the region, `MOVES`
+    /// for a filler the scratch does not help.
+    const MOVES_BUFFERED: Complexity = Self::MOVES;
+
     /// Move the elements of `arr[lo..hi]` below `pivot` to its front, each side
     /// keeping its order, and return where the rest begins. `scratch` is the
     /// rotation's, `R::scratch_size` cells or more.
