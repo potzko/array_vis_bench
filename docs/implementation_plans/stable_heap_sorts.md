@@ -132,6 +132,39 @@ pass has to swap rather than write, since the buffer's elements are real.
 And the selection build of each level's heap is `m log m` comparisons where
 a heapify is linear, the same cost the tagged heap carried.
 
+### The marks, an axis
+
+The mark per buffer cell was a byte of an aux array, the one allocation of
+a shape with a carved buffer. It is the `Marks` slot of
+`LevelHeapSort<B, M, P, R>`, three fillers in `scratchspace_lib`: the byte,
+a bit packed into words, and two more distinct elements of the array per
+cell, carved in the same run as the buffer, in order while the cell is live
+and swapped once it is dead. A carved mark is read by a comparison and
+written by a swap, each pop ends by clearing the marks of its level, which
+are all set by then, so no write reads first, and the pairs are sorted again
+whenever a level is done. With a carved buffer and carved marks the sort
+allocates nothing. A shape that finds fewer distinct elements than it asks
+for has the cells they pay for, a third of them each with carved marks.
+
+Best of five, the same keys, comparisons and moves per element at 2^20,
+measured together on another day than the table above:
+
+| sort | 2^18 | 2^20 | comparisons | moves | extra space |
+|---|---|---|---|---|---|
+| in array 10 log, bytes | 78 ms | 342 ms | 70.2 | 123.9 | 10 log n bytes |
+| in array 10 log, bits | 76 ms | 335 ms | 70.2 | 123.9 | 10 log n bits, at most ten words |
+| in array 10 log, in array | 70 ms | 331 ms | 79.6 | 123.1 | none |
+| in array sqrt, bytes | 64 ms | 291 ms | 64.1 | 128.2 | sqrt n bytes |
+| in array sqrt, bits | 64 ms | 292 ms | 64.1 | 128.2 | sqrt n bits |
+| in array sqrt, in array | 64 ms | 283 ms | 77.0 | 126.1 | none |
+| external half, bytes | 36 ms | 169 ms | 40.6 | 68.4 | n / 2 words, n / 2 bytes |
+| external half, bits | 35 ms | 167 ms | 40.6 | 68.4 | n / 2 words, n / 2 bits |
+
+The carved marks cost a comparison per child the sinking hole looks at,
+about a seventh more comparisons over the sort, and no time on integer
+keys: the heaps are a small part of the work and the marks sit in the
+array beside them. The bits cost nothing over the bytes.
+
 ## Verdict
 
 - The index heap is the stable heap sort: about twice the unstable heap at
@@ -141,7 +174,8 @@ a heapify is linear, the same cost the tagged heap carried.
   sort, and a quicksort by another name, so it did not stay.
 - The level heap sort is the heap sort the level property was for: stable
   with a buffer of any size, half the index heap's words at its speed, and a
-  curve down to log n bytes at about twice the time.
+  curve down to log n bytes at about twice the time, or to no allocation at
+  all with the marks carved from the array.
 - The tagged heap works, and every move but the jump is order safe, but it
   costs about four times the unstable heap. Its comparisons are higher
   because the selection build is `n log n` where a heapify is `2n`, and a
