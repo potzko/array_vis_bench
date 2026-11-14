@@ -1,12 +1,20 @@
-// Level heap family, query owned by level_heap_sort_lib. Every buffer with
-// cells, in the array or outside it by seven sizes, its dead cells marked in
-// bytes, in bits or in the array, by the rotation partition or the block
-// partition it lends the buffer to, and every rotation, 1260 entries: the curve of space against time, and the
-// rotations that keep the space where it is.
+// Level heap family, queries owned by level_heap_sort_lib. Four buffer sizes,
+// the logarithm, 512, the square root and a sixteenth, by the rotation
+// partition or the block partition the sort lends its buffer to, and every
+// rotation. A buffer in the array marks its dead cells in bytes or in the
+// array, the bits being the bytes a little slower; one outside it in bytes or
+// in bits, having no need to carve its marks. 240 entries each, 480.
 
-LevelHeapSorts: SortingAlgorithm = SortingAlgorithm<LevelHeapSort<
-    buffer = _ where ( InArrayBuffer<_> | ExternalBuffer<_> ),
-    marks = _,
+LevelHeapInArray: SortingAlgorithm = SortingAlgorithm<LevelHeapSort<
+    buffer = _ where ( InArrayBuffer<Log> | InArrayBuffer<size_512> | InArrayBuffer<Sqrt> | InArrayBuffer<Sixteenth> ),
+    marks = _ where ( ByteMarks | InArrayMarks ),
+    part = _ where ( RotationPartition | BlockPartition ),
+    rot = _
+>>
+
+LevelHeapExternal: SortingAlgorithm = SortingAlgorithm<LevelHeapSort<
+    buffer = _ where ( ExternalBuffer<Log> | ExternalBuffer<size_512> | ExternalBuffer<Sqrt> | ExternalBuffer<Sixteenth> ),
+    marks = _ where ( ByteMarks | BitMarks ),
     part = _ where ( RotationPartition | BlockPartition ),
     rot = _
 >>
