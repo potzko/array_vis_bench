@@ -136,7 +136,10 @@ const YUV_COLOUR: [&str; 10] = [
 /// The ffmpeg arguments between the input spec and the output path.
 fn output_args(encoding: &Encoding) -> Vec<&'static str> {
     let yuv = |codec_args: &[&'static str]| [codec_args, &YUV_COLOUR].concat();
-    match encoding {
+    // The index goes in front of the video so a player or an upload check can
+    // read the stream's shape without fetching the whole file.
+    let faststart = ["-movflags", "+faststart"];
+    let codec_args = match encoding {
         Encoding::Lossless => vec![
             // libx264rgb stores raw RGB, no YUV conversion, no quality loss.
             // colormatrix=GBR signals to players not to apply a YUV matrix on playback.
@@ -157,7 +160,8 @@ fn output_args(encoding: &Encoding) -> Vec<&'static str> {
             "-crf", "28",
             "-preset", "ultrafast",
         ]),
-    }
+    };
+    [codec_args, faststart.to_vec()].concat()
 }
 
 impl Mp4Visualizer {
@@ -870,6 +874,13 @@ mod tests {
             for (key, value) in [("-colorspace", "bt709"), ("-color_primaries", "bt709"), ("-color_trc", "bt709"), ("-color_range", "tv")] {
                 assert!(has_pair(&args, key, value), "missing {key} {value}");
             }
+        }
+    }
+
+    #[test]
+    fn every_encoding_puts_the_index_in_front_of_the_video() {
+        for encoding in [Encoding::Lossless, Encoding::Lossy, Encoding::Fast] {
+            assert!(has_pair(&output_args(&encoding), "-movflags", "+faststart"));
         }
     }
 
