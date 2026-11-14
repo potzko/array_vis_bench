@@ -81,7 +81,8 @@ array_vis_bench_traits::direct_sort!(LevelHeapSort<B, M, P, R>; B: Auxiliary, M:
 // pivot's equals, so `m` times that. A partition is one comparison per
 // element but `P::MOVES` moves, `n log n` by rotation, unless the rotation's
 // scratch is linear and holds a constant fraction of any range, when it is
-// `P::MOVES_BUFFERED`.
+// `P::MOVES_BUFFERED`, or the buffer, lent to the partition between the
+// heaps, is the square root or more, when it is `P::MOVES_LENT`.
 //
 // The build runs over every element once per depth, and a range halves with
 // each depth until the buffer holds it: `depths()`, a constant for a linear
@@ -97,18 +98,26 @@ array_vis_bench_traits::direct_sort!(LevelHeapSort<B, M, P, R>; B: Auxiliary, M:
 // has anything to move, so each depth is linear, and the heaps or the depths
 // make it `n log n`.
 impl<B: Auxiliary, M: Marks, P: StablePartition, R: Rotation + HasSpace> HasTimeBounds for LevelHeapSort<B, M, P, R> {
-    const WORST: Complexity = Complexity::product(Complexity::N1, partition::<P, R>());
+    const WORST: Complexity = Complexity::product(Complexity::N1, partition::<B, P, R>());
     const BEST: Complexity = Complexity::N_LOG_N;
     const AVERAGE: Complexity = Complexity::sum(
-        Complexity::sum(Complexity::product(partition::<P, R>(), depths::<B>()), Complexity::N_LOG_N),
+        Complexity::sum(Complexity::product(partition::<B, P, R>(), depths::<B>()), Complexity::N_LOG_N),
         Complexity::product(carved::<B, M>(), carved::<B, M>()),
     );
 }
 
-// The moves of one partition of a range, through the rotation's scratch when
-// that is linear.
-const fn partition<P: StablePartition, R: Rotation + HasSpace>() -> Complexity {
-    if R::SPACE.at_least(Complexity::N1) { P::MOVES_BUFFERED } else { P::MOVES }
+// The moves of one partition of a range: through the rotation's scratch when
+// that is linear, through the buffer when that is the square root or more on
+// an array with the distinct elements the shape asks for, and with neither
+// otherwise.
+const fn partition<B: Auxiliary, P: StablePartition, R: Rotation + HasSpace>() -> Complexity {
+    if R::SPACE.at_least(Complexity::N1) {
+        P::MOVES_BUFFERED
+    } else if Complexity::sum(B::MERGE_SPACE, B::CARVED).at_least(Complexity::SQRT_N) {
+        P::MOVES_LENT
+    } else {
+        P::MOVES
+    }
 }
 
 // The depths of levelling before the buffer holds a range, on an array with
@@ -331,7 +340,7 @@ mod tests {
     use super::*;
     use crate::test_util::{items, pairs, Item, Replay, Rng, Tally};
     use array_vis_bench_traits::DirectSort;
-    use extraction_lib::RotationPartition;
+    use extraction_lib::{BlockPartition, RotationPartition};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
@@ -520,6 +529,50 @@ mod tests {
         sorts_stably::<Level<ExternalBuffer<Half>, InArrayMarks>>("external half, in array marks");
     }
 
+    // The block partition works through the buffer and the marks between the
+    // heaps, whichever they are, and through whatever is left of them on the
+    // inputs of few values.
+    type Blocks<B, M = ByteMarks> = LevelHeapSort<B, M, BlockPartition, ReversalRotation>;
+
+    #[test]
+    fn the_block_partition_sorts_stably_through_any_buffer_and_marks() {
+        sorts_stably::<Blocks<InArrayBuffer<Sqrt>>>("blocks, in array sqrt");
+        sorts_stably::<Blocks<InArrayBuffer<TwoSqrt>, BitMarks>>("blocks, in array 2 sqrt, bits");
+        sorts_stably::<Blocks<InArrayBuffer<TwoSqrt>, InArrayMarks>>("blocks, in array 2 sqrt, in array marks");
+        sorts_stably::<Blocks<InArrayBuffer<TenLog>, InArrayMarks>>("blocks, in array 10 log, in array marks");
+        sorts_stably::<Blocks<InArrayBuffer<Half>, InArrayMarks>>("blocks, in array half, in array marks");
+        sorts_stably::<Blocks<ExternalBuffer<TwoSqrt>>>("blocks, external 2 sqrt");
+        sorts_stably::<Blocks<ExternalBuffer<Sqrt>, InArrayMarks>>("blocks, external sqrt, in array marks");
+        sorts_stably::<Blocks<ExternalBuffer<Half>, BitMarks>>("blocks, external half, bits");
+        sorts_stably::<LevelHeapSort<InArrayBuffer<TwoSqrt>, ByteMarks, BlockPartition, AuxiliaryRotation>>("blocks, in array 2 sqrt, auxiliary");
+    }
+
+    #[test]
+    fn the_block_partition_logs_every_move_and_allocates_nothing_of_its_own() {
+        moves_are_all_logged::<Blocks<InArrayBuffer<TwoSqrt>, InArrayMarks>>("blocks, in array 2 sqrt, in array marks");
+        moves_are_all_logged::<Blocks<ExternalBuffer<TwoSqrt>>>("blocks, external 2 sqrt");
+        moves_are_all_logged::<Blocks<ExternalBuffer<Sqrt>, BitMarks>>("blocks, external sqrt, bits");
+        assert_eq!(allocations::<Blocks<InArrayBuffer<TwoSqrt>, InArrayMarks>>(), 0);
+        assert_eq!(allocations::<Blocks<ExternalBuffer<TwoSqrt>>>(), 2);
+    }
+
+    // The replay's copy of a buffer that is not kept starts blank, so a block
+    // partition reading a cell it had not written would leave the two apart.
+    #[test]
+    fn the_block_partition_writes_a_buffer_not_kept_before_it_reads_it() {
+        let mut rng = Rng(0xB0FF);
+        for n in [40usize, 257, 1000, 4000] {
+            let mut arr: Vec<usize> = (0..n).map(|_| 1 + rng.next(n)).collect();
+            let mut replay = Replay::of(&arr);
+            let mut heap: Vec<usize> = (0..2 * n.isqrt()).map(|_| usize::MAX).collect();
+            replay.log_aux_arr_t(&heap);
+            let mut dead = replay.create_aux_arr_u8(heap.len());
+            sort_range::<ByteMarks, BlockPartition, ReversalRotation, _, _>(&mut arr, 0, n, &mut lent(&mut heap, &mut dead), &mut [], &mut replay);
+            assert!(arr.windows(2).all(|w| w[0] <= w[1]), "n={n}: not sorted");
+            assert_eq!(replay.main(), &arr[..], "n={n}: an unwritten cell was read");
+        }
+    }
+
     // Counts the arrays a sort allocates through the logger.
     #[derive(Default)]
     struct Allocations(usize);
@@ -600,6 +653,19 @@ mod tests {
         assert_eq!(<Buffered<InArrayBuffer<Sqrt>> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
     }
 
+    // A buffer of the square root or more, lent to the block partition, makes
+    // it one pass, and a smaller one does not.
+    #[test]
+    fn the_block_partition_through_a_square_root_is_n_log_n() {
+        assert_eq!(<Blocks<InArrayBuffer<Sqrt>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+        assert_eq!(<Blocks<InArrayBuffer<TwoSqrt>, InArrayMarks> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+        assert_eq!(<Blocks<ExternalBuffer<Sqrt>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+        assert_eq!(<Blocks<InArrayBuffer<Sqrt>> as HasTimeBounds>::WORST, Complexity::N_SQUARED);
+        assert_eq!(<Blocks<InArrayBuffer<TenLog>, InArrayMarks> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_SQUARED);
+        assert_eq!(<Blocks<ExternalBuffer<Fixed<512>>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_SQUARED);
+        assert_eq!(<Level<InArrayBuffer<Sqrt>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_SQUARED);
+    }
+
     // What is carved costs its square on a shuffled array: a square root of
     // cells is linear, a linear buffer in the array is quadratic, and so is
     // an external one once its marks are carved.
@@ -626,10 +692,13 @@ mod tests {
     #[test]
     fn the_moves_grow_as_the_bounds_say() {
         type Buffered = LevelHeapSort<InArrayBuffer<Sqrt>, ByteMarks, RotationPartition, AuxiliaryRotation>;
-        let in_place = writes_per_n_log_n::<Level<InArrayBuffer<Sqrt>>>(16) / writes_per_n_log_n::<Level<InArrayBuffer<Sqrt>>>(10);
-        let buffered = writes_per_n_log_n::<Buffered>(16) / writes_per_n_log_n::<Buffered>(10);
-        assert!(in_place > 1.25, "in place {in_place}");
+        let growth = |small: f64, large: f64| large / small;
+        let in_place = growth(writes_per_n_log_n::<Level<InArrayBuffer<Sqrt>>>(13), writes_per_n_log_n::<Level<InArrayBuffer<Sqrt>>>(17));
+        let buffered = growth(writes_per_n_log_n::<Buffered>(13), writes_per_n_log_n::<Buffered>(17));
+        let blocks = growth(writes_per_n_log_n::<Blocks<InArrayBuffer<TwoSqrt>>>(13), writes_per_n_log_n::<Blocks<InArrayBuffer<TwoSqrt>>>(17));
+        assert!(in_place > 1.2, "in place {in_place}");
         assert!(buffered < 1.1, "buffered {buffered}");
+        assert!(blocks < 1.1, "blocks {blocks}");
     }
 
 
