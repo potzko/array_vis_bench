@@ -71,11 +71,18 @@ array_vis_bench_traits::direct_sort!(LevelHeapSort<B, M, P, R>; B: Auxiliary, M:
 
 // The level build is a quickselect per boundary, quadratic at worst and linear
 // expected, over `log (n / buffer)` depths; the heaps cost `n log n` on every
-// input; a carved buffer adds its square to carve and slide home.
+// input. What is carved adds its square to carve and to slide home, on
+// every input but one that has it in place already, as a sorted one does.
 impl<B: Auxiliary, M: Marks, P: StablePartition, R: Rotation> HasTimeBounds for LevelHeapSort<B, M, P, R> {
     const WORST: Complexity = Complexity::N_SQUARED;
     const BEST: Complexity = Complexity::N_LOG_N;
-    const AVERAGE: Complexity = Complexity::N_LOG_N;
+    const AVERAGE: Complexity = Complexity::sum(Complexity::N_LOG_N, Complexity::product(carved::<B, M>(), carved::<B, M>()));
+}
+
+// The order of what is carved: the buffer's cells when it is in the array,
+// and the marks of the buffer's cells wherever it is when they are carved.
+const fn carved<B: Auxiliary, M: Marks>() -> Complexity {
+    if M::CARVED > 0 { Complexity::sum(B::MERGE_SPACE, B::CARVED) } else { B::CARVED }
 }
 
 // The buffer's cells outside the array, the marks allocated for the buffer's
@@ -539,6 +546,20 @@ mod tests {
         assert_eq!(<Level<ExternalBuffer<Half>> as HasSpace>::SPACE, Complexity::N1);
         assert!(<Level<InArrayBuffer<Log>> as HasSpace>::SPACE.is_in_place());
         assert!(<Level<InArrayBuffer<Sqrt>> as HasStability>::STABLE);
+    }
+
+    // What is carved costs its square on a shuffled array: a square root of
+    // cells is linear, a linear buffer in the array is quadratic, and so is
+    // an external one once its marks are carved.
+    #[test]
+    fn the_average_carries_the_square_of_what_is_carved() {
+        assert_eq!(<Level<InArrayBuffer<Sqrt>, InArrayMarks> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+        assert_eq!(<Level<InArrayBuffer<Half>> as HasTimeBounds>::AVERAGE, Complexity::N_SQUARED);
+        assert_eq!(<Level<InArrayBuffer<Sixteenth>, BitMarks> as HasTimeBounds>::AVERAGE, Complexity::N_SQUARED);
+        assert_eq!(<Level<ExternalBuffer<Half>> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+        assert_eq!(<Level<ExternalBuffer<Half>, InArrayMarks> as HasTimeBounds>::AVERAGE, Complexity::N_SQUARED);
+        assert_eq!(<Level<ExternalBuffer<Sqrt>, InArrayMarks> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
+        assert_eq!(<Level<InArrayBuffer<Half>> as HasTimeBounds>::BEST, Complexity::N_LOG_N);
     }
 
     // A byte per cell is the buffer's order wherever the buffer is, a bit per
