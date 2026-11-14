@@ -220,6 +220,17 @@ external one takes one, which is the gap between the in array and the
 external rows. The block partition writes more than the rotations at these
 sizes and is still a third faster, its writes being sequential.
 
+### The shapes the catalog keeps
+
+The types take any buffer, marks, partition and rotation, and the tables
+above measure shapes the catalog does not list. It lists 480: the buffer
+sizes log, 512, sqrt and sixteenth, the half, the ten logs and the two
+square roots left out as near neighbours of those; a buffer in the array
+with its marks in bytes or in the array, the bits there being the bytes 1
+to 3 percent slower at 2^20 over six shapes; and an external buffer with
+its marks in bytes or in bits, since a sort that allocates its buffer gains
+nothing by carving its marks.
+
 ## Verdict
 
 - The index heap is the stable heap sort: about twice the unstable heap at
