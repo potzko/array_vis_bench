@@ -10,7 +10,6 @@ path = "src/lib.rs"
 
 [dependencies]
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
-small_sort_insertion_strategy = { path = "../../small_sorts/small_sort_insertion_strategy" }
 sort_logger = { path = "../../../sort_logger" }
 
 # Spec-system catalog fragment + query, OWNED by this crate and gathered by
