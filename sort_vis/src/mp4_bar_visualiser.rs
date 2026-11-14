@@ -122,6 +122,32 @@ fn compute_array_scales(actions: &[SortLog<usize>]) -> Vec<f64> {
     scales
 }
 
+/// The ffmpeg arguments between the input spec and the output path.
+fn output_args(encoding: &Encoding) -> Vec<&'static str> {
+    match encoding {
+        Encoding::Lossless => vec![
+            // libx264rgb stores raw RGB, no YUV conversion, no quality loss.
+            // colormatrix=GBR signals to players not to apply a YUV matrix on playback.
+            "-c:v", "libx264rgb",
+            "-crf", "0",
+            "-preset", "medium",
+            "-x264-params", "colormatrix=GBR:colorprim=bt709:transfer=bt709",
+        ],
+        Encoding::Lossy => vec![
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv444p",  // 4:4:4 avoids chroma blur on sharp edges
+            "-crf", "23",
+            "-preset", "medium",
+        ],
+        Encoding::Fast => vec![
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-crf", "28",
+            "-preset", "ultrafast",
+        ],
+    }
+}
+
 impl Mp4Visualizer {
     pub fn new(config: Mp4Config) -> Self {
         Self { config }
@@ -142,30 +168,7 @@ impl Mp4Visualizer {
             "-i", "pipe:0",
         ];
 
-        // Mode-specific output args
-        match self.config.encoding {
-            Encoding::Lossless => args.extend([
-                // libx264rgb stores raw RGB — no YUV conversion, no quality loss.
-                // colormatrix=GBR signals to players not to apply a YUV matrix on playback.
-                "-c:v", "libx264rgb",
-                "-crf", "0",
-                "-preset", "medium",
-                "-x264-params", "colormatrix=GBR:colorprim=bt709:transfer=bt709",
-            ]),
-            Encoding::Lossy => args.extend([
-                "-c:v", "libx264",
-                "-pix_fmt", "yuv444p",  // 4:4:4 avoids chroma blur on sharp edges
-                "-crf", "23",
-                "-preset", "medium",
-            ]),
-            Encoding::Fast => args.extend([
-                "-c:v", "libx264",
-                "-pix_fmt", "yuv420p",
-                "-crf", "28",
-                "-preset", "ultrafast",
-            ]),
-        }
-
+        args.extend(output_args(&self.config.encoding));
         args.push(&self.config.output_path);
 
         Command::new("ffmpeg")
