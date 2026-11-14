@@ -10,9 +10,9 @@ use sort_logger::{NoOpLogger, SortLog, SortLogger};
 
 use crate::heap::SmoothHeap;
 use crate::tree::{above, children};
-use crate::{BinarySearch, Build, BottomUp, Forest, Heapify, Insert, LazyInsert, Leonardo, Pairs, Perfect, Shape, Sift, SmoothSort};
+use crate::{BinarySearch, Build, BottomUp, Forest, Heapify, Insert, LazyInsert, Leonardo, Narayana, Pairs, Perfect, Shape, Sift, SmoothSort};
 
-// Calls `$check::<SmoothSort<D, S, F, B>>(name)` for each of the 36 types.
+// Calls `$check::<SmoothSort<D, S, F, B>>(name)` for each of the 54 types.
 macro_rules! every_sort {
     ($check:ident) => {
         every_sort!(@dir $check; MinReverse);
@@ -21,6 +21,7 @@ macro_rules! every_sort {
     (@dir $check:ident; $d:ty) => {
         every_sort!(@shape $check; $d, Leonardo);
         every_sort!(@shape $check; $d, Perfect);
+        every_sort!(@shape $check; $d, Narayana);
     };
     (@shape $check:ident; $d:ty, $s:ty) => {
         every_sort!(@sift $check; $d, $s, Pairs);

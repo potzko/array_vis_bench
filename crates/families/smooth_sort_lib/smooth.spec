@@ -16,6 +16,12 @@ component smooth_shape_perfect
   provides SmoothShape
 end
 
+component smooth_shape_narayana
+  type     Narayana
+  label    narayana
+  provides SmoothShape
+end
+
 component smooth_sift_pairs
   type     Pairs
   label    pairs

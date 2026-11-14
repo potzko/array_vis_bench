@@ -37,9 +37,9 @@ impl Sift for Pairs {
     }
 }
 
-// The deepest path a tree has, an order's worth of cells: a tree is an order
-// below the word's width, and the Leonardo trees are the deepest.
-const DEPTH: usize = 96;
+// The deepest path a tree has, an order's worth of cells: a tree holds at most
+// a word's count of elements, and the Narayana trees are the deepest, 116 orders.
+pub(crate) const DEPTH: usize = 128;
 
 // Walks from the root of the tree of `order` to a leaf by the greater child, one
 // comparison a level, leaving the cells passed in `path` and giving how many.
