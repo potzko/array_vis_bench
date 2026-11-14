@@ -1,11 +1,12 @@
 // Level heap family, query owned by level_heap_sort_lib. Every buffer with
 // cells, in the array or outside it by seven sizes, its dead cells marked in
-// bytes, by the rotation partition and every rotation, 210 entries: the curve of space against time, and the
+// bytes, in bits or in the array, by the rotation partition and every
+// rotation, 630 entries: the curve of space against time, and the
 // rotations that keep the space where it is.
 
 LevelHeapSorts: SortingAlgorithm = SortingAlgorithm<LevelHeapSort<
     buffer = _ where ( InArrayBuffer<_> | ExternalBuffer<_> ),
-    marks = _ where ( ByteMarks ),
+    marks = _,
     part = _ where ( RotationPartition ),
     rot = _
 >>
