@@ -828,6 +828,11 @@ dependencies = [
 [[package]]
 name = "smooth_sort_lib"
 version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "heap_sort_lib",
+ "sort_logger",
+]
 
 [[package]]
 name = "sort_logger"

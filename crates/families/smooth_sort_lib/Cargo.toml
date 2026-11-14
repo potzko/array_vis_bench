@@ -12,3 +12,6 @@ name = "smooth_sort_lib"
 path = "src/lib.rs"
 
 [dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+heap_sort_lib = { path = "../heap_sort_lib" }
+sort_logger = { path = "../../../sort_logger" }
