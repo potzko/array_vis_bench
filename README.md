@@ -44,7 +44,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 
 ## Current catalog
 
-2737 entries are emitted from the build at the tip of this branch.
+2761 entries are emitted from the build at the tip of this branch.
 
 | family | entries | notes |
 |---|---|---|
@@ -57,6 +57,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 | quick select | 56 | recursive and iterative, pivoted and heap extract |
 | quick heap sorts | 34 | 16 classic + 16 deferred + 2 set quick select |
 | shell sorts | 30 | 9 gap sequences and 6 rod gap chains x 2 drivers |
+| smooth sorts | 24 | the heap a forest of post order trees whose last element is the greatest: 2 directions x 2 tree shapes (Leonardo, perfect) x 2 sifts x 3 builds |
 | circle sorts | 17 | |
 | rod sorts | 114 | 6 branching strategies x 19 merges, sixteen of them over the tree sort trees, keyed by copies or in place |
 | bubble sorts | 6 | 3 base + 3 odd even |
