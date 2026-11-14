@@ -138,6 +138,7 @@ mod tests {
         assert_eq!(COUNT_HEAP, 400, "heap family (16 classic + 360 quick + 24 dual)");
         assert_eq!(COUNT_WEAK, 4, "weak-heap family (2 dir x 2 storage)");
         assert_eq!(COUNT_BEAP, 80, "beap family (2 classic + 72 quick + 6 dual)");
+        assert_eq!(COUNT_SMOOTH, 24, "smooth family (2 dir x 2 trees x 2 sifts x 3 builds)");
         assert_eq!(
             COUNT_QUICK_HEAP, 34,
             "quick-heap subset (16 classic + 16 deferred + 2 finite() set-quick-select)"
@@ -162,7 +163,7 @@ mod tests {
             COUNT_SHELL + COUNT_INSERTION + COUNT_QUICK + COUNT_CYCLE + COUNT_TREE + COUNT_INDEX_HEAP
                 + COUNT_TAGGED_HEAP + COUNT_LEVEL_HEAP + COUNT_BLOCK_MERGE + COUNT_BUBBLE + COUNT_COMB
                 + COUNT_ROD + COUNT_CIRCLE + COUNT_MERGE + COUNT_HEAP + COUNT_WEAK + COUNT_BEAP
-                + COUNT_QUICK_HEAP + COUNT_QUICK_SELECT + COUNT_FUN_SORTS + COUNT_SCRATCHSPACE
+                + COUNT_SMOOTH + COUNT_QUICK_HEAP + COUNT_QUICK_SELECT + COUNT_FUN_SORTS + COUNT_SCRATCHSPACE
                 + COUNT_KINDS,
             "total drifted from the per-family sum"
         );
@@ -225,7 +226,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 2737, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 2761, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -1144,15 +1145,25 @@ mod tests {
                 "beap variants should be N_SQRT_N worst");
         }
 
-        // Correctness across the FULL heap cluster (484 variants): every emitted
+        #[test]
+        fn smooth_emits_24_and_is_linear_on_a_sorted_input() {
+            let es = by_prefix("smooth sort<");
+            assert_eq!(es.len(), COUNT_SMOOTH, "2 dir x 2 trees x 2 sifts x 3 builds");
+            assert!(es.iter().all(|e| e.worst == Complexity::N_LOG_N && e.best == Complexity::N1),
+                "smooth sorts are N log N worst and linear best");
+            assert!(es.iter().all(|e| e.space == Complexity::LOG_N && !e.stable));
+        }
+
+        // Correctness across the FULL heap cluster (508 variants): every emitted
         // variant actually sorts. This is the real arity/composition oracle.
         #[test]
         fn heap_cluster_passes_correctness() {
             let cluster: Vec<_> = by_prefix("heap sort").into_iter()
                 .chain(by_prefix("weak heap sort"))
                 .chain(by_prefix("beap sort"))
+                .chain(by_prefix("smooth sort"))
                 .collect();
-            assert_eq!(cluster.len(), COUNT_HEAP + COUNT_WEAK + COUNT_BEAP);
+            assert_eq!(cluster.len(), COUNT_HEAP + COUNT_WEAK + COUNT_BEAP + COUNT_SMOOTH);
             for e in cluster {
                 (e.run_correctness)();
             }
@@ -1161,7 +1172,7 @@ mod tests {
         #[test]
         fn heap_cluster_nests_under_heap_sorts() {
             let v = navigation::variants();
-            for name_prefix in ["heap sort<", "weak heap sort<", "beap sort<"] {
+            for name_prefix in ["heap sort<", "weak heap sort<", "beap sort<", "smooth sort<"] {
                 let one = v.iter().find(|v| v.name.starts_with(name_prefix))
                     .unwrap_or_else(|| panic!("no variant `{name_prefix}`"));
                 assert_eq!(one.category[0], "sorts");

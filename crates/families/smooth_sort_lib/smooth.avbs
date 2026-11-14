@@ -1,0 +1,5 @@
+// Smooth family, query owned by smooth_sort_lib. Four holes, each over every
+// filler of its role: the heap direction (2, shared with the other heap sorts),
+// the shape of the trees (2), the sift (2) and the build (3) = 24 entries.
+
+SmoothSorts: SortingAlgorithm = SortingAlgorithm<SmoothSort<d = _, s = _, f = _, b = _>>

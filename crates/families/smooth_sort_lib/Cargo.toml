@@ -15,3 +15,9 @@ path = "src/lib.rs"
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 heap_sort_lib = { path = "../heap_sort_lib" }
 sort_logger = { path = "../../../sort_logger" }
+
+# Catalog fragment and query, owned by this crate and gathered by
+# `spec_catalog` through the dependency graph.
+[package.metadata.array_vis_bench]
+spec  = "smooth.spec"
+query = "smooth.avbs"

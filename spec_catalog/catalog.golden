@@ -2720,6 +2720,30 @@ Sort	shell sort<sequence: sedgewick>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	shell sort<sequence: tokuda>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	slow sort	0.0Exponential 0.0Exponential 0.0Exponential 0.1 false
 Sort	slow sort potzko	0.0Exponential 0.0Exponential 0.0Exponential 0.1 false
+Sort	smooth sort<dir: max forward, trees: leonardo, sift: bottom up, build: heapify>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: max forward, trees: leonardo, sift: bottom up, build: insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: max forward, trees: leonardo, sift: bottom up, build: lazy insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: max forward, trees: leonardo, sift: pairs, build: heapify>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: max forward, trees: leonardo, sift: pairs, build: insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: max forward, trees: leonardo, sift: pairs, build: lazy insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: max forward, trees: perfect, sift: bottom up, build: heapify>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: max forward, trees: perfect, sift: bottom up, build: insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: max forward, trees: perfect, sift: bottom up, build: lazy insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: max forward, trees: perfect, sift: pairs, build: heapify>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: max forward, trees: perfect, sift: pairs, build: insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: max forward, trees: perfect, sift: pairs, build: lazy insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: min reverse, trees: leonardo, sift: bottom up, build: heapify>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: min reverse, trees: leonardo, sift: bottom up, build: insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: min reverse, trees: leonardo, sift: bottom up, build: lazy insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: min reverse, trees: leonardo, sift: pairs, build: heapify>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: min reverse, trees: leonardo, sift: pairs, build: insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: min reverse, trees: leonardo, sift: pairs, build: lazy insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: min reverse, trees: perfect, sift: bottom up, build: heapify>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: min reverse, trees: perfect, sift: bottom up, build: insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: min reverse, trees: perfect, sift: bottom up, build: lazy insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: min reverse, trees: perfect, sift: pairs, build: heapify>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: min reverse, trees: perfect, sift: pairs, build: insert>	1.1 1.0 1.1 0.1 false
+Sort	smooth sort<dir: min reverse, trees: perfect, sift: pairs, build: lazy insert>	1.1 1.0 1.1 0.1 false
 Sort	stooge sort<insertion: 32>	2.0Sqrt 2.0Sqrt 2.0Sqrt 0.1 false
 Sort	stooge sort<network: 16>	2.0Sqrt 2.0Sqrt 2.0Sqrt 0.1 false
 Sort	tagged heap sort	1.1 1.1 1.1 1.0 true

@@ -105,6 +105,8 @@ heap_sort_lib = { path = "../crates/families/heap_sort_lib" }
 weak_heap_sort_lib = { path = "../crates/families/weak_heap_sort_lib" }
 reverse_storage_lib = { path = "../crates/components/reverse_storage_lib" }
 beap_sort_lib = { path = "../crates/families/beap_sort_lib" }
+# smooth sort (reuses heap's HeapDir)
+smooth_sort_lib = { path = "../crates/families/smooth_sort_lib" }
 # quick-heap (portable classic+deferred subset; reuses heap's HeapArity + quick's small sorts)
 quick_heap_sort_lib = { path = "../crates/families/quick_heap_sort_lib" }
 

@@ -903,6 +903,7 @@ dependencies = [
  "small_sort_insertion",
  "small_sort_insertion_strategy",
  "small_sort_network_16",
+ "smooth_sort_lib",
  "sort_logger",
  "spec_core",
  "spec_emit",

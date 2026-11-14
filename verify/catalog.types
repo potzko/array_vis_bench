@@ -2713,6 +2713,30 @@
 "smaller-side<piston>"	SmallerSideRotationMerge<PistonRotation>
 "smaller-side<reversal>"	SmallerSideRotationMerge<ReversalRotation>
 "smaller-side<trinity>"	SmallerSideRotationMerge<TrinityRotation>
+"smooth sort<dir: max forward, trees: leonardo, sift: bottom up, build: heapify>"	SmoothSort<MaxForward, Leonardo, BottomUp, Heapify>
+"smooth sort<dir: max forward, trees: leonardo, sift: bottom up, build: insert>"	SmoothSort<MaxForward, Leonardo, BottomUp, Insert>
+"smooth sort<dir: max forward, trees: leonardo, sift: bottom up, build: lazy insert>"	SmoothSort<MaxForward, Leonardo, BottomUp, LazyInsert>
+"smooth sort<dir: max forward, trees: leonardo, sift: pairs, build: heapify>"	SmoothSort<MaxForward, Leonardo, Pairs, Heapify>
+"smooth sort<dir: max forward, trees: leonardo, sift: pairs, build: insert>"	SmoothSort<MaxForward, Leonardo, Pairs, Insert>
+"smooth sort<dir: max forward, trees: leonardo, sift: pairs, build: lazy insert>"	SmoothSort<MaxForward, Leonardo, Pairs, LazyInsert>
+"smooth sort<dir: max forward, trees: perfect, sift: bottom up, build: heapify>"	SmoothSort<MaxForward, Perfect, BottomUp, Heapify>
+"smooth sort<dir: max forward, trees: perfect, sift: bottom up, build: insert>"	SmoothSort<MaxForward, Perfect, BottomUp, Insert>
+"smooth sort<dir: max forward, trees: perfect, sift: bottom up, build: lazy insert>"	SmoothSort<MaxForward, Perfect, BottomUp, LazyInsert>
+"smooth sort<dir: max forward, trees: perfect, sift: pairs, build: heapify>"	SmoothSort<MaxForward, Perfect, Pairs, Heapify>
+"smooth sort<dir: max forward, trees: perfect, sift: pairs, build: insert>"	SmoothSort<MaxForward, Perfect, Pairs, Insert>
+"smooth sort<dir: max forward, trees: perfect, sift: pairs, build: lazy insert>"	SmoothSort<MaxForward, Perfect, Pairs, LazyInsert>
+"smooth sort<dir: min reverse, trees: leonardo, sift: bottom up, build: heapify>"	SmoothSort<MinReverse, Leonardo, BottomUp, Heapify>
+"smooth sort<dir: min reverse, trees: leonardo, sift: bottom up, build: insert>"	SmoothSort<MinReverse, Leonardo, BottomUp, Insert>
+"smooth sort<dir: min reverse, trees: leonardo, sift: bottom up, build: lazy insert>"	SmoothSort<MinReverse, Leonardo, BottomUp, LazyInsert>
+"smooth sort<dir: min reverse, trees: leonardo, sift: pairs, build: heapify>"	SmoothSort<MinReverse, Leonardo, Pairs, Heapify>
+"smooth sort<dir: min reverse, trees: leonardo, sift: pairs, build: insert>"	SmoothSort<MinReverse, Leonardo, Pairs, Insert>
+"smooth sort<dir: min reverse, trees: leonardo, sift: pairs, build: lazy insert>"	SmoothSort<MinReverse, Leonardo, Pairs, LazyInsert>
+"smooth sort<dir: min reverse, trees: perfect, sift: bottom up, build: heapify>"	SmoothSort<MinReverse, Perfect, BottomUp, Heapify>
+"smooth sort<dir: min reverse, trees: perfect, sift: bottom up, build: insert>"	SmoothSort<MinReverse, Perfect, BottomUp, Insert>
+"smooth sort<dir: min reverse, trees: perfect, sift: bottom up, build: lazy insert>"	SmoothSort<MinReverse, Perfect, BottomUp, LazyInsert>
+"smooth sort<dir: min reverse, trees: perfect, sift: pairs, build: heapify>"	SmoothSort<MinReverse, Perfect, Pairs, Heapify>
+"smooth sort<dir: min reverse, trees: perfect, sift: pairs, build: insert>"	SmoothSort<MinReverse, Perfect, Pairs, Insert>
+"smooth sort<dir: min reverse, trees: perfect, sift: pairs, build: lazy insert>"	SmoothSort<MinReverse, Perfect, Pairs, LazyInsert>
 "stooge sort<insertion: 32>"	StoogeSort<InsertionSmallSort<LinearInsertion, 32>>
 "stooge sort<network: 16>"	StoogeSort<Network16SmallSort>
 "tagged heap sort"	TaggedHeapSort
