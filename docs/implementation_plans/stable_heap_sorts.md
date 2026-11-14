@@ -125,7 +125,7 @@ partitions the whole range. The heaps themselves are a small part of the
 time. The in array half and sixteenth carve their buffer by the scan at the
 square, as the block sort's do, and are quadratic.
 
-Two cuts are open. The external buffer is free while a level is being
+Two cuts were open; the first is taken by the block partition, below. The external buffer is free while a level is being
 built and could serve the partition as scratch, which makes a partition of
 a range at most twice the buffer one buffered pass; for a carved buffer the
 pass has to swap rather than write, since the buffer's elements are real.
@@ -185,6 +185,40 @@ pass through. Writes per `n log n` on random keys, a swap as two:
 | in array 10 log, auxiliary | 3.4 | 3.4 | 3.4 | 3.5 | 3.5 |
 
 The comparisons per `n log n` stay between 2 and 3.5 in every row.
+
+### The block partition
+
+The buffer and the marks are idle while a range is levelled, and the sort
+lends them to its partition as a workspace. `BlockPartition`, in
+`extraction_lib`, streams the matches into one half of the buffer and the
+rest into the other, writes a half that fills back as a whole block, marks
+each block's kind, and moves the blocks into order along the cycles of
+their permutation with a second mark per block for the ones placed. That is
+linear for a range up to a quarter of the buffer's square, so a buffer of
+the square root or more makes the sort `O(n log n)` expected, still stable
+and with nothing more allocated. A smaller buffer only shortens the
+rotations at the bottom, and the order stays `O(n log^2 n)`.
+
+Comparisons and writes per `n log n` at 2^20 and best of three, random
+keys, the reversal rotation:
+
+| sort | comparisons | writes | 2^18 | 2^20 |
+|---|---|---|---|---|
+| rotation, in array sqrt, bytes | 3.17 | 11.4 | 66 ms | 296 ms |
+| block, in array sqrt, bytes | 3.17 | 15.3 | 44 ms | 198 ms |
+| block, in array 2 sqrt, bytes | 2.98 | 13.7 | 42 ms | 183 ms |
+| block, in array 2 sqrt, in array | 3.96 | 16.2 | 45 ms | 203 ms |
+| block, external 2 sqrt, bytes | 3.19 | 7.6 | 40 ms | 175 ms |
+| rotation, in array 10 log, in array | 4.05 | 12.0 | 71 ms | 339 ms |
+| block, in array 10 log, in array | 4.82 | 20.1 | 53 ms | 255 ms |
+| rotation, external half, bytes | 1.96 | 6.0 | 38 ms | 179 ms |
+| block, external half, bytes | 1.96 | 2.3 | 30 ms | 145 ms |
+
+The block rows' writes per `n log n` are flat from 2^14 up where the
+rotation rows climb. A carved buffer is swapped with, two writes where an
+external one takes one, which is the gap between the in array and the
+external rows. The block partition writes more than the rotations at these
+sizes and is still a third faster, its writes being sequential.
 
 ## Verdict
 

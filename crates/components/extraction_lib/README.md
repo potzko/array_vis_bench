@@ -30,5 +30,14 @@ partition for a region the rotation's scratch holds: `O(n)` comparisons,
 scan, each run of elements that stay costing one rotation of the block past
 it: `O(n)` comparisons and `O(n + m r)` moves for `m` matches in `r` runs,
 linear when they are few or clustered and quadratic at worst.
+`BlockPartition` works through a workspace its caller lends, a buffer of
+elements and a mark per cell: the scan streams the matches into one half of
+the buffer and the rest into the other, a half that fills goes back into
+the cells the scan has emptied as a whole block, and the blocks are then
+moved into order along the cycles of their permutation, read off a mark per
+block for its kind and kept track of by a second: `O(n)` comparisons and
+moves for a region up to a quarter of the buffer's square, a longer one
+halved and rotated. Without a workspace it is the rotation partition, so it
+is not offered to the partition extraction.
 
 Its catalog components are declared in `extraction.spec`.

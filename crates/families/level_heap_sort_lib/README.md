@@ -45,5 +45,11 @@ number of depths, or over a rotation whose scratch is linear, which the
 partition then makes one pass through. The selection is a quickselect, so
 the worst case is `n` partitions of the range, `O(n^2 log n)` in place.
 
+The buffer and the marks lie idle while a range is levelled, so the sort
+lends them to its partition. The rotation partition has no use for them.
+The block partition works through them and is linear for a buffer of the
+square root or more, which makes the sort `O(n log n)` expected with nothing
+allocated beyond what the buffer and the marks already are.
+
 Its catalog component is declared in `level_heap.spec` and built by
 `level_heap.avbs`.
