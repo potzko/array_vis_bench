@@ -1,9 +1,9 @@
 # `level_heap_sort_lib`
 
-Level heap sort, `LevelHeapSort<B, P, R>`: a stable heap sort through a
+Level heap sort, `LevelHeapSort<B, M, P, R>`: a stable heap sort through a
 buffer of elements smaller than the array, over a buffer `B`, carved from
-the array or allocated beside it and sized by a `BufferSize`, a stable
-partition `P` and a rotation `R`.
+the array or allocated beside it and sized by a `BufferSize`, the marks `M`
+of its dead cells, a stable partition `P` and a rotation `R`.
 
 A heap sort is unstable because a pop moves the element at the array's end
 to the root, across every equal of it. Out of place there is nothing to
@@ -29,6 +29,12 @@ by level, the ranges halving with every depth, so a buffer of `B` cells costs
 can be the square root the block sorts carve. A carved buffer is distinct,
 so an unstable heap sort puts it back in order at the end, and it slides
 home like a block sort's.
+
+The marks are a flag per buffer cell, and `M` is where they are kept: a byte
+or a bit of an aux array, or two more distinct elements of the array per
+cell, carved along with the buffer, in order while the cell is live and
+swapped once it is dead. Carved marks are read by a comparison and written
+by a swap, and with a carved buffer the sort allocates nothing.
 
 Its catalog component is declared in `level_heap.spec` and built by
 `level_heap.avbs`.
