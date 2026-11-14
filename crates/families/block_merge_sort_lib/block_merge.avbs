@@ -11,5 +11,5 @@ BlockMergeExtractions: SortingAlgorithm = SortingAlgorithm<BlockMergeSort<
     buffer = _ where ( InArrayBuffer<Sqrt> | ExternalBuffer<Sqrt> | bb_none ),
     keys = _ where ( InArrayKeys ),
     rot = _ where ( ReversalRotation | TrinityRotation | AuxiliaryRotation ),
-    extract = _ - { ScanExtraction }
+    extract = _ where ( PrefixSortExtraction | PartitionExtraction<RotationPartition> | PartitionExtraction<SlidingPartition> )
 >>
