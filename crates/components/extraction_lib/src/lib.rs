@@ -18,7 +18,7 @@ pub mod partition;
 #[cfg(test)]
 pub mod test_util;
 
-pub use partition::{RotationPartition, SlidingPartition};
+pub use partition::{BlockPartition, RotationPartition, SlidingPartition};
 
 // Runs of RUN elements are insertion sorted before the first merge.
 const RUN: usize = 8;
