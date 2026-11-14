@@ -165,6 +165,27 @@ about a seventh more comparisons over the sort, and no time on integer
 keys: the heaps are a small part of the work and the marks sit in the
 array beside them. The bits cost nothing over the bytes.
 
+### The time, counted in moves
+
+The bounds first declared for the family counted comparisons. In moves a
+stable partition with no scratch is `n log n`, and the level build runs
+one over every element at each depth, so a shape over an in place
+rotation with a buffer smaller than linear is `O(n log^2 n)` expected and
+`O(n^2 log n)` at worst, the quickselect taking a pass per element. Two
+things take the log back: a linear buffer, reached in a constant number of
+depths, and a rotation with linear scratch, which the partition makes one
+pass through. Writes per `n log n` on random keys, a swap as two:
+
+| sort | 2^12 | 2^14 | 2^16 | 2^18 | 2^20 |
+|---|---|---|---|---|---|
+| in array sqrt, reversal | 7.3 | 8.2 | 9.4 | 10.8 | 11.4 |
+| in array 10 log, reversal | 7.1 | 8.6 | 9.4 | 10.3 | 11.9 |
+| external half, reversal | 4.9 | 5.5 | 5.7 | 5.4 | 6.0 |
+| in array sqrt, auxiliary | 3.3 | 3.2 | 3.3 | 3.4 | 3.3 |
+| in array 10 log, auxiliary | 3.4 | 3.4 | 3.4 | 3.5 | 3.5 |
+
+The comparisons per `n log n` stay between 2 and 3.5 in every row.
+
 ## Verdict
 
 - The index heap is the stable heap sort: about twice the unstable heap at

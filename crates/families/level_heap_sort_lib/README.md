@@ -36,5 +36,14 @@ cell, carved along with the buffer, in order while the cell is live and
 swapped once it is dead. Carved marks are read by a comparison and written
 by a swap, and with a carved buffer the sort allocates nothing.
 
+The time is the level build's. Its comparisons are `O(n log n)` expected,
+but a stable partition with no scratch moves `n log n`, and one runs over
+every element at each of the `log (n / B)` depths, so the sort is
+`O(n log^2 n)` expected over an in place rotation and a buffer smaller than
+linear. It is `O(n log n)` with a linear buffer, reached in a constant
+number of depths, or over a rotation whose scratch is linear, which the
+partition then makes one pass through. The selection is a quickselect, so
+the worst case is `n` partitions of the range, `O(n^2 log n)` in place.
+
 Its catalog component is declared in `level_heap.spec` and built by
 `level_heap.avbs`.
