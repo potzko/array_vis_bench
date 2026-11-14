@@ -36,18 +36,19 @@ impl<B: Auxiliary, P: StablePartition, R: Rotation> LevelHeapSort<B, P, R> {
         let external = B::scratch_size(n);
         // A carved buffer is the first distinct elements of the array, as many
         // as the backing asks for or as there are; the rest is the range sorted.
+        // An external buffer holds nothing worth keeping.
         let carved = if external > 0 { 0 } else { extract_distinct::<R, T, U>(arr, 0, n, B::internal_size(n), &mut scratch, log) };
         if carved > 0 { log.hold_region(arr, 0, carved, RegionKind::Buffer); }
         let mut ext = if external > 0 { log.create_aux_arr_t(external) } else { Vec::new() };
         if external > 0 { log.hold_region(&ext, 0, external, RegionKind::Buffer); }
         let mut dead = log.create_aux_arr_u8(external.max(carved));
         if external > 0 {
-            sort_range::<P, R, T, U>(arr, 0, n, &mut ext, &mut dead, &mut scratch, log);
+            sort_range::<P, R, T, U>(arr, 0, n, &mut ext, &mut dead, false, &mut scratch, log);
             log.release_region(&ext, 0, external, RegionKind::Buffer);
             log.free_aux_arr_t(&ext);
         } else {
             let (buffer, rest) = arr.split_at_mut(carved);
-            sort_range::<P, R, T, U>(rest, 0, n - carved, buffer, &mut dead, &mut scratch, log);
+            sort_range::<P, R, T, U>(rest, 0, n - carved, buffer, &mut dead, true, &mut scratch, log);
         }
         log.free_aux_arr_u8(&dead);
         // The carved buffer is distinct, so an unstable sort puts it back in
@@ -157,6 +158,7 @@ pub fn sort_range<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + So
     hi: usize,
     heap: &mut [T],
     dead: &mut [u8],
+    keeps: bool,
     scratch: &mut [T],
     log: &mut U,
 ) {
@@ -164,12 +166,12 @@ pub fn sort_range<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + So
     if m <= RUN {
         sort_region(arr, lo, hi, log);
     } else if m <= heap.len() {
-        heap_sort_into(arr, lo, hi, heap, dead, log);
+        heap_sort_into(arr, lo, hi, heap, dead, keeps, log);
     } else {
         build_levels::<P, R, T, U>(arr, lo, hi, scratch, log);
         let mut start = lo;
         for b in boundaries(m).map(|b| lo + b).chain([hi]) {
-            sort_range::<P, R, T, U>(arr, start, b, heap, dead, scratch, log);
+            sort_range::<P, R, T, U>(arr, start, b, heap, dead, keeps, scratch, log);
             start = b;
         }
     }
@@ -187,24 +189,30 @@ pub fn left_size(m: usize) -> usize {
 }
 
 /// Sort `arr[lo..hi]` stably through `heap`, a buffer of at least as many
-/// cells, and `dead`, as many marks. The elements are swapped into the
-/// buffer's first cells, a pre-order min heap is built there by selection, and
-/// the pops come back into `arr[lo..hi]` in order: each pop takes the root and
-/// sinks the hole it leaves to a leaf, which dies and takes the buffer element
-/// the output cell held. Stable because the build leaves equals in pre-order,
-/// a rising left child moves one cell, a rising right child passes only the
-/// left subtree and only when strictly smaller than its root, and the root is
-/// the first of the minima. The buffer keeps its elements as a set, scrambled.
+/// cells, and `dead`, as many marks. The elements go into the buffer's first
+/// cells, a pre-order min heap is built there by selection, and the pops come
+/// back into `arr[lo..hi]` in order: each pop takes the root and sinks the
+/// hole it leaves to a leaf, which dies. Stable because the build leaves
+/// equals in pre-order, a rising left child moves one cell, a rising right
+/// child passes only the left subtree and only when strictly smaller than its
+/// root, and the root is the first of the minima. A buffer that `keeps` its
+/// elements, one carved from the array, is swapped with rather than written,
+/// and each dead leaf takes the buffer element the output cell held, so it
+/// keeps them as a set, scrambled; a buffer that does not is never read before
+/// it is written.
 pub fn heap_sort_into<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
     hi: usize,
     heap: &mut [T],
     dead: &mut [u8],
+    keeps: bool,
     log: &mut U,
 ) {
     let m = hi - lo;
-    for i in 0..m { swap_across(arr, lo + i, heap, i, log); }
+    for i in 0..m {
+        if keeps { swap_across(arr, lo + i, heap, i, log) } else { log.write_accross(arr, lo + i, heap, i) }
+    }
     build_heap(heap, 0, m, log);
     for i in 0..m { log.write_data_u8(dead, i, 0); }
     for out in lo..hi {
@@ -212,7 +220,7 @@ pub fn heap_sort_into<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         let grave = sink_hole(heap, m, dead, log);
         let held = arr[out];
         log.write_data(arr, out, least);
-        log.write_data(heap, grave, held);
+        if keeps { log.write_data(heap, grave, held); }
     }
 }
 
@@ -316,7 +324,7 @@ mod tests {
                 let mut arr = arr0.clone();
                 let mut heap = buffer(m + rng.next(3));
                 let mut dead = vec![7u8; heap.len()];
-                heap_sort_into(&mut arr, lo, hi, &mut heap, &mut dead, &mut NoOpLogger);
+                heap_sort_into(&mut arr, lo, hi, &mut heap, &mut dead, true, &mut NoOpLogger);
                 let mut want = arr0.clone();
                 want[lo..hi].sort_by_key(|x| x.key);
                 assert_eq!(pairs(&arr), pairs(&want), "kind {kind}, n={n}, {lo}..{hi}");
@@ -325,6 +333,23 @@ mod tests {
                 assert_eq!(tags, (0..heap.len() as u32).map(|i| 10_000 + i).collect::<Vec<_>>(), "kind {kind}, n={n}: the buffer lost an element");
                 assert!(dead[..m].iter().all(|&d| d == 1) && dead[m..].iter().all(|&d| d == 7), "kind {kind}, n={n}: the marks are off");
             }
+        }
+    }
+
+    // A buffer that is not kept is only ever read where it was written: the
+    // replay's copy of it starts blank, so a read of an unwritten cell would
+    // leave the two sorts apart.
+    #[test]
+    fn a_buffer_not_kept_is_written_before_it_is_read() {
+        let mut rng = Rng(0xB0FF);
+        for n in [9usize, 40, 257, 1000] {
+            let mut arr: Vec<usize> = (0..n).map(|_| 1 + rng.next(n)).collect();
+            let mut replay = Replay::of(&arr);
+            let mut heap: Vec<usize> = (0..n).map(|_| usize::MAX).collect();
+            replay.log_aux_arr_t(&heap);
+            let mut dead = replay.create_aux_arr_u8(n);
+            heap_sort_into(&mut arr, 0, n, &mut heap, &mut dead, false, &mut replay);
+            assert_eq!(replay.main(), &arr[..], "n={n}: an unwritten cell was read");
         }
     }
 
@@ -337,7 +362,7 @@ mod tests {
                 let mut replay = Replay::of(&arr);
                 let mut heap = replay.create_aux_arr_t(n);
                 let mut dead = replay.create_aux_arr_u8(n);
-                heap_sort_into(&mut arr, 0, n, &mut heap, &mut dead, &mut replay);
+                heap_sort_into(&mut arr, 0, n, &mut heap, &mut dead, false, &mut replay);
                 assert!(arr.windows(2).all(|w| w[0] <= w[1]), "not sorted, n={n} values={values}");
                 assert_eq!(replay.main(), &arr[..], "a move went unlogged, n={n} values={values}");
             }
@@ -449,7 +474,7 @@ mod tests {
         let mut arr: Vec<usize> = (0..m).map(|_| rng.next(1 << 30)).collect();
         let (mut heap, mut dead) = (vec![0usize; m], vec![0u8; m]);
         let mut tally = Tally::default();
-        heap_sort_into(&mut arr, 0, m, &mut heap, &mut dead, &mut tally);
+        heap_sort_into(&mut arr, 0, m, &mut heap, &mut dead, false, &mut tally);
         assert!(arr.windows(2).all(|w| w[0] <= w[1]));
         assert!(tally.cmps < 3 * m * 12, "comparisons {}", tally.cmps);
         assert!(tally.moves < 3 * m * 12, "moves {}", tally.moves);
