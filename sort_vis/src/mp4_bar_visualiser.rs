@@ -122,8 +122,20 @@ fn compute_array_scales(actions: &[SortLog<usize>]) -> Vec<f64> {
     scales
 }
 
+// Converting rgb24 to YUV uses ffmpeg's BT.601 by default and leaves it untagged,
+// and players take untagged HD to be BT.709, so the colours shift. Convert with
+// BT.709 limited range and say so in the stream.
+const YUV_COLOUR: [&str; 10] = [
+    "-vf", "scale=out_color_matrix=bt709:out_range=tv",
+    "-colorspace", "bt709",
+    "-color_primaries", "bt709",
+    "-color_trc", "bt709",
+    "-color_range", "tv",
+];
+
 /// The ffmpeg arguments between the input spec and the output path.
 fn output_args(encoding: &Encoding) -> Vec<&'static str> {
+    let yuv = |codec_args: &[&'static str]| [codec_args, &YUV_COLOUR].concat();
     match encoding {
         Encoding::Lossless => vec![
             // libx264rgb stores raw RGB, no YUV conversion, no quality loss.
@@ -133,18 +145,18 @@ fn output_args(encoding: &Encoding) -> Vec<&'static str> {
             "-preset", "medium",
             "-x264-params", "colormatrix=GBR:colorprim=bt709:transfer=bt709",
         ],
-        Encoding::Lossy => vec![
+        Encoding::Lossy => yuv(&[
             "-c:v", "libx264",
             "-pix_fmt", "yuv444p",  // 4:4:4 avoids chroma blur on sharp edges
             "-crf", "23",
             "-preset", "medium",
-        ],
-        Encoding::Fast => vec![
+        ]),
+        Encoding::Fast => yuv(&[
             "-c:v", "libx264",
             "-pix_fmt", "yuv420p",
             "-crf", "28",
             "-preset", "ultrafast",
-        ],
+        ]),
     }
 }
 
@@ -844,6 +856,26 @@ mod tests {
 
     fn region(start: usize, len: usize, kind: RegionKind, held: bool) -> SortLog<usize> {
         SortLog::Region { name: 0x1000, start, len, kind, held }
+    }
+
+    fn has_pair(args: &[&str], key: &str, value: &str) -> bool {
+        args.windows(2).any(|pair| pair == [key, value])
+    }
+
+    #[test]
+    fn a_yuv_encoding_converts_with_and_is_tagged_bt709_limited_range() {
+        for encoding in [Encoding::Lossy, Encoding::Fast] {
+            let args = output_args(&encoding);
+            assert!(has_pair(&args, "-vf", "scale=out_color_matrix=bt709:out_range=tv"));
+            for (key, value) in [("-colorspace", "bt709"), ("-color_primaries", "bt709"), ("-color_trc", "bt709"), ("-color_range", "tv")] {
+                assert!(has_pair(&args, key, value), "missing {key} {value}");
+            }
+        }
+    }
+
+    #[test]
+    fn the_rgb_encoding_has_no_yuv_conversion() {
+        assert!(!output_args(&Encoding::Lossless).contains(&"-vf"));
     }
 
     #[test]
