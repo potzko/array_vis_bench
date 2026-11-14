@@ -14,4 +14,5 @@ Source of `array_vis_bench_traits`. The crate README one level up says what it i
 - `quick_select.rs`: `QuickSelect`, partition-based k-th-order-statistic finder role.
 - `rotation.rs`: `Rotation`, rotation algorithm role + the shared in-place helpers every rotation impl reaches for.
 - `scratchspace.rs`: `Scratchspace`, a set of contracts over one or more sequential lists, realised through a small auxiliary buffer.
+- `stable_partition.rs`: `StablePartition`, the stable partition role, and `Workspace`, the buffer and marks a caller lends one.
 - `small_sort.rs`: `SmallSort` and its companion traits.

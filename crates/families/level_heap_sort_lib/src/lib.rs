@@ -12,7 +12,7 @@ use core::marker::PhantomData;
 
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::role::keys::{extract_distinct, heap_sort_region, slide_merge, sort_region};
-use array_vis_bench_traits::role::{Auxiliary, Marks, Rotation, StablePartition};
+use array_vis_bench_traits::role::{Auxiliary, Marks, Rotation, StablePartition, Workspace};
 use array_vis_bench_traits::Complexity;
 use sort_logger::{RegionKind, SortLogger};
 
@@ -52,7 +52,9 @@ impl<B: Auxiliary, M: Marks, P: StablePartition, R: Rotation> LevelHeapSort<B, M
         let mut marks = M::create::<T, U>(cells, log);
         if cells > 0 { log.hold_region(heap, 0, cells, RegionKind::Buffer); }
         if !pairs.is_empty() { log.hold_region(pairs, 0, pairs.len(), RegionKind::Keys); }
-        sort_range::<M, P, R, T, U>(rest, 0, n - carved, heap, &mut marks, pairs, keeps, &mut scratch, log);
+        let mut work = Workspace::<M, T> { buffer: heap, keeps, marks: &mut marks, carved: pairs };
+        sort_range::<M, P, R, T, U>(rest, 0, n - carved, &mut work, &mut scratch, log);
+        let Workspace { buffer: heap, carved: pairs, .. } = work;
         if !pairs.is_empty() { log.release_region(pairs, 0, pairs.len(), RegionKind::Keys); }
         if cells > 0 { log.release_region(heap, 0, cells, RegionKind::Buffer); }
         M::free::<T, U>(&marks, log);
@@ -152,18 +154,19 @@ pub fn boundaries(n: usize) -> impl Iterator<Item = usize> {
 /// the three way stable partition around a median of three, done as soon as the
 /// boundary falls inside the pivot's equal group, which the stable split leaves
 /// in order.
-pub fn select<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+pub fn select<M: Marks, P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
     hi: usize,
     k: usize,
+    work: &mut Workspace<M, T>,
     scratch: &mut [T],
     log: &mut U,
 ) {
     let (mut lo, mut hi, mut k) = (lo, hi, k);
     while k > 0 && k < hi - lo {
         let pivot = arr[median_of_three(arr, lo, lo + (hi - lo) / 2, hi - 1, log)];
-        let (equal, above) = P::partition_three_way::<R, T, U>(arr, lo, hi, pivot, scratch, log);
+        let (equal, above) = P::partition_three_way_lent::<M, R, T, U>(arr, lo, hi, pivot, work, scratch, log);
         if lo + k < equal {
             hi = equal;
         } else if lo + k > above {
@@ -190,16 +193,17 @@ fn median_of_three<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], a: usize
 /// The level ordered heap of `arr[lo..hi]`: the smallest `2^k - 1` elements at
 /// its front for every boundary, from the largest down so that the prefixes
 /// halve, equal elements in original order throughout.
-pub fn build_levels<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+pub fn build_levels<M: Marks, P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
     hi: usize,
+    work: &mut Workspace<M, T>,
     scratch: &mut [T],
     log: &mut U,
 ) {
     let mut end = hi;
     for b in boundaries(hi - lo).collect::<Vec<_>>().into_iter().rev() {
-        select::<P, R, T, U>(arr, lo, end, b, scratch, log);
+        select::<M, P, R, T, U>(arr, lo, end, b, work, scratch, log);
         end = lo + b;
     }
 }
@@ -208,28 +212,24 @@ pub fn build_levels<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + 
 /// holds through the heap, and a larger one by levelling it and sorting each
 /// level the same way, so a range halves with every depth until the buffer
 /// holds it.
-#[allow(clippy::too_many_arguments)]
 pub fn sort_range<M: Marks, P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
     hi: usize,
-    heap: &mut [T],
-    marks: &mut M::Store,
-    pairs: &mut [T],
-    keeps: bool,
+    work: &mut Workspace<M, T>,
     scratch: &mut [T],
     log: &mut U,
 ) {
     let m = hi - lo;
     if m <= RUN {
         sort_region(arr, lo, hi, log);
-    } else if m <= heap.len() {
-        heap_sort_into::<M, T, U>(arr, lo, hi, heap, marks, pairs, keeps, log);
+    } else if m <= work.buffer.len() {
+        heap_sort_into::<M, T, U>(arr, lo, hi, work, log);
     } else {
-        build_levels::<P, R, T, U>(arr, lo, hi, scratch, log);
+        build_levels::<M, P, R, T, U>(arr, lo, hi, work, scratch, log);
         let mut start = lo;
         for b in boundaries(m).map(|b| lo + b).chain([hi]) {
-            sort_range::<M, P, R, T, U>(arr, start, b, heap, marks, pairs, keeps, scratch, log);
+            sort_range::<M, P, R, T, U>(arr, start, b, work, scratch, log);
             start = b;
         }
     }
@@ -246,11 +246,10 @@ pub fn left_size(m: usize) -> usize {
     half - 1 + last.min(half)
 }
 
-/// Sort `arr[lo..hi]` stably through `heap`, a buffer of at least as many
-/// cells, and as many of the marks `M`, clear coming in and clear again going
-/// out, `pairs` being the region they are carved from if they are. The
-/// elements go into the buffer's first cells, a pre-order min heap is built
-/// there by selection, and the pops come
+/// Sort `arr[lo..hi]` stably through the workspace: its buffer, of at least
+/// as many cells, is the heap, and its marks, clear coming in and clear again
+/// going out, flag the dead cells. The elements go into the buffer's first
+/// cells, a pre-order min heap is built there by selection, and the pops come
 /// back into `arr[lo..hi]` in order: each pop takes the root and sinks the
 /// hole it leaves to a leaf, which dies. Stable because the build leaves
 /// equals in pre-order, a rising left child moves one cell, a rising right
@@ -260,17 +259,9 @@ pub fn left_size(m: usize) -> usize {
 /// and each dead leaf takes the buffer element the output cell held, so it
 /// keeps them as a set, scrambled; a buffer that does not is never read before
 /// it is written.
-#[allow(clippy::too_many_arguments)]
-pub fn heap_sort_into<M: Marks, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
-    arr: &mut [T],
-    lo: usize,
-    hi: usize,
-    heap: &mut [T],
-    marks: &mut M::Store,
-    pairs: &mut [T],
-    keeps: bool,
-    log: &mut U,
-) {
+pub fn heap_sort_into<M: Marks, T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], lo: usize, hi: usize, work: &mut Workspace<M, T>, log: &mut U) {
+    let Workspace { buffer: heap, keeps, marks, carved: pairs } = work;
+    let keeps = *keeps;
     let m = hi - lo;
     for i in 0..m {
         if keeps { swap_across(arr, lo + i, heap, i, log) } else { log.write_accross(arr, lo + i, heap, i) }
@@ -376,6 +367,11 @@ mod tests {
         assert_eq!((1..=8).map(left_size).collect::<Vec<_>>(), [0, 1, 1, 2, 3, 3, 3, 4]);
     }
 
+    // A buffer that is not kept, with its marks in bytes.
+    fn lent<'a, T>(buffer: &'a mut [T], marks: &'a mut Vec<u8>) -> Workspace<'a, ByteMarks, T> {
+        Workspace { buffer, keeps: false, marks, carved: &mut [] }
+    }
+
     // The region a filler carves its marks from: distinct, sorted, tagged
     // from 20000 up.
     fn pairs_of<M: Marks>(cells: usize) -> Vec<Item> { (0..cells * M::CARVED).map(|i| Item { key: i as u32, tag: 20_000 + i as u32 }).collect() }
@@ -392,7 +388,7 @@ mod tests {
                 let mut heap = buffer(m + rng.next(3));
                 let mut marks = M::create::<Item, _>(heap.len(), &mut NoOpLogger);
                 let mut carved = pairs_of::<M>(heap.len());
-                heap_sort_into::<M, _, _>(&mut arr, lo, hi, &mut heap, &mut marks, &mut carved, true, &mut NoOpLogger);
+                heap_sort_into(&mut arr, lo, hi, &mut Workspace::<M, _> { buffer: &mut heap, keeps: true, marks: &mut marks, carved: &mut carved }, &mut NoOpLogger);
                 let mut want = arr0.clone();
                 want[lo..hi].sort_by_key(|x| x.key);
                 assert_eq!(pairs(&arr), pairs(&want), "{}: kind {kind}, n={n}, {lo}..{hi}", M::NAME);
@@ -424,7 +420,7 @@ mod tests {
             let mut heap: Vec<usize> = (0..n).map(|_| usize::MAX).collect();
             replay.log_aux_arr_t(&heap);
             let mut dead = replay.create_aux_arr_u8(n);
-            heap_sort_into::<ByteMarks, _, _>(&mut arr, 0, n, &mut heap, &mut dead, &mut [], false, &mut replay);
+            heap_sort_into(&mut arr, 0, n, &mut lent(&mut heap, &mut dead), &mut replay);
             assert_eq!(replay.main(), &arr[..], "n={n}: an unwritten cell was read");
         }
     }
@@ -438,7 +434,7 @@ mod tests {
                 let mut replay = Replay::of(&arr);
                 let mut heap = replay.create_aux_arr_t(n);
                 let mut dead = replay.create_aux_arr_u8(n);
-                heap_sort_into::<ByteMarks, _, _>(&mut arr, 0, n, &mut heap, &mut dead, &mut [], false, &mut replay);
+                heap_sort_into(&mut arr, 0, n, &mut lent(&mut heap, &mut dead), &mut replay);
                 assert!(arr.windows(2).all(|w| w[0] <= w[1]), "not sorted, n={n} values={values}");
                 assert_eq!(replay.main(), &arr[..], "a move went unlogged, n={n} values={values}");
             }
@@ -466,7 +462,7 @@ mod tests {
             for kind in 0..KINDS {
                 let arr0 = input(kind, n, &mut rng);
                 let mut arr = arr0.clone();
-                build_levels::<RotationPartition, ReversalRotation, _, _>(&mut arr, 0, n, &mut [], &mut NoOpLogger);
+                build_levels::<ByteMarks, RotationPartition, ReversalRotation, _, _>(&mut arr, 0, n, &mut lent(&mut [], &mut Vec::new()), &mut [], &mut NoOpLogger);
                 for hi in boundaries(n) {
                     let got: HashSet<u32> = arr[..hi].iter().map(|x| x.tag).collect();
                     assert_eq!(got, smallest(&arr0, hi), "kind {kind}, n={n}: the first {hi}");
@@ -658,7 +654,7 @@ mod tests {
         let mut arr: Vec<usize> = (0..m).map(|_| rng.next(1 << 30)).collect();
         let (mut heap, mut dead) = (vec![0usize; m], vec![0u8; m]);
         let mut tally = Tally::default();
-        heap_sort_into::<ByteMarks, _, _>(&mut arr, 0, m, &mut heap, &mut dead, &mut [], false, &mut tally);
+        heap_sort_into(&mut arr, 0, m, &mut lent(&mut heap, &mut dead), &mut tally);
         assert!(arr.windows(2).all(|w| w[0] <= w[1]));
         assert!(tally.cmps < 3 * m * 12, "comparisons {}", tally.cmps);
         assert!(tally.moves < 3 * m * 12, "moves {}", tally.moves);
