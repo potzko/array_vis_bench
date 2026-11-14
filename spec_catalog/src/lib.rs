@@ -138,7 +138,7 @@ mod tests {
         assert_eq!(COUNT_HEAP, 400, "heap family (16 classic + 360 quick + 24 dual)");
         assert_eq!(COUNT_WEAK, 4, "weak-heap family (2 dir x 2 storage)");
         assert_eq!(COUNT_BEAP, 80, "beap family (2 classic + 72 quick + 6 dual)");
-        assert_eq!(COUNT_SMOOTH, 54, "smooth family (2 dir x 3 trees x 3 sifts x 3 builds)");
+        assert_eq!(COUNT_SMOOTH, 72, "smooth family (2 dir x 3 trees x 3 sifts x [3 builds over sorted roots + 1 over scanned])");
         assert_eq!(
             COUNT_QUICK_HEAP, 34,
             "quick-heap subset (16 classic + 16 deferred + 2 finite() set-quick-select)"
@@ -226,7 +226,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 2791, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 2809, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -1146,11 +1146,14 @@ mod tests {
         }
 
         #[test]
-        fn smooth_emits_every_combination_and_is_linear_on_a_sorted_input() {
+        fn smooth_emits_every_combination_and_is_linear_on_a_sorted_input_with_sorted_roots() {
             let es = by_prefix("smooth sort<");
-            assert_eq!(es.len(), COUNT_SMOOTH, "2 dir x 3 trees x 3 sifts x 3 builds");
-            assert!(es.iter().all(|e| e.worst == Complexity::N_LOG_N && e.best == Complexity::N1),
-                "smooth sorts are N log N worst and linear best");
+            assert_eq!(es.len(), COUNT_SMOOTH, "2 dir x 3 trees x 3 sifts x (3 + 1)");
+            assert!(es.iter().all(|e| e.worst == Complexity::N_LOG_N), "smooth sorts are N log N worst");
+            for e in &es {
+                let best = if e.name.contains("roots: sorted") { Complexity::N1 } else { Complexity::N_LOG_N };
+                assert_eq!(e.best, best, "`{}`: linear best with the roots sorted, a scan of them an element otherwise", e.name);
+            }
             assert!(es.iter().all(|e| e.space == Complexity::LOG_N && !e.stable));
         }
 

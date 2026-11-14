@@ -1,9 +1,9 @@
 # Smooth sort family catalog fragment, owned by smooth_sort_lib and gathered by
 # `spec_catalog` through `[package.metadata.array_vis_bench] spec =
 # "smooth.spec"`. One driver over the shared HeapDir role (declared in
-# heap.spec, referenced here and not declared again) and three axes of its own:
-# the shape of the trees the heap is a forest of, the sift of one tree and the
-# build of the forest.
+# heap.spec, referenced here and not declared again) and four axes of its own:
+# the shape of the trees the heap is a forest of, the sift of one tree, what is
+# done about the order of the roots and the build of the forest.
 
 component smooth_shape_leonardo
   type     Leonardo
@@ -39,6 +39,17 @@ component smooth_sift_binary_search
   provides SmoothSift
 end
 
+component smooth_roots_sorted
+  type     SortedRoots
+  label    sorted
+  provides SmoothRoots
+end
+component smooth_roots_scanned
+  type     ScannedRoots
+  label    scanned
+  provides SmoothRoots
+end
+
 component smooth_build_insert
   type     Insert
   label    insert
@@ -56,12 +67,13 @@ component smooth_build_heapify
 end
 
 component smooth_sort
-  type     SmoothSort<{d}, {s}, {f}, {b}>
-  label    smooth sort<dir: {d}, trees: {s}, sift: {f}, build: {b}>
+  type     SmoothSort<{d}, {s}, {f}, {r}, {b}>
+  label    smooth sort<dir: {d}, trees: {s}, sift: {f}, roots: {r}, build: {b}>
   provides Sort
   menu     heap sorts / smooth
   slot     d HeapDir
   slot     s SmoothShape
   slot     f SmoothSift
+  slot     r SmoothRoots
   slot     b SmoothBuild
 end

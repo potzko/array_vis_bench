@@ -10,9 +10,12 @@ use sort_logger::{NoOpLogger, SortLog, SortLogger};
 
 use crate::heap::SmoothHeap;
 use crate::tree::{above, children};
-use crate::{BinarySearch, Build, BottomUp, Forest, Heapify, Insert, LazyInsert, Leonardo, Narayana, Pairs, Perfect, Shape, Sift, SmoothSort};
+use crate::{BinarySearch, Build, BottomUp, Forest, Heapify, Insert, LazyInsert, Leonardo, Narayana, Pairs, Perfect, Roots, ScannedRoots, Shape, Sift, SmoothSort, SortedRoots};
 
-// Calls `$check::<SmoothSort<D, S, F, B>>(name)` for each of the 54 types.
+// Calls `$check::<SmoothSort<D, S, F, R, B>, D, S, F, R, B>(name)` for each of
+// the 90 types: every build over sorted roots, and over scanned roots every
+// build but the lazy one, which has nothing to leave out. The heapify build
+// does what insertion does there, and is kept to show it.
 macro_rules! every_sort {
     ($check:ident) => {
         every_sort!(@dir $check; MinReverse);
@@ -29,12 +32,14 @@ macro_rules! every_sort {
         every_sort!(@sift $check; $d, $s, BinarySearch);
     };
     (@sift $check:ident; $d:ty, $s:ty, $f:ty) => {
-        every_sort!(@build $check; $d, $s, $f, Insert);
-        every_sort!(@build $check; $d, $s, $f, LazyInsert);
-        every_sort!(@build $check; $d, $s, $f, Heapify);
+        every_sort!(@build $check; $d, $s, $f, SortedRoots, Insert);
+        every_sort!(@build $check; $d, $s, $f, SortedRoots, LazyInsert);
+        every_sort!(@build $check; $d, $s, $f, SortedRoots, Heapify);
+        every_sort!(@build $check; $d, $s, $f, ScannedRoots, Insert);
+        every_sort!(@build $check; $d, $s, $f, ScannedRoots, Heapify);
     };
-    (@build $check:ident; $d:ty, $s:ty, $f:ty, $b:ty) => {
-        $check::<SmoothSort<$d, $s, $f, $b>, $d, $s, $f, $b>(stringify!($d, $s, $f, $b));
+    (@build $check:ident; $d:ty, $s:ty, $f:ty, $r:ty, $b:ty) => {
+        $check::<SmoothSort<$d, $s, $f, $r, $b>, $d, $s, $f, $r, $b>(stringify!($d, $s, $f, $r, $b));
     };
 }
 
@@ -62,7 +67,7 @@ fn inputs(n: usize) -> Vec<Vec<usize>> {
 
 const SIZES: [usize; 22] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 16, 17, 31, 32, 33, 64, 100, 255, 1000, 3000];
 
-fn sorts_every_input<A: DirectSort, D, S, F, B>(name: &str) {
+fn sorts_every_input<A: DirectSort, D, S, F, R, B>(name: &str) {
     for n in SIZES {
         for input in inputs(n) {
             let mut sorted = input.clone();
@@ -91,7 +96,7 @@ impl SortLogger<usize> for Replay {
     }
 }
 
-fn logs_every_move<A: DirectSort, D, S, F, B>(name: &str) {
+fn logs_every_move<A: DirectSort, D, S, F, R, B>(name: &str) {
     for n in [10, 100, 1000] {
         for input in inputs(n) {
             let mut arr = input.clone();
@@ -105,9 +110,9 @@ fn logs_every_move<A: DirectSort, D, S, F, B>(name: &str) {
 #[test]
 fn no_combination_moves_an_element_without_logging_it() { every_sort!(logs_every_move); }
 
-// Whether every tree of the forest is a heap and the roots ascend, the last
-// outranking all, over the first `len` cells.
-fn is_smooth<D: Direction, S: Shape>(arr: &[usize], forest: &Forest, len: usize) -> bool {
+// Whether every tree of the forest is a heap and, for sorted roots, the roots
+// ascend, the last outranking all, over the first `len` cells.
+fn is_smooth<D: Direction, S: Shape, R: Roots>(arr: &[usize], forest: &Forest, len: usize) -> bool {
     fn heap<D: Direction, S: Shape>(arr: &[usize], root: usize, order: usize) -> bool {
         children::<S>(root, order).map_or(true, |pair| {
             pair.iter().all(|&(child, child_order)| !above::<D, usize, NoOpLogger>(arr, child, root, &mut NoOpLogger) && heap::<D, S>(arr, child, child_order))
@@ -117,19 +122,21 @@ fn is_smooth<D: Direction, S: Shape>(arr: &[usize], forest: &Forest, len: usize)
     let roots: Vec<(usize, usize)> = forest.orders().iter().map(|&order| { end += S::size(order); (end - 1, order) }).collect();
     end == len
         && roots.iter().all(|&(root, order)| heap::<D, S>(arr, root, order))
-        && roots.windows(2).all(|pair| !above::<D, usize, NoOpLogger>(arr, pair[0].0, pair[1].0, &mut NoOpLogger))
+        && (!R::ORDERED || roots.windows(2).all(|pair| !above::<D, usize, NoOpLogger>(arr, pair[0].0, pair[1].0, &mut NoOpLogger)))
 }
 
-fn keeps_the_forest<A, D: Direction, S: Shape, F: Sift, B: Build>(name: &str) {
+fn keeps_the_forest<A, D: Direction, S: Shape, F: Sift, R: Roots, B: Build>(name: &str) {
     for n in [1, 2, 3, 4, 5, 8, 9, 14, 15, 16, 41, 100, 200] {
         for input in inputs(n) {
             let mut arr = input;
             let mut forest = Forest::default();
-            B::build::<D, S, F, usize, NoOpLogger>(&mut arr, &mut forest, &mut NoOpLogger);
-            assert!(is_smooth::<D, S>(&arr, &forest, n), "{name}: the build of {arr:?}");
+            B::build::<D, S, F, R, usize, NoOpLogger>(&mut arr, &mut forest, &mut NoOpLogger);
+            assert!(is_smooth::<D, S, R>(&arr, &forest, n), "{name}: the build of {arr:?}");
             for len in (1..n).rev() {
-                SmoothHeap::<D, S, F>::remove_last(&mut arr, &mut forest, len + 1, &mut NoOpLogger);
-                assert!(is_smooth::<D, S>(&arr, &forest, len), "{name}: {len} left of {arr:?}");
+                R::raise::<D, S, F, usize, NoOpLogger>(&mut arr, &forest, len + 1, &mut NoOpLogger);
+                assert!((0..len).all(|at| !above::<D, usize, NoOpLogger>(&arr, at, len, &mut NoOpLogger)), "{name}: the greatest is not last in {arr:?}");
+                SmoothHeap::<D, S, F, R>::remove_last(&mut arr, &mut forest, len + 1, &mut NoOpLogger);
+                assert!(is_smooth::<D, S, R>(&arr, &forest, len), "{name}: {len} left of {arr:?}");
             }
         }
     }
@@ -140,8 +147,8 @@ fn the_forest_holds_through_the_build_and_every_removal() { every_sort!(keeps_th
 
 #[test]
 fn the_heap_algorithm_names_the_last_cell_the_root() {
-    assert_eq!(<SmoothSort<MaxForward, Leonardo, Pairs, Insert> as HeapAlgorithm>::root_phys(10), 9);
-    assert_eq!(<SmoothSort<MinReverse, Leonardo, Pairs, Insert> as HeapAlgorithm>::root_phys(10), 0);
+    assert_eq!(<SmoothSort<MaxForward, Leonardo, Pairs, SortedRoots, Insert> as HeapAlgorithm>::root_phys(10), 9);
+    assert_eq!(<SmoothSort<MinReverse, Leonardo, Pairs, SortedRoots, Insert> as HeapAlgorithm>::root_phys(10), 0);
 }
 
 // Counts the comparisons and the moves.
@@ -171,16 +178,18 @@ fn random_input() -> Vec<usize> {
     (0..COUNTED).map(|_| rng.next(1 << 30)).collect()
 }
 
-fn costs_little_on_a_sorted_input<A: DirectSort, D, S, F, B>(name: &str) {
+fn costs_little_on_a_sorted_input<A: DirectSort, D, S, F, R: Roots, B>(name: &str) {
     let tally = counted::<A>((0..COUNTED).collect());
-    assert!(tally.cmps <= 5 * COUNTED, "{name}: {} comparisons for {COUNTED} sorted elements", tally.cmps);
+    // Sorted roots, linear; scanned, a scan of the roots an element.
+    let bound = if R::ORDERED { 5 * COUNTED } else { 2 * COUNTED * COUNTED.ilog2() as usize };
+    assert!(tally.cmps <= bound, "{name}: {} comparisons for {COUNTED} sorted elements", tally.cmps);
     assert_eq!(tally.moves, 0, "{name} moved elements already in place");
 }
 
 #[test]
-fn a_sorted_input_is_linear_and_moves_nothing() { every_sort!(costs_little_on_a_sorted_input); }
+fn a_sorted_input_moves_nothing_and_is_linear_for_sorted_roots() { every_sort!(costs_little_on_a_sorted_input); }
 
-fn costs_n_log_n_on_a_random_input<A: DirectSort, D, S, F, B>(name: &str) {
+fn costs_n_log_n_on_a_random_input<A: DirectSort, D, S, F, R, B>(name: &str) {
     let tally = counted::<A>(random_input());
     let n_log_n = COUNTED * COUNTED.ilog2() as usize;
     assert!(tally.cmps <= 4 * n_log_n, "{name}: {} comparisons", tally.cmps);
@@ -194,7 +203,7 @@ fn comparisons<A: DirectSort>() -> usize { counted::<A>(random_input()).cmps }
 
 #[test]
 fn the_axes_move_the_comparisons_the_way_they_are_meant_to() {
-    type Max<S, F, B> = SmoothSort<MaxForward, S, F, B>;
+    type Max<S, F, B> = SmoothSort<MaxForward, S, F, SortedRoots, B>;
     // The bottom up sift, one comparison a level on the way down.
     assert!(comparisons::<Max<Leonardo, BottomUp, Insert>>() < comparisons::<Max<Leonardo, Pairs, Insert>>());
     assert!(comparisons::<Max<Perfect, BottomUp, Heapify>>() < comparisons::<Max<Perfect, Pairs, Heapify>>());
@@ -214,7 +223,7 @@ fn the_axes_move_the_comparisons_the_way_they_are_meant_to() {
 // laid out from the right, so the two directions cost the same to a few percent.
 #[test]
 fn the_two_directions_cost_the_same() {
-    let max = comparisons::<SmoothSort<MaxForward, Leonardo, Pairs, Insert>>() as f64;
-    let min = comparisons::<SmoothSort<MinReverse, Leonardo, Pairs, Insert>>() as f64;
+    let max = comparisons::<SmoothSort<MaxForward, Leonardo, Pairs, SortedRoots, Insert>>() as f64;
+    let min = comparisons::<SmoothSort<MinReverse, Leonardo, Pairs, SortedRoots, Insert>>() as f64;
     assert!((max - min).abs() < 0.01 * max, "{max} against {min}");
 }
