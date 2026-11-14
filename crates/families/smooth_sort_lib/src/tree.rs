@@ -1,5 +1,5 @@
 //! Moves and comparisons on the logical positions of a heap: `above` asks
-//! whether one cell outranks another, `swap` exchanges two, and
+//! whether one cell outranks another, `swap`, `put` and `copy` write one, and
 //! `children` finds the two subtrees of a tree from its root. A position is
 //! logical, the direction `D` maps it to a cell of the array.
 
@@ -25,6 +25,16 @@ pub fn above<D: Direction, T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], 
 pub fn swap<D: Direction, T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], a: usize, b: usize, log: &mut U) {
     let n = arr.len();
     log.swap(arr, cell::<D>(n, a), cell::<D>(n, b));
+}
+
+/// The element at `at`, held while its cell is written over.
+#[inline(always)]
+pub fn take<D: Direction, T: Ord + Copy>(arr: &[T], at: usize) -> T { arr[cell::<D>(arr.len(), at)] }
+
+#[inline(always)]
+pub fn put<D: Direction, T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], at: usize, value: T, log: &mut U) {
+    let n = arr.len();
+    log.write_data(arr, cell::<D>(n, at), value);
 }
 
 /// The root and the order of the left and of the right subtree of the tree of

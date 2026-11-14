@@ -10,9 +10,9 @@ use sort_logger::{NoOpLogger, SortLog, SortLogger};
 
 use crate::heap::SmoothHeap;
 use crate::tree::{above, children};
-use crate::{Build, Forest, Insert, Leonardo, Pairs, Perfect, Shape, Sift, SmoothSort};
+use crate::{Build, BottomUp, Forest, Insert, Leonardo, Pairs, Perfect, Shape, Sift, SmoothSort};
 
-// Calls `$check::<SmoothSort<D, S, F, B>>(name)` for each of the four types.
+// Calls `$check::<SmoothSort<D, S, F, B>>(name)` for each of the eight types.
 macro_rules! every_sort {
     ($check:ident) => {
         every_sort!(@dir $check; MinReverse);
@@ -24,6 +24,7 @@ macro_rules! every_sort {
     };
     (@shape $check:ident; $d:ty, $s:ty) => {
         every_sort!(@sift $check; $d, $s, Pairs);
+        every_sort!(@sift $check; $d, $s, BottomUp);
     };
     (@sift $check:ident; $d:ty, $s:ty, $f:ty) => {
         every_sort!(@build $check; $d, $s, $f, Insert);
@@ -188,9 +189,13 @@ fn a_random_input_is_n_log_n() { every_sort!(costs_n_log_n_on_a_random_input); }
 fn comparisons<A: DirectSort>() -> usize { counted::<A>(random_input()).cmps }
 
 #[test]
-fn the_leonardo_trees_cost_fewer_comparisons_than_the_perfect() {
-    // A root over uneven subtrees, and fewer trees to walk.
-    assert!(comparisons::<SmoothSort<MaxForward, Leonardo, Pairs, Insert>>() < comparisons::<SmoothSort<MaxForward, Perfect, Pairs, Insert>>());
+fn the_axes_move_the_comparisons_the_way_they_are_meant_to() {
+    type Max<S, F> = SmoothSort<MaxForward, S, F, Insert>;
+    // The bottom up sift, one comparison a level on the way down.
+    assert!(comparisons::<Max<Leonardo, BottomUp>>() < comparisons::<Max<Leonardo, Pairs>>());
+    assert!(comparisons::<Max<Perfect, BottomUp>>() < comparisons::<Max<Perfect, Pairs>>());
+    // The Leonardo trees, a root over uneven subtrees and fewer trees to walk.
+    assert!(comparisons::<Max<Leonardo, Pairs>>() < comparisons::<Max<Perfect, Pairs>>());
 }
 
 // A reversed heap direction sorts the same elements the same way, the min heap
