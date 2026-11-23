@@ -201,7 +201,7 @@ mod tests {
 
     #[test]
     fn the_moves_per_element_are_flat_in_the_size_and_below_the_rotation_partitions() {
-        moves_are_flat_and_below_the_rotation_partition::<EncodedPartition>(tight);
+        moves_are_flat_and_below_the_rotation_partition::<EncodedPartition>(tight, 1 << 10);
     }
 
     #[test]

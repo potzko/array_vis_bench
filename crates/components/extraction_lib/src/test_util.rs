@@ -251,6 +251,49 @@ pub fn matches_the_reference<P: StablePartition, R: Rotation>(extra: usize, bloc
     }
 }
 
+// Arrays of only two, three and four distinct keys, in a few skews, around every
+// pivot from below the least key to above the greatest: a partition that writes
+// its block ranks into the elements must need no element to be distinct from
+// another, since the pivot tells the two elements it swaps apart.
+pub fn few_distinct_values_match_the_reference<P: StablePartition, R: Rotation>() {
+    let mut rng = Rng(0xF3D);
+    for n in (0..=200).chain([255, 256, 257, 511, 1000, 1024, 3000, 4096]) {
+        for values in 2..=4u32 {
+            for skew in 0..4 {
+                let mut run = (0, 0);
+                let keys: Vec<u32> = (0..n)
+                    .map(|_| match skew {
+                        0 => rng.next(values as usize) as u32,
+                        1 => if rng.next(8) == 0 { rng.next(values as usize) as u32 } else { 0 },
+                        2 => if rng.next(8) == 0 { rng.next(values as usize) as u32 } else { values - 1 },
+                        _ => {
+                            if run.0 == 0 { run = (1 + rng.next(40), rng.next(values as usize) as u32) }
+                            run.0 -= 1;
+                            run.1
+                        }
+                    })
+                    .collect();
+                let arr0 = items(&keys);
+                let mut scratch = vec![item(u32::MAX); R::scratch_size(n).max(P::scratch_size(n))];
+                for pivot in 0..=values {
+                    let name = format!("{}, {}: n={n} values={values} skew={skew} pivot={pivot}", P::NAME, R::NAME);
+                    let below = arr0.iter().filter(|x| x.key < pivot).count();
+                    let not_above = arr0.iter().filter(|x| x.key <= pivot).count();
+                    let mut arr = arr0.clone();
+                    let split = P::partition::<R, _, _>(&mut arr, 0, n, item(pivot), &mut scratch, &mut NoOpLogger);
+                    assert_eq!((pairs(&arr), split), (reference(&arr0, |k| k < pivot), below), "{name}: below");
+                    let mut arr = arr0.clone();
+                    let split = P::partition_at_most::<R, _, _>(&mut arr, 0, n, item(pivot), &mut scratch, &mut NoOpLogger);
+                    assert_eq!((pairs(&arr), split), (reference(&arr0, |k| k <= pivot), not_above), "{name}: at most");
+                    let mut arr = arr0.clone();
+                    let ends = P::partition_three_way::<R, _, _>(&mut arr, 0, n, item(pivot), &mut scratch, &mut NoOpLogger);
+                    assert_eq!((pairs(&arr), ends), (three_way(&arr0, pivot), (below, not_above)), "{name}: three way");
+                }
+            }
+        }
+    }
+}
+
 // Logged moves and comparisons per element of one partition of random
 // `usize` keys of a shape's `types` in blocks of `b` cells.
 pub fn cost<P: StablePartition, R: Rotation>(n: usize, shape: usize, b: usize) -> (f64, f64) {
@@ -295,14 +338,14 @@ pub fn replays_without_a_gap<P: StablePartition>(block: fn(usize) -> usize) {
     }
 }
 
-// The moves per element do not grow with the size, which a partition by
-// rotation's `log n` would, and stay under a few and below the rotation
-// partition's.
-pub fn moves_are_flat_and_below_the_rotation_partition<P: StablePartition>(block: fn(usize) -> usize) {
-    let (small, _) = cost::<P, ReversalRotation>(1 << 10, 2, block(1 << 10));
+// The moves per element do not grow with the size from `small` elements to
+// 2^16, which a partition by rotation's `log n` would, and stay under a few and
+// below the rotation partition's.
+pub fn moves_are_flat_and_below_the_rotation_partition<P: StablePartition>(block: fn(usize) -> usize, small: usize) {
+    let (small_moves, _) = cost::<P, ReversalRotation>(small, 2, block(small));
     let (large, cmps) = cost::<P, ReversalRotation>(1 << 16, 2, block(1 << 16));
     let (rotation, _) = cost::<RotationPartition, ReversalRotation>(1 << 16, 2, block(1 << 16));
-    assert!(large < 1.3 * small, "{small} moves per element at 2^10 and {large} at 2^16");
+    assert!(large < 1.3 * small_moves, "{small_moves} moves per element at {small} and {large} at 2^16");
     assert!(large < 5.0, "{large} moves per element at 2^16");
     assert!(cmps < 1.3, "{cmps} comparisons per element at 2^16");
     assert!(2.0 * large < rotation, "{large} moves per element against the rotation partition's {rotation}");

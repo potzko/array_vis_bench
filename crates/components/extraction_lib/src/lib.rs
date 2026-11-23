@@ -15,12 +15,14 @@ use sort_logger::SortLogger;
 
 mod blocks;
 pub mod encoded;
+pub mod masked;
 pub mod partition;
 
 #[cfg(test)]
 pub mod test_util;
 
 pub use encoded::EncodedPartition;
+pub use masked::MaskedPartition;
 pub use partition::{RotationPartition, SlidingPartition};
 
 // Runs of RUN elements are insertion sorted before the first merge.
