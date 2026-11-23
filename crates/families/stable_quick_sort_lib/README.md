@@ -7,7 +7,8 @@ stable partition `P`, the `StablePartition` axis, rotating with a rotation
 A quick sort is unstable because its partition throws an element across the
 equal ones it passes. A stable partition keeps each side in order, so the
 sort needs no tag and no index, only the scratch the partition and the
-rotation share, allocated once. The pivot is a copied value, the median of
+rotation share, allocated once, and the fixed size words the partition keeps,
+allocated once as well. The pivot is a copied value, the median of
 three values and past 128 elements the median of three such medians, so
 nothing is moved to choose it. The region splits into the elements below the
 pivot and the rest, and the sort recurses into the smaller of the two and

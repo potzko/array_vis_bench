@@ -48,18 +48,25 @@ ends with are in place, and are compared once and left, so a pass with nothing
 to move costs its comparisons alone.
 `MaskedPartition` makes the same blocks with no buffer at all. The region goes
 through in windows of up to a thousand elements, each window's types held as a
-bit mask in sixteen words of locals, and a window is permuted in place into
+bit mask in sixteen words, and a window is permuted in place into
 whole blocks of the front type, whole blocks of the back type, and then the
 partial blocks that start the next window. An element's place is worked out
 from popcounts of the mask below it, the cycles of the permutation are walked
 with one element carried in a local, and every element that moves is written
-once. It holds 290 bytes of arrays in locals, whatever the element type is, and
-asks for no scratch. `MaskedTablePartition` is the same with the places of a
-window filled into a table first, which the cycle walk then reads instead of
-counting bits, at 2210 bytes of locals. Both share the trim, the
+once. The mask, its counts and the positions done are the fixed size arrays a C
+version keeps on the stack, and here they are registered words, three arrays
+laid side by side of 16, 17 and 16 words, whatever the element type is: the
+`StablePartition` role declares them as `SCRATCH_SECTIONS`, the sort allocates
+them once through the logger and every write to them is logged. It asks for no
+scratch of elements. `MaskedTablePartition` is the same with the places of a
+window filled into a table first, a word a position, which the cycle walk then
+reads instead of counting bits, at 16, 17 and 1024 words. Both share the trim, the
 ordering of the blocks and the last rotation with the encoded partition, in
 `blocks.rs`. The walk is the `walk` slot of `Masked<K>` in the catalog, filled
 by `Popcount` or `Tabulated`, so both are catalogued, as `masked<popcount>`
 and `masked<table>`.
+
+`PartitionExtraction<P>` asks for the words of its partition and hands them on,
+and the other fillers ask for none.
 
 Its catalog components are declared in `extraction.spec`.

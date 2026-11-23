@@ -577,13 +577,22 @@ Every method is generic over `<T: Ord + Copy, U: ?Sized + SortLogger<T>>`.
 | `Rotation` | `const NAME`, `fn scratch_size(n) -> usize`, `fn rotate(arr, split_ind, scratch, logger)` | Rotate a slice; in-place or buffered. |
 | `QuickSelect` | `fn select(arr, logger, target)` | Place the `target`-th order statistic at index `target`. |
 | `DirectSort` | `fn sort(arr, logger)` | Sort a whole array; every driver type joins it with one `direct_sort!` line forwarding to its inherent `sort`. |
-| `RotationMerge` | `fn scratch_size(n)`, `fn merge(arr, mid, scratch, logger)` | Merge two adjacent sorted runs in place using a rotation. |
+| `RotationMerge` | `fn scratch_size(n)`, `const SCRATCH_SECTIONS = &[]`, `fn merge(arr, mid, scratch, words, logger)` | Merge two adjacent sorted runs in place using a rotation. |
 | `MergeStrategy` | `type With<R: Rotation>: RotationMerge` | A rotation merge left open in its rotation, which a block merge sort names for its local merge. |
 | `Scratchspace` | `const NAME`, `fn aux_size(n)`, `acquire`/`release`/`park`/`place`/`block_swap`/`relocate`/`roll` | Bounded-buffer contract for block-merge sorts (WikiSort/GrailSort). |
 | `Auxiliary` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn scratch_size(n)`, `fn internal_size(n)` | How much scratch a merge is handed (-> in-place vs buffered), external and carved from the array. |
 | `Keys` | `const NAME`, `const MERGE_WORST`, `const MERGE_SPACE`, `fn key_count(blocks)`, `tag_block`/`find_block`/`restore` | The key region that tags the blocks of a block merge (the movement imitation buffer). |
-| `Extraction` | `const NAME`, `fn scratch_size(n)`, `fn extract(arr, lo, hi, want, scratch, logger) -> usize` | How a block merge sort carves its keys and buffer: distinct first occurrences gathered sorted at the front, the rest in order among equals. |
-| `StablePartition` | `const NAME`, `const MOVES`, `fn scratch_size(n)`, `fn partition`, `fn partition_at_most`, `fn partition_three_way(arr, lo, hi, pivot, scratch, logger)` | The elements below a pivot, or not above it, brought to the front, each side keeping its order; the two together split three ways. |
+| `Extraction` | `const NAME`, `fn scratch_size(n)`, `const SCRATCH_SECTIONS = &[]`, `fn extract(arr, lo, hi, want, scratch, words, logger) -> usize` | How a block merge sort carves its keys and buffer: distinct first occurrences gathered sorted at the front, the rest in order among equals. |
+| `StablePartition` | `const NAME`, `const MOVES`, `fn scratch_size(n)`, `const SCRATCH_SECTIONS = &[]`, `fn partition`, `fn partition_at_most`, `fn partition_three_way(arr, lo, hi, pivot, scratch, words, logger)` | The elements below a pivot, or not above it, brought to the front, each side keeping its order; the two together split three ways. |
+
+The three roles that keep fixed size arrays, which a C version holds on the
+stack, register them as words: `SCRATCH_SECTIONS` lists the length of each array,
+the driver allocates them once per sort with
+[`with_words`](../array_vis_bench_traits/src/role/words.rs), and every call is
+handed the whole as `words`. Cut it with `split_sections` by the same lengths and
+write it only through `write_data_u`, so the visualiser draws the arrays and every
+write is logged. The words hold what the calls before left, so write a word before
+reading it.
 
 ### 6.2 Annotation traits , the Big-O that composes itself
 

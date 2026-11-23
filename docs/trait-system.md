@@ -45,12 +45,12 @@ All live in `array_vis_bench_traits/src/role/`. Every method takes the
 | `Rotation` | `NAME`, `scratch_size(n)`, `rotate(arr, split, scratch, logger)` | rotate a slice, in place or with a declared scratch |
 | `QuickSelect` | `select(arr, logger, target)` | place the target order statistic |
 | `DirectSort` | `sort(arr, logger)` | sort a whole array; each driver type forwards to its inherent `sort` with `direct_sort!` |
-| `RotationMerge` | `scratch_size(n)`, `merge(arr, mid, scratch, logger)` | merge two adjacent sorted runs using a rotation |
+| `RotationMerge` | `scratch_size(n)`, `SCRATCH_SECTIONS`, `merge(arr, mid, scratch, words, logger)` | merge two adjacent sorted runs using a rotation |
 | `MergeStrategy` | `type With<R: Rotation>: RotationMerge` | a rotation merge left open in its rotation, which a block merge sort names for its local merge |
 | `Auxiliary` | `NAME`, `MERGE_WORST`, `MERGE_SPACE`, `scratch_size(n)`, `internal_size(n)` | how much scratch a merge is handed, external and carved from the array |
 | `Keys` | `NAME`, `MERGE_WORST`, `MERGE_SPACE`, `key_count(blocks)`, `tag_block`, `find_block`, `restore` | the key region that tags the blocks of a block merge, the movement imitation buffer |
-| `Extraction` | `NAME`, `scratch_size(n)`, `extract(arr, lo, hi, want, scratch, logger)` | how a block merge sort carves its keys and buffer: distinct first occurrences gathered sorted at the front, the rest in order among equals |
-| `StablePartition` | `NAME`, `MOVES`, `scratch_size(n)`, `partition`, `partition_at_most`, `partition_three_way(arr, lo, hi, pivot, scratch, logger)` | the elements below a pivot, or not above it, brought to the front, each side keeping its order; the two together split three ways |
+| `Extraction` | `NAME`, `scratch_size(n)`, `SCRATCH_SECTIONS`, `extract(arr, lo, hi, want, scratch, words, logger)` | how a block merge sort carves its keys and buffer: distinct first occurrences gathered sorted at the front, the rest in order among equals |
+| `StablePartition` | `NAME`, `MOVES`, `scratch_size(n)`, `SCRATCH_SECTIONS`, `partition`, `partition_at_most`, `partition_three_way(arr, lo, hi, pivot, scratch, words, logger)` | the elements below a pivot, or not above it, brought to the front, each side keeping its order; the two together split three ways |
 | `Scratchspace` | `NAME`, `aux_size(n)`, `acquire`, `release`, `park`, `place`, `block_swap`, `relocate`, `roll` | a bounded buffer contract whose operations all conserve the multiset |
 | `ScratchspaceRun` | `run(list, aux, logger)` | a scripted workflow over a `Scratchspace`, netting to identity |
 
@@ -76,6 +76,15 @@ A scheme that needs scratch declares `SCRATCH_LEN`; `with_partition_scratch`
 allocates it once per sort through the logger and threads the same slice into
 every call. Rotations do the same with `scratch_size`. The visualiser can then
 draw the buffer next to the array.
+
+The fixed size arrays of a stable partition, an extraction and a rotation merge,
+the ones a C version keeps on the stack, are registered the same way. The role
+declares `SCRATCH_SECTIONS`, the lengths of its arrays of `usize` words, and the
+driver of a sort allocates them once with `with_words`, as one array drawn a
+section at a time side by side. Every call takes the whole as `words`, which the
+component cuts with `split_sections` and writes only through `write_data_u`. A
+component with none leaves the default, an empty list, and gets an empty slice
+and no events.
 
 ## Annotation traits
 

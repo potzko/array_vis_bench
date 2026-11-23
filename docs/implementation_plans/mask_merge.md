@@ -21,7 +21,7 @@ block merge sort. symMerge cuts a window at the middle of its shorter run, rotat
 and recurses down to single elements, so an element moves about `log n` times.
 Where a window is short, a merge that only compares can record where each output
 position gets its element, and a permutation applied by cycles then writes each
-element once. The mask holds that record in a few words of the stack, so nothing is
+element once. The mask holds that record in a few words, so no cell of elements is
 allocated and the merge stays in place. A longer window cannot be held, so it is cut
 the way symMerge cuts it until the pieces fit.
 
@@ -117,7 +117,7 @@ the same per element at every window that fits the cache, so a larger cap remove
 levels of rotating, each a pass of cheap swaps, and nothing else. It also hands the
 mask more of the windows whose keys are mostly ties, where symMerge trims and
 rotates long stretches of one key cheaply and the mask pays its pass for each of
-them. The default is 16 words, 1024 positions, a mask of 384 bytes of stack and a
+them. The default is 16 words, 1024 positions, a mask of 384 bytes of words and a
 window of 8 KB of data that sits in the level one cache, and is the middle of that
 tradeoff. The measurement below found no knee: each doubling past 16 words gains 2 to 3
 percent on distinct keys and costs 2 to 6 percent on few, so it stays.
@@ -510,6 +510,34 @@ slot of the sort, a fifth parameter `M: MergeStrategy`, which defaults to symMer
   copies of the crates with the mask merge in the local merges. The 90 entries put the same
   switch in the catalog, over the shapes with a buffer too, so the catalog's timing measures
   it. Not measured here.
+
+## Registered scratch
+
+The mask is words of the sort now, not an array on the stack: the fixed size arrays a C version
+keeps there, allocated once through the logger so the visualiser shows them and every write to
+them is logged. `RotationMerge` has `SCRATCH_SECTIONS`, the lengths of the arrays of `usize` it
+keeps (default empty), and `merge` takes them as `words`. The rotation merge sorts, `run_rotation_merge`
+and the local merge of the block merge sort allocate them once with `with_words`, as one array in
+sections drawn side by side, and thread the slice into every merge; `AuxiliaryMerge`,
+`NaiveRotationMerge` and `SmallerSideRotationMerge` ask for none, and `bufferless_merge`, which
+is the smaller side merge, is handed an empty slice.
+
+`MaskRotationMerge` asks for three sections of `WORDS` words each: the origin mask, the count of
+set bits below each of its words, and the positions walked. That is 48 words, the 384 bytes of
+the arrays it had, at the default of 16. The words hold what the merges before left, so a window
+writes every word it reads: the origin mask words past the scan, which are the clear bits of the
+rest of A and were zero when the array was new, are cleared, the counts are written whole, and
+the walked marks are cleared first. A window of `w` positions still costs `w` moves and at most
+`w - 1` comparisons, and a write to a word is no move: the replay logger compares the arrays
+with its copy as they are freed, with the words blank and with them full of garbage, and the
+visualiser sees the origin mask fill a word to each 64 comparisons of the scan, then the counts,
+then the walked marks cleared and set during the cycles. A sort over the mask merge creates the
+three arrays once and frees them once, and a sort over another merge makes none.
+
+Measured on 2^20 distinct keys in one build against dev 28cc610 with the arrays on the stack,
+best of six runs on idle cores 6, 8 and 10, the runs within 1.5 percent of each other: the top
+down rotation merge sort over the mask merge by reversal, 110.5 ms before and 112.2 ms after,
+1.5 percent slower.
 
 ## Open
 

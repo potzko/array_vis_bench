@@ -14,7 +14,9 @@ factor of two to three on a split that leaves a small minority. The walk by popc
 1.8 times as long as the encoded partition in every row, at 290 bytes. The refactor that
 moved the encoded partition's trim and finish into shared functions did not slow it: it is
 5 percent faster. The walk to run is the walk by table, the constants stay, and the catalog
-holds both walks, as an axis of the partition.
+holds both walks, as an axis of the partition. The arrays of masks and counts are
+registered words of the sort now, not locals, and cost nothing measurable: see
+Registered scratch.
 
 ## What was built
 
@@ -88,7 +90,8 @@ reproduces the array. The two walks differ in how they find the next place:
 
 ## Local memory
 
-The arrays a window holds in locals, in bytes, at 16 words, which
+The arrays a window holds, in bytes, at 16 words, as they were when they were locals
+(Registered scratch has the words they are now), which
 is a window of up to 1024 elements, whatever the element type is:
 
 | partition | arrays | bytes |
@@ -103,6 +106,49 @@ logarithm of the region, the masks do not: at 2^20 elements the walk by popcount
 holds less than the encoded buffer for an element of 2 bytes or more, and the
 walk by table for an element of 14 bytes or more. A test pins the two figures
 of the masks and checks them against the encoded buffer of `usize` elements.
+
+## Registered scratch
+
+The arrays are words of the sort now, as the block partition's offset buffers are: the
+fixed size arrays a C version keeps on the stack, allocated once through the logger so the
+visualiser shows them and every write to them is logged.
+`StablePartition` has `SCRATCH_SECTIONS`, the lengths of the arrays of `usize` it keeps
+(default empty), and its methods take them as `words`. `Extraction` has the same and
+`PartitionExtraction<P>` hands on `P`'s. `StableQuickSort`, `LevelHeapSort` and the
+extraction of `BlockMergeSort` allocate them once with `with_words`, as one array in
+sections drawn side by side, and thread the slice into every call.
+
+`Masked<K>` asks for three sections: the mask of back elements, 16 words; the count of them
+below each word, 17; and the walk's own array, `K::WORDS`, which replaces `LOCAL_BYTES`: the
+positions done by popcount, 16 words, or the table of places, 1024, a word a position. That is
+49 words and 392 bytes by popcount, 1057 words and 8456 bytes by table, where the arrays of
+the table walk were 2210 bytes with places of 16 bits; the encoded buffer is 1280 bytes at
+2^20 elements, so the walk by popcount still holds less and the walk by table more. The words hold what the
+calls before left, so the mask and the counts are written whole for each window, the
+walk by popcount clears the words of its window, and the table is filled before it is read.
+The encoded and rotation partitions ask for none.
+
+The tests: a sort over each walk creates its three arrays once and frees them once, however
+many windows it partitions, and a sort over a partition without words makes none; the
+replay logger compares the arrays with its copy as they are freed, which shows that no
+write to them went unlogged, with the words blank and with them full of garbage a read
+before a write would show; the mask fills a word to each 64 comparisons of the sweep
+and the done marks follow the counts.
+
+Measured on 2^20 elements in one build against dev 28cc610 with the arrays as locals, best of
+six runs on idle cores 6, 8 and 10, the runs within 1.5 percent of each other:
+
+| | before | after | after against before |
+|---|---|---|---|
+| one partition of a random half, table | 4.126 ms | 4.032 ms | 2.3 percent faster |
+| one partition of a random half, popcount | 8.262 ms | 8.385 ms | 1.5 percent slower |
+| stable quick sort, `masked<table>`, distinct keys | 81.4 ms | 78.3 ms | 3.8 percent faster |
+| stable quick sort, `masked<popcount>`, distinct keys | 146.0 ms | 147.5 ms | 1.0 percent slower |
+
+The table walk gets no slower for a table four times the size, 8 KB in the level one cache
+beside a window of 8 KB of elements. The old arrays were zeroed whole for each window, 2 KB
+for the table, and the words are written as far as the window goes, which may be why it
+is a little faster; the cause was not isolated.
 
 ## Why it is stable, and why it is linear
 

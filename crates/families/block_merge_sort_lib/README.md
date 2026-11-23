@@ -26,6 +26,9 @@ runs where neither the buffer nor the keys reach, a `MergeStrategy` from
 which is the default, or `MaskMerge`. It runs in every merge of a shape without a
 buffer or without keys, and in the others when the keys run short or the blocks
 outgrow the buffer.
+The fixed size arrays of the extraction and of the merge, the masks of the masked
+partition and the mask merge, are registered words: the sort allocates the
+extraction's before it and the merge's before the merges, each once.
 
 The size trades the merges against the carving. A buffer that keeps up with
 `sqrt(n)` holds a block of every merge, so each merge is linear and the sort is
