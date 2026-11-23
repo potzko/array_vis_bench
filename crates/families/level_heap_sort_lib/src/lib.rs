@@ -277,7 +277,7 @@ mod tests {
     use super::*;
     use crate::test_util::{items, pairs, Item, Replay, Rng, Tally};
     use array_vis_bench_traits::DirectSort;
-    use extraction_lib::{EncodedPartition, MaskedPartition, RotationPartition};
+    use extraction_lib::{EncodedPartition, MaskedPartition, MaskedTablePartition, RotationPartition};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
@@ -492,13 +492,15 @@ mod tests {
         sorts_stably::<LevelHeapSort<ExternalBuffer<Half>, EncodedPartition, ReversalRotation>>("external half, encoded");
     }
 
-    // The masked partition asks for no scratch of its own, so the buffers are
+    // The masked partitions ask for no scratch of their own, so the buffers are
     // the only memory the level build holds.
     #[test]
-    fn the_masked_partition_sorts_stably() {
+    fn the_masked_partitions_sort_stably() {
         sorts_stably::<LevelHeapSort<InArrayBuffer<Log>, MaskedPartition, ReversalRotation>>("in array log, masked");
         sorts_stably::<LevelHeapSort<ExternalBuffer<Sqrt>, MaskedPartition, AuxiliaryRotation>>("external sqrt, masked, auxiliary");
         sorts_stably::<LevelHeapSort<ExternalBuffer<Half>, MaskedPartition, ReversalRotation>>("external half, masked");
+        sorts_stably::<LevelHeapSort<InArrayBuffer<Log>, MaskedTablePartition, ReversalRotation>>("in array log, masked table");
+        sorts_stably::<LevelHeapSort<ExternalBuffer<Sqrt>, MaskedTablePartition, ReversalRotation>>("external sqrt, masked table");
     }
 
     fn moves_are_all_logged<S: DirectSort>(name: &str) {
@@ -523,6 +525,7 @@ mod tests {
         moves_are_all_logged::<LevelHeapSort<ExternalBuffer<Sqrt>, EncodedPartition, AuxiliaryRotation>>("external sqrt, encoded, auxiliary");
         moves_are_all_logged::<LevelHeapSort<InArrayBuffer<Log>, MaskedPartition, ReversalRotation>>("in array log, masked");
         moves_are_all_logged::<LevelHeapSort<ExternalBuffer<Sqrt>, MaskedPartition, AuxiliaryRotation>>("external sqrt, masked, auxiliary");
+        moves_are_all_logged::<LevelHeapSort<InArrayBuffer<Log>, MaskedTablePartition, ReversalRotation>>("in array log, masked table");
     }
 
     #[test]

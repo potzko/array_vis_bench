@@ -114,7 +114,7 @@ mod tests {
     use super::*;
     use crate::test_util::{items, pairs, Item, Replay, Rng, Tally};
     use array_vis_bench_traits::DirectSort;
-    use extraction_lib::{EncodedPartition, MaskedPartition, RotationPartition, SlidingPartition};
+    use extraction_lib::{EncodedPartition, MaskedPartition, MaskedTablePartition, RotationPartition, SlidingPartition};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
@@ -162,6 +162,7 @@ mod tests {
         sorts_stably::<StableQuickSort<SlidingPartition, ReversalRotation>>("sliding, reversal");
         sorts_stably::<StableQuickSort<EncodedPartition, ReversalRotation>>("encoded, reversal");
         sorts_stably::<StableQuickSort<MaskedPartition, ReversalRotation>>("masked, reversal");
+        sorts_stably::<StableQuickSort<MaskedTablePartition, ReversalRotation>>("masked table, reversal");
     }
 
     // The rotation is `R`'s, and trinity and the auxiliary rotation run through
@@ -172,6 +173,7 @@ mod tests {
         sorts_stably::<StableQuickSort<EncodedPartition, AuxiliaryRotation>>("encoded, auxiliary");
         sorts_stably::<StableQuickSort<MaskedPartition, TrinityRotation>>("masked, trinity");
         sorts_stably::<StableQuickSort<MaskedPartition, AuxiliaryRotation>>("masked, auxiliary");
+        sorts_stably::<StableQuickSort<MaskedTablePartition, AuxiliaryRotation>>("masked table, auxiliary");
         sorts_stably::<StableQuickSort<RotationPartition, TrinityRotation>>("rotation, trinity");
         sorts_stably::<StableQuickSort<RotationPartition, AuxiliaryRotation>>("rotation, auxiliary");
         sorts_stably::<StableQuickSort<SlidingPartition, AuxiliaryRotation>>("sliding, auxiliary");
@@ -201,6 +203,8 @@ mod tests {
         moves_are_all_logged::<StableQuickSort<MaskedPartition, ReversalRotation>>("masked, reversal");
         moves_are_all_logged::<StableQuickSort<MaskedPartition, TrinityRotation>>("masked, trinity");
         moves_are_all_logged::<StableQuickSort<MaskedPartition, AuxiliaryRotation>>("masked, auxiliary");
+        moves_are_all_logged::<StableQuickSort<MaskedTablePartition, ReversalRotation>>("masked table, reversal");
+        moves_are_all_logged::<StableQuickSort<MaskedTablePartition, AuxiliaryRotation>>("masked table, auxiliary");
     }
 
     // One aux array for the run, whichever of the partition and the rotation
@@ -215,14 +219,19 @@ mod tests {
         assert_eq!(created, 1);
     }
 
-    // The masked partition asks for no scratch, so over a rotation that asks for
+    // The masked partitions ask for no scratch, so over a rotation that asks for
     // none the sort allocates nothing.
     #[test]
-    fn the_masked_partition_over_a_rotation_without_scratch_allocates_nothing() {
+    fn the_masked_partitions_over_a_rotation_without_scratch_allocate_nothing() {
         use sort_logger::{SortLog, VisualizerLogger};
         let mut arr: Vec<usize> = (0..5000).map(|i| i * 7919 % 5003).collect();
         let mut log = VisualizerLogger { type_ghost: core::marker::PhantomData, log: Vec::new() };
         StableQuickSort::<MaskedPartition, ReversalRotation>::sort(&mut arr, &mut log);
+        assert!(arr.windows(2).all(|w| w[0] <= w[1]));
+        assert_eq!(log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArrT { .. })).count(), 0);
+        let mut arr: Vec<usize> = (0..5000).map(|i| i * 7919 % 5003).collect();
+        let mut log = VisualizerLogger { type_ghost: core::marker::PhantomData, log: Vec::new() };
+        StableQuickSort::<MaskedTablePartition, ReversalRotation>::sort(&mut arr, &mut log);
         assert!(arr.windows(2).all(|w| w[0] <= w[1]));
         assert_eq!(log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArrT { .. })).count(), 0);
     }
@@ -372,6 +381,7 @@ mod tests {
         sorts::<StableQuickSort<EncodedPartition, ReversalRotation>>("encoded");
         sorts::<StableQuickSort<EncodedPartition, AuxiliaryRotation>>("encoded, auxiliary");
         sorts::<StableQuickSort<MaskedPartition, ReversalRotation>>("masked");
+        sorts::<StableQuickSort<MaskedTablePartition, ReversalRotation>>("masked table");
         sorts::<StableQuickSort<SlidingPartition, ReversalRotation>>("sliding");
     }
 
