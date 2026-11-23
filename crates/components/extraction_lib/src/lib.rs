@@ -179,28 +179,12 @@ fn rank_of<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], a: usize, b: usi
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_util::{item, items, pairs, Item, Needy, Rng};
+    use crate::test_util::{item, items, pairs, Item, Needy, Rng, Tally};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
-    use sort_logger::{NoOpLogger, SortLog, SortLogger};
+    use sort_logger::NoOpLogger;
     use std::collections::BTreeMap;
-
-    // Counts the logged moves and comparisons.
-    #[derive(Default)]
-    pub struct Tally {
-        pub moves: usize,
-        pub cmps: usize,
-    }
-    impl SortLogger<Item> for Tally {
-        fn log(&mut self, event: SortLog<Item>) {
-            match event {
-                SortLog::Swap { .. } | SortLog::WriteInArr { .. } | SortLog::WriteData { .. } => self.moves += 1,
-                SortLog::CmpInArr { .. } | SortLog::CmpData { .. } => self.cmps += 1,
-                _ => {}
-            }
-        }
-    }
 
     fn random(rng: &mut Rng, n: usize, values: usize) -> Vec<Item> {
         items(&(0..n).map(|_| rng.next(values) as u32).collect::<Vec<_>>())

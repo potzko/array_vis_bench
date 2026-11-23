@@ -140,27 +140,11 @@ fn by_sliding<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_util::{item, items, pairs, Item, Rng};
+    use crate::test_util::{item, items, pairs, reference, three_way, Item, Rng};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
     use sort_logger::{NoOpLogger, SortLog, SortLogger};
-
-    // The expected outcome, spelled out: the elements the predicate picks in
-    // order, then the rest in order; and for the three way split, below, equal
-    // and above, each in order.
-    fn reference(arr: &[Item], picked: impl Fn(u32) -> bool) -> Vec<(u32, u32)> {
-        let first = arr.iter().filter(|x| picked(x.key));
-        let rest = arr.iter().filter(|x| !picked(x.key));
-        first.chain(rest).map(|x| (x.key, x.tag)).collect()
-    }
-
-    fn three_way(arr: &[Item], pivot: u32) -> Vec<(u32, u32)> {
-        let below = arr.iter().filter(|x| x.key < pivot);
-        let equal = arr.iter().filter(|x| x.key == pivot);
-        let above = arr.iter().filter(|x| x.key > pivot);
-        below.chain(equal).chain(above).map(|x| (x.key, x.tag)).collect()
-    }
 
     // Counts comparisons, to pin one per element.
     #[derive(Default)]
