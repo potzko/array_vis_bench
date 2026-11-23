@@ -42,7 +42,7 @@ const MASK_BYTES: usize = size_of::<[u64; MASK_WORDS]>() + size_of::<[u16; MASK_
 /// the positions done: a few words of locals and nothing else.
 pub struct Popcount;
 impl Walk for Popcount {
-    const LABEL: &'static str = "masked";
+    const LABEL: &'static str = "masked<popcount>";
     const LOCAL_BYTES: usize = MASK_BYTES + size_of::<[u64; MASK_WORDS]>();
 
     // A cycle is followed with its element carried in a local: take the first
@@ -71,7 +71,7 @@ impl Walk for Popcount {
 /// pointing its entry at itself. Locals of a position's two bytes more.
 pub struct Tabulated;
 impl Walk for Tabulated {
-    const LABEL: &'static str = "masked table";
+    const LABEL: &'static str = "masked<table>";
     const LOCAL_BYTES: usize = MASK_BYTES + size_of::<[u16; MASK_WORDS * 64]>();
 
     fn apply<T: Ord + Copy, U: ?Sized + SortLogger<T>, P: Fn(usize) -> usize>(arr: &mut [T], start: usize, len: usize, place: P, log: &mut U) {
@@ -457,6 +457,13 @@ mod tests {
             let b = block_len(n);
             assert!(window(b) >= b && window(b) + 2 * b <= MASK_WORDS * 64, "n={n}: windows of {} after blocks of {b}", window(b));
         }
+    }
+
+    // What a failed test prints is the label the catalog gives the entry.
+    #[test]
+    fn the_names_are_the_catalog_labels() {
+        assert_eq!(MaskedPartition::NAME, "masked<popcount>");
+        assert_eq!(MaskedTablePartition::NAME, "masked<table>");
     }
 
     #[test]
