@@ -6,11 +6,14 @@
 
 pub mod auxiliary_merge;
 pub mod bottom_up;
+pub mod mask_merge;
 pub mod naive;
 pub mod natural;
 pub mod rotation;
 pub mod rotation_merge;
 pub mod top_down;
+#[cfg(test)]
+mod test_util;
 mod utils;
 
 pub use auxiliary_merge::{AuxMerge, FullCopyAuxMerge, HalfCopyAuxMerge};

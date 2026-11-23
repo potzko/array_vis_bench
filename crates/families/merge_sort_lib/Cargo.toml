@@ -12,6 +12,15 @@ path = "src/lib.rs"
 array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 sort_logger = { path = "../../../sort_logger" }
 
+[dev-dependencies]
+# Four rotations for the module tests: reversal, which needs no scratch,
+# trinity and block cycle, whose scratch is fixed, and auxiliary, whose scratch
+# grows with the array.
+rotation_reversal = { path = "../../rotations/rotation_reversal" }
+rotation_block_cycle = { path = "../../rotations/rotation_block_cycle" }
+rotation_trinity = { path = "../../rotations/rotation_trinity" }
+rotation_auxiliary = { path = "../../rotations/rotation_auxiliary" }
+
 # Spec-system catalog fragment + query, OWNED by this crate and gathered by
 # `spec_catalog`'s build via the dependency-graph walk.
 [package.metadata.array_vis_bench]
