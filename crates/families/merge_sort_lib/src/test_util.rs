@@ -57,18 +57,19 @@ pub fn stable_merge(arr: &[Item]) -> Vec<(u32, u32)> {
     pairs(&all)
 }
 
-/// Counts the logged moves and comparisons, to read a growth rate off a run.
+/// Counts the logged moves and comparisons, to read a growth rate off a run. A
+/// write to a word of a merge's own is no move of an element, and counted apart.
 #[derive(Default)]
 pub struct Tally {
     pub moves: usize,
     pub cmps: usize,
+    pub word_writes: usize,
 }
 impl<T: Copy + Ord> SortLogger<T> for Tally {
     fn log(&mut self, event: SortLog<T>) {
         match event {
-            SortLog::Swap { .. } | SortLog::WriteInArr { .. } | SortLog::WriteData { .. } | SortLog::WriteDataU { .. } => {
-                self.moves += 1
-            }
+            SortLog::Swap { .. } | SortLog::WriteInArr { .. } | SortLog::WriteData { .. } => self.moves += 1,
+            SortLog::WriteDataU { .. } => self.word_writes += 1,
             SortLog::CmpInArr { .. } | SortLog::CmpData { .. } | SortLog::CmpDataU { .. } | SortLog::CmpAcrossArrs { .. } => {
                 self.cmps += 1
             }
@@ -81,12 +82,14 @@ impl<T: Copy + Ord> SortLogger<T> for Tally {
 /// the array that was merged with the array itself shows that no move went
 /// unlogged. An event finds its array by address, as the visualiser does, so a
 /// sub slice of the array, which is what a rotation is handed, resolves to the
-/// right copy and offset.
+/// right copy and offset. An array of words is compared with its copy when it is
+/// freed, while it is still live, which shows that no write to it went unlogged.
 pub struct Replay {
     arrays: Vec<(usize, Vec<usize>)>,
+    words: Vec<usize>,
 }
 impl Replay {
-    pub fn of(arr: &[usize]) -> Self { Replay { arrays: vec![(arr.as_ptr() as usize, arr.to_vec())] } }
+    pub fn of(arr: &[usize]) -> Self { Replay { arrays: vec![(arr.as_ptr() as usize, arr.to_vec())], words: Vec::new() } }
 
     pub fn main(&self) -> &[usize] { &self.arrays[0].1 }
 
@@ -117,10 +120,21 @@ impl SortLogger<usize> for Replay {
                 let (copy, off) = self.at(name);
                 copy[ind + off] = data;
             }
-            SortLog::CreateAuxArrT { name, length } | SortLog::CreateAuxArr { name, length } => {
+            SortLog::CreateAuxArrT { name, length } => self.arrays.push((name, vec![0; length])),
+            SortLog::CreateAuxArr { name, length } => {
                 self.arrays.push((name, vec![0; length]));
+                self.words.push(name);
             }
-            SortLog::FreeAuxArr { name } => self.arrays.retain(|(base, _)| *base != name),
+            SortLog::FreeAuxArr { name } => {
+                if self.words.contains(&name) {
+                    let (_, copy) = self.arrays.iter().find(|(base, _)| *base == name).expect("the words are live until they are freed");
+                    // SAFETY: the array of `copy.len()` words at `name` is live, the event is logged before it is dropped.
+                    let held = unsafe { core::slice::from_raw_parts(name as *const usize, copy.len()) };
+                    assert_eq!(held, &copy[..], "a write to the words went unlogged");
+                    self.words.retain(|&word| word != name);
+                }
+                self.arrays.retain(|(base, _)| *base != name);
+            }
             _ => {}
         }
     }

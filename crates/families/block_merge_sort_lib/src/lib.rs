@@ -496,6 +496,26 @@ mod tests {
         assert!(writes > 100, "{writes} writes to the words: one for the extraction and one for each merge");
     }
 
+    // The masked partition and the mask merge are registered like the doubles: a
+    // sort with both makes the three arrays of the extraction's words and frees
+    // them, then the three of the merge's and frees them, each once however many
+    // partitions and merges use them, and every write to them is logged.
+    #[test]
+    fn the_masked_partition_and_the_mask_merge_are_registered_once_per_sort() {
+        type Both = BlockMergeSort<NoBuffer, InArrayKeys, ReversalRotation, PartitionExtraction<MaskedTablePartition>, MaskMerge>;
+        sorts_stably::<Both>("masked partition, mask merge");
+        let mut arr = input(0, 20_000, &mut Rng(0x5EED));
+        let mut log = VisualizerLogger { type_ghost: std::marker::PhantomData, log: Vec::new() };
+        Both::sort(&mut arr, &mut log);
+        let created: Vec<(usize, usize)> = log.log.iter().filter_map(|e| if let SortLog::CreateAuxArr { name, length } = e { Some((*name, *length)) } else { None }).collect();
+        let freed: Vec<usize> = log.log.iter().filter_map(|e| if let SortLog::FreeAuxArr { name } = e { Some(*name) } else { None }).collect();
+        assert_eq!(created.iter().map(|(_, length)| *length).collect::<Vec<_>>(), [16, 17, 1024, 16, 16, 16]);
+        assert_eq!(freed, created.iter().map(|(name, _)| *name).collect::<Vec<_>>());
+        let writes = |names: &[usize]| log.log.iter().filter(|e| matches!(e, SortLog::WriteDataU { name, .. } if names.contains(name))).count();
+        let (partition, merge): (Vec<usize>, Vec<usize>) = (created[..3].iter().map(|c| c.0).collect(), created[3..].iter().map(|c| c.0).collect());
+        assert!(writes(&partition) > 100 && writes(&merge) > 100, "{} and {} writes to the words", writes(&partition), writes(&merge));
+    }
+
     // With the buffer and the keys in the array, the rotation's scratch is the
     // one aux array of the run, however many rotations use it.
     #[test]

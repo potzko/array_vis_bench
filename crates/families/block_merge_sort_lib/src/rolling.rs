@@ -101,7 +101,7 @@ pub fn roll_merge<K: Keys, R: Rotation, M: MergeStrategy, T: Ord + Copy, U: ?Siz
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_util::{junk, merged, pairs, sorted_run, Item, Rng};
+    use crate::test_util::{junk, merged, pairs, sorted_run, words_of, Item, Rng};
     use merge_sort_lib::{MaskMerge, SmallerSideMerge};
     use rotation_reversal::ReversalRotation;
     use scratchspace_lib::{InArrayKeys, NoKeys};
@@ -135,7 +135,7 @@ mod tests {
             Shape::External => Stash::External(&mut ext),
             Shape::Nowhere => Stash::None,
         };
-        roll_merge::<InArrayKeys, ReversalRotation, M, _, _>(&mut arr, lo, lo + la, lo + la + lb, s, 0, &mut stash, &mut [], &mut [], &mut NoOpLogger);
+        roll_merge::<InArrayKeys, ReversalRotation, M, _, _>(&mut arr, lo, lo + la, lo + la + lb, s, 0, &mut stash, &mut [], &mut words_of::<M>(), &mut NoOpLogger);
         let label = format!("{shape:?} la={la} lb={lb} s={s} values={values}");
         assert_eq!(pairs(&arr[lo..]), merged(&a, &b), "{label}");
         assert_eq!(pairs(&arr[..keys.len()]), pairs(&keys), "keys not restored, {label}");

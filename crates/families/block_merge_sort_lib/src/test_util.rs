@@ -1,9 +1,12 @@
 //! Test helpers shared by the module tests: `Item`, ordered by `key` alone so
 //! the `tag` shows which of several equal keys is which, a small generator, the
-//! run and comparison helpers, and two loggers that count and collect.
+//! run and comparison helpers, two loggers that count and collect, and the blank
+//! words a local merge asks for.
 
 use core::cmp::Ordering;
 
+use array_vis_bench_traits::role::{MergeStrategy, RotationMerge};
+use rotation_reversal::ReversalRotation;
 use sort_logger::{RegionKind, SortLog, SortLogger};
 
 #[derive(Clone, Copy, Debug)]
@@ -49,18 +52,25 @@ pub fn merged(a: &[Item], b: &[Item]) -> Vec<(u32, u32)> {
 /// `n` cells of scratch, tagged from 5000 so they are told from data.
 pub fn junk(n: usize) -> Vec<Item> { (0..n).map(|i| Item { key: 7, tag: 5000 + i as u32 }).collect() }
 
-/// Counts the logged moves and comparisons, to read a growth rate off a run.
+/// The words the local merge of strategy `M` asks for over the reversal rotation,
+/// blank, for a test that does not register them.
+pub fn words_of<M: MergeStrategy>() -> Vec<usize> {
+    vec![0; <M::With<ReversalRotation> as RotationMerge>::SCRATCH_SECTIONS.iter().sum()]
+}
+
+/// Counts the logged moves and comparisons, to read a growth rate off a run. A
+/// write to a word of a merge's own is no move of an element, and counted apart.
 #[derive(Default)]
 pub struct Tally {
     pub moves: usize,
     pub cmps: usize,
+    pub word_writes: usize,
 }
 impl<T: Copy + Ord> SortLogger<T> for Tally {
     fn log(&mut self, event: SortLog<T>) {
         match event {
-            SortLog::Swap { .. } | SortLog::WriteInArr { .. } | SortLog::WriteData { .. } | SortLog::WriteDataU { .. } => {
-                self.moves += 1
-            }
+            SortLog::Swap { .. } | SortLog::WriteInArr { .. } | SortLog::WriteData { .. } => self.moves += 1,
+            SortLog::WriteDataU { .. } => self.word_writes += 1,
             SortLog::CmpInArr { .. }
             | SortLog::CmpData { .. }
             | SortLog::CmpDataU { .. }

@@ -1,9 +1,12 @@
-//! `MaskRotationMerge`, a stable in place merge with no scratch of its own: it
-//! trims the runs to the window that needs merging and, when the window fits a
-//! bit mask held in local variables, `merge_window` merges it by an origin mask
-//! and cycles; a longer window is split by rotations, as symMerge splits, until
-//! the pieces fit, or handed whole to the smaller side merge when `SPLIT` is off.
-//! Every move and every comparison goes through the logger.
+//! `MaskRotationMerge`, a stable in place merge with no scratch of elements of
+//! its own: it trims the runs to the window that needs merging and, when the
+//! window fits a bit mask held in words, `merge_window` merges it by an origin
+//! mask and cycles; a longer window is split by rotations, as symMerge splits,
+//! until the pieces fit, or handed whole to the smaller side merge when `SPLIT`
+//! is off. The mask, its counts and the positions walked are the fixed size arrays
+//! a C version keeps on the stack, and here are words the driver of the sort
+//! allocates once through the logger. Every move, every comparison and every
+//! write to a word goes through the logger.
 
 use core::marker::PhantomData;
 
@@ -11,14 +14,15 @@ use super::rotation_merge::SmallerSideRotationMerge;
 use super::utils::{lower_bound, upper_bound};
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::{Complexity, Rotation};
-use sort_logger::SortLogger;
+use sort_logger::{split_sections, SortLogger};
 
 use array_vis_bench_traits::role::merge::{MergeStrategy, RotationMerge};
 
 /// Merge by the mask where the window fits `64 * WORDS` positions, and by
 /// symMerge's split over the rotation `R` where it does not. The mask is two
-/// arrays of `WORDS` words and a third of their running popcounts, all on the
-/// stack, so the merge needs the rotation's scratch and no other. With `SPLIT`
+/// arrays of `WORDS` words and a third of their running popcounts, the words the
+/// sort allocates once, so the merge needs the rotation's scratch and no other
+/// cells of elements. With `SPLIT`
 /// off a window past the cap is not split: it goes whole to the smaller side merge,
 /// which never uses the mask, the fallback the split is to be measured against.
 /// The catalog takes the defaults, 16 words and the split. The 16 is provisional,
@@ -35,14 +39,17 @@ impl MergeStrategy for MaskMerge {
 }
 
 impl<R: Rotation, const WORDS: usize, const SPLIT: bool> RotationMerge for MaskRotationMerge<R, WORDS, SPLIT> {
+    // The origin mask, the set bits below each of its words and the positions walked.
+    const SCRATCH_SECTIONS: &'static [usize] = &[WORDS; 3];
+
     #[inline]
     fn scratch_size(n: usize) -> usize {
         R::scratch_size(n)
     }
 
-    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], mid: usize, scratch: &mut [T], _words: &mut [usize], logger: &mut U) {
+    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], mid: usize, scratch: &mut [T], words: &mut [usize], logger: &mut U) {
         let n = arr.len();
-        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, 0, mid, n, scratch, logger);
+        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, 0, mid, n, scratch, words, logger);
     }
 }
 
@@ -81,6 +88,7 @@ fn merge_trimmed<const WORDS: usize, const SPLIT: bool, R: Rotation, T: Ord + Co
     mid: usize,
     hi: usize,
     scratch: &mut [T],
+    words: &mut [usize],
     logger: &mut U,
 ) {
     if lo >= mid || mid >= hi || logger.cmp_le(arr, mid - 1, mid) { return; }
@@ -88,7 +96,7 @@ fn merge_trimmed<const WORDS: usize, const SPLIT: bool, R: Rotation, T: Ord + Co
     let hi = lower_bound(arr, mid, hi, arr[mid - 1], logger);
     let (left, right) = (mid - lo, hi - mid);
     if left + right <= 64 * WORDS {
-        merge_window::<WORDS, T, U>(arr, lo, mid, hi, logger);
+        merge_window::<WORDS, T, U>(arr, lo, mid, hi, words, logger);
     } else if !SPLIT {
         SmallerSideRotationMerge::<R>::merge(&mut arr[lo..hi], mid - lo, scratch, &mut [], logger);
     } else if left <= right {
@@ -96,15 +104,15 @@ fn merge_trimmed<const WORDS: usize, const SPLIT: bool, R: Rotation, T: Ord + Co
         let q = lower_bound(arr, mid, hi, arr[p], logger);
         R::rotate(&mut arr[p..q], mid - p, scratch, logger);
         let cut = p + (q - mid);
-        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, lo, p, cut, scratch, logger);
-        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, cut, q, hi, scratch, logger);
+        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, lo, p, cut, scratch, words, logger);
+        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, cut, q, hi, scratch, words, logger);
     } else {
         let p = mid + right / 2;
         let q = upper_bound(arr, lo, mid, arr[p], logger);
         R::rotate(&mut arr[q..p + 1], mid - q, scratch, logger);
         let cut = q + (p + 1 - mid);
-        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, lo, q, cut, scratch, logger);
-        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, cut, p + 1, hi, scratch, logger);
+        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, lo, q, cut, scratch, words, logger);
+        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, cut, p + 1, hi, scratch, words, logger);
     }
 }
 
@@ -133,46 +141,54 @@ fn merge_trimmed<const WORDS: usize, const SPLIT: bool, R: Rotation, T: Ord + Co
 /// Merge `arr[lo..mid]` with `arr[mid..hi]`, both sorted, stably, when
 /// `arr[lo] > arr[mid]`, `arr[mid - 1] > arr[hi - 1]` and the window `hi - lo`
 /// is at most `64 * WORDS`. A window of `w` elements costs at most `w - 1`
-/// comparisons and exactly `w` moves.
+/// comparisons and exactly `w` moves. `words` is the `3 * WORDS` of the merge,
+/// the origin mask, the counts and the walked marks laid end to end, as they were
+/// left: the merge writes every word it reads, by `write_data_u`.
 pub fn merge_window<const WORDS: usize, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
     mid: usize,
     hi: usize,
+    words: &mut [usize],
     logger: &mut U,
 ) {
     let (left, window) = (mid - lo, hi - lo);
     assert!(lo < mid && mid < hi && window <= 64 * WORDS, "a window of {window} is not 1..={} cells", 64 * WORDS);
+    let [origin, below, walked] = split_sections(words, [WORDS; 3]);
 
-    // The origin mask, a word at a time, B running out ends the scan.
-    let mut origin = [0u64; WORDS];
-    let (mut a, mut b, mut t, mut word) = (lo, mid, 0usize, 0u64);
+    // The origin mask, a word at a time, B running out ends the scan. The words
+    // past it are the clear bits of the rest of A.
+    let used = window.div_ceil(64);
+    let (mut a, mut b, mut t, mut word) = (lo, mid, 0usize, 0usize);
     while b < hi {
         let from_b = logger.cmp_lt(arr, b, a);
-        word |= (from_b as u64) << (t & 63);
+        word |= (from_b as usize) << (t & 63);
         b += from_b as usize;
         a += !from_b as usize;
         t += 1;
         if t & 63 == 0 {
-            origin[(t - 1) >> 6] = word;
+            logger.write_data_u(origin, (t - 1) >> 6, word);
             word = 0;
         }
     }
-    if t & 63 != 0 { origin[t >> 6] = word; }
+    if t & 63 != 0 { logger.write_data_u(origin, t >> 6, word); }
+    for k in t.div_ceil(64)..used { logger.write_data_u(origin, k, 0); }
 
     // The set bits below each word, so a rank is one popcount.
-    let words = window.div_ceil(64);
-    let mut below = [0usize; WORDS];
-    for k in 1..words { below[k] = below[k - 1] + origin[k - 1].count_ones() as usize; }
+    let mut ones = 0;
+    for k in 0..used {
+        logger.write_data_u(below, k, ones);
+        ones += origin[k].count_ones() as usize;
+    }
     let source = |t: usize| {
         let (k, bit) = (t >> 6, t & 63);
-        let ones = below[k] + (origin[k] & ((1u64 << bit) - 1)).count_ones() as usize;
+        let ones = below[k] + (origin[k] & ((1usize << bit) - 1)).count_ones() as usize;
         if (origin[k] >> bit) & 1 == 1 { left + ones } else { t - ones }
     };
 
-    let mut walked = [0u64; WORDS];
-    for k in 0..words {
-        let valid = if (k + 1) * 64 <= window { !0u64 } else { (1u64 << (window & 63)) - 1 };
+    for k in 0..used { logger.write_data_u(walked, k, 0); }
+    for k in 0..used {
+        let valid = if (k + 1) * 64 <= window { !0usize } else { (1usize << (window & 63)) - 1 };
         loop {
             let free = !walked[k] & valid;
             if free == 0 { break; }
@@ -180,7 +196,8 @@ pub fn merge_window<const WORDS: usize, T: Ord + Copy, U: ?Sized + SortLogger<T>
             let carried = arr[lo + start];
             let mut at = start;
             loop {
-                walked[at >> 6] |= 1 << (at & 63);
+                let marked = walked[at >> 6] | 1usize << (at & 63);
+                logger.write_data_u(walked, at >> 6, marked);
                 let from = source(at);
                 if from == start {
                     logger.write_data(arr, lo + at, carried);
@@ -196,7 +213,7 @@ pub fn merge_window<const WORDS: usize, T: Ord + Copy, U: ?Sized + SortLogger<T>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::rotation_merge::{SmallerSideMerge, SmallerSideRotationMerge};
+    use crate::rotation_merge::{NaiveRotationMerge, SmallerSideMerge, SmallerSideRotationMerge};
     use crate::test_util::{pairs, runs, sorted_keys, stable_merge, words_of, Item, Replay, Rng, Tally};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_block_cycle::BlockCycleRotation;
@@ -217,7 +234,7 @@ mod tests {
         let want = stable_merge(&arr);
         let mut tally = Tally::default();
         let n = arr.len();
-        merge_window::<WORDS, _, _>(&mut arr, 0, a.len(), n, &mut tally);
+        merge_window::<WORDS, _, _>(&mut arr, 0, a.len(), n, &mut vec![0; 3 * WORDS], &mut tally);
         (pairs(&arr), want, tally)
     }
 
@@ -277,17 +294,25 @@ mod tests {
         merged_window::<1>(&a, &b);
     }
 
-    // The logged moves are the whole story: replayed onto a copy they give the array.
+    // The logged moves are the whole story: replayed onto a copy they give the array,
+    // and so are the writes to the words, which are compared with their copy as they
+    // are freed. The words start blank like their copy, or full of garbage, which the
+    // merge must not read before it writes it.
     #[test]
     fn no_move_goes_unlogged() {
         let mut rng = Rng(0x10661);
         for (la, lb) in [(1, 1), (5, 9), (40, 24), (64, 64), (200, 300), (1, 700), (700, 1)] {
-            let (a, b) = trimmed_runs(&mut rng, la, lb, 40);
-            let mut arr: Vec<usize> = a.iter().chain(&b).map(|&k| k as usize).collect();
-            let mut replay = Replay::of(&arr);
-            merge_window::<16, _, _>(&mut arr, 0, la, la + lb, &mut replay);
-            assert!(arr.windows(2).all(|w| w[0] <= w[1]), "la={la} lb={lb}");
-            assert_eq!(replay.main(), &arr[..], "la={la} lb={lb}: a move went unlogged");
+            for garbage in [false, true] {
+                let (a, b) = trimmed_runs(&mut rng, la, lb, 40);
+                let mut arr: Vec<usize> = a.iter().chain(&b).map(|&k| k as usize).collect();
+                let mut replay = Replay::of(&arr);
+                let mut words = replay.create_aux_arr_split(&[16; 3]);
+                if garbage { words.fill(usize::MAX); }
+                merge_window::<16, _, _>(&mut arr, 0, la, la + lb, &mut words, &mut replay);
+                assert!(arr.windows(2).all(|w| w[0] <= w[1]), "la={la} lb={lb} garbage={garbage}");
+                assert_eq!(replay.main(), &arr[..], "la={la} lb={lb} garbage={garbage}: a move went unlogged");
+                if !garbage { replay.free_aux_arr_split(&words, &[16; 3]); }
+            }
         }
     }
 
@@ -297,7 +322,7 @@ mod tests {
         let (a, b) = trimmed_runs(&mut rng, 20, 25, 30);
         let mut arr: Vec<Item> = (0..7).map(|i| Item { key: 99, tag: 900 + i }).chain(runs(&a, &b)).chain((0..5).map(|i| Item { key: 98, tag: 800 + i })).collect();
         let want = stable_merge(&arr[7..52]);
-        merge_window::<1, _, _>(&mut arr, 7, 27, 52, &mut NoOpLogger);
+        merge_window::<1, _, _>(&mut arr, 7, 27, 52, &mut [0; 3], &mut NoOpLogger);
         assert_eq!(pairs(&arr[7..52]), want);
         assert!(arr[..7].iter().all(|x| x.key == 99 && x.tag >= 900) && arr[52..].iter().all(|x| x.key == 98 && x.tag >= 800));
     }
@@ -468,8 +493,9 @@ mod tests {
         }
     }
 
-    // No move goes unlogged, and the scratch of the rotation is registered with the
-    // logger as a sort registers it.
+    // No move goes unlogged, and the scratch of the rotation and the words of the
+    // merge are registered with the logger as a sort registers them, the words
+    // compared with their copy as they are freed.
     fn replayed<M: RotationMerge>(label: &str) {
         let mut rng = Rng(0x10661);
         for _ in 0..200 {
@@ -480,9 +506,11 @@ mod tests {
             let mut replay = Replay::of(&arr);
             let mut scratch = vec![usize::MAX; M::scratch_size(arr.len())];
             replay.log_aux_arr_t(&scratch);
-            M::merge(&mut arr, la, &mut scratch, &mut words_of::<M>(), &mut replay);
+            let mut words = replay.create_aux_arr_split(M::SCRATCH_SECTIONS);
+            M::merge(&mut arr, la, &mut scratch, &mut words, &mut replay);
             assert!(arr.windows(2).all(|w| w[0] <= w[1]), "{label}: la={la} lb={lb}");
             assert_eq!(replay.main(), &arr[..], "{label}: la={la} lb={lb}: a move went unlogged");
+            replay.free_aux_arr_split(&words, M::SCRATCH_SECTIONS);
         }
     }
 
@@ -518,6 +546,51 @@ mod tests {
         let mask = moves_per_element::<MaskRotationMerge<ReversalRotation>>(1 << 18);
         let smaller_side = moves_per_element::<SmallerSideRotationMerge<ReversalRotation>>(1 << 18);
         assert!(mask * 1.4 < smaller_side, "mask {mask} against smaller side {smaller_side}");
+    }
+
+    // The words of a window: the origin mask, the count of set bits below each of
+    // its words and the positions walked, a mask of the same width, each of the
+    // words of the cap. The other merges keep no fixed size array.
+    #[test]
+    fn the_merge_asks_for_three_arrays_of_the_cap_in_words() {
+        assert_eq!(<MaskRotationMerge<ReversalRotation> as RotationMerge>::SCRATCH_SECTIONS, &[16, 16, 16]);
+        assert_eq!(<MaskRotationMerge<TrinityRotation, 2, false> as RotationMerge>::SCRATCH_SECTIONS, &[2, 2, 2]);
+        assert_eq!(<<MaskMerge as MergeStrategy>::With<BlockCycleRotation> as RotationMerge>::SCRATCH_SECTIONS, &[16, 16, 16]);
+        assert!(<NaiveRotationMerge<ReversalRotation> as RotationMerge>::SCRATCH_SECTIONS.is_empty());
+        assert!(<SmallerSideRotationMerge<ReversalRotation> as RotationMerge>::SCRATCH_SECTIONS.is_empty());
+        assert!(<<SmallerSideMerge as MergeStrategy>::With<ReversalRotation> as RotationMerge>::SCRATCH_SECTIONS.is_empty());
+    }
+
+    // What the visualiser sees of a merge of one window: the origin mask fills a
+    // word to each 64 comparisons of the scan, then the counts, then the walked
+    // marks are cleared and set during the cycles.
+    #[test]
+    fn the_origin_mask_fills_during_the_scan_and_the_walked_marks_during_the_cycles() {
+        use sort_logger::{SortLog, VisualizerLogger};
+        let (a, b) = window_of(900);
+        let mut arr = runs(&a, &b);
+        let mut log = VisualizerLogger { type_ghost: core::marker::PhantomData, log: Vec::new() };
+        let mut words = log.create_aux_arr_split(&[16; 3]);
+        let [origin, below, walked] = [0, 16, 32].map(|at| words[at..].as_ptr() as usize);
+        <MaskRotationMerge<ReversalRotation> as RotationMerge>::merge(&mut arr, a.len(), &mut [], &mut words, &mut log);
+        let kinds: Vec<char> = log
+            .log
+            .iter()
+            .filter_map(|e| match e {
+                SortLog::CmpInArr { .. } => Some('c'),
+                SortLog::WriteDataU { name, .. } => Some(if *name == origin { 'o' } else if *name == below { 'b' } else if *name == walked { 'w' } else { '?' }),
+                _ => None,
+            })
+            .collect();
+        assert!(!kinds.contains(&'?'), "a write to a word the sections do not name");
+        let first = |kind: char| kinds.iter().position(|&k| k == kind).unwrap_or_else(|| panic!("no write of kind {kind}"));
+        assert!(first('c') < first('o') && first('o') < first('b') && first('b') < first('w'), "{:?}", (first('c'), first('o'), first('b'), first('w')));
+        let (mut gaps, mut since) = (Vec::new(), 0);
+        for &kind in kinds.iter().take_while(|&&kind| kind == 'c' || kind == 'o') {
+            if kind == 'c' { since += 1 } else { gaps.push(std::mem::take(&mut since)) }
+        }
+        assert!(gaps.len() >= 10, "{} words of the origin mask", gaps.len());
+        assert!(gaps[1..gaps.len() - 1].iter().all(|&gap| gap == 64), "comparisons between the words of the mask: {gaps:?}");
     }
 
     #[test]

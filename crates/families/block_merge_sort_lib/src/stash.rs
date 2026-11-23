@@ -153,7 +153,7 @@ fn copy_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_util::{junk, merged, pairs, sorted_run, Item, Rng};
+    use crate::test_util::{junk, merged, pairs, sorted_run, words_of, Item, Rng};
     use merge_sort_lib::{MaskMerge, SmallerSideMerge};
     use rotation_reversal::ReversalRotation;
     use sort_logger::NoOpLogger;
@@ -196,7 +196,7 @@ mod tests {
 
             // none, by the mask merge
             let mut arr: Vec<Item> = a.iter().chain(&b).copied().collect();
-            Stash::None.merge::<ReversalRotation, MaskMerge, _>(&mut arr, 0, a_len, b_len, &mut [], &mut [], &mut NoOpLogger);
+            Stash::None.merge::<ReversalRotation, MaskMerge, _>(&mut arr, 0, a_len, b_len, &mut [], &mut words_of::<MaskMerge>(), &mut NoOpLogger);
             assert_eq!(pairs(&arr), want, "none, mask, round {round}");
         }
     }

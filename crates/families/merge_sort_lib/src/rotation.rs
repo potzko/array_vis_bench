@@ -189,6 +189,7 @@ impl<S: SmallSort + HasStability, M: RotationMerge + HasStability, const EARLY_E
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::mask_merge::MaskRotationMerge;
     use crate::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge};
     use array_vis_bench_traits::DirectSort;
     use core::marker::PhantomData;
@@ -238,6 +239,23 @@ mod tests {
         assert_eq!(freed, created.iter().map(|(name, _)| *name).collect::<Vec<_>>());
         assert!(writes > 100, "{writes} writes to the words: a merge each");
         assert_eq!(word_events::<B>(), (vec![], vec![], 0));
+    }
+
+    // The mask merge keeps three arrays of the words of its cap, drawn side by
+    // side: a sort over it makes them once and frees them once, and every merge
+    // of a window writes to them.
+    #[test]
+    fn a_sort_over_the_mask_merge_allocates_its_three_arrays_once() {
+        for (created, freed, writes) in [
+            word_events::<TopDownRotationMergeSort<Unit, MaskRotationMerge<ReversalRotation>, false>>(),
+            word_events::<BottomUpRotationMergeSort<Unit, MaskRotationMerge<ReversalRotation>, false>>(),
+            word_events::<TopDownRotationMergeSort<Unit, MaskRotationMerge<ReversalRotation, 2, false>, true>>(),
+        ] {
+            let lengths = created.iter().map(|(_, length)| *length).collect::<Vec<_>>();
+            assert!(lengths == [16, 16, 16] || lengths == [2, 2, 2], "{lengths:?}");
+            assert_eq!(freed, created.iter().map(|(name, _)| *name).collect::<Vec<_>>());
+            assert!(writes > 100, "{writes} writes to the words: a window of a merge each");
+        }
     }
 
     #[test]
