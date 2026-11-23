@@ -13,31 +13,30 @@ bytes of locals; and it loses to it by 5 to 27 percent in the level heap sort an
 factor of two to three on a split that leaves a small minority. The walk by popcount takes
 1.8 times as long as the encoded partition in every row, at 290 bytes. The refactor that
 moved the encoded partition's trim and finish into shared functions did not slow it: it is
-5 percent faster. The walk to catalogue is the walk by table, the constants stay, and the
-catalog was not changed by the measurement.
+5 percent faster. The walk to run is the walk by table, the constants stay, and the catalog
+holds both walks, as an axis of the partition.
 
 ## What was built
 
-- `MaskedPartition`, in `extraction_lib`, label `masked`, `MOVES = N1`,
+- `MaskedPartition`, in `extraction_lib`, label `masked<popcount>`, `MOVES = N1`,
   `scratch_size` 0. It keeps the trim, the ordering of the blocks by ranks
   written into the elements, and the last rotation of the encoded partition,
   which now live in `blocks.rs` as `trim`, `order_blocks` and `finish` for both
   partitions to share. Only the first phase, the making of the whole blocks,
   differs.
-- `MaskedTablePartition`, label `masked table`, the same with one change to how
-  a window is applied, below. It is not in the catalog: it is there to be
-  measured against `MaskedPartition`, and the measurement below says which goes
-  into the catalog.
+- `MaskedTablePartition`, label `masked<table>`, the same with one change to how
+  a window is applied, below. It is there to be measured against
+  `MaskedPartition`, and is catalogued beside it.
 - The two are `Masked<K>` over a `Walk`, `Popcount` and `Tabulated`, with
   `MaskedPartition` and `MaskedTablePartition` as aliases, so the windows, the
   masks and the places are one implementation and the walk is the one thing that
   differs.
-- Catalog. `MaskedPartition` joins the `StableQuickSort` query, under every
+- Catalog. The masked partition joins the `StableQuickSort` query, under every
   rotation, 15 entries, and gets a level heap study over the buffers and
-  rotations of `LevelHeapEncoded`, 28 entries, 43 in all: the catalog goes from
-  2534 entries to 2577. The block merge extraction study leaves the partition
-  extraction over it out, as it did for the encoded partition. The sliding
-  partition stays out of the stable quick sort, as before.
+  rotations of `LevelHeapEncoded`, 28 entries, 43 in all, by each of its walks.
+  The block merge extraction study leaves the partition extraction over it out,
+  as it did for the encoded partition. The sliding partition stays out of the
+  stable quick sort, as before. The walks as an axis are below.
 
 ## The first phase, by windows
 
@@ -137,7 +136,7 @@ up, as for the encoded partition, and at most a quarter of the cap. The
 measurement draws both curves: the block length is flat from five to ten
 logarithms and eight is kept; the cap is a trade of bytes for a few percent, 32 words
 taking 7 to 9 percent off one partition and 2 to 8 percent off the stable quick sort
-for twice the bytes, and 16 is kept until the walk to catalogue is chosen.
+for twice the bytes, and 16 is kept, one number for both walks.
 
 ## Tests
 
@@ -561,29 +560,40 @@ Verdict.
   2210 bytes at 16 words against the encoded buffer's 1280 bytes of `usize` at 2^20,
   which grows with the element and the logarithm where the masks do not, and the
   shapes it loses on, lopsided splits and the small regions of the level heap sort.
-- The walk to catalogue is the walk by table. The walk by popcount holds 290 bytes and
+- The walk to run is the walk by table. The walk by popcount holds 290 bytes and
   takes 1.8 times as long as the encoded partition in every row; it is the walk that
-  holds less than the encoded buffer, and nothing else is to be said for it. The
-  catalog now holds the popcount walk as `masked`, and the table walk is the one to give
-  that label and those entries, 15 and 28, with the count unchanged; the catalog was not
-  changed here.
+  holds less than the encoded buffer. Both are catalogued, below.
 - The encoded partition did not get slower: it is 5 percent faster.
 - The constants stay: eight logarithms is the middle of a flat curve, and 16 words is a
   choice of bytes between the 290 and 2210 of the 16 word default and the 578 and 4418 at
   32 words that bring the sort's few percent, which is the one number to settle with the walk.
   Measured, 32 words is better for the stable quick sort on all eight rows and level
   for the level heap sort, and is the number to take if the table walk is the one
-  catalogued and 4.4 KB of locals is not a cost.
+  run and 4.4 KB of locals is not a cost.
+
+## Both walks in the catalog
+
+The walk is a slot of the partition: `Masked<{walk}>`, label `masked<{walk}>`, over the
+role `MaskWalk`, which `Popcount` (label `popcount`) and `Tabulated` (label `table`) fill,
+all declared in `extraction.spec` beside the partition. Wherever the masked partition was
+catalogued both walks are: 15 more entries of the stable quick sort and 28 more of the level
+heap sort, 43 in all, so the catalog goes from 2712 entries to 2755, and the block merge
+extraction study leaves the partition extraction out for either walk, as `Masked<_>` in
+the one `-` of its query. The entries are `masked<popcount>` and `masked<table>`, and the
+partitions print the same two names in a failed test.
+
+Why both. The measurement says which walk to run, the walk by table: it matches the
+encoded partition, and the walk by popcount takes 1.8 times as long. But the two are the
+two ends of one trade, and the popcount walk is the one true to the point of the
+partition, which spends bits where the encoded partition spends cells: a mask of the
+positions done in place of a table of 16 bit places, 290 bytes of locals against 2210. A
+catalog that held the walk by table alone would show the partition at its speed and hide
+what it costs to keep to bits, so it holds both, and the time of one against the bytes of
+the other is read off the catalog as the buffers of the level heap sort are.
 
 ## Open
 
-- Which walk goes into the catalog. The measurement says the walk by table: it
-  matches the encoded partition and the walk by popcount does not. `MaskedPartition`,
-  the walk by popcount, is the catalog's now, with `MaskedTablePartition` selectable by
-  type; the table walk takes the label `masked` and the catalog entries, 15 and 28, with
-  the count unchanged, and the popcount walk stays a type for study or goes. The type
-  text of the entries changes, so the golden and type files change with it.
-- The cap of 32 words, if the table walk is the one catalogued and 4.4 KB of locals is not
+- The cap of 32 words, if the table walk is the one run and 4.4 KB of locals is not
   a cost: it is better for the stable quick sort on every row and level for the level heap
   sort. The bytes the tests pin, 290 and 2210, would change with it.
 - The first phase is the cost of the walk, not of the moves: the first phase

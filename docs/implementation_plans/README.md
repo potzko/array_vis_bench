@@ -15,7 +15,7 @@ priority order.
 - `instruction_counts.md`: an instruction count gate under callgrind for the three pairs and one entry per kind, exact baselines; not started.
 - `kind_trait.md`: one input shape, one driver and one emit template over a kinds table, done, kept as the record.
 - `mask_merge.md`: a stable in place merge by an origin mask held in local variables and cycles, split by rotations when the window is long, `MaskRotationMerge` in the catalog; built and measured on the combined branch, 35 to 48 percent off the rotation merge sorts and 28 to 46 percent off the bufferless block sort on distinct keys, slower on few distinct keys.
-- `masked_partition.md`: the stable partition by bit masks over windows, no buffer of elements, with the walk by popcount and the walk by table, built and measured on the combined branch: the walk by table matches the encoded partition, the walk by popcount takes 1.8 times as long.
+- `masked_partition.md`: the stable partition by bit masks over windows, no buffer of elements, with the walk by popcount and the walk by table, both catalogued as the `walk` slot, built and measured on the combined branch: the walk by table matches the encoded partition, the walk by popcount takes 1.8 times as long.
 - `one_timing_consumer.md`: the four timing surfaces became one benchmark consumer, done, kept as the record.
 - `rod_sort_axes.md`: the tournament merge and rod gaps as a Shell sequence, with why a transposed layout is not an axis and why a tuned strategy was dropped, done, kept as the record.
 - `stable_heap_sorts.md`: the index heap, the tagged heap and the level heap sort, the level sort built and removed, and the measurements that rank them, done, kept as the record.
