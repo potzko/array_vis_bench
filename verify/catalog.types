@@ -2630,6 +2630,21 @@
 "stable quick sort<partition: encoded, rotation: piston>"	StableQuickSort<EncodedPartition, PistonRotation>
 "stable quick sort<partition: encoded, rotation: reversal>"	StableQuickSort<EncodedPartition, ReversalRotation>
 "stable quick sort<partition: encoded, rotation: trinity>"	StableQuickSort<EncodedPartition, TrinityRotation>
+"stable quick sort<partition: masked, rotation: auxiliary>"	StableQuickSort<MaskedPartition, AuxiliaryRotation>
+"stable quick sort<partition: masked, rotation: block cycle>"	StableQuickSort<MaskedPartition, BlockCycleRotation>
+"stable quick sort<partition: masked, rotation: bridge>"	StableQuickSort<MaskedPartition, BridgeRotation>
+"stable quick sort<partition: masked, rotation: contrev>"	StableQuickSort<MaskedPartition, ContrevRotation>
+"stable quick sort<partition: masked, rotation: drill>"	StableQuickSort<MaskedPartition, DrillRotation>
+"stable quick sort<partition: masked, rotation: grail>"	StableQuickSort<MaskedPartition, GrailRotation>
+"stable quick sort<partition: masked, rotation: gries-mills>"	StableQuickSort<MaskedPartition, GriesMillsRotation>
+"stable quick sort<partition: masked, rotation: helix>"	StableQuickSort<MaskedPartition, HelixRotation>
+"stable quick sort<partition: masked, rotation: juggling>"	StableQuickSort<MaskedPartition, JugglingRotation>
+"stable quick sort<partition: masked, rotation: optimized piston<3 windows>>"	StableQuickSort<MaskedPartition, OptimizedPiston<3, 256>>
+"stable quick sort<partition: masked, rotation: optimized piston<in place>>"	StableQuickSort<MaskedPartition, OptimizedPiston<2, 0>>
+"stable quick sort<partition: masked, rotation: optimized piston>"	StableQuickSort<MaskedPartition, OptimizedPistonRotation>
+"stable quick sort<partition: masked, rotation: piston>"	StableQuickSort<MaskedPartition, PistonRotation>
+"stable quick sort<partition: masked, rotation: reversal>"	StableQuickSort<MaskedPartition, ReversalRotation>
+"stable quick sort<partition: masked, rotation: trinity>"	StableQuickSort<MaskedPartition, TrinityRotation>
 "stable quick sort<partition: rotation, rotation: auxiliary>"	StableQuickSort<RotationPartition, AuxiliaryRotation>
 "stable quick sort<partition: rotation, rotation: block cycle>"	StableQuickSort<RotationPartition, BlockCycleRotation>
 "stable quick sort<partition: rotation, rotation: bridge>"	StableQuickSort<RotationPartition, BridgeRotation>

@@ -2637,6 +2637,21 @@ Sort	stable quick sort<partition: encoded, rotation: optimized piston>	2.0 1.1 1
 Sort	stable quick sort<partition: encoded, rotation: piston>	2.0 1.1 1.1 0.1 true
 Sort	stable quick sort<partition: encoded, rotation: reversal>	2.0 1.1 1.1 0.1 true
 Sort	stable quick sort<partition: encoded, rotation: trinity>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	stable quick sort<partition: masked, rotation: block cycle>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	stable quick sort<partition: masked, rotation: contrev>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: drill>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: grail>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: gries-mills>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: helix>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: juggling>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: optimized piston>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: piston>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: reversal>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: masked, rotation: trinity>	2.0 1.1 1.1 0.1 true
 Sort	stable quick sort<partition: rotation, rotation: auxiliary>	2.1 1.2 1.2 1.0 true
 Sort	stable quick sort<partition: rotation, rotation: block cycle>	2.1 1.2 1.2 0.1 true
 Sort	stable quick sort<partition: rotation, rotation: bridge>	2.1 1.2 1.2 1.0 true

@@ -4,7 +4,8 @@
 # the one scan of GrailSort and WikiSort, a sorted prefix under the scan, or the
 # smallest values selected by a `StablePartition` around a pivot read off that
 # prefix. The partitions are by rotation, by a block riding behind the scan, or
-# by blocks put in order with their ranks written into the elements.
+# by blocks put in order with their ranks written into the elements, which are
+# gathered through a buffer or made by bit masks over windows of the region.
 
 component ex_scan
   type     ScanExtraction
@@ -40,5 +41,11 @@ end
 component sp_encoded
   type     EncodedPartition
   label    encoded
+  provides StablePartition
+end
+
+component sp_masked
+  type     MaskedPartition
+  label    masked
   provides StablePartition
 end

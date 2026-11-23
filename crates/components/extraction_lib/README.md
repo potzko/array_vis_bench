@@ -46,5 +46,14 @@ last rotation, so it is allocated with the rotation's once, by the role's
 pass instead. The front elements a region starts with and the back ones it
 ends with are in place, and are compared once and left, so a pass with nothing
 to move costs its comparisons alone.
+`MaskedPartition` makes the same blocks with no buffer at all. The region goes
+through in windows of up to a thousand elements, each window's types held as a
+bit mask in sixteen words of locals, and a window is permuted in place into
+whole blocks of the front type, whole blocks of the back type, and then the
+partial blocks that start the next window. An element's place is worked out
+from popcounts of the mask below it, a table of the places is walked by cycles
+with one element carried in a local, and every element that moves is written
+once. Its scratch is none, and it shares the trim, the ordering of the blocks
+and the last rotation with the encoded partition, in `blocks.rs`.
 
 Its catalog components are declared in `extraction.spec`.
