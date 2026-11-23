@@ -40,7 +40,7 @@ impl<R: Rotation, const WORDS: usize, const SPLIT: bool> RotationMerge for MaskR
         R::scratch_size(n)
     }
 
-    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], mid: usize, scratch: &mut [T], logger: &mut U) {
+    fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], mid: usize, scratch: &mut [T], _words: &mut [usize], logger: &mut U) {
         let n = arr.len();
         merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, 0, mid, n, scratch, logger);
     }
@@ -90,7 +90,7 @@ fn merge_trimmed<const WORDS: usize, const SPLIT: bool, R: Rotation, T: Ord + Co
     if left + right <= 64 * WORDS {
         merge_window::<WORDS, T, U>(arr, lo, mid, hi, logger);
     } else if !SPLIT {
-        SmallerSideRotationMerge::<R>::merge(&mut arr[lo..hi], mid - lo, scratch, logger);
+        SmallerSideRotationMerge::<R>::merge(&mut arr[lo..hi], mid - lo, scratch, &mut [], logger);
     } else if left <= right {
         let p = lo + left / 2;
         let q = lower_bound(arr, mid, hi, arr[p], logger);
@@ -197,7 +197,7 @@ pub fn merge_window<const WORDS: usize, T: Ord + Copy, U: ?Sized + SortLogger<T>
 mod tests {
     use super::*;
     use crate::rotation_merge::{SmallerSideMerge, SmallerSideRotationMerge};
-    use crate::test_util::{pairs, runs, sorted_keys, stable_merge, Item, Replay, Rng, Tally};
+    use crate::test_util::{pairs, runs, sorted_keys, stable_merge, words_of, Item, Replay, Rng, Tally};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_block_cycle::BlockCycleRotation;
     use rotation_reversal::ReversalRotation;
@@ -308,7 +308,7 @@ mod tests {
         let mut arr = runs(a, b);
         let want = stable_merge(&arr);
         let mut scratch = vec![Item { key: 0, tag: 0 }; M::scratch_size(arr.len())];
-        M::merge(&mut arr, a.len(), &mut scratch, &mut NoOpLogger);
+        M::merge(&mut arr, a.len(), &mut scratch, &mut words_of::<M>(), &mut NoOpLogger);
         assert_eq!(pairs(&arr), want, "{label}: la={} lb={}", a.len(), b.len());
     }
 
@@ -408,7 +408,7 @@ mod tests {
             let mut arr = runs(&a, &b);
             let want = stable_merge(&arr);
             let mut tally = Tally::default();
-            <MaskRotationMerge<Counting, WORDS> as RotationMerge>::merge(&mut arr, a.len(), &mut [], &mut tally);
+            <MaskRotationMerge<Counting, WORDS> as RotationMerge>::merge(&mut arr, a.len(), &mut [], &mut words_of::<MaskRotationMerge<Counting, WORDS>>(), &mut tally);
             assert_eq!(pairs(&arr), want, "cap {cap} window {w}");
             let rotations = ROTATIONS.with(|c| c.get());
             if w <= cap {
@@ -436,7 +436,7 @@ mod tests {
         let mut arr = runs(&a, &b);
         let want = stable_merge(&arr);
         let mut tally = Tally::default();
-        <MaskRotationMerge<Counting, 1> as RotationMerge>::merge(&mut arr, a.len(), &mut [], &mut tally);
+        <MaskRotationMerge<Counting, 1> as RotationMerge>::merge(&mut arr, a.len(), &mut [], &mut words_of::<MaskRotationMerge<Counting, 1>>(), &mut tally);
         assert_eq!(pairs(&arr), want);
         assert_eq!(tally.moves, 64);
     }
@@ -461,7 +461,7 @@ mod tests {
             if window > 1024 { continue; }
             let mut arr = runs(&a, &b);
             let mut tally = Tally::default();
-            <MaskRotationMerge<Counting, 16> as RotationMerge>::merge(&mut arr, la, &mut [], &mut tally);
+            <MaskRotationMerge<Counting, 16> as RotationMerge>::merge(&mut arr, la, &mut [], &mut words_of::<MaskRotationMerge<Counting, 16>>(), &mut tally);
             assert_eq!(tally.moves, window, "la={la} lb={lb} values={values}");
             let searches = 3 * ((la + lb).ilog2() as usize + 2);
             assert!(tally.cmps <= window + searches, "la={la} lb={lb}: {} comparisons for a window of {window}", tally.cmps);
@@ -480,7 +480,7 @@ mod tests {
             let mut replay = Replay::of(&arr);
             let mut scratch = vec![usize::MAX; M::scratch_size(arr.len())];
             replay.log_aux_arr_t(&scratch);
-            M::merge(&mut arr, la, &mut scratch, &mut replay);
+            M::merge(&mut arr, la, &mut scratch, &mut words_of::<M>(), &mut replay);
             assert!(arr.windows(2).all(|w| w[0] <= w[1]), "{label}: la={la} lb={lb}");
             assert_eq!(replay.main(), &arr[..], "{label}: la={la} lb={lb}: a move went unlogged");
         }
@@ -500,7 +500,7 @@ mod tests {
         let mut arr = runs(&a, &b);
         let mut scratch = vec![Item { key: 0, tag: 0 }; M::scratch_size(n)];
         let mut tally = Tally::default();
-        M::merge(&mut arr, n / 2, &mut scratch, &mut tally);
+        M::merge(&mut arr, n / 2, &mut scratch, &mut words_of::<M>(), &mut tally);
         tally.moves as f64 / n as f64
     }
 
@@ -545,7 +545,7 @@ mod tests {
         ROTATIONS.with(|c| c.set(0));
         let mut arr = runs(&a, &b);
         let mut tally = Tally::default();
-        <MaskRotationMerge<Counting, 2, false> as RotationMerge>::merge(&mut arr, a.len(), &mut [], &mut tally);
+        <MaskRotationMerge<Counting, 2, false> as RotationMerge>::merge(&mut arr, a.len(), &mut [], &mut words_of::<MaskRotationMerge<Counting, 2, false>>(), &mut tally);
         assert_eq!((ROTATIONS.with(|c| c.get()), tally.moves), (0, 128));
     }
 

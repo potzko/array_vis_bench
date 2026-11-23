@@ -26,6 +26,7 @@ impl<R: Rotation> RotationMerge for NaiveRotationMerge<R> {
         arr: &mut [T],
         mid: usize,
         scratch: &mut [T],
+        _words: &mut [usize],
         logger: &mut U,
     ) {
         merge_rotation::<R, T, U>(arr, mid, scratch, logger);
@@ -78,6 +79,7 @@ impl<R: Rotation> RotationMerge for SmallerSideRotationMerge<R> {
         arr: &mut [T],
         mid: usize,
         scratch: &mut [T],
+        _words: &mut [usize],
         logger: &mut U,
     ) {
         let n = arr.len();

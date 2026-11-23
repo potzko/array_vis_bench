@@ -1,10 +1,12 @@
 //! Test helpers shared by the module tests: `Item`, ordered by `key` alone so
 //! the `tag` shows which of several equal keys is which, a small generator, the
 //! two sorted runs of a merge and their stable merge, a tally of the logged
-//! moves and comparisons, and a replay of the logged moves onto a copy.
+//! moves and comparisons, a replay of the logged moves onto a copy, and the blank
+//! words a merge asks for.
 
 use core::cmp::Ordering;
 
+use array_vis_bench_traits::role::RotationMerge;
 use sort_logger::{SortLog, SortLogger};
 
 #[derive(Clone, Copy, Debug)]
@@ -42,6 +44,9 @@ pub fn sorted_keys(rng: &mut Rng, n: usize, values: usize) -> Vec<u32> {
 pub fn runs(a: &[u32], b: &[u32]) -> Vec<Item> {
     a.iter().chain(b).zip(0u32..).map(|(&key, tag)| Item { key, tag }).collect()
 }
+
+/// The words a merge asks for, blank, for a test that does not register them.
+pub fn words_of<M: RotationMerge>() -> Vec<usize> { vec![0; M::SCRATCH_SECTIONS.iter().sum()] }
 
 pub fn pairs(arr: &[Item]) -> Vec<(u32, u32)> { arr.iter().map(|x| (x.key, x.tag)).collect() }
 

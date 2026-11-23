@@ -119,7 +119,7 @@ mod tests {
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
-    use sort_logger::NoOpLogger;
+    use sort_logger::{split_sections, NoOpLogger};
 
     // The input shapes: a tie is the rule in some, a sorted run in others, and
     // the ones that sink a plain first element pivot.
@@ -239,7 +239,7 @@ mod tests {
 
     // A partition by rotation that keeps words of its own, three sections with an
     // empty one between, whose length it checks on every call and which it writes
-    // to through the logger.
+    // to through the logger, the last section's last word.
     struct Wordy;
     impl StablePartition for Wordy {
         const NAME: &'static str = "wordy";
@@ -256,7 +256,8 @@ mod tests {
             log: &mut U,
         ) -> usize {
             assert_eq!(words.len(), 8, "the words of a call");
-            log.write_data_u(words, 7, hi - lo);
+            let [_, _, tail] = split_sections(&mut *words, [3, 0, 5]);
+            log.write_data_u(tail, 4, hi - lo);
             RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
         }
 
@@ -270,7 +271,8 @@ mod tests {
             log: &mut U,
         ) -> usize {
             assert_eq!(words.len(), 8, "the words of a call");
-            log.write_data_u(words, 7, hi - lo);
+            let [_, _, tail] = split_sections(&mut *words, [3, 0, 5]);
+            log.write_data_u(tail, 4, hi - lo);
             RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
         }
     }

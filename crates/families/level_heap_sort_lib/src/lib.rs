@@ -288,7 +288,7 @@ mod tests {
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
     use scratchspace_lib::{ExternalBuffer, Fixed, Half, InArrayBuffer, Log, Sixteenth, Sqrt, TwoSqrt};
-    use sort_logger::{NoOpLogger, SortLog, VisualizerLogger};
+    use sort_logger::{split_sections, NoOpLogger, SortLog, VisualizerLogger};
     use std::collections::{HashMap, HashSet};
 
     // The shapes under test rotate by reversal and partition by rotation unless
@@ -508,7 +508,8 @@ mod tests {
             log: &mut U,
         ) -> usize {
             assert_eq!(words.len(), 6, "the words of a call");
-            log.write_data_u(words, 5, hi - lo);
+            let [_, tail] = split_sections(&mut *words, [4, 2]);
+            log.write_data_u(tail, 1, hi - lo);
             RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
         }
 
@@ -522,7 +523,8 @@ mod tests {
             log: &mut U,
         ) -> usize {
             assert_eq!(words.len(), 6, "the words of a call");
-            log.write_data_u(words, 5, hi - lo);
+            let [_, tail] = split_sections(&mut *words, [4, 2]);
+            log.write_data_u(tail, 1, hi - lo);
             RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
         }
     }

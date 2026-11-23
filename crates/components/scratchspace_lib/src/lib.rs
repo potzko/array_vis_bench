@@ -131,6 +131,7 @@ impl<A: Auxiliary> RotationMerge for AuxiliaryMerge<A> {
         arr: &mut [T],
         mid: usize,
         scratch: &mut [T],
+        _words: &mut [usize],
         logger: &mut U,
     ) {
         let n = arr.len();
@@ -253,7 +254,7 @@ mod tests {
         let before = multiset(&arr);
         let n = arr.len();
         let mut scratch = vec![Item { key: 0, tag: 0 }; <AuxiliaryMerge<A> as RotationMerge>::scratch_size(n)];
-        <AuxiliaryMerge<A> as RotationMerge>::merge(&mut arr, mid, &mut scratch, &mut NoOpLogger);
+        <AuxiliaryMerge<A> as RotationMerge>::merge(&mut arr, mid, &mut scratch, &mut [], &mut NoOpLogger);
         assert_sorted_stable(&arr);
         assert_eq!(multiset(&arr), before, "elements lost/duplicated");
     }
@@ -280,6 +281,15 @@ mod tests {
         merge_battery::<NoBuffer>();
     }
 
+    // A merge over a buffer keeps no fixed size array of its own, and the bufferless
+    // merge it falls back to none either, so no sort over one allocates words.
+    #[test]
+    fn the_auxiliary_merges_ask_for_no_words() {
+        assert!(<AuxiliaryMerge<FullBuffer> as RotationMerge>::SCRATCH_SECTIONS.is_empty());
+        assert!(<AuxiliaryMerge<HalfBuffer> as RotationMerge>::SCRATCH_SECTIONS.is_empty());
+        assert!(<AuxiliaryMerge<NoBuffer> as RotationMerge>::SCRATCH_SECTIONS.is_empty());
+    }
+
     /// `usize` (the project's element type) cross-checked against a reference merge.
     fn usize_check<A: Auxiliary>() {
         let mut state: u64 = 0x9E37_79B9_7F4A_7C15;
@@ -298,7 +308,7 @@ mod tests {
             expected.sort();
             let mut scratch =
                 vec![0usize; <AuxiliaryMerge<A> as RotationMerge>::scratch_size(arr.len())];
-            <AuxiliaryMerge<A> as RotationMerge>::merge(&mut arr, mid, &mut scratch, &mut NoOpLogger);
+            <AuxiliaryMerge<A> as RotationMerge>::merge(&mut arr, mid, &mut scratch, &mut [], &mut NoOpLogger);
             assert_eq!(arr, expected, "mismatch at ({la},{lb})");
         }
     }
@@ -470,7 +480,7 @@ mod tests {
         let mut expected = arr.clone();
         expected.sort();
         let mut tally = Tally::default();
-        <AuxiliaryMerge<NoBuffer> as RotationMerge>::merge(&mut arr, n / 2, &mut [], &mut tally);
+        <AuxiliaryMerge<NoBuffer> as RotationMerge>::merge(&mut arr, n / 2, &mut [], &mut [], &mut tally);
         assert_eq!(arr, expected);
         tally
     }

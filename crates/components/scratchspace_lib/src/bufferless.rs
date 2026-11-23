@@ -10,7 +10,8 @@ use sort_logger::SortLogger;
 
 /// Merge the sorted runs `arr[lo..mid]` and `arr[mid..hi]` in place, stably
 /// (an equal key of the left run stays first). `scratch` is the rotation's,
-/// `R::scratch_size` cells or more.
+/// `R::scratch_size` cells or more. The smaller side merge keeps no fixed size
+/// arrays, so it is handed no words and the callers have none to pass.
 pub fn bufferless_merge<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
@@ -20,7 +21,7 @@ pub fn bufferless_merge<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     logger: &mut U,
 ) {
     if lo >= mid || mid >= hi { return; }
-    <SmallerSideRotationMerge<R> as RotationMerge>::merge(&mut arr[lo..hi], mid - lo, scratch, logger);
+    <SmallerSideRotationMerge<R> as RotationMerge>::merge(&mut arr[lo..hi], mid - lo, scratch, &mut [], logger);
 }
 
 #[cfg(test)]

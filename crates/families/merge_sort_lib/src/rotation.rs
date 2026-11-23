@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 use sort_logger::SortLogger;
 use super::rotation_merge::RotationMerge;
+use array_vis_bench_traits::role::with_words;
 use array_vis_bench_traits::SmallSort;
 use array_vis_bench_traits::Complexity;
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
@@ -29,18 +30,21 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
             return;
         }
         let scratch_size = M::scratch_size(n);
-        if scratch_size == 0 {
-            Self::sort_rec(arr, &mut [], logger);
-        } else {
-            let mut scratch = logger.create_aux_arr_t(scratch_size);
-            Self::sort_rec(arr, &mut scratch, logger);
-            logger.free_aux_arr_t(&scratch);
-        }
+        with_words::<T, U, _>(logger, M::SCRATCH_SECTIONS, |logger, words| {
+            if scratch_size == 0 {
+                Self::sort_rec(arr, &mut [], words, logger);
+            } else {
+                let mut scratch = logger.create_aux_arr_t(scratch_size);
+                Self::sort_rec(arr, &mut scratch, words, logger);
+                logger.free_aux_arr_t(&scratch);
+            }
+        });
     }
 
     fn sort_rec<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         scratch: &mut [T],
+        words: &mut [usize],
         logger: &mut U,
     ) {
         let n = arr.len();
@@ -54,13 +58,13 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
         let mid = n / 2;
         {
             let (l, r) = arr.split_at_mut(mid);
-            Self::sort_rec(l, scratch, logger);
-            Self::sort_rec(r, scratch, logger);
+            Self::sort_rec(l, scratch, words, logger);
+            Self::sort_rec(r, scratch, words, logger);
         }
         if EARLY_EXIT && logger.cmp_le_accross(arr, mid - 1, arr, mid) {
             return;
         }
-        M::merge(arr, mid, scratch, logger);
+        M::merge(arr, mid, scratch, words, logger);
     }
 }
 
@@ -109,18 +113,21 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
             return;
         }
         let scratch_size = M::scratch_size(n);
-        if scratch_size == 0 {
-            Self::sort_inner(arr, &mut [], logger);
-        } else {
-            let mut scratch = logger.create_aux_arr_t(scratch_size);
-            Self::sort_inner(arr, &mut scratch, logger);
-            logger.free_aux_arr_t(&scratch);
-        }
+        with_words::<T, U, _>(logger, M::SCRATCH_SECTIONS, |logger, words| {
+            if scratch_size == 0 {
+                Self::sort_inner(arr, &mut [], words, logger);
+            } else {
+                let mut scratch = logger.create_aux_arr_t(scratch_size);
+                Self::sort_inner(arr, &mut scratch, words, logger);
+                logger.free_aux_arr_t(&scratch);
+            }
+        });
     }
 
     fn sort_inner<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         scratch: &mut [T],
+        words: &mut [usize],
         logger: &mut U,
     ) {
         let n = arr.len();
@@ -145,7 +152,7 @@ impl<S: SmallSort, M: RotationMerge, const EARLY_EXIT: bool>
                     if EARLY_EXIT && logger.cmp_le_accross(arr, mid - 1, arr, mid) {
                         // already sorted — skip
                     } else {
-                        M::merge(&mut arr[i..end], mid - i, scratch, logger);
+                        M::merge(&mut arr[i..end], mid - i, scratch, words, logger);
                     }
                 }
                 i += 2 * gap;
@@ -177,4 +184,71 @@ impl<S: SmallSort + HasStability, M: RotationMerge + HasStability, const EARLY_E
     HasStability for BottomUpRotationMergeSort<S, M, EARLY_EXIT>
 {
     const STABLE: bool = <M as HasStability>::STABLE && S::STABLE;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::rotation_merge::{NaiveRotationMerge, SmallerSideRotationMerge};
+    use array_vis_bench_traits::DirectSort;
+    use core::marker::PhantomData;
+    use rotation_reversal::ReversalRotation;
+    use sort_logger::{split_sections, SortLog, VisualizerLogger};
+
+    // No small sort, so that the sort is merges all the way down.
+    struct Unit;
+    impl SmallSort for Unit {
+        const THRESHOLD: usize = 0;
+        fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(_arr: &mut [T], _logger: &mut U) -> bool { false }
+    }
+
+    // A merge by the smaller side that keeps words of its own, two sections whose
+    // length it checks and the second of which it writes to through the logger.
+    struct Wordy;
+    impl RotationMerge for Wordy {
+        const SCRATCH_SECTIONS: &'static [usize] = &[2, 3];
+
+        fn scratch_size(n: usize) -> usize { SmallerSideRotationMerge::<ReversalRotation>::scratch_size(n) }
+
+        fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], mid: usize, scratch: &mut [T], words: &mut [usize], logger: &mut U) {
+            assert_eq!(words.len(), 5, "the words of a merge");
+            let [_, tail] = split_sections(&mut *words, [2, 3]);
+            logger.write_data_u(tail, 2, arr.len());
+            SmallerSideRotationMerge::<ReversalRotation>::merge(arr, mid, scratch, words, logger);
+        }
+    }
+
+    // The events a sort of 3000 elements by `S` leaves: the arrays of words
+    // created, with their lengths, those freed, and the writes to them.
+    fn word_events<S: DirectSort>() -> (Vec<(usize, usize)>, Vec<usize>, usize) {
+        let mut arr: Vec<usize> = (0..3000).map(|i| i * 7919 % 3001).collect();
+        let mut log = VisualizerLogger { type_ghost: PhantomData, log: Vec::new() };
+        S::sort(&mut arr, &mut log);
+        assert!(arr.windows(2).all(|w| w[0] <= w[1]));
+        let created = log.log.iter().filter_map(|e| if let SortLog::CreateAuxArr { name, length } = e { Some((*name, *length)) } else { None });
+        let freed = log.log.iter().filter_map(|e| if let SortLog::FreeAuxArr { name } = e { Some(*name) } else { None });
+        (created.collect(), freed.collect(), log.log.iter().filter(|e| matches!(e, SortLog::WriteDataU { .. })).count())
+    }
+
+    // The words are one allocation of the sort, an array a section, however many
+    // merges use them, and a merge without words leaves no array of them.
+    fn words_are_created_once<S: DirectSort, B: DirectSort>() {
+        let (created, freed, writes) = word_events::<S>();
+        assert_eq!(created.iter().map(|(_, length)| *length).collect::<Vec<_>>(), [2, 3]);
+        assert_eq!(freed, created.iter().map(|(name, _)| *name).collect::<Vec<_>>());
+        assert!(writes > 100, "{writes} writes to the words: a merge each");
+        assert_eq!(word_events::<B>(), (vec![], vec![], 0));
+    }
+
+    #[test]
+    fn the_top_down_sort_allocates_the_words_of_its_merge_once() {
+        words_are_created_once::<TopDownRotationMergeSort<Unit, Wordy, false>, TopDownRotationMergeSort<Unit, SmallerSideRotationMerge<ReversalRotation>, false>>();
+        words_are_created_once::<TopDownRotationMergeSort<Unit, Wordy, true>, TopDownRotationMergeSort<Unit, NaiveRotationMerge<ReversalRotation>, true>>();
+    }
+
+    #[test]
+    fn the_bottom_up_sort_allocates_the_words_of_its_merge_once() {
+        words_are_created_once::<BottomUpRotationMergeSort<Unit, Wordy, false>, BottomUpRotationMergeSort<Unit, SmallerSideRotationMerge<ReversalRotation>, false>>();
+        words_are_created_once::<BottomUpRotationMergeSort<Unit, Wordy, true>, BottomUpRotationMergeSort<Unit, NaiveRotationMerge<ReversalRotation>, true>>();
+    }
 }

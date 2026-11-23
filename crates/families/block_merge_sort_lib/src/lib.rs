@@ -115,7 +115,9 @@ impl<B: Auxiliary, K: Keys, R: Rotation, E: Extraction, M: MergeStrategy> BlockM
             (false, true) => Stash::Internal { at: keys, cap: buffer },
             (false, false) => Stash::None,
         };
-        merge_levels::<K, R, M, T, U>(arr, found, &mut stash, keys, &mut scratch, log);
+        with_words::<T, U, _>(log, <M::With<R> as RotationMerge>::SCRATCH_SECTIONS, |log, words| {
+            merge_levels::<K, R, M, T, U>(arr, found, &mut stash, keys, &mut scratch, words, log)
+        });
         drop(stash);
         if external > 0 {
             log.release_region(&ext, 0, external, RegionKind::Buffer);
@@ -177,6 +179,7 @@ fn merge_levels<K: Keys, R: Rotation, M: MergeStrategy, T: Ord + Copy, U: ?Sized
     stash: &mut Stash<T>,
     keys: usize,
     scratch: &mut [T],
+    words: &mut [usize],
     log: &mut U,
 ) {
     let n = arr.len();
@@ -186,7 +189,7 @@ fn merge_levels<K: Keys, R: Rotation, M: MergeStrategy, T: Ord + Copy, U: ?Sized
         let mut lo = from;
         while lo + width < n {
             let mid = lo + width;
-            merge_pair::<K, R, M, T, U>(arr, lo, mid, (mid + width).min(n), stash, keys, scratch, log);
+            merge_pair::<K, R, M, T, U>(arr, lo, mid, (mid + width).min(n), stash, keys, scratch, words, log);
             lo = mid + width;
         }
         width *= 2;
@@ -205,19 +208,20 @@ fn merge_pair<K: Keys, R: Rotation, M: MergeStrategy, T: Ord + Copy, U: ?Sized +
     stash: &mut Stash<T>,
     keys: usize,
     scratch: &mut [T],
+    words: &mut [usize],
     log: &mut U,
 ) {
     if log.cmp_le(arr, mid - 1, mid) { return; }
     let (la, lb) = (mid - lo, hi - mid);
     if la <= stash.capacity() {
         stash.park(arr, lo, la, log);
-        stash.merge::<R, M, U>(arr, lo, la, lb, scratch, log);
+        stash.merge::<R, M, U>(arr, lo, la, lb, scratch, words, log);
     } else if let Some(s) = block_size(la, keys) {
         let mut nowhere = Stash::None;
         let blocks_fit = s <= stash.capacity();
-        roll_merge::<K, R, M, T, U>(arr, lo, mid, hi, s, 0, if blocks_fit { stash } else { &mut nowhere }, scratch, log);
+        roll_merge::<K, R, M, T, U>(arr, lo, mid, hi, s, 0, if blocks_fit { stash } else { &mut nowhere }, scratch, words, log);
     } else {
-        merge_in_place::<R, M, T, U>(arr, lo, mid, hi, scratch, log);
+        merge_in_place::<R, M, T, U>(arr, lo, mid, hi, scratch, words, log);
     }
 }
 
@@ -245,7 +249,7 @@ mod tests {
         ExternalBuffer, Fixed, FullBuffer, Half, HalfBuffer, InArrayBuffer, InArrayKeys, Log, NoBuffer, NoKeys, Sixteenth, Sqrt,
         TwoSqrt,
     };
-    use sort_logger::{NoOpLogger, SortLog, VisualizerLogger};
+    use sort_logger::{split_sections, NoOpLogger, SortLog, VisualizerLogger};
 
     // The shapes under test rotate by reversal, carve by the scan and merge by the
     // smaller side unless a test names another rotation, extraction or merge.
@@ -395,7 +399,8 @@ mod tests {
             log: &mut U,
         ) -> usize {
             assert_eq!(words.len(), 8, "the words of the extraction");
-            log.write_data_u(words, 7, want);
+            let [_, tail] = split_sections(&mut *words, [5, 3]);
+            log.write_data_u(tail, 2, want);
             ScanExtraction::extract::<R, T, U>(arr, lo, hi, want, scratch, words, log)
         }
     }
@@ -430,9 +435,9 @@ mod tests {
     impl<R: Rotation> RotationMerge for NeedyOver<R> {
         fn scratch_size(n: usize) -> usize { n }
 
-        fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], mid: usize, scratch: &mut [T], log: &mut U) {
+        fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], mid: usize, scratch: &mut [T], words: &mut [usize], log: &mut U) {
             assert!(scratch.len() >= arr.len(), "a scratch of {} for a merge of {}", scratch.len(), arr.len());
-            <SmallerSideRotationMerge<R> as RotationMerge>::merge(arr, mid, scratch, log);
+            <SmallerSideRotationMerge<R> as RotationMerge>::merge(arr, mid, scratch, words, log);
         }
     }
     impl MergeStrategy for NeedyMerge {
@@ -449,6 +454,43 @@ mod tests {
         BlockMergeSort::<NoBuffer, InArrayKeys, ReversalRotation, ScanExtraction, NeedyMerge>::sort(&mut arr, &mut log);
         let created = log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArrT { .. } | SortLog::CreateAuxArr { .. }));
         assert_eq!(created.count(), 1);
+    }
+
+    // A merge by the smaller side that keeps words of its own, two sections whose
+    // length it checks and the second of which it writes to through the logger.
+    struct WordyMerge;
+    struct WordyOver<R>(PhantomData<R>);
+    impl<R: Rotation> RotationMerge for WordyOver<R> {
+        const SCRATCH_SECTIONS: &'static [usize] = &[2, 3];
+
+        fn scratch_size(n: usize) -> usize { R::scratch_size(n) }
+
+        fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], mid: usize, scratch: &mut [T], words: &mut [usize], log: &mut U) {
+            assert_eq!(words.len(), 5, "the words of the merge");
+            let [_, tail] = split_sections(&mut *words, [2, 3]);
+            log.write_data_u(tail, 2, arr.len());
+            <SmallerSideRotationMerge<R> as RotationMerge>::merge(arr, mid, scratch, words, log);
+        }
+    }
+    impl MergeStrategy for WordyMerge {
+        type With<R: Rotation> = WordyOver<R>;
+    }
+
+    // The local merge's words are one allocation of the sort, an array a section,
+    // made after the extraction's are freed and kept for every merge, however many.
+    #[test]
+    fn a_merge_with_words_is_handed_them_once_per_sort() {
+        sorts_stably::<BlockMergeSort<NoBuffer, NoKeys, ReversalRotation, ScanExtraction, WordyMerge>>("none, none, wordy");
+        sorts_stably::<BlockMergeSort<InArrayBuffer<Sixteenth>, InArrayKeys, TrinityRotation, ScanExtraction, WordyMerge>>("sixteenth, in array, trinity, wordy");
+        let mut arr = input(0, 3000, &mut Rng(0x5EED));
+        let mut log = VisualizerLogger { type_ghost: std::marker::PhantomData, log: Vec::new() };
+        BlockMergeSort::<NoBuffer, InArrayKeys, ReversalRotation, WordyExtraction, WordyMerge>::sort(&mut arr, &mut log);
+        let created: Vec<(usize, usize)> = log.log.iter().filter_map(|e| if let SortLog::CreateAuxArr { name, length } = e { Some((*name, *length)) } else { None }).collect();
+        let freed: Vec<usize> = log.log.iter().filter_map(|e| if let SortLog::FreeAuxArr { name } = e { Some(*name) } else { None }).collect();
+        assert_eq!(created.iter().map(|(_, length)| *length).collect::<Vec<_>>(), [5, 3, 2, 3]);
+        assert_eq!(freed, created.iter().map(|(name, _)| *name).collect::<Vec<_>>());
+        let writes = log.log.iter().filter(|e| matches!(e, SortLog::WriteDataU { .. })).count();
+        assert!(writes > 100, "{writes} writes to the words: one for the extraction and one for each merge");
     }
 
     // With the buffer and the keys in the array, the rotation's scratch is the

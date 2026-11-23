@@ -14,7 +14,7 @@ use crate::RotationPartition;
 use array_vis_bench_traits::role::{Rotation, StablePartition};
 use array_vis_bench_traits::Complexity;
 use rotation_reversal::ReversalRotation;
-use sort_logger::{NoOpLogger, SortLog, SortLogger};
+use sort_logger::{split_sections, NoOpLogger, SortLog, SortLogger};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Item {
@@ -86,7 +86,7 @@ impl StablePartition for Needy {
 
 /// Partitions by rotation and keeps words of its own, three sections with an
 /// empty one between: it checks their length on every call and writes the size of
-/// the region into the last word, through the logger.
+/// the region into the last word of the last section, through the logger.
 pub struct Wordy;
 impl StablePartition for Wordy {
     const NAME: &'static str = "wordy";
@@ -103,7 +103,8 @@ impl StablePartition for Wordy {
         log: &mut U,
     ) -> usize {
         assert_eq!(words.len(), 8, "the words of a call");
-        log.write_data_u(words, 7, hi - lo);
+        let [_, _, tail] = split_sections(&mut *words, [3, 0, 5]);
+        log.write_data_u(tail, 4, hi - lo);
         RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
     }
 
@@ -117,7 +118,8 @@ impl StablePartition for Wordy {
         log: &mut U,
     ) -> usize {
         assert_eq!(words.len(), 8, "the words of a call");
-        log.write_data_u(words, 7, hi - lo);
+        let [_, _, tail] = split_sections(&mut *words, [3, 0, 5]);
+        log.write_data_u(tail, 4, hi - lo);
         RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
     }
 }

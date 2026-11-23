@@ -239,6 +239,7 @@ mod tests {
             arr: &mut [T],
             _mid: usize,
             _scratch: &mut [T],
+            _words: &mut [usize],
             _logger: &mut U,
         ) {
             arr.sort();
@@ -253,6 +254,7 @@ mod tests {
             _arr: &mut [T],
             _mid: usize,
             _scratch: &mut [T],
+            _words: &mut [usize],
             _logger: &mut U,
         ) {
         }

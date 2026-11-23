@@ -43,7 +43,8 @@ use crate::stash::Stash;
 /// of `s >= 2` elements. `arr[keys_at..]` holds one key for each full block of the
 /// left run, `la / s`, sorted and distinct, outside `lo..hi`. The keys are as they
 /// were when it returns, and so is the stash's buffer up to order. Rotations are
-/// `R`'s, through `scratch`, and a merge the stash cannot do is `M`'s over `R`.
+/// `R`'s, through `scratch`, and a merge the stash cannot do is `M`'s over `R`,
+/// which keeps its fixed size arrays in `words`.
 pub fn roll_merge<K: Keys, R: Rotation, M: MergeStrategy, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
@@ -53,6 +54,7 @@ pub fn roll_merge<K: Keys, R: Rotation, M: MergeStrategy, T: Ord + Copy, U: ?Siz
     keys_at: usize,
     stash: &mut Stash<T>,
     scratch: &mut [T],
+    words: &mut [usize],
     log: &mut U,
 ) {
     let (la, lb) = (mid - lo, hi - mid);
@@ -74,7 +76,7 @@ pub fn roll_merge<K: Keys, R: Rotation, M: MergeStrategy, T: Ord + Copy, U: ?Siz
             K::tag_block(arr, keys_at + dropped, window, log);
             dropped += 1;
             let split = first_not_below(arr, last_b, window, window, log);
-            stash.merge::<R, M, U>(arr, pending, pending_len, split - (pending + pending_len), scratch, log);
+            stash.merge::<R, M, U>(arr, pending, pending_len, split - (pending + pending_len), scratch, words, log);
             stash.park(arr, window, s, log);
             stash.pass_behind::<R, U>(arr, split, window, s, window - split, scratch, log);
             (pending, pending_len, last_b) = (split, s, split + s);
@@ -93,7 +95,7 @@ pub fn roll_merge<K: Keys, R: Rotation, M: MergeStrategy, T: Ord + Copy, U: ?Siz
             (last_b, window) = (window, window + s);
         }
     }
-    stash.merge::<R, M, U>(arr, pending, pending_len, hi - (pending + pending_len), scratch, log);
+    stash.merge::<R, M, U>(arr, pending, pending_len, hi - (pending + pending_len), scratch, words, log);
 }
 
 #[cfg(test)]
@@ -133,7 +135,7 @@ mod tests {
             Shape::External => Stash::External(&mut ext),
             Shape::Nowhere => Stash::None,
         };
-        roll_merge::<InArrayKeys, ReversalRotation, M, _, _>(&mut arr, lo, lo + la, lo + la + lb, s, 0, &mut stash, &mut [], &mut NoOpLogger);
+        roll_merge::<InArrayKeys, ReversalRotation, M, _, _>(&mut arr, lo, lo + la, lo + la + lb, s, 0, &mut stash, &mut [], &mut [], &mut NoOpLogger);
         let label = format!("{shape:?} la={la} lb={lb} s={s} values={values}");
         assert_eq!(pairs(&arr[lo..]), merged(&a, &b), "{label}");
         assert_eq!(pairs(&arr[..keys.len()]), pairs(&keys), "keys not restored, {label}");
@@ -181,7 +183,7 @@ mod tests {
         let a = sorted_run(&mut rng, la, 5, 0);
         let b = sorted_run(&mut rng, lb, 5, 100);
         let mut arr: Vec<Item> = a.iter().chain(&b).copied().collect();
-        roll_merge::<NoKeys, ReversalRotation, SmallerSideMerge, _, _>(&mut arr, 0, la, la + lb, s, 0, &mut Stash::None, &mut [], &mut NoOpLogger);
+        roll_merge::<NoKeys, ReversalRotation, SmallerSideMerge, _, _>(&mut arr, 0, la, la + lb, s, 0, &mut Stash::None, &mut [], &mut [], &mut NoOpLogger);
         assert_eq!(pairs(&arr), merged(&a, &b));
     }
 }
