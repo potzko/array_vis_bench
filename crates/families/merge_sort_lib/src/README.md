@@ -5,7 +5,7 @@ Source of `merge_sort_lib`. The crate README one level up says what it is for.
 - `auxiliary_merge.rs`: Auxiliary-array merges, the "normal" textbook merge that uses an external scratch buffer, in contrast to the in-place rotation-based merges in...
 - `bottom_up.rs`: the crate's source.
 - `lib.rs`: Merge sort family, classic (TopDown, BottomUp, Naive, Natural) and rotation-based merge sorts.
-- `mask_merge.rs`: `merge_window`, the stable merge of a window that fits a bit mask held in local variables, an origin mask and the cycles that apply it.
+- `mask_merge.rs`: `MaskRotationMerge`, a stable merge with no scratch of its own, trimmed to a window and merged by `merge_window`, an origin mask and the cycles that apply it, split by rotations when the window is too long.
 - `naive.rs`: the crate's source.
 - `natural.rs`: the crate's source.
 - `rotation.rs`: the crate's source.
