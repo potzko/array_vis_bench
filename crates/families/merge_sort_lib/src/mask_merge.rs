@@ -2,10 +2,12 @@
 //! trims the runs to the window that needs merging and, when the window fits a
 //! bit mask held in local variables, `merge_window` merges it by an origin mask
 //! and cycles; a longer window is split by rotations, as symMerge splits, until
-//! the pieces fit. Every move and every comparison goes through the logger.
+//! the pieces fit, or handed whole to the smaller side merge when `SPLIT` is off.
+//! Every move and every comparison goes through the logger.
 
 use core::marker::PhantomData;
 
+use super::rotation_merge::SmallerSideRotationMerge;
 use super::utils::{lower_bound, upper_bound};
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::{Complexity, Rotation};
@@ -16,12 +18,16 @@ use array_vis_bench_traits::role::merge::RotationMerge;
 /// Merge by the mask where the window fits `64 * WORDS` positions, and by
 /// symMerge's split over the rotation `R` where it does not. The mask is two
 /// arrays of `WORDS` words and a third of their running popcounts, all on the
-/// stack, so the merge needs the rotation's scratch and no other.
-pub struct MaskRotationMerge<R: Rotation, const WORDS: usize = 16> {
+/// stack, so the merge needs the rotation's scratch and no other. With `SPLIT`
+/// off a window past the cap is not split: it goes whole to the smaller side merge,
+/// which never uses the mask, the fallback the split is to be measured against.
+/// The catalog takes the defaults, 16 words and the split. The 16 is provisional,
+/// the choice of the cap waits for the measurement of the combined branch.
+pub struct MaskRotationMerge<R: Rotation, const WORDS: usize = 16, const SPLIT: bool = true> {
     _phantom: PhantomData<R>,
 }
 
-impl<R: Rotation, const WORDS: usize> RotationMerge for MaskRotationMerge<R, WORDS> {
+impl<R: Rotation, const WORDS: usize, const SPLIT: bool> RotationMerge for MaskRotationMerge<R, WORDS, SPLIT> {
     #[inline]
     fn scratch_size(n: usize) -> usize {
         R::scratch_size(n)
@@ -29,7 +35,7 @@ impl<R: Rotation, const WORDS: usize> RotationMerge for MaskRotationMerge<R, WOR
 
     fn merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], mid: usize, scratch: &mut [T], logger: &mut U) {
         let n = arr.len();
-        merge_trimmed::<WORDS, R, T, U>(arr, 0, mid, n, scratch, logger);
+        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, 0, mid, n, scratch, logger);
     }
 }
 
@@ -38,17 +44,18 @@ impl<R: Rotation, const WORDS: usize> RotationMerge for MaskRotationMerge<R, WOR
 // shorter run, so a merge of two runs of `n / 2` splits `log (n / cap)` times and costs
 // `O(n log (n / cap))` moves where symMerge costs `O(n log n)`. A lopsided merge is cut
 // more times than that and costs up to the `O(n log n)` of symMerge, and a merge of
-// runs in order costs the one comparison that says so.
-impl<R: Rotation, const WORDS: usize> HasTimeBounds for MaskRotationMerge<R, WORDS> {
-    const WORST: Complexity = Complexity::N_LOG_N;
+// runs in order costs the one comparison that says so. The fallback is the smaller side
+// merge past the cap and has its bounds.
+impl<R: Rotation, const WORDS: usize, const SPLIT: bool> HasTimeBounds for MaskRotationMerge<R, WORDS, SPLIT> {
+    const WORST: Complexity = if SPLIT { Complexity::N_LOG_N } else { Complexity::N_LOG_SQUARED };
     const BEST: Complexity = Complexity::N1;
-    const AVERAGE: Complexity = Complexity::N_LOG_N;
+    const AVERAGE: Complexity = Self::WORST;
 }
 // The mask is a constant number of words, so the space is the rotation's.
-impl<R: Rotation + HasSpace, const WORDS: usize> HasSpace for MaskRotationMerge<R, WORDS> {
+impl<R: Rotation + HasSpace, const WORDS: usize, const SPLIT: bool> HasSpace for MaskRotationMerge<R, WORDS, SPLIT> {
     const SPACE: Complexity = R::SPACE;
 }
-impl<R: Rotation, const WORDS: usize> HasStability for MaskRotationMerge<R, WORDS> {
+impl<R: Rotation, const WORDS: usize, const SPLIT: bool> HasStability for MaskRotationMerge<R, WORDS, SPLIT> {
     /// The mask is the origin of a stable merge, and the split is symMerge's, which
     /// cuts at a `lower_bound` or an `upper_bound` so equal keys keep their order.
     const STABLE: bool = true;
@@ -60,7 +67,8 @@ impl<R: Rotation, const WORDS: usize> HasStability for MaskRotationMerge<R, WORD
 // `merge_window` takes, and it is cut at the middle of its shorter run when it is too
 // long: the pivot splits the other run by a bound, one rotation puts the two lower
 // pieces together and the two upper ones together, and each pair is merged the same way.
-fn merge_trimmed<const WORDS: usize, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+// Without `SPLIT` the long window is the smaller side merge's.
+fn merge_trimmed<const WORDS: usize, const SPLIT: bool, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
     mid: usize,
@@ -74,20 +82,22 @@ fn merge_trimmed<const WORDS: usize, R: Rotation, T: Ord + Copy, U: ?Sized + Sor
     let (left, right) = (mid - lo, hi - mid);
     if left + right <= 64 * WORDS {
         merge_window::<WORDS, T, U>(arr, lo, mid, hi, logger);
+    } else if !SPLIT {
+        SmallerSideRotationMerge::<R>::merge(&mut arr[lo..hi], mid - lo, scratch, logger);
     } else if left <= right {
         let p = lo + left / 2;
         let q = lower_bound(arr, mid, hi, arr[p], logger);
         R::rotate(&mut arr[p..q], mid - p, scratch, logger);
         let cut = p + (q - mid);
-        merge_trimmed::<WORDS, R, T, U>(arr, lo, p, cut, scratch, logger);
-        merge_trimmed::<WORDS, R, T, U>(arr, cut, q, hi, scratch, logger);
+        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, lo, p, cut, scratch, logger);
+        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, cut, q, hi, scratch, logger);
     } else {
         let p = mid + right / 2;
         let q = upper_bound(arr, lo, mid, arr[p], logger);
         R::rotate(&mut arr[q..p + 1], mid - q, scratch, logger);
         let cut = q + (p + 1 - mid);
-        merge_trimmed::<WORDS, R, T, U>(arr, lo, q, cut, scratch, logger);
-        merge_trimmed::<WORDS, R, T, U>(arr, cut, p + 1, hi, scratch, logger);
+        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, lo, q, cut, scratch, logger);
+        merge_trimmed::<WORDS, SPLIT, R, T, U>(arr, cut, p + 1, hi, scratch, logger);
     }
 }
 
@@ -509,5 +519,42 @@ mod tests {
         assert_eq!(<MaskRotationMerge<TrinityRotation> as RotationMerge>::scratch_size(1000), TrinityRotation::scratch_size(1000));
         assert_eq!(<MaskRotationMerge<AuxiliaryRotation> as RotationMerge>::scratch_size(1000), 500);
         assert!(<MaskRotationMerge<ReversalRotation> as HasStability>::STABLE);
+    }
+
+    // The fallback, symMerge for a window past the cap, is the same merge for the
+    // windows that fit and a stable merge for the rest.
+    #[test]
+    fn the_fallback_merges_stably() {
+        every_pair_of_lengths::<MaskRotationMerge<ReversalRotation, 1, false>>("reversal, one word, fallback");
+        every_shape::<MaskRotationMerge<ReversalRotation, 1, false>>("reversal, 1, fallback");
+        every_shape::<MaskRotationMerge<TrinityRotation, 2, false>>("trinity, 2, fallback");
+        every_shape::<MaskRotationMerge<AuxiliaryRotation, 16, false>>("auxiliary, 16, fallback");
+        replayed::<MaskRotationMerge<ReversalRotation, 1, false>>("reversal, fallback");
+    }
+
+    #[test]
+    fn a_window_that_fits_is_one_mask_under_the_fallback_too() {
+        let (a, b) = window_of(128);
+        ROTATIONS.with(|c| c.set(0));
+        let mut arr = runs(&a, &b);
+        let mut tally = Tally::default();
+        <MaskRotationMerge<Counting, 2, false> as RotationMerge>::merge(&mut arr, a.len(), &mut [], &mut tally);
+        assert_eq!((ROTATIONS.with(|c| c.get()), tally.moves), (0, 128));
+    }
+
+    #[test]
+    fn the_split_moves_fewer_cells_than_the_fallback_past_the_cap() {
+        for k in [12, 14, 16] {
+            let split = moves_per_element::<MaskRotationMerge<ReversalRotation, 1>>(1 << k);
+            let fallback = moves_per_element::<MaskRotationMerge<ReversalRotation, 1, false>>(1 << k);
+            assert!(split < fallback, "2^{k}: split {split}, fallback {fallback}");
+        }
+    }
+
+    #[test]
+    fn the_fallback_has_symmerges_bounds_and_the_split_the_mask_s() {
+        assert_eq!(<MaskRotationMerge<ReversalRotation> as HasTimeBounds>::WORST, Complexity::N_LOG_N);
+        assert_eq!(<MaskRotationMerge<ReversalRotation, 16, false> as HasTimeBounds>::WORST, Complexity::N_LOG_SQUARED);
+        assert!(<MaskRotationMerge<ReversalRotation, 16, false> as HasStability>::STABLE);
     }
 }
