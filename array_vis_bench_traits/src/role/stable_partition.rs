@@ -1,9 +1,9 @@
 //! `StablePartition`, the stable partition role: the elements of a region
 //! below a pivot value brought to its front and the rest after them, each side
 //! keeping its order. The partition extraction of a block merge sort selects
-//! its sample with one, and a stable quick sort would partition with one. A
-//! filler rotates with the `Rotation` it is handed and may use that rotation's
-//! scratch as a buffer.
+//! its sample with one, and a stable quick sort partitions with one. A filler
+//! rotates with the `Rotation` it is handed and may use the scratch as a buffer
+//! of its own, which the caller allocates once for the two together.
 
 use crate::Complexity;
 use crate::Rotation;
@@ -16,9 +16,18 @@ pub trait StablePartition {
     /// Worst case moves of a partition of `n` elements without scratch.
     const MOVES: Complexity;
 
+    /// Cells of scratch a partition of up to `n` elements wants for itself, 0
+    /// for a filler that makes do with the rotation's. The caller allocates the
+    /// larger of this and `R::scratch_size(n)` once and hands it to every
+    /// call: the partition lets go of its cells before it rotates, so the two
+    /// never use them at once.
+    #[inline]
+    fn scratch_size(_n: usize) -> usize { 0 }
+
     /// Move the elements of `arr[lo..hi]` below `pivot` to its front, each side
-    /// keeping its order, and return where the rest begins. `scratch` is the
-    /// rotation's, `R::scratch_size` cells or more.
+    /// keeping its order, and return where the rest begins. `scratch` holds
+    /// `R::scratch_size(n)` or `Self::scratch_size(n)` cells, whichever is more,
+    /// for an `n` no smaller than the region.
     fn partition<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         lo: usize,

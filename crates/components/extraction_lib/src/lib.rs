@@ -115,6 +115,8 @@ pub struct PartitionExtraction<P>(PhantomData<P>);
 impl<P: StablePartition> Extraction for PartitionExtraction<P> {
     const NAME: &'static str = "partition";
 
+    fn scratch_size(n: usize) -> usize { P::scratch_size(n) }
+
     fn extract<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         lo: usize,
@@ -177,7 +179,7 @@ fn rank_of<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], a: usize, b: usi
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_util::{item, items, pairs, Item, Rng};
+    use crate::test_util::{item, items, pairs, Item, Needy, Rng};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
@@ -222,7 +224,7 @@ mod tests {
             let arr0 = random(&mut rng, n, values);
             let lo = rng.next(3).min(n - 1);
             let mut arr = arr0.clone();
-            let mut scratch = vec![item(0); R::scratch_size(n)];
+            let mut scratch = vec![item(0); R::scratch_size(n).max(E::scratch_size(n))];
             let found = E::extract::<R, _, _>(&mut arr, lo, n, want, &mut scratch, &mut NoOpLogger);
             let first = firsts(&arr0[lo..]);
             let name = format!("{}, {}: round {round}: n={n} values={values} want={want} lo={lo}", E::NAME, R::NAME);
@@ -262,6 +264,22 @@ mod tests {
         carves_first_occurrences::<PartitionExtraction<RotationPartition>, AuxiliaryRotation>();
         carves_first_occurrences::<PartitionExtraction<SlidingPartition>, ReversalRotation>();
         carves_first_occurrences::<PartitionExtraction<SlidingPartition>, AuxiliaryRotation>();
+    }
+
+    // A partition's own scratch is the extraction's, and the scan and the prefix
+    // sort ask for none.
+    #[test]
+    fn an_extraction_asks_for_the_scratch_of_its_partition() {
+        assert_eq!(<PartitionExtraction<Needy> as Extraction>::scratch_size(1000), 1000);
+        assert_eq!(<PartitionExtraction<RotationPartition> as Extraction>::scratch_size(1000), 0);
+        assert_eq!(<ScanExtraction as Extraction>::scratch_size(1000), 0);
+        assert_eq!(<PrefixSortExtraction as Extraction>::scratch_size(1000), 0);
+    }
+
+    #[test]
+    fn a_partition_extraction_carves_through_the_scratch_of_its_partition() {
+        carves_first_occurrences::<PartitionExtraction<Needy>, ReversalRotation>();
+        carves_first_occurrences::<PartitionExtraction<Needy>, AuxiliaryRotation>();
     }
 
     // The partition extraction's point: on distinct data the keys are the

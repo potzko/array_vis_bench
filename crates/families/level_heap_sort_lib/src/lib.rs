@@ -24,14 +24,15 @@ const RUN: usize = 8;
 
 /// `B` is the buffer, carved from the array or allocated beside it, `P` the
 /// `StablePartition` the level build selects with and `R` the `Rotation` it
-/// rotates with, whose scratch is the one other allocation of the sort.
+/// rotates with, whose scratch, or the partition's if that is larger, is the
+/// one other allocation of the sort.
 pub struct LevelHeapSort<B, P, R>(PhantomData<(B, P, R)>);
 
 impl<B: Auxiliary, P: StablePartition, R: Rotation> LevelHeapSort<B, P, R> {
     pub fn sort<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], log: &mut U) {
         let n = arr.len();
         if n < 2 { return; }
-        let cells = R::scratch_size(n);
+        let cells = R::scratch_size(n).max(P::scratch_size(n));
         let mut scratch = if cells > 0 { log.create_aux_arr_t(cells) } else { Vec::new() };
         let external = B::scratch_size(n);
         // A carved buffer is the first distinct elements of the array, as many
@@ -281,12 +282,46 @@ mod tests {
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
     use scratchspace_lib::{ExternalBuffer, Fixed, Half, InArrayBuffer, Log, Sixteenth, Sqrt, TwoSqrt};
-    use sort_logger::NoOpLogger;
+    use sort_logger::{NoOpLogger, SortLog, VisualizerLogger};
     use std::collections::{HashMap, HashSet};
 
     // The shapes under test rotate by reversal and partition by rotation unless
     // a test names others.
     type Level<B> = LevelHeapSort<B, RotationPartition, ReversalRotation>;
+
+    // A partition by rotation that wants a scratch of its own as long as the
+    // region, and fails when it is handed a shorter one.
+    struct Needy;
+    impl StablePartition for Needy {
+        const NAME: &'static str = "needy";
+        const MOVES: Complexity = Complexity::N_LOG_N;
+
+        fn scratch_size(n: usize) -> usize { n }
+
+        fn partition<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+            arr: &mut [T],
+            lo: usize,
+            hi: usize,
+            pivot: T,
+            scratch: &mut [T],
+            log: &mut U,
+        ) -> usize {
+            assert!(scratch.len() >= hi - lo, "a scratch of {} for a region of {}", scratch.len(), hi - lo);
+            RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, log)
+        }
+
+        fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+            arr: &mut [T],
+            lo: usize,
+            hi: usize,
+            pivot: T,
+            scratch: &mut [T],
+            log: &mut U,
+        ) -> usize {
+            assert!(scratch.len() >= hi - lo, "a scratch of {} for a region of {}", scratch.len(), hi - lo);
+            RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, log)
+        }
+    }
 
     // The input shapes: every key repeated often, so that ties are the rule.
     fn input(kind: usize, n: usize, rng: &mut Rng) -> Vec<Item> {
@@ -433,6 +468,18 @@ mod tests {
     fn any_rotation_sorts_stably() {
         sorts_stably::<LevelHeapSort<InArrayBuffer<Sqrt>, RotationPartition, TrinityRotation>>("in array sqrt, trinity");
         sorts_stably::<LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, AuxiliaryRotation>>("external sqrt, auxiliary");
+    }
+
+    // The partition's own scratch is allocated with the rotation's, once.
+    #[test]
+    fn a_partition_with_its_own_scratch_is_handed_it() {
+        sorts_stably::<LevelHeapSort<InArrayBuffer<Sqrt>, Needy, ReversalRotation>>("in array sqrt, needy");
+        sorts_stably::<LevelHeapSort<ExternalBuffer<Sqrt>, Needy, TrinityRotation>>("external sqrt, needy, trinity");
+        let mut arr: Vec<usize> = (0..1000).rev().collect();
+        let mut log = VisualizerLogger { type_ghost: core::marker::PhantomData, log: Vec::new() };
+        LevelHeapSort::<InArrayBuffer<Sqrt>, Needy, ReversalRotation>::sort(&mut arr, &mut log);
+        let created = log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArrT { .. })).count();
+        assert_eq!(created, 1, "the scratch is one aux array of the run");
     }
 
     fn moves_are_all_logged<S: DirectSort>(name: &str) {

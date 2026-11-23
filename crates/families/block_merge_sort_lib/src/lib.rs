@@ -79,8 +79,9 @@ impl<B: Auxiliary, K: Keys, R: Rotation, E: Extraction> BlockMergeSort<B, K, R, 
             sort_region(arr, 0, n, log);
             return;
         }
-        // One scratch serves every rotation of the sort, as in a rotation merge sort.
-        let rotation_cells = R::scratch_size(n);
+        // One scratch serves every rotation of the sort, as in a rotation merge sort,
+        // and the extraction's partition when it wants cells of its own.
+        let rotation_cells = R::scratch_size(n).max(E::scratch_size(n));
         let mut scratch = if rotation_cells > 0 { log.create_aux_arr_t(rotation_cells) } else { Vec::new() };
         // The keys come first in the carved region and the buffer behind them. A
         // block of `isqrt(n)` elements gives `n / isqrt(n)` blocks to tag.
@@ -309,6 +310,39 @@ mod tests {
         sorts_stably::<BlockMergeSort<NoBuffer, InArrayKeys, AuxiliaryRotation, PartitionExtraction<RotationPartition>>>("none, auxiliary, partition by rotation");
         sorts_stably::<BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, ReversalRotation, PrefixSortExtraction>>("sixteenth, none, prefix sort");
     }
+    // An extraction that wants a scratch of its own, as long as the array, and
+    // fails when it is handed a shorter one.
+    struct Needy;
+    impl Extraction for Needy {
+        const NAME: &'static str = "needy";
+
+        fn scratch_size(n: usize) -> usize { n }
+
+        fn extract<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+            arr: &mut [T],
+            lo: usize,
+            hi: usize,
+            want: usize,
+            scratch: &mut [T],
+            log: &mut U,
+        ) -> usize {
+            assert!(scratch.len() >= hi - lo, "a scratch of {} for a region of {}", scratch.len(), hi - lo);
+            ScanExtraction::extract::<R, T, U>(arr, lo, hi, want, scratch, log)
+        }
+    }
+
+    // The extraction's own scratch is allocated with the rotation's, once.
+    #[test]
+    fn an_extraction_with_its_own_scratch_is_handed_it() {
+        sorts_stably::<BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, ReversalRotation, Needy>>("wiki, needy");
+        sorts_stably::<BlockMergeSort<NoBuffer, InArrayKeys, AuxiliaryRotation, Needy>>("none, auxiliary, needy");
+        let mut arr = input(0, 1000, &mut Rng(0x5EED));
+        let mut log = VisualizerLogger { type_ghost: std::marker::PhantomData, log: Vec::new() };
+        BlockMergeSort::<InArrayBuffer<Sixteenth>, InArrayKeys, AuxiliaryRotation, Needy>::sort(&mut arr, &mut log);
+        let created = log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArrT { .. } | SortLog::CreateAuxArr { .. }));
+        assert_eq!(created.count(), 1);
+    }
+
     // With the buffer and the keys in the array, the rotation's scratch is the
     // one aux array of the run, however many rotations use it.
     #[test]
