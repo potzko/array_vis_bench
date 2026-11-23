@@ -45,7 +45,7 @@ Its catalog component is declared in `block_merge.spec`, the buffer, size and ke
 
 Query `block_merge.avbs` builds: `BlockMergeSorts`, 450 entries: fifteen
 buffers (in the array or external by seven sizes, or none) by two key shapes by
-fifteen rotations, each carving by the scan; and `BlockMergeExtractions`, 36
+fifteen rotations, each carving by the scan and merging by the smaller side; and `BlockMergeExtractions`, 36
 entries: the other four extractions over the WikiSort, dynamic GrailSort and
 bufferless shapes with in array keys, by the reversal, trinity and auxiliary
 rotations.

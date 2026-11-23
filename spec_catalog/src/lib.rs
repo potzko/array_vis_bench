@@ -130,7 +130,7 @@ mod tests {
         assert_eq!(COUNT_TAGGED_HEAP, 1, "tagged heap family");
         assert_eq!(COUNT_LEVEL_HEAP, 294, "level heap family (14 buffers with cells x 15 rotations by the rotation partition, plus x 2 rotations by the encoded one and by the masked one over each of its 2 walks)");
         assert_eq!(COUNT_STABLE_QUICK, 60, "stable quick family (rotation, encoded and the masked one by each of its 2 walks, not the sliding one, 4 stable partitions x 15 rotations)");
-        assert_eq!(COUNT_BLOCK_MERGE, 486, "block merge family (15 buffers x 2 key shapes x 15 rotations by the scan, plus 3 shapes x 3 rotations x 4 other extractions)");
+        assert_eq!(COUNT_BLOCK_MERGE, 486, "block merge family (15 buffers x 2 key shapes x 15 rotations by the scan, plus 3 shapes x 3 rotations x 4 other extractions, all merging by the smaller side)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
         assert_eq!(COUNT_ROD, 114, "rod family (6 branching x [3 merges + the tree merge over 8 trees x 2 key stores])");
@@ -752,7 +752,7 @@ mod tests {
             let es = entries();
             assert_eq!(es.len(), COUNT_BLOCK_MERGE, "count drifted");
             assert_eq!(COUNT_BLOCK_MERGE, 450 + 36);
-            assert_eq!(es.iter().filter(|e| e.name.ends_with(", extraction: scan>")).count(), 450);
+            assert_eq!(es.iter().filter(|e| e.name.ends_with(", extraction: scan, merge: smaller-side>")).count(), 450);
             let cfg = RunConfig { size: 64, seed: 1 };
             for e in &es {
                 assert_eq!(e.category, Category::Sort);
@@ -772,7 +772,7 @@ mod tests {
                 .collect();
             want.sort();
             for keys in ["in array", "none"] {
-                let tail = format!(", keys: {keys}, rotation: reversal, extraction: scan>");
+                let tail = format!(", keys: {keys}, rotation: reversal, extraction: scan, merge: smaller-side>");
                 let mut buffers: Vec<&str> = entries()
                     .iter()
                     .filter_map(|e| e.name.strip_prefix("block sort<buffer: ")?.strip_suffix(tail.as_str()))
@@ -780,8 +780,8 @@ mod tests {
                 buffers.sort();
                 assert_eq!(buffers, want, "keys: {keys}");
             }
-            find("block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: scan>");
-            find("block sort<buffer: external<512>, keys: in array, rotation: reversal, extraction: scan>");
+            find("block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>");
+            find("block sort<buffer: external<512>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>");
             let wiki = entries().iter().filter(|e| e.name.starts_with("block sort<buffer: in array<sqrt>, keys: in array,")).count();
             assert_eq!(wiki, 15 + 3 * 4, "WikiSort under every rotation, and under the other four extractions by three rotations");
         }
@@ -790,12 +790,12 @@ mod tests {
         // that are not the scan.
         #[test]
         fn the_extraction_study_covers_three_shapes_by_three_rotations() {
-            let study: Vec<&str> = entries().iter().filter(|e| !e.name.ends_with(", extraction: scan>")).map(|e| e.name).collect();
+            let study: Vec<&str> = entries().iter().filter(|e| !e.name.ends_with(", extraction: scan, merge: smaller-side>")).map(|e| e.name).collect();
             assert_eq!(study.len(), 36);
             for extraction in ["prefix sort", "partition<rotation>", "partition<sliding>", "partition<encoded>"] {
                 for rotation in ["reversal", "trinity", "auxiliary"] {
                     for buffer in ["in array<sqrt>", "external<sqrt>", "none"] {
-                        let name = format!("block sort<buffer: {buffer}, keys: in array, rotation: {rotation}, extraction: {extraction}>");
+                        let name = format!("block sort<buffer: {buffer}, keys: in array, rotation: {rotation}, extraction: {extraction}, merge: smaller-side>");
                         assert!(study.contains(&name.as_str()), "no entry {name}");
                     }
                 }
@@ -804,29 +804,29 @@ mod tests {
 
         #[test]
         fn inherited_complexity_matches_the_concrete_types() {
-            let wiki = find("block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: scan>");
+            let wiki = find("block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>");
             type Wiki = BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, ReversalRotation, ScanExtraction>;
             assert_eq!(wiki.worst, <Wiki as HasTimeBounds>::WORST);
             assert_eq!(wiki.best, <Wiki as HasTimeBounds>::BEST);
             assert_eq!(wiki.space, <Wiki as HasSpace>::SPACE);
             assert_eq!(wiki.stable, <Wiki as HasStability>::STABLE);
             assert!(wiki.adaptive);
-            let grail = find("block sort<buffer: external<512>, keys: in array, rotation: reversal, extraction: scan>");
+            let grail = find("block sort<buffer: external<512>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>");
             type Grail = BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, ReversalRotation, ScanExtraction>;
             assert_eq!(grail.worst, <Grail as HasTimeBounds>::WORST);
             assert_eq!(grail.space, <Grail as HasSpace>::SPACE);
-            let bare = find("block sort<buffer: none, keys: none, rotation: reversal, extraction: scan>");
+            let bare = find("block sort<buffer: none, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>");
             assert_eq!(bare.worst, <BlockMergeSort<NoBuffer, NoKeys, ReversalRotation, ScanExtraction> as HasTimeBounds>::WORST);
             // a rotation that copies a side out takes the sort out of place
-            let copying = find("block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: scan>");
+            let copying = find("block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>");
             assert_eq!(copying.space, <BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, AuxiliaryRotation, ScanExtraction> as HasSpace>::SPACE);
             assert!(!copying.space.is_in_place());
             // and the size sets the rest: half the array carved costs its square,
             // a square root outside the array is that much space
-            let carved_half = find("block sort<buffer: in array<half>, keys: in array, rotation: reversal, extraction: scan>");
+            let carved_half = find("block sort<buffer: in array<half>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>");
             assert_eq!(carved_half.worst, <BlockMergeSort<InArrayBuffer<Half>, InArrayKeys, ReversalRotation, ScanExtraction> as HasTimeBounds>::WORST);
             assert_eq!(carved_half.worst, Complexity::N_SQUARED);
-            let dynamic = find("block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: scan>");
+            let dynamic = find("block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>");
             assert_eq!(dynamic.space, <BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, ReversalRotation, ScanExtraction> as HasSpace>::SPACE);
             assert_eq!(dynamic.space, Complexity::SQRT_N);
         }
@@ -837,14 +837,14 @@ mod tests {
             let one = v.iter().find(|v| v.name.starts_with("block sort<")).expect("registered");
             assert_eq!(one.category, vec!["sorts", "merge sorts", "block"], "got {:?}", one.category);
             let roles: Vec<&str> = one.axes.iter().map(|a| a.role.as_str()).collect();
-            assert!(["BlockBuffer", "Keys", "Rotation"].iter().all(|role| roles.contains(role)), "{roles:?}");
+            assert!(["BlockBuffer", "Keys", "Rotation", "MergeStrategy"].iter().all(|role| roles.contains(role)), "{roles:?}");
         }
 
         /// A run through the logger the visualiser drives holds each region and releases it.
         #[test]
         fn the_wiki_sort_logs_its_regions_for_the_visualiser() {
             use sort_logger::{RegionKind, SortLog, SortLogger, VisualizerLogger};
-            let e = find("block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: scan>");
+            let e = find("block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>");
             let mut logger =
                 VisualizerLogger::<usize> { type_ghost: std::marker::PhantomData, log: Vec::new() };
             let cfg = RunConfig { size: 400, seed: 1 };
