@@ -109,6 +109,23 @@ one run driver plus the tagged `INPUTS` slice fill that role, and the
     every constant setting. The shell family took the hold and shift kernel
     after, which put the rod gap entries ahead of the recursion. See
     [implementation_plans/rod_sort_axes.md](implementation_plans/rod_sort_axes.md).
+12. A stable block distribution sort. Not started. The shape of IPS4o
+    (Axtmann, Witt, Ferizovic and Sanders, in place parallel super scalar
+    samplesort), run sequentially and made stable. Elements are classified
+    into k buckets by splitters drawn from a sample; each bucket fills a
+    block, and full blocks are written back in scan order, so each bucket's
+    blocks keep their order. A block's rank within its bucket is stored by
+    swapping cells with a block of another bucket, which always differs from
+    it since a bucket is a function of value. The blocks then go by cycles to
+    their bucket's start plus rank times the block length, where IPS4o places
+    them in any order, and each bucket's partial last block goes after its
+    full ones. A bucket holding more than half the blocks is split off first
+    by a three way partition at its bounds. With the buckets taken as the
+    values of a low cardinality array, one level sorts it. Open before it
+    starts: the blocks in flight need about k times 2 log2 n cells, which
+    IPS4o takes outside the array, and this sort stays in place, so it waits
+    on building pure blocks from bits instead of cells. See
+    [implementation_plans/stable_partition_axis.md](implementation_plans/stable_partition_axis.md).
 
 ## Concept cleanups, 2026-10-20 review
 
