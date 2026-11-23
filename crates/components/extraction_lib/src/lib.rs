@@ -250,6 +250,9 @@ mod tests {
         carves_first_occurrences::<PartitionExtraction<RotationPartition>, AuxiliaryRotation>();
         carves_first_occurrences::<PartitionExtraction<SlidingPartition>, ReversalRotation>();
         carves_first_occurrences::<PartitionExtraction<SlidingPartition>, AuxiliaryRotation>();
+        carves_first_occurrences::<PartitionExtraction<EncodedPartition>, ReversalRotation>();
+        carves_first_occurrences::<PartitionExtraction<EncodedPartition>, TrinityRotation>();
+        carves_first_occurrences::<PartitionExtraction<EncodedPartition>, AuxiliaryRotation>();
     }
 
     // A partition's own scratch is the extraction's, and the scan and the prefix

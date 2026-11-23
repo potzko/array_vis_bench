@@ -228,7 +228,7 @@ mod tests {
     use super::*;
     use crate::test_util::{pairs, Item, Marks, Regions, Replay, Rng, Tally};
     use array_vis_bench_traits::DirectSort;
-    use extraction_lib::{PartitionExtraction, PrefixSortExtraction, RotationPartition, ScanExtraction, SlidingPartition};
+    use extraction_lib::{EncodedPartition, PartitionExtraction, PrefixSortExtraction, RotationPartition, ScanExtraction, SlidingPartition};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
@@ -306,6 +306,9 @@ mod tests {
         sorts_stably::<Wiki<PrefixSortExtraction>>("wiki, prefix sort");
         sorts_stably::<Wiki<PartitionExtraction<RotationPartition>>>("wiki, partition by rotation");
         sorts_stably::<Wiki<PartitionExtraction<SlidingPartition>>>("wiki, partition by sliding");
+        sorts_stably::<Wiki<PartitionExtraction<EncodedPartition>>>("wiki, partition by encoding");
+        sorts_stably::<BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, TrinityRotation, PartitionExtraction<EncodedPartition>>>("grail, trinity, partition by encoding");
+        sorts_stably::<BlockMergeSort<NoBuffer, InArrayKeys, AuxiliaryRotation, PartitionExtraction<EncodedPartition>>>("none, auxiliary, partition by encoding");
         sorts_stably::<BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, TrinityRotation, PartitionExtraction<RotationPartition>>>("grail, trinity, partition by rotation");
         sorts_stably::<BlockMergeSort<NoBuffer, InArrayKeys, AuxiliaryRotation, PartitionExtraction<RotationPartition>>>("none, auxiliary, partition by rotation");
         sorts_stably::<BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, ReversalRotation, PrefixSortExtraction>>("sixteenth, none, prefix sort");

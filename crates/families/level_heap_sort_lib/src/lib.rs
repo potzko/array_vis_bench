@@ -277,7 +277,7 @@ mod tests {
     use super::*;
     use crate::test_util::{items, pairs, Item, Replay, Rng, Tally};
     use array_vis_bench_traits::DirectSort;
-    use extraction_lib::RotationPartition;
+    use extraction_lib::{EncodedPartition, RotationPartition};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
@@ -482,6 +482,16 @@ mod tests {
         assert_eq!(created, 1, "the scratch is one aux array of the run");
     }
 
+    // The encoded partition's own scratch is allocated with the rotation's, and
+    // the level build selects through it.
+    #[test]
+    fn the_encoded_partition_sorts_stably() {
+        sorts_stably::<LevelHeapSort<InArrayBuffer<Sqrt>, EncodedPartition, ReversalRotation>>("in array sqrt, encoded");
+        sorts_stably::<LevelHeapSort<InArrayBuffer<Log>, EncodedPartition, TrinityRotation>>("in array log, encoded, trinity");
+        sorts_stably::<LevelHeapSort<ExternalBuffer<Sqrt>, EncodedPartition, AuxiliaryRotation>>("external sqrt, encoded, auxiliary");
+        sorts_stably::<LevelHeapSort<ExternalBuffer<Half>, EncodedPartition, ReversalRotation>>("external half, encoded");
+    }
+
     fn moves_are_all_logged<S: DirectSort>(name: &str) {
         let mut rng = Rng(0x10661);
         for n in [32usize, 33, 100, 257, 600, 1500] {
@@ -500,6 +510,8 @@ mod tests {
         moves_are_all_logged::<Level<InArrayBuffer<Sqrt>>>("in array sqrt");
         moves_are_all_logged::<Level<ExternalBuffer<Log>>>("external log");
         moves_are_all_logged::<LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, TrinityRotation>>("external sqrt, trinity");
+        moves_are_all_logged::<LevelHeapSort<InArrayBuffer<Log>, EncodedPartition, ReversalRotation>>("in array log, encoded");
+        moves_are_all_logged::<LevelHeapSort<ExternalBuffer<Sqrt>, EncodedPartition, AuxiliaryRotation>>("external sqrt, encoded, auxiliary");
     }
 
     #[test]
