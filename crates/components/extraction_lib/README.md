@@ -58,6 +58,7 @@ asks for no scratch. `MaskedTablePartition` is the same with the places of a
 window filled into a table first, which the cycle walk then reads instead of
 counting bits, at 2210 bytes of locals. Both share the trim, the
 ordering of the blocks and the last rotation with the encoded partition, in
-`blocks.rs`.
+`blocks.rs`. Only `MaskedPartition` is in the catalog; the table variant is
+there to be measured against it.
 
 Its catalog components are declared in `extraction.spec`.
