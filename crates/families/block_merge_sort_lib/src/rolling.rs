@@ -4,7 +4,7 @@
 //! through the logger, and the keys that tag the blocks are the `Keys` axis.
 
 use array_vis_bench_traits::role::keys::first_not_below;
-use array_vis_bench_traits::role::{Keys, Rotation};
+use array_vis_bench_traits::role::{Keys, MergeStrategy, Rotation};
 use sort_logger::SortLogger;
 
 use crate::stash::Stash;
@@ -43,8 +43,8 @@ use crate::stash::Stash;
 /// of `s >= 2` elements. `arr[keys_at..]` holds one key for each full block of the
 /// left run, `la / s`, sorted and distinct, outside `lo..hi`. The keys are as they
 /// were when it returns, and so is the stash's buffer up to order. Rotations are
-/// `R`'s, through `scratch`.
-pub fn roll_merge<K: Keys, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+/// `R`'s, through `scratch`, and a merge the stash cannot do is `M`'s over `R`.
+pub fn roll_merge<K: Keys, R: Rotation, M: MergeStrategy, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
     mid: usize,
@@ -74,7 +74,7 @@ pub fn roll_merge<K: Keys, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>
             K::tag_block(arr, keys_at + dropped, window, log);
             dropped += 1;
             let split = first_not_below(arr, last_b, window, window, log);
-            stash.merge::<R, U>(arr, pending, pending_len, split - (pending + pending_len), scratch, log);
+            stash.merge::<R, M, U>(arr, pending, pending_len, split - (pending + pending_len), scratch, log);
             stash.park(arr, window, s, log);
             stash.pass_behind::<R, U>(arr, split, window, s, window - split, scratch, log);
             (pending, pending_len, last_b) = (split, s, split + s);
@@ -93,13 +93,14 @@ pub fn roll_merge<K: Keys, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>
             (last_b, window) = (window, window + s);
         }
     }
-    stash.merge::<R, U>(arr, pending, pending_len, hi - (pending + pending_len), scratch, log);
+    stash.merge::<R, M, U>(arr, pending, pending_len, hi - (pending + pending_len), scratch, log);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::test_util::{junk, merged, pairs, sorted_run, Item, Rng};
+    use merge_sort_lib::{MaskMerge, SmallerSideMerge};
     use rotation_reversal::ReversalRotation;
     use scratchspace_lib::{InArrayKeys, NoKeys};
     use sort_logger::NoOpLogger;
@@ -114,7 +115,7 @@ mod tests {
 
     // Lay out [keys | buffer | A | B], roll merge, and check the merged run, the
     // key region (exactly as it was) and the buffer (the same values).
-    fn case(shape: Shape, rng: &mut Rng, la: usize, lb: usize, s: usize, values: usize) {
+    fn case<M: MergeStrategy>(shape: Shape, rng: &mut Rng, la: usize, lb: usize, s: usize, values: usize) {
         let blocks = la / s;
         let keys: Vec<Item> = (0..blocks + rng.next(3)).map(|i| Item { key: 10_000 + i as u32, tag: 9000 + i as u32 }).collect();
         let cap = s + rng.next(3);
@@ -132,7 +133,7 @@ mod tests {
             Shape::External => Stash::External(&mut ext),
             Shape::Nowhere => Stash::None,
         };
-        roll_merge::<InArrayKeys, ReversalRotation, _, _>(&mut arr, lo, lo + la, lo + la + lb, s, 0, &mut stash, &mut [], &mut NoOpLogger);
+        roll_merge::<InArrayKeys, ReversalRotation, M, _, _>(&mut arr, lo, lo + la, lo + la + lb, s, 0, &mut stash, &mut [], &mut NoOpLogger);
         let label = format!("{shape:?} la={la} lb={lb} s={s} values={values}");
         assert_eq!(pairs(&arr[lo..]), merged(&a, &b), "{label}");
         assert_eq!(pairs(&arr[..keys.len()]), pairs(&keys), "keys not restored, {label}");
@@ -150,7 +151,8 @@ mod tests {
             let lb = 1 + rng.next(45);
             let values = [1, 2, 3, 6, 1000][rng.next(5)];
             for shape in [Shape::Internal, Shape::External, Shape::Nowhere] {
-                case(shape, &mut rng, la, lb, s, values);
+                case::<SmallerSideMerge>(shape, &mut rng, la, lb, s, values);
+                case::<MaskMerge>(shape, &mut rng, la, lb, s, values);
             }
         }
     }
@@ -162,7 +164,10 @@ mod tests {
             // exactly one block, a right run of one, a right run shorter than a block,
             // a run that is a whole number of blocks on either side
             for (la, lb, s) in [(2, 1, 2), (4, 1, 4), (6, 5, 3), (6, 6, 3), (9, 2, 3), (12, 12, 4), (2, 40, 2), (40, 1, 5)] {
-                for values in [1, 2, 1000] { case(shape, &mut rng, la, lb, s, values); }
+                for values in [1, 2, 1000] {
+                    case::<SmallerSideMerge>(shape, &mut rng, la, lb, s, values);
+                    case::<MaskMerge>(shape, &mut rng, la, lb, s, values);
+                }
             }
         }
     }
@@ -176,7 +181,7 @@ mod tests {
         let a = sorted_run(&mut rng, la, 5, 0);
         let b = sorted_run(&mut rng, lb, 5, 100);
         let mut arr: Vec<Item> = a.iter().chain(&b).copied().collect();
-        roll_merge::<NoKeys, ReversalRotation, _, _>(&mut arr, 0, la, la + lb, s, 0, &mut Stash::None, &mut [], &mut NoOpLogger);
+        roll_merge::<NoKeys, ReversalRotation, SmallerSideMerge, _, _>(&mut arr, 0, la, la + lb, s, 0, &mut Stash::None, &mut [], &mut NoOpLogger);
         assert_eq!(pairs(&arr), merged(&a, &b));
     }
 }

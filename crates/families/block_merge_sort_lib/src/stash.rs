@@ -4,12 +4,27 @@
 //! array by swapping, so the buffer's values end up in the array's scratch cells
 //! and come back when the merge is done. `Stash::External` copies into an aux
 //! array, and its leftovers are stale copies that nobody reads. `Stash::None` has
-//! nowhere to park, the run stays in place and the merge is the rotation merge,
-//! over the rotation the sort was given.
+//! nowhere to park, the run stays in place and the merge is the sort's
+//! `MergeStrategy`, over the rotation the sort was given, which `merge_in_place`
+//! runs.
 
-use array_vis_bench_traits::role::Rotation;
-use scratchspace_lib::bufferless_merge;
+use array_vis_bench_traits::role::{MergeStrategy, Rotation, RotationMerge};
 use sort_logger::SortLogger;
+
+/// Merge the sorted runs `arr[lo..mid]` and `arr[mid..hi]` in place, stably (an
+/// equal key of the left run stays first), by the merge `M` names over the rotation
+/// `R`. `scratch` is as long as the merge's `scratch_size` for the array.
+pub fn merge_in_place<R: Rotation, M: MergeStrategy, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+    arr: &mut [T],
+    lo: usize,
+    mid: usize,
+    hi: usize,
+    scratch: &mut [T],
+    log: &mut U,
+) {
+    if lo >= mid || mid >= hi { return; }
+    <M::With<R> as RotationMerge>::merge(&mut arr[lo..hi], mid - lo, scratch, log);
+}
 
 pub enum Stash<'a, T> {
     None,
@@ -40,8 +55,8 @@ impl<T: Ord + Copy> Stash<'_, T> {
     /// Merge the parked run of `a_len` elements, whose cells start at `a_start`,
     /// with the `b_len` elements behind those cells. The output fills `a_len +
     /// b_len` cells from `a_start`, an equal key of the run ahead of one of B.
-    /// `scratch` is `R`'s, for the rotation merge of `Stash::None`.
-    pub fn merge<R: Rotation, U: ?Sized + SortLogger<T>>(
+    /// `scratch` is the merge's and the rotation's, for the merge of `Stash::None`.
+    pub fn merge<R: Rotation, M: MergeStrategy, U: ?Sized + SortLogger<T>>(
         &mut self,
         arr: &mut [T],
         a_start: usize,
@@ -51,7 +66,7 @@ impl<T: Ord + Copy> Stash<'_, T> {
         log: &mut U,
     ) {
         match self {
-            Stash::None => bufferless_merge::<R, T, U>(arr, a_start, a_start + a_len, a_start + a_len + b_len, scratch, log),
+            Stash::None => merge_in_place::<R, M, T, U>(arr, a_start, a_start + a_len, a_start + a_len + b_len, scratch, log),
             Stash::Internal { at, .. } => swap_merge(arr, a_start, a_len, b_len, *at, log),
             Stash::External(ext) => copy_merge(arr, ext, a_start, a_len, b_len, log),
         }
@@ -135,6 +150,7 @@ fn copy_merge<T: Ord + Copy, U: ?Sized + SortLogger<T>>(
 mod tests {
     use super::*;
     use crate::test_util::{junk, merged, pairs, sorted_run, Item, Rng};
+    use merge_sort_lib::{MaskMerge, SmallerSideMerge};
     use rotation_reversal::ReversalRotation;
     use sort_logger::NoOpLogger;
 
@@ -153,7 +169,7 @@ mod tests {
             let mut arr: Vec<Item> = junk(cap).into_iter().chain(a.iter().copied()).chain(b.iter().copied()).collect();
             let mut stash = Stash::Internal { at: 0, cap };
             stash.park(&mut arr, cap, a_len, &mut NoOpLogger);
-            stash.merge::<ReversalRotation, _>(&mut arr, cap, a_len, b_len, &mut [], &mut NoOpLogger);
+            stash.merge::<ReversalRotation, SmallerSideMerge, _>(&mut arr, cap, a_len, b_len, &mut [], &mut NoOpLogger);
             assert_eq!(pairs(&arr[cap..]), want, "internal, round {round}");
             let mut buffer: Vec<u32> = arr[..cap].iter().map(|x| x.tag).collect();
             buffer.sort();
@@ -164,15 +180,20 @@ mod tests {
             let mut ext = junk(cap);
             let mut stash = Stash::External(&mut ext);
             stash.park(&mut arr, 0, a_len, &mut NoOpLogger);
-            stash.merge::<ReversalRotation, _>(&mut arr, 0, a_len, b_len, &mut [], &mut NoOpLogger);
+            stash.merge::<ReversalRotation, SmallerSideMerge, _>(&mut arr, 0, a_len, b_len, &mut [], &mut NoOpLogger);
             assert_eq!(pairs(&arr), want, "external, round {round}");
 
             // none: A stays in place
             let mut arr: Vec<Item> = a.iter().chain(&b).copied().collect();
             let mut stash = Stash::None;
             stash.park(&mut arr, 0, a_len, &mut NoOpLogger);
-            stash.merge::<ReversalRotation, _>(&mut arr, 0, a_len, b_len, &mut [], &mut NoOpLogger);
+            stash.merge::<ReversalRotation, SmallerSideMerge, _>(&mut arr, 0, a_len, b_len, &mut [], &mut NoOpLogger);
             assert_eq!(pairs(&arr), want, "none, round {round}");
+
+            // none, by the mask merge
+            let mut arr: Vec<Item> = a.iter().chain(&b).copied().collect();
+            Stash::None.merge::<ReversalRotation, MaskMerge, _>(&mut arr, 0, a_len, b_len, &mut [], &mut NoOpLogger);
+            assert_eq!(pairs(&arr), want, "none, mask, round {round}");
         }
     }
 

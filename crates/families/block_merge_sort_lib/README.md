@@ -1,13 +1,13 @@
 # `block_merge_sort_lib`
 
-Block merge sort, `BlockMergeSort<Buffer, Keys, Rotation, Extraction>`. A stable merge sort that does
+Block merge sort, `BlockMergeSort<Buffer, Keys, Rotation, Extraction, Merge>`. A stable merge sort that does
 its merges with a small buffer instead of an `O(n)` scratch array: the left run
 is cut into blocks of about `sqrt(n)`, the blocks are rolled through the right
 run by block swaps, and each block is merged with the elements it lands
 among, using the buffer as swap space. The blocks are tagged by a key region
 of distinct elements, so a rolled block still says which block it was.
 
-Four axes. The buffer is an `Auxiliary` backing: `InArrayBuffer` carves it out
+Five axes. The buffer is an `Auxiliary` backing: `InArrayBuffer` carves it out
 of the array, `ExternalBuffer` is an aux array, `NoBuffer` has none and the
 local merges rotate. The first two take a `BufferSize`: `Sqrt`, `TwoSqrt`,
 `Log`, `Fixed<512>`, `Half` or `Sixteenth`. The keys are a `Keys` backing: `InArrayKeys` or `NoKeys`, which
@@ -20,7 +20,12 @@ buffer, and of `Sqrt` with its dynamic one. The extraction is how the keys and
 the buffer are carved, an `Extraction` from `extraction_lib`: the scan of both
 sorts, a sorted prefix under the scan, or the smallest values selected by a
 `StablePartition`, which makes the final slide back free on distinct data at
-the price of partitioning the whole array.
+the price of partitioning the whole array. The merge is the local merge that
+runs where neither the buffer nor the keys reach, a `MergeStrategy` from
+`merge_sort_lib` that takes the sort's rotation: symMerge, `SmallerSideMerge`,
+which is the default, or `MaskMerge`. It runs in every merge of a shape without a
+buffer or without keys, and in the others when the keys run short or the blocks
+outgrow the buffer.
 
 The size trades the merges against the carving. A buffer that keeps up with
 `sqrt(n)` holds a block of every merge, so each merge is linear and the sort is
