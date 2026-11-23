@@ -13,6 +13,7 @@ use array_vis_bench_traits::role::{Extraction, Rotation, StablePartition};
 use scratchspace_lib::bufferless_merge;
 use sort_logger::SortLogger;
 
+mod blocks;
 pub mod encoded;
 pub mod partition;
 
