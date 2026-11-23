@@ -84,3 +84,11 @@ component mrm_smaller_side
   slot     rot Rotation
 end
 
+# `mask` merges a window up to 1024 positions by an origin mask held in local variables
+# and splits a longer one by rotations, so it is the one with a cap beside the rotation.
+component mrm_mask
+  type     MaskRotationMerge<{rot}>
+  label    mask<{rot}>
+  provides RotationMerge MergeKind
+  slot     rot Rotation
+end

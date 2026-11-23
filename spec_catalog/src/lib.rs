@@ -135,7 +135,7 @@ mod tests {
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
         assert_eq!(COUNT_ROD, 114, "rod family (6 branching x [3 merges + the tree merge over 8 trees x 2 key stores])");
         assert_eq!(COUNT_CIRCLE, 17, "circle family");
-        assert_eq!(COUNT_MERGE, 280, "merge family (40 classic + 240 rotation)");
+        assert_eq!(COUNT_MERGE, 400, "merge family (40 classic + 360 rotation)");
         assert_eq!(COUNT_HEAP, 400, "heap family (16 classic + 360 quick + 24 dual)");
         assert_eq!(COUNT_WEAK, 4, "weak-heap family (2 dir x 2 storage)");
         assert_eq!(COUNT_BEAP, 80, "beap family (2 classic + 72 quick + 6 dual)");
@@ -226,7 +226,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 2534, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 2669, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -1096,10 +1096,10 @@ mod tests {
                 .collect()
         }
         #[test]
-        fn emits_280_classic_plus_rotation() {
+        fn emits_400_classic_plus_rotation() {
             let es = entries();
             assert_eq!(es.len(), COUNT_MERGE, "count drifted");
-            assert_eq!(COUNT_MERGE, 280);
+            assert_eq!(COUNT_MERGE, 400);
             // const-set fanout sanity: top-down classic should be 4 small x 2 pp x 2 ee = 16.
             let top_down = es.iter().filter(|e| e.name.starts_with("merge sort<")).count();
             assert_eq!(top_down, 16, "TopDown const-fanout should yield 16, got {top_down}");
@@ -1443,10 +1443,10 @@ mod tests {
     }
 
     // ──────────────────────────── MERGES ─────────────────────────────────────
-    // The merge KIND: 2 RotationMerge families (naive, smaller-side) × 15
-    // rotations = 30, emitted `Category::Merge` and verified through `MergeSuite`;
+    // The merge KIND: 3 RotationMerge families (naive, smaller-side, mask) × 15
+    // rotations = 45, emitted `Category::Merge` and verified through `MergeSuite`;
     // the rot slot REUSES the Rotation leaves. NOTE these are distinct from
-    // merge.spec's 280 merge SORTS: these are standalone single-merge-step
+    // merge.spec's 400 merge SORTS: these are standalone single-merge-step
     // algorithms.
     mod merge_kind {
         use super::*;
@@ -1455,27 +1455,29 @@ mod tests {
                 .iter()
                 .filter(|e| {
                     e.category == Category::Merge
-                        && (e.name.starts_with("naive<") || e.name.starts_with("smaller-side<"))
+                        && (e.name.starts_with("naive<") || e.name.starts_with("smaller-side<") || e.name.starts_with("mask<"))
                 })
                 .collect()
         }
 
         #[test]
-        fn emits_two_families_by_fifteen_rotations() {
-            assert_eq!(entries().len(), 30, "2 RotationMerge families x 15 rotations");
+        fn emits_three_families_by_fifteen_rotations() {
+            assert_eq!(entries().len(), 45, "3 RotationMerge families x 15 rotations");
             let naive = entries().iter().filter(|e| e.name.starts_with("naive<")).count();
             let smaller = entries().iter().filter(|e| e.name.starts_with("smaller-side<")).count();
             assert_eq!(naive, 15, "naive family");
             assert_eq!(smaller, 15, "smaller-side family");
+            let mask = entries().iter().filter(|e| e.name.starts_with("mask<")).count();
+            assert_eq!(mask, 15, "mask family");
             assert!(entries().iter().any(|e| e.name == "naive<reversal>"));
         }
 
-        /// Each of the 30 drives `merge_battery` (via `MergeSuite::verify` and
+        /// Each of the 45 drives `merge_battery` (via `MergeSuite::verify` and
         /// `run_rotation_merge`) and passes end-to-end.
         #[test]
-        fn all_thirty_pass_the_merge_battery() {
+        fn all_forty_five_pass_the_merge_battery() {
             let es = entries();
-            assert_eq!(es.len(), 30);
+            assert_eq!(es.len(), 45);
             for e in &es {
                 (e.run_correctness)();
             }

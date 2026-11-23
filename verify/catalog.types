@@ -595,6 +595,21 @@
 "bottom-up merge sort<small: size: 2, pp=false, ee=true>"	BottomUpMergeSort<Size2SmallSort, false, true>
 "bottom-up merge sort<small: size: 2, pp=true, ee=false>"	BottomUpMergeSort<Size2SmallSort, true, false>
 "bottom-up merge sort<small: size: 2, pp=true, ee=true>"	BottomUpMergeSort<Size2SmallSort, true, true>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<auxiliary>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<AuxiliaryRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<block cycle>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<BlockCycleRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<bridge>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<BridgeRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<contrev>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<ContrevRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<drill>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<DrillRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<grail>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<GrailRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<gries-mills>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<GriesMillsRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<helix>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<HelixRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<juggling>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<JugglingRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<optimized piston<3 windows>>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<OptimizedPiston<3, 256>>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<optimized piston<in place>>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<OptimizedPiston<2, 0>>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<optimized piston>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<OptimizedPistonRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<piston>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<PistonRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<reversal>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<ReversalRotation>, false>
+"bottom-up rotation merge sort<small: insertion: 32, merge: mask<trinity>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<TrinityRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<AuxiliaryRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<block cycle>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<BlockCycleRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: naive<bridge>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<BridgeRotation>, false>
@@ -625,6 +640,21 @@
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<PistonRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>"	BottomUpRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<TrinityRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<auxiliary>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<AuxiliaryRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<block cycle>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<BlockCycleRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<bridge>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<BridgeRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<contrev>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<ContrevRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<drill>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<DrillRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<grail>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<GrailRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<gries-mills>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<GriesMillsRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<helix>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<HelixRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<juggling>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<JugglingRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<optimized piston<3 windows>>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<OptimizedPiston<3, 256>>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<optimized piston<in place>>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<OptimizedPiston<2, 0>>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<optimized piston>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<OptimizedPistonRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<piston>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<PistonRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<reversal>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<ReversalRotation>, false>
+"bottom-up rotation merge sort<small: network: 16, merge: mask<trinity>>"	BottomUpRotationMergeSort<Network16SmallSort, MaskRotationMerge<TrinityRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<auxiliary>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<AuxiliaryRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<block cycle>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<BlockCycleRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: naive<bridge>>"	BottomUpRotationMergeSort<Network16SmallSort, NaiveRotationMerge<BridgeRotation>, false>
@@ -655,6 +685,21 @@
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<piston>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<PistonRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<reversal>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: network: 16, merge: smaller-side<trinity>>"	BottomUpRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<auxiliary>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<AuxiliaryRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<block cycle>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<BlockCycleRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<bridge>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<BridgeRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<contrev>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<ContrevRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<drill>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<DrillRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<grail>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<GrailRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<gries-mills>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<GriesMillsRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<helix>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<HelixRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<juggling>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<JugglingRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<optimized piston<3 windows>>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<OptimizedPiston<3, 256>>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<optimized piston<in place>>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<OptimizedPiston<2, 0>>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<optimized piston>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<OptimizedPistonRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<piston>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<PistonRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<reversal>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<ReversalRotation>, false>
+"bottom-up rotation merge sort<small: size: 1, merge: mask<trinity>>"	BottomUpRotationMergeSort<Size1SmallSort, MaskRotationMerge<TrinityRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<auxiliary>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<AuxiliaryRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<block cycle>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<BlockCycleRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: naive<bridge>>"	BottomUpRotationMergeSort<Size1SmallSort, NaiveRotationMerge<BridgeRotation>, false>
@@ -685,6 +730,21 @@
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<piston>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<PistonRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<reversal>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "bottom-up rotation merge sort<small: size: 1, merge: smaller-side<trinity>>"	BottomUpRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<auxiliary>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<AuxiliaryRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<block cycle>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<BlockCycleRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<bridge>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<BridgeRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<contrev>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<ContrevRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<drill>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<DrillRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<grail>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<GrailRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<gries-mills>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<GriesMillsRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<helix>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<HelixRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<juggling>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<JugglingRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<optimized piston<3 windows>>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<OptimizedPiston<3, 256>>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<optimized piston<in place>>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<OptimizedPiston<2, 0>>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<optimized piston>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<OptimizedPistonRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<piston>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<PistonRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<reversal>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<ReversalRotation>, false>
+"bottom-up rotation merge sort<small: size: 2, merge: mask<trinity>>"	BottomUpRotationMergeSort<Size2SmallSort, MaskRotationMerge<TrinityRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<auxiliary>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<AuxiliaryRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<block cycle>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<BlockCycleRotation>, false>
 "bottom-up rotation merge sort<small: size: 2, merge: naive<bridge>>"	BottomUpRotationMergeSort<Size2SmallSort, NaiveRotationMerge<BridgeRotation>, false>
@@ -1663,6 +1723,21 @@
 "level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: piston>"	LevelHeapSort<InArrayBuffer<Sqrt>, RotationPartition, PistonRotation>
 "level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sqrt>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<Sqrt>, RotationPartition, TrinityRotation>
+"mask<auxiliary>"	MaskRotationMerge<AuxiliaryRotation>
+"mask<block cycle>"	MaskRotationMerge<BlockCycleRotation>
+"mask<bridge>"	MaskRotationMerge<BridgeRotation>
+"mask<contrev>"	MaskRotationMerge<ContrevRotation>
+"mask<drill>"	MaskRotationMerge<DrillRotation>
+"mask<grail>"	MaskRotationMerge<GrailRotation>
+"mask<gries-mills>"	MaskRotationMerge<GriesMillsRotation>
+"mask<helix>"	MaskRotationMerge<HelixRotation>
+"mask<juggling>"	MaskRotationMerge<JugglingRotation>
+"mask<optimized piston<3 windows>>"	MaskRotationMerge<OptimizedPiston<3, 256>>
+"mask<optimized piston<in place>>"	MaskRotationMerge<OptimizedPiston<2, 0>>
+"mask<optimized piston>"	MaskRotationMerge<OptimizedPistonRotation>
+"mask<piston>"	MaskRotationMerge<PistonRotation>
+"mask<reversal>"	MaskRotationMerge<ReversalRotation>
+"mask<trinity>"	MaskRotationMerge<TrinityRotation>
 "merge sort<small: insertion: 32, pp=false, ee=false>"	TopDownMergeSort<InsertionSmallSort<LinearInsertion, 32>, false, false>
 "merge sort<small: insertion: 32, pp=false, ee=true>"	TopDownMergeSort<InsertionSmallSort<LinearInsertion, 32>, false, true>
 "merge sort<small: insertion: 32, pp=true, ee=false>"	TopDownMergeSort<InsertionSmallSort<LinearInsertion, 32>, true, false>
@@ -2305,6 +2380,21 @@
 "rod sort<strategy: root-parity, merge: tree<avl: fixed 1, keys: indexed>>"	RodSort<RootParity, TreeMerge<FixedAvl, IndexedKeys>>
 "rod sort<strategy: root-parity, merge: tree<naive, keys: copied>>"	RodSort<RootParity, TreeMerge<Naive, CopiedKeys>>
 "rod sort<strategy: root-parity, merge: tree<naive, keys: indexed>>"	RodSort<RootParity, TreeMerge<Naive, IndexedKeys>>
+"rotation merge sort<small: insertion: 32, merge: mask<auxiliary>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<AuxiliaryRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<block cycle>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<BlockCycleRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<bridge>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<BridgeRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<contrev>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<ContrevRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<drill>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<DrillRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<grail>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<GrailRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<gries-mills>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<GriesMillsRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<helix>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<HelixRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<juggling>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<JugglingRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<optimized piston<3 windows>>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<OptimizedPiston<3, 256>>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<optimized piston<in place>>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<OptimizedPiston<2, 0>>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<optimized piston>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<OptimizedPistonRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<piston>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<PistonRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<reversal>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<ReversalRotation>, false>
+"rotation merge sort<small: insertion: 32, merge: mask<trinity>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, MaskRotationMerge<TrinityRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<AuxiliaryRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<block cycle>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: naive<bridge>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, NaiveRotationMerge<BridgeRotation>, false>
@@ -2335,6 +2425,21 @@
 "rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<PistonRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>"	TopDownRotationMergeSort<InsertionSmallSort<LinearInsertion, 32>, SmallerSideRotationMerge<TrinityRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<auxiliary>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<AuxiliaryRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<block cycle>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<BlockCycleRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<bridge>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<BridgeRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<contrev>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<ContrevRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<drill>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<DrillRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<grail>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<GrailRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<gries-mills>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<GriesMillsRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<helix>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<HelixRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<juggling>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<JugglingRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<optimized piston<3 windows>>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<OptimizedPiston<3, 256>>, false>
+"rotation merge sort<small: network: 16, merge: mask<optimized piston<in place>>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<OptimizedPiston<2, 0>>, false>
+"rotation merge sort<small: network: 16, merge: mask<optimized piston>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<OptimizedPistonRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<piston>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<PistonRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<reversal>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<ReversalRotation>, false>
+"rotation merge sort<small: network: 16, merge: mask<trinity>>"	TopDownRotationMergeSort<Network16SmallSort, MaskRotationMerge<TrinityRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<auxiliary>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<AuxiliaryRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<block cycle>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: network: 16, merge: naive<bridge>>"	TopDownRotationMergeSort<Network16SmallSort, NaiveRotationMerge<BridgeRotation>, false>
@@ -2365,6 +2470,21 @@
 "rotation merge sort<small: network: 16, merge: smaller-side<piston>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<PistonRotation>, false>
 "rotation merge sort<small: network: 16, merge: smaller-side<reversal>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: network: 16, merge: smaller-side<trinity>>"	TopDownRotationMergeSort<Network16SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<auxiliary>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<AuxiliaryRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<block cycle>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<BlockCycleRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<bridge>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<BridgeRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<contrev>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<ContrevRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<drill>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<DrillRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<grail>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<GrailRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<gries-mills>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<GriesMillsRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<helix>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<HelixRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<juggling>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<JugglingRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<optimized piston<3 windows>>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<OptimizedPiston<3, 256>>, false>
+"rotation merge sort<small: size: 1, merge: mask<optimized piston<in place>>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<OptimizedPiston<2, 0>>, false>
+"rotation merge sort<small: size: 1, merge: mask<optimized piston>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<OptimizedPistonRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<piston>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<PistonRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<reversal>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<ReversalRotation>, false>
+"rotation merge sort<small: size: 1, merge: mask<trinity>>"	TopDownRotationMergeSort<Size1SmallSort, MaskRotationMerge<TrinityRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<auxiliary>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<AuxiliaryRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<block cycle>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: size: 1, merge: naive<bridge>>"	TopDownRotationMergeSort<Size1SmallSort, NaiveRotationMerge<BridgeRotation>, false>
@@ -2395,6 +2515,21 @@
 "rotation merge sort<small: size: 1, merge: smaller-side<piston>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<PistonRotation>, false>
 "rotation merge sort<small: size: 1, merge: smaller-side<reversal>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<ReversalRotation>, false>
 "rotation merge sort<small: size: 1, merge: smaller-side<trinity>>"	TopDownRotationMergeSort<Size1SmallSort, SmallerSideRotationMerge<TrinityRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<auxiliary>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<AuxiliaryRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<block cycle>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<BlockCycleRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<bridge>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<BridgeRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<contrev>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<ContrevRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<drill>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<DrillRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<grail>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<GrailRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<gries-mills>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<GriesMillsRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<helix>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<HelixRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<juggling>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<JugglingRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<optimized piston<3 windows>>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<OptimizedPiston<3, 256>>, false>
+"rotation merge sort<small: size: 2, merge: mask<optimized piston<in place>>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<OptimizedPiston<2, 0>>, false>
+"rotation merge sort<small: size: 2, merge: mask<optimized piston>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<OptimizedPistonRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<piston>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<PistonRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<reversal>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<ReversalRotation>, false>
+"rotation merge sort<small: size: 2, merge: mask<trinity>>"	TopDownRotationMergeSort<Size2SmallSort, MaskRotationMerge<TrinityRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<auxiliary>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<AuxiliaryRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<block cycle>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<BlockCycleRotation>, false>
 "rotation merge sort<small: size: 2, merge: naive<bridge>>"	TopDownRotationMergeSort<Size2SmallSort, NaiveRotationMerge<BridgeRotation>, false>

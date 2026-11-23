@@ -1,6 +1,21 @@
 Merge	auxiliary<full>	1.0 1.0 1.0 1.0 true
 Merge	auxiliary<half>	1.0 1.0 1.0 1.0 true
 Merge	auxiliary<none>	1.1 1.0 1.1 0.0 true
+Merge	mask<auxiliary>	1.1 1.0 1.1 1.0 true
+Merge	mask<block cycle>	1.1 1.0 1.1 0.0 true
+Merge	mask<bridge>	1.1 1.0 1.1 1.0 true
+Merge	mask<contrev>	1.1 1.0 1.1 0.0 true
+Merge	mask<drill>	1.1 1.0 1.1 0.0 true
+Merge	mask<grail>	1.1 1.0 1.1 0.0 true
+Merge	mask<gries-mills>	1.1 1.0 1.1 0.0 true
+Merge	mask<helix>	1.1 1.0 1.1 0.0 true
+Merge	mask<juggling>	1.1 1.0 1.1 0.0 true
+Merge	mask<optimized piston<3 windows>>	1.1 1.0 1.1 0.0 true
+Merge	mask<optimized piston<in place>>	1.1 1.0 1.1 0.0 true
+Merge	mask<optimized piston>	1.1 1.0 1.1 0.0 true
+Merge	mask<piston>	1.1 1.0 1.1 0.0 true
+Merge	mask<reversal>	1.1 1.0 1.1 0.0 true
+Merge	mask<trinity>	1.1 1.0 1.1 0.0 true
 Merge	naive<auxiliary>	2.0 1.0 2.0 1.0 true
 Merge	naive<block cycle>	2.0 1.0 2.0 0.0 true
 Merge	naive<bridge>	2.0 1.0 2.0 1.0 true
@@ -772,6 +787,21 @@ Sort	bottom-up merge sort<small: size: 2, pp=false, ee=false>	1.1 1.1 1.1 1.0 tr
 Sort	bottom-up merge sort<small: size: 2, pp=false, ee=true>	1.1 1.1 1.1 1.0 true
 Sort	bottom-up merge sort<small: size: 2, pp=true, ee=false>	1.1 1.1 1.1 1.0 true
 Sort	bottom-up merge sort<small: size: 2, pp=true, ee=true>	1.1 1.1 1.1 1.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<auxiliary>>	1.1 1.0 1.1 1.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<block cycle>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<bridge>>	1.1 1.0 1.1 1.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<contrev>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<drill>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<grail>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<gries-mills>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<helix>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<juggling>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<optimized piston<3 windows>>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<optimized piston<in place>>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<optimized piston>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<piston>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<reversal>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: insertion: 32, merge: mask<trinity>>	1.1 1.0 1.1 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<block cycle>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
@@ -802,6 +832,21 @@ Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<opt
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<auxiliary>>	1.1 1.0 1.1 1.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<block cycle>>	1.1 1.0 1.1 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<bridge>>	1.1 1.0 1.1 1.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<contrev>>	1.1 1.0 1.1 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<drill>>	1.1 1.0 1.1 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<grail>>	1.1 1.0 1.1 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<gries-mills>>	1.1 1.0 1.1 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<helix>>	1.1 1.0 1.1 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<juggling>>	1.1 1.0 1.1 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<optimized piston<3 windows>>>	1.1 1.0 1.1 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<optimized piston<in place>>>	1.1 1.0 1.1 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<optimized piston>>	1.1 1.0 1.1 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<piston>>	1.1 1.0 1.1 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<reversal>>	1.1 1.0 1.1 0.0 false
+Sort	bottom-up rotation merge sort<small: network: 16, merge: mask<trinity>>	1.1 1.0 1.1 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<block cycle>>	2.0 1.0 2.0 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: naive<bridge>>	2.0 1.0 2.0 1.0 false
@@ -832,6 +877,21 @@ Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<optim
 Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 false
 Sort	bottom-up rotation merge sort<small: network: 16, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 false
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<auxiliary>>	1.1 1.0 1.1 1.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<block cycle>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<bridge>>	1.1 1.0 1.1 1.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<contrev>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<drill>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<grail>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<gries-mills>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<helix>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<juggling>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<optimized piston<3 windows>>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<optimized piston<in place>>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<optimized piston>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<piston>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<reversal>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 1, merge: mask<trinity>>	1.1 1.0 1.1 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<block cycle>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
@@ -862,6 +922,21 @@ Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<optimized
 Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 1, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<auxiliary>>	1.1 1.0 1.1 1.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<block cycle>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<bridge>>	1.1 1.0 1.1 1.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<contrev>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<drill>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<grail>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<gries-mills>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<helix>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<juggling>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<optimized piston<3 windows>>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<optimized piston<in place>>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<optimized piston>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<piston>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<reversal>>	1.1 1.0 1.1 0.0 true
+Sort	bottom-up rotation merge sort<small: size: 2, merge: mask<trinity>>	1.1 1.0 1.1 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<block cycle>>	2.0 1.0 2.0 0.0 true
 Sort	bottom-up rotation merge sort<small: size: 2, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
@@ -2329,6 +2404,21 @@ Sort	rod sort<strategy: root-parity, merge: tree<avl: fixed 1, keys: copied>>	1.
 Sort	rod sort<strategy: root-parity, merge: tree<avl: fixed 1, keys: indexed>>	1.1 1.1 1.1 1.0 false
 Sort	rod sort<strategy: root-parity, merge: tree<naive, keys: copied>>	1.0Sqrt 1.1 1.1 1.0 false
 Sort	rod sort<strategy: root-parity, merge: tree<naive, keys: indexed>>	1.0Sqrt 1.1 1.1 1.0 false
+Sort	rotation merge sort<small: insertion: 32, merge: mask<auxiliary>>	1.1 1.0 1.1 1.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<block cycle>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<bridge>>	1.1 1.0 1.1 1.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<contrev>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<drill>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<grail>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<gries-mills>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<helix>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<juggling>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<optimized piston<3 windows>>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<optimized piston<in place>>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<optimized piston>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<piston>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<reversal>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: insertion: 32, merge: mask<trinity>>	1.1 1.0 1.1 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: naive<block cycle>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
@@ -2359,6 +2449,21 @@ Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<optimized pis
 Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: insertion: 32, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: network: 16, merge: mask<auxiliary>>	1.1 1.0 1.1 1.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<block cycle>>	1.1 1.0 1.1 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<bridge>>	1.1 1.0 1.1 1.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<contrev>>	1.1 1.0 1.1 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<drill>>	1.1 1.0 1.1 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<grail>>	1.1 1.0 1.1 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<gries-mills>>	1.1 1.0 1.1 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<helix>>	1.1 1.0 1.1 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<juggling>>	1.1 1.0 1.1 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<optimized piston<3 windows>>>	1.1 1.0 1.1 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<optimized piston<in place>>>	1.1 1.0 1.1 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<optimized piston>>	1.1 1.0 1.1 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<piston>>	1.1 1.0 1.1 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<reversal>>	1.1 1.0 1.1 0.0 false
+Sort	rotation merge sort<small: network: 16, merge: mask<trinity>>	1.1 1.0 1.1 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 false
 Sort	rotation merge sort<small: network: 16, merge: naive<block cycle>>	2.0 1.0 2.0 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: naive<bridge>>	2.0 1.0 2.0 1.0 false
@@ -2389,6 +2494,21 @@ Sort	rotation merge sort<small: network: 16, merge: smaller-side<optimized pisto
 Sort	rotation merge sort<small: network: 16, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 false
 Sort	rotation merge sort<small: network: 16, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 false
+Sort	rotation merge sort<small: size: 1, merge: mask<auxiliary>>	1.1 1.0 1.1 1.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<block cycle>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<bridge>>	1.1 1.0 1.1 1.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<contrev>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<drill>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<grail>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<gries-mills>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<helix>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<juggling>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<optimized piston<3 windows>>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<optimized piston<in place>>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<optimized piston>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<piston>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<reversal>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 1, merge: mask<trinity>>	1.1 1.0 1.1 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
 Sort	rotation merge sort<small: size: 1, merge: naive<block cycle>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
@@ -2419,6 +2539,21 @@ Sort	rotation merge sort<small: size: 1, merge: smaller-side<optimized piston>>	
 Sort	rotation merge sort<small: size: 1, merge: smaller-side<piston>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: smaller-side<reversal>>	1.2 1.0 1.2 0.0 true
 Sort	rotation merge sort<small: size: 1, merge: smaller-side<trinity>>	1.2 1.0 1.2 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<auxiliary>>	1.1 1.0 1.1 1.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<block cycle>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<bridge>>	1.1 1.0 1.1 1.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<contrev>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<drill>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<grail>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<gries-mills>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<helix>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<juggling>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<optimized piston<3 windows>>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<optimized piston<in place>>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<optimized piston>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<piston>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<reversal>>	1.1 1.0 1.1 0.0 true
+Sort	rotation merge sort<small: size: 2, merge: mask<trinity>>	1.1 1.0 1.1 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: naive<auxiliary>>	2.0 1.0 2.0 1.0 true
 Sort	rotation merge sort<small: size: 2, merge: naive<block cycle>>	2.0 1.0 2.0 0.0 true
 Sort	rotation merge sort<small: size: 2, merge: naive<bridge>>	2.0 1.0 2.0 1.0 true
