@@ -5,7 +5,7 @@ use sort_logger::SortLogger;
 use array_vis_bench_traits::Rotation;
 use super::utils::{merge_rotation, lower_bound, upper_bound};
 
-pub use array_vis_bench_traits::role::merge::{run_rotation_merge, RotationMerge};
+pub use array_vis_bench_traits::role::merge::{run_rotation_merge, MergeStrategy, RotationMerge};
 
 // ---------------------------------------------------------------------------
 
@@ -59,6 +59,13 @@ impl<R: Rotation> HasStability for NaiveRotationMerge<R> {
 /// O(N log N) rotations and O(N log² N) comparisons total.
 pub struct SmallerSideRotationMerge<R: Rotation> {
     _phantom: PhantomData<R>,
+}
+
+/// symMerge, over whichever rotation it is given.
+pub struct SmallerSideMerge;
+
+impl MergeStrategy for SmallerSideMerge {
+    type With<R: Rotation> = SmallerSideRotationMerge<R>;
 }
 
 impl<R: Rotation> RotationMerge for SmallerSideRotationMerge<R> {

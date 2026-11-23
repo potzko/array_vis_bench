@@ -18,9 +18,9 @@ mod utils;
 
 pub use auxiliary_merge::{AuxMerge, FullCopyAuxMerge, HalfCopyAuxMerge};
 pub use bottom_up::BottomUpMergeSort;
-pub use mask_merge::MaskRotationMerge;
+pub use mask_merge::{MaskMerge, MaskRotationMerge};
 pub use naive::NaiveMergeSort;
 pub use natural::NaturalMergeSort;
 pub use rotation::{BottomUpRotationMergeSort, TopDownRotationMergeSort};
-pub use rotation_merge::{NaiveRotationMerge, RotationMerge, SmallerSideRotationMerge};
+pub use rotation_merge::{MergeStrategy, NaiveRotationMerge, RotationMerge, SmallerSideMerge, SmallerSideRotationMerge};
 pub use top_down::TopDownMergeSort;

@@ -1,7 +1,9 @@
 //! `RotationMerge`, the merge role: merge two adjacent sorted runs in place.
 //! `run_rotation_merge` is the one-shot that owns the scratch buffer, the merge
-//! analogue of `rotation::run_rotation`.
+//! analogue of `rotation::run_rotation`. `MergeStrategy` is a rotation merge
+//! left open in its rotation.
 
+use crate::Rotation;
 use sort_logger::SortLogger;
 
 /// Strategy for merging two adjacent sorted slices in-place using rotation.
@@ -23,6 +25,14 @@ pub trait RotationMerge {
         scratch: &mut [T],
         logger: &mut U,
     );
+}
+
+/// A rotation merge left open in its rotation, which the caller names. A block
+/// merge sort merges with one where its buffer and its keys do not reach, by the
+/// rotation it rotates with everywhere else, so the merge is chosen apart from
+/// the rotation.
+pub trait MergeStrategy {
+    type With<R: Rotation>: RotationMerge;
 }
 
 /// Run a single [`RotationMerge`] as a one-shot: allocate the merge's scratch

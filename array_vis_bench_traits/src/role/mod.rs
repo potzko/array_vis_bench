@@ -23,7 +23,7 @@ pub use buffer_size::BufferSize;
 pub use direct_sort::DirectSort;
 pub use extraction::Extraction;
 pub use keys::Keys;
-pub use merge::{run_rotation_merge, RotationMerge};
+pub use merge::{run_rotation_merge, MergeStrategy, RotationMerge};
 pub use partition::{with_partition_scratch, PartitionScheme, PartitionVisitor};
 pub use scratchspace::{Scratchspace, ScratchspaceRun};
 pub use pivot::{DualPivotSelector, NoPivot, PivotInput, PivotSelector};

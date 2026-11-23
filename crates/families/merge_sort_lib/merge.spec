@@ -92,3 +92,19 @@ component mrm_mask
   provides RotationMerge MergeKind
   slot     rot Rotation
 end
+
+# ── MergeStrategy: a rotation merge left open in its rotation ──
+# The `merge` slot of the block merge sort, which merges with one where its buffer
+# and keys do not reach. Not a `RotationMerge` or a `MergeKind`: the rotation is
+# the sort's, so the merge kinds above stay the entries that carry their own.
+component ms_smaller_side
+  type     SmallerSideMerge
+  label    smaller-side
+  provides MergeStrategy
+end
+
+component ms_mask
+  type     MaskMerge
+  label    mask
+  provides MergeStrategy
+end

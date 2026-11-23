@@ -13,7 +13,7 @@ use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::{Complexity, Rotation};
 use sort_logger::SortLogger;
 
-use array_vis_bench_traits::role::merge::RotationMerge;
+use array_vis_bench_traits::role::merge::{MergeStrategy, RotationMerge};
 
 /// Merge by the mask where the window fits `64 * WORDS` positions, and by
 /// symMerge's split over the rotation `R` where it does not. The mask is two
@@ -25,6 +25,13 @@ use array_vis_bench_traits::role::merge::RotationMerge;
 /// the choice of the cap waits for the measurement of the combined branch.
 pub struct MaskRotationMerge<R: Rotation, const WORDS: usize = 16, const SPLIT: bool = true> {
     _phantom: PhantomData<R>,
+}
+
+/// The mask merge with its defaults, over whichever rotation it is given.
+pub struct MaskMerge;
+
+impl MergeStrategy for MaskMerge {
+    type With<R: Rotation> = MaskRotationMerge<R>;
 }
 
 impl<R: Rotation, const WORDS: usize, const SPLIT: bool> RotationMerge for MaskRotationMerge<R, WORDS, SPLIT> {
@@ -189,7 +196,7 @@ pub fn merge_window<const WORDS: usize, T: Ord + Copy, U: ?Sized + SortLogger<T>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::rotation_merge::SmallerSideRotationMerge;
+    use crate::rotation_merge::{SmallerSideMerge, SmallerSideRotationMerge};
     use crate::test_util::{pairs, runs, sorted_keys, stable_merge, Item, Replay, Rng, Tally};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_block_cycle::BlockCycleRotation;
@@ -556,5 +563,21 @@ mod tests {
         assert_eq!(<MaskRotationMerge<ReversalRotation> as HasTimeBounds>::WORST, Complexity::N_LOG_N);
         assert_eq!(<MaskRotationMerge<ReversalRotation, 16, false> as HasTimeBounds>::WORST, Complexity::N_LOG_SQUARED);
         assert!(<MaskRotationMerge<ReversalRotation, 16, false> as HasStability>::STABLE);
+    }
+
+    // A strategy is the merge it names under the rotation it is given, and merges as it does.
+    #[test]
+    fn a_strategy_is_its_merge_over_the_rotation_it_is_given() {
+        use core::any::type_name;
+        assert_eq!(
+            type_name::<<MaskMerge as MergeStrategy>::With<TrinityRotation>>(),
+            type_name::<MaskRotationMerge<TrinityRotation>>()
+        );
+        assert_eq!(
+            type_name::<<SmallerSideMerge as MergeStrategy>::With<TrinityRotation>>(),
+            type_name::<SmallerSideRotationMerge<TrinityRotation>>()
+        );
+        every_shape::<<MaskMerge as MergeStrategy>::With<BlockCycleRotation>>("mask strategy, block cycle");
+        every_shape::<<SmallerSideMerge as MergeStrategy>::With<AuxiliaryRotation>>("smaller side strategy, auxiliary");
     }
 }
