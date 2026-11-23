@@ -3,7 +3,9 @@
 //! swaps, and the one thing a block swap cannot do, remember which block was
 //! which, is written into the elements themselves, one bit at a time, by
 //! swapping two elements the pivot tells apart. `gather` makes the blocks,
-//! `order_blocks` orders them and `by_encoding` is the whole partition.
+//! `order_blocks` orders them and `by_encoding` is the whole partition, which
+//! first leaves the front elements at the start and the back ones at the end
+//! where they are.
 
 use array_vis_bench_traits::role::keys::rotate_region;
 use array_vis_bench_traits::role::{Rotation, StablePartition};
@@ -61,6 +63,10 @@ fn ceil_log2(n: usize) -> usize { (usize::BITS - (n - 1).leading_zeros()) as usi
 
 // `front` says whether the element at an index is one of those to bring to the
 // front, by one logged comparison against the pivot, and `b` is the block length.
+// The front elements the region starts with and the back elements it ends with
+// are in place, and are read once and left, so a pass with nothing to move costs
+// its comparisons alone; what is between them, which starts with a back element
+// and ends with a front one, is partitioned.
 fn by_encoding<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
     arr: &mut [T],
     lo: usize,
@@ -70,8 +76,10 @@ fn by_encoding<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut
     scratch: &mut [T],
     log: &mut U,
 ) -> usize {
+    let Some(start) = (lo..hi).find(|&i| !front(log, arr, i)) else { return hi };
+    let Some(last) = (start + 1..hi).rev().find(|&i| front(log, arr, i)) else { return start };
+    let (lo, hi) = (start, last + 1);
     let n = hi - lo;
-    if n <= 1 { return lo + usize::from(n == 1 && front(log, arr, lo)); }
     if n <= scratch.len() { return buffered(arr, lo, hi, front, scratch, log); }
     assert!(scratch.len() >= b, "a partition of {n} elements needs {b} cells of scratch, not {}", scratch.len());
     let (end, loose, held) = gather(arr, lo, hi, b, front, scratch, log);
@@ -407,6 +415,42 @@ mod tests {
             let (moves, cmps) = cost::<EncodedPartition, ReversalRotation>(1 << 14, shape);
             assert!(moves < 5.0 && cmps < 1.5, "shape {shape}: {moves} moves and {cmps} comparisons per element");
         }
+    }
+
+    // A region already partitioned, or with nothing to move to the front, costs
+    // its comparisons and no move: every element is read once and none written.
+    #[test]
+    fn a_pass_with_nothing_to_move_costs_comparisons_only() {
+        for n in [100usize, 1 << 10, 1 << 14, 40_000] {
+            for (shape, name) in [(0, "all front"), (1, "all back"), (7, "sorted")] {
+                let mut rng = Rng(5);
+                let types = types(shape, n, &mut rng);
+                let mut arr: Vec<usize> = types.iter().enumerate().map(|(i, &f)| if f { i } else { n + i }).collect();
+                let want = arr.clone();
+                let mut scratch = vec![0usize; EncodedPartition::scratch_size(n)];
+                let mut tally = Tally::default();
+                let split = EncodedPartition::partition::<ReversalRotation, _, _>(&mut arr, 0, n, n, &mut scratch, &mut tally);
+                assert_eq!(arr, want, "{name}, n={n}: moved");
+                assert_eq!(split, types.iter().filter(|&&f| f).count(), "{name}, n={n}: the split");
+                assert_eq!((tally.moves, tally.cmps <= n + 2), (0, true), "{name}, n={n}: {} moves, {} comparisons", tally.moves, tally.cmps);
+            }
+        }
+    }
+
+    // The ends are trimmed, and what is between them partitioned: an eighth in
+    // front, a quarter shuffled and the rest in back cost the quarter alone.
+    #[test]
+    fn the_ends_that_are_in_place_cost_no_moves() {
+        let n = 1 << 14;
+        let mut rng = Rng(11);
+        let middle: Vec<usize> = (0..n / 4).map(|i| if rng.next(2) == 0 { i } else { n + i }).collect();
+        let mut arr: Vec<usize> = (0..n / 8).chain(middle).chain((0..5 * n / 8).map(|i| n + i)).collect();
+        let mut scratch = vec![0usize; EncodedPartition::scratch_size(n)];
+        let mut tally = Tally::default();
+        let split = EncodedPartition::partition::<ReversalRotation, _, _>(&mut arr, 0, n, n, &mut scratch, &mut tally);
+        assert!(arr[..split].iter().all(|&x| x < n) && arr[split..].iter().all(|&x| x >= n));
+        assert!(tally.moves < n, "{} moves for a middle of {}", tally.moves, n / 4);
+        assert!(tally.cmps < n + n / 16, "{} comparisons", tally.cmps);
     }
 
     #[test]

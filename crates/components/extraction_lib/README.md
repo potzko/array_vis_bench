@@ -43,6 +43,8 @@ never alike, so no element has to be distinct. The scratch is a block, eight
 times the logarithm of the region, which the partition lets go of before its
 last rotation, so it is allocated with the rotation's once, by the role's
 `scratch_size`; a region that scratch holds is partitioned in one buffered
-pass instead.
+pass instead. The front elements a region starts with and the back ones it
+ends with are in place, and are compared once and left, so a pass with nothing
+to move costs its comparisons alone.
 
 Its catalog components are declared in `extraction.spec`.
