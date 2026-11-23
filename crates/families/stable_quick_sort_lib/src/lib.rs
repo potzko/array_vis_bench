@@ -114,7 +114,7 @@ mod tests {
     use super::*;
     use crate::test_util::{items, pairs, Item, Replay, Rng, Tally};
     use array_vis_bench_traits::DirectSort;
-    use extraction_lib::{EncodedPartition, RotationPartition, SlidingPartition};
+    use extraction_lib::{EncodedPartition, MaskedPartition, RotationPartition, SlidingPartition};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
@@ -161,6 +161,7 @@ mod tests {
         sorts_stably::<StableQuickSort<RotationPartition, ReversalRotation>>("rotation, reversal");
         sorts_stably::<StableQuickSort<SlidingPartition, ReversalRotation>>("sliding, reversal");
         sorts_stably::<StableQuickSort<EncodedPartition, ReversalRotation>>("encoded, reversal");
+        sorts_stably::<StableQuickSort<MaskedPartition, ReversalRotation>>("masked, reversal");
     }
 
     // The rotation is `R`'s, and trinity and the auxiliary rotation run through
@@ -169,6 +170,8 @@ mod tests {
     fn any_rotation_sorts_stably() {
         sorts_stably::<StableQuickSort<EncodedPartition, TrinityRotation>>("encoded, trinity");
         sorts_stably::<StableQuickSort<EncodedPartition, AuxiliaryRotation>>("encoded, auxiliary");
+        sorts_stably::<StableQuickSort<MaskedPartition, TrinityRotation>>("masked, trinity");
+        sorts_stably::<StableQuickSort<MaskedPartition, AuxiliaryRotation>>("masked, auxiliary");
         sorts_stably::<StableQuickSort<RotationPartition, TrinityRotation>>("rotation, trinity");
         sorts_stably::<StableQuickSort<RotationPartition, AuxiliaryRotation>>("rotation, auxiliary");
         sorts_stably::<StableQuickSort<SlidingPartition, AuxiliaryRotation>>("sliding, auxiliary");
@@ -195,6 +198,9 @@ mod tests {
         moves_are_all_logged::<StableQuickSort<EncodedPartition, ReversalRotation>>("encoded, reversal");
         moves_are_all_logged::<StableQuickSort<EncodedPartition, TrinityRotation>>("encoded, trinity");
         moves_are_all_logged::<StableQuickSort<EncodedPartition, AuxiliaryRotation>>("encoded, auxiliary");
+        moves_are_all_logged::<StableQuickSort<MaskedPartition, ReversalRotation>>("masked, reversal");
+        moves_are_all_logged::<StableQuickSort<MaskedPartition, TrinityRotation>>("masked, trinity");
+        moves_are_all_logged::<StableQuickSort<MaskedPartition, AuxiliaryRotation>>("masked, auxiliary");
     }
 
     // One aux array for the run, whichever of the partition and the rotation
@@ -207,6 +213,18 @@ mod tests {
         StableQuickSort::<EncodedPartition, ReversalRotation>::sort(&mut arr, &mut log);
         let created = log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArrT { .. })).count();
         assert_eq!(created, 1);
+    }
+
+    // The masked partition asks for no scratch, so over a rotation that asks for
+    // none the sort allocates nothing.
+    #[test]
+    fn the_masked_partition_over_a_rotation_without_scratch_allocates_nothing() {
+        use sort_logger::{SortLog, VisualizerLogger};
+        let mut arr: Vec<usize> = (0..5000).map(|i| i * 7919 % 5003).collect();
+        let mut log = VisualizerLogger { type_ghost: core::marker::PhantomData, log: Vec::new() };
+        StableQuickSort::<MaskedPartition, ReversalRotation>::sort(&mut arr, &mut log);
+        assert!(arr.windows(2).all(|w| w[0] <= w[1]));
+        assert_eq!(log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArrT { .. })).count(), 0);
     }
 
     // A comparison per element per level of a split that halves, give or take
@@ -353,6 +371,7 @@ mod tests {
         sorts::<StableQuickSort<RotationPartition, ReversalRotation>>("rotation");
         sorts::<StableQuickSort<EncodedPartition, ReversalRotation>>("encoded");
         sorts::<StableQuickSort<EncodedPartition, AuxiliaryRotation>>("encoded, auxiliary");
+        sorts::<StableQuickSort<MaskedPartition, ReversalRotation>>("masked");
         sorts::<StableQuickSort<SlidingPartition, ReversalRotation>>("sliding");
     }
 
@@ -379,6 +398,8 @@ mod tests {
         assert_eq!(<Rotating as HasTimeBounds>::WORST, Complexity::N_SQUARED_LOG_N);
         assert_eq!(<Rotating as HasTimeBounds>::AVERAGE, Complexity::N_LOG_SQUARED);
         assert_eq!(<Encoded as HasSpace>::SPACE, Complexity::LOG_N);
+        assert_eq!(<StableQuickSort<MaskedPartition, ReversalRotation> as HasSpace>::SPACE, Complexity::LOG_N);
+        assert_eq!(<StableQuickSort<MaskedPartition, ReversalRotation> as HasTimeBounds>::AVERAGE, Complexity::N_LOG_N);
         assert_eq!(<StableQuickSort<EncodedPartition, AuxiliaryRotation> as HasSpace>::SPACE, Complexity::N1);
         assert!(<Encoded as HasStability>::STABLE);
     }
