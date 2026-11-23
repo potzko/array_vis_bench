@@ -4,7 +4,7 @@
 // rotations that keep the space where it is. Then the encoded partition study:
 // the same buffers by the reversal and auxiliary rotations, 28 entries, since
 // the small buffers pay for the level build's partitions most. Then the same
-// study by the masked partition, 28 entries more.
+// study by the masked partition, by each of its two walks, 56 entries more.
 
 LevelHeapSorts: SortingAlgorithm = SortingAlgorithm<LevelHeapSort<
     buffer = _ where ( InArrayBuffer<_> | ExternalBuffer<_> ),
@@ -20,6 +20,6 @@ LevelHeapEncoded: SortingAlgorithm = SortingAlgorithm<LevelHeapSort<
 
 LevelHeapMasked: SortingAlgorithm = SortingAlgorithm<LevelHeapSort<
     buffer = _ where ( InArrayBuffer<_> | ExternalBuffer<_> ),
-    part = _ where ( MaskedPartition ),
+    part = _ where ( Masked<_> ),
     rot = _ where ( ReversalRotation | AuxiliaryRotation )
 >>

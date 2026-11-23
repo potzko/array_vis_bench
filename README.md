@@ -44,12 +44,12 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 
 ## Current catalog
 
-2712 entries are emitted from the build at the tip of this branch.
+2755 entries are emitted from the build at the tip of this branch.
 
 | family | entries | notes |
 |---|---|---|
 | quick sorts | 408 | 2 drivers x 51 partitions x 4 small sorts |
-| stable quick sorts | 45 | a quick sort over a stable partition, 3 partitions (rotation, encoded, masked) x 15 rotations |
+| stable quick sorts | 60 | a quick sort over a stable partition, 4 partitions (rotation, encoded, masked by popcount, masked by table) x 15 rotations |
 | heap sorts | 400 | 16 classic + 360 quick build + 24 dual build |
 | block merge sorts | 486 | 15 buffers x 2 key shapes x 15 rotations carving by the scan, the WikiSort and GrailSort shapes among them, plus 36 over the other four extractions |
 | merge sorts | 400 | 40 classic + 360 rotation based |
@@ -68,7 +68,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 | tree sorts | 8 | avl trees of slack 1, 2, 4, 8, 16 and 32, a fixed slack 1 avl and naive, over one node store |
 | index heap sorts | 1 | a heap of indices, the index the secondary key, stable at one word per element |
 | tagged heap sort | 1 | a stable heap sort in pre-order, built by selection, a stamp only for the element a pop moves |
-| level heap sorts | 266 | a stable heap sort through a buffer, each level of the level ordered heap heaped out of place, 7 sizes in the array or outside it x 15 rotations, plus 28 each by the encoded and the masked partition over two |
+| level heap sorts | 294 | a stable heap sort through a buffer, each level of the level ordered heap heaped out of place, 7 sizes in the array or outside it x 15 rotations, plus 28 each by the encoded partition and by the masked partition of each walk over two |
 | cycle sort | 1 | |
 | first class kinds | 149 | 15 rotations, 7 small sorts, 67 partitions, 48 merges, 12 scratchspace workflows |
 

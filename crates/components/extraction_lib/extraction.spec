@@ -45,7 +45,26 @@ component sp_encoded
 end
 
 component sp_masked
-  type     MaskedPartition
-  label    masked
+  type     Masked<{walk}>
+  label    masked<{walk}>
   provides StablePartition
+  slot     walk MaskWalk
+end
+
+# The walk of the masked partition, how the cycles of a window's permutation
+# find each element's place: by popcounts of the window's mask as the cycle is
+# walked, in 290 bytes of locals, or from a table of 16 bit places filled before
+# any element moves, in 2210 bytes. The table is the faster walk, and the popcount
+# is the one that spends bits where the table spends cells.
+
+component mw_popcount
+  type     Popcount
+  label    popcount
+  provides MaskWalk
+end
+
+component mw_table
+  type     Tabulated
+  label    table
+  provides MaskWalk
 end

@@ -1487,8 +1487,10 @@
 "left-right<ninther>"	Pivoted<LeftRightPartition, Ninther>
 "level heap sort<buffer: external<10 log>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TenLog>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<10 log>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TenLog>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: external<10 log>, partition: masked, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TenLog>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: external<10 log>, partition: masked, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TenLog>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: external<10 log>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TenLog>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: external<10 log>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TenLog>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: external<10 log>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TenLog>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: external<10 log>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TenLog>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: external<10 log>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<10 log>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<10 log>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, BridgeRotation>
@@ -1506,8 +1508,10 @@
 "level heap sort<buffer: external<10 log>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: external<2 sqrt>, partition: masked, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: external<2 sqrt>, partition: masked, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: external<2 sqrt>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: external<2 sqrt>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: external<2 sqrt>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: external<2 sqrt>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, BridgeRotation>
@@ -1525,8 +1529,10 @@
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: external<512>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<512>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: external<512>, partition: masked, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: external<512>, partition: masked, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: external<512>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: external<512>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: external<512>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: external<512>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: external<512>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<512>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<512>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, RotationPartition, BridgeRotation>
@@ -1544,8 +1550,10 @@
 "level heap sort<buffer: external<512>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: external<half>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Half>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<half>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Half>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: external<half>, partition: masked, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Half>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: external<half>, partition: masked, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Half>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: external<half>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Half>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: external<half>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Half>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: external<half>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Half>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: external<half>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Half>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: external<half>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Half>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<half>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<Half>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<half>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<Half>, RotationPartition, BridgeRotation>
@@ -1563,8 +1571,10 @@
 "level heap sort<buffer: external<half>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<Half>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: external<log>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Log>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<log>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Log>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: external<log>, partition: masked, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Log>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: external<log>, partition: masked, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Log>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: external<log>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Log>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: external<log>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Log>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: external<log>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Log>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: external<log>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Log>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: external<log>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Log>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<log>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<Log>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<log>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<Log>, RotationPartition, BridgeRotation>
@@ -1582,8 +1592,10 @@
 "level heap sort<buffer: external<log>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<Log>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: external<sixteenth>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sixteenth>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<sixteenth>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sixteenth>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: external<sixteenth>, partition: masked, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sixteenth>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: external<sixteenth>, partition: masked, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sixteenth>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: external<sixteenth>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sixteenth>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: external<sixteenth>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sixteenth>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: external<sixteenth>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sixteenth>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: external<sixteenth>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sixteenth>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sixteenth>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<Sixteenth>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<Sixteenth>, RotationPartition, BridgeRotation>
@@ -1601,8 +1613,10 @@
 "level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<Sixteenth>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: external<sqrt>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sqrt>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<sqrt>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sqrt>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: external<sqrt>, partition: masked, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sqrt>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: external<sqrt>, partition: masked, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sqrt>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: external<sqrt>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sqrt>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: external<sqrt>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sqrt>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: external<sqrt>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sqrt>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: external<sqrt>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sqrt>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, BridgeRotation>
@@ -1620,8 +1634,10 @@
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: in array<10 log>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TenLog>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<10 log>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TenLog>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: in array<10 log>, partition: masked, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TenLog>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: in array<10 log>, partition: masked, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TenLog>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: in array<10 log>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TenLog>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: in array<10 log>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TenLog>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: in array<10 log>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TenLog>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: in array<10 log>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TenLog>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: in array<10 log>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<10 log>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<10 log>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, BridgeRotation>
@@ -1639,8 +1655,10 @@
 "level heap sort<buffer: in array<10 log>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: in array<2 sqrt>, partition: masked, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: in array<2 sqrt>, partition: masked, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: in array<2 sqrt>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: in array<2 sqrt>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: in array<2 sqrt>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: in array<2 sqrt>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, BridgeRotation>
@@ -1658,8 +1676,10 @@
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: in array<512>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<512>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: in array<512>, partition: masked, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: in array<512>, partition: masked, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: in array<512>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: in array<512>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: in array<512>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: in array<512>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: in array<512>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<512>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<512>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, RotationPartition, BridgeRotation>
@@ -1677,8 +1697,10 @@
 "level heap sort<buffer: in array<512>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: in array<half>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Half>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<half>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Half>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: in array<half>, partition: masked, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Half>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: in array<half>, partition: masked, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Half>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: in array<half>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Half>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: in array<half>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Half>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: in array<half>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Half>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: in array<half>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Half>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: in array<half>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Half>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<half>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<Half>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<half>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<Half>, RotationPartition, BridgeRotation>
@@ -1696,8 +1718,10 @@
 "level heap sort<buffer: in array<half>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<Half>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: in array<log>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Log>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<log>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Log>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: in array<log>, partition: masked, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Log>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: in array<log>, partition: masked, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Log>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: in array<log>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Log>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: in array<log>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Log>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: in array<log>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Log>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: in array<log>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Log>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: in array<log>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Log>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<log>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<Log>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<log>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<Log>, RotationPartition, BridgeRotation>
@@ -1715,8 +1739,10 @@
 "level heap sort<buffer: in array<log>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<Log>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: in array<sixteenth>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sixteenth>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<sixteenth>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sixteenth>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: in array<sixteenth>, partition: masked, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sixteenth>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: in array<sixteenth>, partition: masked, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sixteenth>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: in array<sixteenth>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sixteenth>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: in array<sixteenth>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sixteenth>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: in array<sixteenth>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sixteenth>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: in array<sixteenth>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sixteenth>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sixteenth>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<Sixteenth>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<Sixteenth>, RotationPartition, BridgeRotation>
@@ -1734,8 +1760,10 @@
 "level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<Sixteenth>, RotationPartition, TrinityRotation>
 "level heap sort<buffer: in array<sqrt>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sqrt>, EncodedPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<sqrt>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sqrt>, EncodedPartition, ReversalRotation>
-"level heap sort<buffer: in array<sqrt>, partition: masked, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sqrt>, MaskedPartition, AuxiliaryRotation>
-"level heap sort<buffer: in array<sqrt>, partition: masked, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sqrt>, MaskedPartition, ReversalRotation>
+"level heap sort<buffer: in array<sqrt>, partition: masked<popcount>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sqrt>, Masked<Popcount>, AuxiliaryRotation>
+"level heap sort<buffer: in array<sqrt>, partition: masked<popcount>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sqrt>, Masked<Popcount>, ReversalRotation>
+"level heap sort<buffer: in array<sqrt>, partition: masked<table>, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sqrt>, Masked<Tabulated>, AuxiliaryRotation>
+"level heap sort<buffer: in array<sqrt>, partition: masked<table>, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sqrt>, Masked<Tabulated>, ReversalRotation>
 "level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sqrt>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<Sqrt>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<Sqrt>, RotationPartition, BridgeRotation>
@@ -2658,21 +2686,36 @@
 "stable quick sort<partition: encoded, rotation: piston>"	StableQuickSort<EncodedPartition, PistonRotation>
 "stable quick sort<partition: encoded, rotation: reversal>"	StableQuickSort<EncodedPartition, ReversalRotation>
 "stable quick sort<partition: encoded, rotation: trinity>"	StableQuickSort<EncodedPartition, TrinityRotation>
-"stable quick sort<partition: masked, rotation: auxiliary>"	StableQuickSort<MaskedPartition, AuxiliaryRotation>
-"stable quick sort<partition: masked, rotation: block cycle>"	StableQuickSort<MaskedPartition, BlockCycleRotation>
-"stable quick sort<partition: masked, rotation: bridge>"	StableQuickSort<MaskedPartition, BridgeRotation>
-"stable quick sort<partition: masked, rotation: contrev>"	StableQuickSort<MaskedPartition, ContrevRotation>
-"stable quick sort<partition: masked, rotation: drill>"	StableQuickSort<MaskedPartition, DrillRotation>
-"stable quick sort<partition: masked, rotation: grail>"	StableQuickSort<MaskedPartition, GrailRotation>
-"stable quick sort<partition: masked, rotation: gries-mills>"	StableQuickSort<MaskedPartition, GriesMillsRotation>
-"stable quick sort<partition: masked, rotation: helix>"	StableQuickSort<MaskedPartition, HelixRotation>
-"stable quick sort<partition: masked, rotation: juggling>"	StableQuickSort<MaskedPartition, JugglingRotation>
-"stable quick sort<partition: masked, rotation: optimized piston<3 windows>>"	StableQuickSort<MaskedPartition, OptimizedPiston<3, 256>>
-"stable quick sort<partition: masked, rotation: optimized piston<in place>>"	StableQuickSort<MaskedPartition, OptimizedPiston<2, 0>>
-"stable quick sort<partition: masked, rotation: optimized piston>"	StableQuickSort<MaskedPartition, OptimizedPistonRotation>
-"stable quick sort<partition: masked, rotation: piston>"	StableQuickSort<MaskedPartition, PistonRotation>
-"stable quick sort<partition: masked, rotation: reversal>"	StableQuickSort<MaskedPartition, ReversalRotation>
-"stable quick sort<partition: masked, rotation: trinity>"	StableQuickSort<MaskedPartition, TrinityRotation>
+"stable quick sort<partition: masked<popcount>, rotation: auxiliary>"	StableQuickSort<Masked<Popcount>, AuxiliaryRotation>
+"stable quick sort<partition: masked<popcount>, rotation: block cycle>"	StableQuickSort<Masked<Popcount>, BlockCycleRotation>
+"stable quick sort<partition: masked<popcount>, rotation: bridge>"	StableQuickSort<Masked<Popcount>, BridgeRotation>
+"stable quick sort<partition: masked<popcount>, rotation: contrev>"	StableQuickSort<Masked<Popcount>, ContrevRotation>
+"stable quick sort<partition: masked<popcount>, rotation: drill>"	StableQuickSort<Masked<Popcount>, DrillRotation>
+"stable quick sort<partition: masked<popcount>, rotation: grail>"	StableQuickSort<Masked<Popcount>, GrailRotation>
+"stable quick sort<partition: masked<popcount>, rotation: gries-mills>"	StableQuickSort<Masked<Popcount>, GriesMillsRotation>
+"stable quick sort<partition: masked<popcount>, rotation: helix>"	StableQuickSort<Masked<Popcount>, HelixRotation>
+"stable quick sort<partition: masked<popcount>, rotation: juggling>"	StableQuickSort<Masked<Popcount>, JugglingRotation>
+"stable quick sort<partition: masked<popcount>, rotation: optimized piston<3 windows>>"	StableQuickSort<Masked<Popcount>, OptimizedPiston<3, 256>>
+"stable quick sort<partition: masked<popcount>, rotation: optimized piston<in place>>"	StableQuickSort<Masked<Popcount>, OptimizedPiston<2, 0>>
+"stable quick sort<partition: masked<popcount>, rotation: optimized piston>"	StableQuickSort<Masked<Popcount>, OptimizedPistonRotation>
+"stable quick sort<partition: masked<popcount>, rotation: piston>"	StableQuickSort<Masked<Popcount>, PistonRotation>
+"stable quick sort<partition: masked<popcount>, rotation: reversal>"	StableQuickSort<Masked<Popcount>, ReversalRotation>
+"stable quick sort<partition: masked<popcount>, rotation: trinity>"	StableQuickSort<Masked<Popcount>, TrinityRotation>
+"stable quick sort<partition: masked<table>, rotation: auxiliary>"	StableQuickSort<Masked<Tabulated>, AuxiliaryRotation>
+"stable quick sort<partition: masked<table>, rotation: block cycle>"	StableQuickSort<Masked<Tabulated>, BlockCycleRotation>
+"stable quick sort<partition: masked<table>, rotation: bridge>"	StableQuickSort<Masked<Tabulated>, BridgeRotation>
+"stable quick sort<partition: masked<table>, rotation: contrev>"	StableQuickSort<Masked<Tabulated>, ContrevRotation>
+"stable quick sort<partition: masked<table>, rotation: drill>"	StableQuickSort<Masked<Tabulated>, DrillRotation>
+"stable quick sort<partition: masked<table>, rotation: grail>"	StableQuickSort<Masked<Tabulated>, GrailRotation>
+"stable quick sort<partition: masked<table>, rotation: gries-mills>"	StableQuickSort<Masked<Tabulated>, GriesMillsRotation>
+"stable quick sort<partition: masked<table>, rotation: helix>"	StableQuickSort<Masked<Tabulated>, HelixRotation>
+"stable quick sort<partition: masked<table>, rotation: juggling>"	StableQuickSort<Masked<Tabulated>, JugglingRotation>
+"stable quick sort<partition: masked<table>, rotation: optimized piston<3 windows>>"	StableQuickSort<Masked<Tabulated>, OptimizedPiston<3, 256>>
+"stable quick sort<partition: masked<table>, rotation: optimized piston<in place>>"	StableQuickSort<Masked<Tabulated>, OptimizedPiston<2, 0>>
+"stable quick sort<partition: masked<table>, rotation: optimized piston>"	StableQuickSort<Masked<Tabulated>, OptimizedPistonRotation>
+"stable quick sort<partition: masked<table>, rotation: piston>"	StableQuickSort<Masked<Tabulated>, PistonRotation>
+"stable quick sort<partition: masked<table>, rotation: reversal>"	StableQuickSort<Masked<Tabulated>, ReversalRotation>
+"stable quick sort<partition: masked<table>, rotation: trinity>"	StableQuickSort<Masked<Tabulated>, TrinityRotation>
 "stable quick sort<partition: rotation, rotation: auxiliary>"	StableQuickSort<RotationPartition, AuxiliaryRotation>
 "stable quick sort<partition: rotation, rotation: block cycle>"	StableQuickSort<RotationPartition, BlockCycleRotation>
 "stable quick sort<partition: rotation, rotation: bridge>"	StableQuickSort<RotationPartition, BridgeRotation>
