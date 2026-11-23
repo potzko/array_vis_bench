@@ -13,6 +13,12 @@ array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
 small_sort_insertion_strategy = { path = "../../small_sorts/small_sort_insertion_strategy" }
 sort_logger = { path = "../../../sort_logger" }
 
+# The strategy crate is used by the catalog, not by the Rust code: its fragment
+# fills this family's `InsertionStrategy` slot, and a catalog built from this
+# crate's dependency closure finds it only through this dependency.
+[lints.cargo]
+unused_dependencies = "allow"
+
 # Spec-system catalog fragment + query, OWNED by this crate and gathered by
 # `spec_catalog`'s build via the dependency-graph walk.
 [package.metadata.array_vis_bench]
