@@ -5,7 +5,7 @@
 //! where every element goes from popcounts of the mask below it, `Walk` applies
 //! those places by cycles with one element carried in a local, `windows` slides
 //! the window along the region, and `by_masks` is the whole partition, the
-//! `blocks` module ordering the blocks the windows leave. The two walks are the
+//! `blocks` module trimming the ends and ordering the blocks the windows leave. The two walks are the
 //! two fillers: `MaskedPartition` works each place out by popcount as it goes,
 //! with a second mask for the positions done, and `MaskedTablePartition` fills a
 //! table of places first, which is faster and takes more locals.
@@ -17,7 +17,8 @@ use array_vis_bench_traits::role::{Rotation, StablePartition};
 use array_vis_bench_traits::Complexity;
 use sort_logger::SortLogger;
 
-use crate::blocks::{by_blocks, ceil_log2};
+use crate::blocks::{ceil_log2, finish, trim};
+use crate::partition::buffered;
 
 /// How the places of a window are applied to its elements.
 pub trait Walk {
@@ -134,13 +135,12 @@ impl<K: Walk> StablePartition for Masked<K> {
 // Words of a mask. A window, the partial blocks it starts with and the fresh
 // elements it takes, is at most 64 times as many elements, 1024, and its places
 // are 16 bit entries. A window holds bits and no element: the classes, and a
-// table of the backs below each word. Measured on one partition of 2^20 random
-// elements half of them in front, with blocks of eight logarithms, in
-// milliseconds by popcount and by table: 8 words took 10.5 and 6.0, 16 took 9.5
-// and 5.0, 32 took 9.0 and 4.6, 64 took 8.8 and 4.6 and 128 took 9.1 and 5.4. The
-// arrays are `18 w + 2` bytes by popcount and `138 w + 2` by table, so 16 words
-// is under 300 bytes and under 2.3 KB, and 32, which is 5 to 8 percent faster,
-// has twice the bytes.
+// table of the backs below each word. The arrays are `18 w + 2` bytes by popcount
+// and `138 w + 2` by table, `w` the words: 290 and 2210 bytes at 16 words, where
+// the buffer of `EncodedPartition` is 1280 bytes of `usize` at 2^20 elements, and
+// it grows with the element type where these do not. Provisional: 16 words, the
+// 1024 bits of the brief, is a guess at the knee of a curve that was flat from
+// 16 to 64 words on a loaded machine, and the combined measurement settles it.
 const MASK_WORDS: usize = 16;
 const _: () = assert!(MASK_WORDS * 64 <= u16::MAX as usize);
 
@@ -148,10 +148,9 @@ const _: () = assert!(MASK_WORDS * 64 <= u16::MAX as usize);
 // least two, as in `EncodedPartition`, and at most a quarter of a window, so that
 // a window takes at least two blocks of fresh elements and the code cells of a
 // block's rank, `ceil(log2(minority blocks))` of them, are fewer than its cells.
-// Measured as above with 16 words, one logarithm took 13.3 and 9.4 ms, two 10.8
-// and 6.6, four 9.8 and 5.4, eight 9.4 and 5.1 and sixteen 10.1 and 5.3, and the
-// moves an element went from 2.9 to 2.6 and back up to 2.8, so eight is as in the
-// encoded partition and in the flat part.
+// Provisional: eight is the encoded partition's, and a block of that many
+// logarithms sat on the flat part of the curve in the first trials, which a
+// combined measurement is to confirm.
 const BLOCK_LOGS: usize = 8;
 const MAX_BLOCK: usize = MASK_WORDS * 64 / 4;
 
@@ -163,8 +162,9 @@ fn window(b: usize) -> usize { MASK_WORDS * 64 - 2 * b }
 
 // `front` says whether the element at an index is one of those to bring to the
 // front, by one logged comparison against the pivot, `b` is the block length and
-// `w` the fresh elements a window takes. The trim and everything after the blocks
-// are made belong to `by_blocks`.
+// `w` the fresh elements a window takes. The ends in place are left by `trim`,
+// the blocks are made by `windows`, and put in order, with the loose elements
+// placed, by `finish`.
 fn by_masks<K: Walk, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
     arr: &mut [T],
     lo: usize,
@@ -175,7 +175,13 @@ fn by_masks<K: Walk, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: F
     scratch: &mut [T],
     log: &mut U,
 ) -> usize {
-    by_blocks::<R, T, U, F, _>(arr, lo, hi, b, front, scratch, log, |arr, lo, hi, _, log| windows::<K, T, U, F>(arr, lo, hi, b, w, front, log))
+    let (lo, hi) = match trim(arr, lo, hi, front, log) {
+        Ok(region) => region,
+        Err(split) => return split,
+    };
+    if hi - lo <= scratch.len() { return buffered(arr, lo, hi, front, scratch, log); }
+    let (end, loose) = windows::<K, T, U, F>(arr, lo, hi, b, w, front, log);
+    finish::<R, T, U, F>(arr, lo, end, loose, b, front, scratch, log)
 }
 
 // The region goes through in windows. Behind the window are whole blocks of one
@@ -184,7 +190,7 @@ fn by_masks<K: Walk, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: F
 // `w` elements still unread behind them. Each window is permuted into whole
 // blocks and new partial blocks, so each element is compared once and moved
 // about once, and nothing outside the masks is kept. Returns `end` and `z`, and
-// the `h` back elements run to `hi`, as `by_blocks` asks.
+// the `h` back elements run to `hi`, as `finish` asks.
 fn windows<K: Walk, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
     arr: &mut [T],
     lo: usize,

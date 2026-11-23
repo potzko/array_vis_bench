@@ -8,7 +8,8 @@ use array_vis_bench_traits::role::{Rotation, StablePartition};
 use array_vis_bench_traits::Complexity;
 use sort_logger::SortLogger;
 
-use crate::blocks::{by_blocks, ceil_log2};
+use crate::blocks::{ceil_log2, finish, trim};
+use crate::partition::buffered;
 
 pub struct EncodedPartition;
 impl StablePartition for EncodedPartition {
@@ -57,8 +58,8 @@ fn block_len(n: usize) -> usize { if n < 2 { 0 } else { (BLOCK_LOGS * ceil_log2(
 
 // `front` says whether the element at an index is one of those to bring to the
 // front, by one logged comparison against the pivot, and `b` is the block length.
-// The blocks are made by `gather`, and put in order, with the loose elements
-// placed, by `by_blocks`.
+// The ends in place are left by `trim`, the blocks are made by `gather`, and put
+// in order, with the loose elements placed, by `finish`.
 fn by_encoding<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
     arr: &mut [T],
     lo: usize,
@@ -68,14 +69,17 @@ fn by_encoding<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut
     scratch: &mut [T],
     log: &mut U,
 ) -> usize {
-    by_blocks::<R, T, U, F, _>(arr, lo, hi, b, front, scratch, log, |arr, lo, hi, scratch, log| {
-        assert!(scratch.len() >= b, "a partition of {} elements needs {b} cells of scratch, not {}", hi - lo, scratch.len());
-        let (end, loose, held) = gather(arr, lo, hi, b, front, scratch, log);
-        // The back elements held go to the free cells behind the loose front ones,
-        // where they belong.
-        log.copy_range(scratch, 0, arr, end + loose, held);
-        (end, loose)
-    })
+    let (lo, hi) = match trim(arr, lo, hi, front, log) {
+        Ok(region) => region,
+        Err(split) => return split,
+    };
+    if hi - lo <= scratch.len() { return buffered(arr, lo, hi, front, scratch, log); }
+    assert!(scratch.len() >= b, "a partition of {} elements needs {b} cells of scratch, not {}", hi - lo, scratch.len());
+    let (end, loose, held) = gather(arr, lo, hi, b, front, scratch, log);
+    // The back elements held go to the free cells behind the loose front ones,
+    // where they belong.
+    log.copy_range(scratch, 0, arr, end + loose, held);
+    finish::<R, T, U, F>(arr, lo, end, loose, b, front, scratch, log)
 }
 
 // One scan from the left leaves whole blocks of one type in `arr[lo..end]`,
@@ -86,6 +90,11 @@ fn by_encoding<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut
 // when a block of the back elements is whole, the loose ones step up over it
 // into the free cells and the block is written where they were. Two moves for
 // each element at most, and one comparison.
+//
+// It stays out of line. Inlined into `by_encoding`, with the trim and the finish
+// shared with the masked partitions, its loop ran 40 to 90 percent slower: one
+// partition of 2^20 random elements took 7 to 10 ms against 5 out of line.
+#[inline(never)]
 fn gather<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
     arr: &mut [T],
     lo: usize,

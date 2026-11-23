@@ -56,7 +56,7 @@ with one element carried in a local, and every element that moves is written
 once. It holds 290 bytes of arrays in locals, whatever the element type is, and
 asks for no scratch. `MaskedTablePartition` is the same with the places of a
 window filled into a table first, which the cycle walk then reads instead of
-counting bits: twice as fast, at 2210 bytes of locals. Both share the trim, the
+counting bits, at 2210 bytes of locals. Both share the trim, the
 ordering of the blocks and the last rotation with the encoded partition, in
 `blocks.rs`.
 

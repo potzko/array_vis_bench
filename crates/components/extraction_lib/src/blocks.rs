@@ -1,49 +1,51 @@
-//! What a block partition does once its blocks are made: `by_blocks` trims the
-//! ends that are in place, hands the region to a function that makes whole
-//! blocks of one type each, `order_blocks` puts the blocks in order, front ones
-//! first, remembering which block was which by writing its rank into the
-//! elements, and one rotation places the loose elements. `EncodedPartition` and
-//! `MaskedPartition` differ in how they make the blocks and in nothing else.
+//! What the block partitions share: `trim` leaves the ends that are in place,
+//! and `finish` puts the whole blocks a partition made in order, front ones
+//! first, with `order_blocks`, which remembers which block was which by writing
+//! its rank into the elements, and one rotation places the loose elements.
+//! `EncodedPartition` and the masked partitions differ in how they make the
+//! blocks between the two and in nothing else.
 
 use array_vis_bench_traits::role::keys::rotate_region;
 use array_vis_bench_traits::role::Rotation;
 use sort_logger::SortLogger;
 
-use crate::partition::buffered;
-
 pub(crate) fn ceil_log2(n: usize) -> usize { (usize::BITS - (n - 1).leading_zeros()) as usize }
 
 // `front` says whether the element at an index is one of those to bring to the
-// front, by one logged comparison against the pivot, and `b` is the block length.
-// The front elements the region starts with and the back elements it ends with
-// are in place, and are read once and left, so a pass with nothing to move costs
-// its comparisons alone; what is between them, which starts with a back element
-// and ends with a front one, is partitioned.
-//
-// `gather` is handed that region, `arr[lo..hi]` and the scratch, and leaves
-// whole blocks of one type each in `arr[lo..end]`, each type's in order, then
-// `loose` front elements, fewer than a block, then the rest of the back
-// elements, fewer than a block, in order, and returns `(end, loose)`.
-pub(crate) fn by_blocks<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool, G>(
-    arr: &mut [T],
+// front, by one logged comparison against the pivot. The front elements the
+// region `arr[lo..hi]` starts with and the back elements it ends with are in
+// place, and are read once and left, so a pass with nothing to move costs its
+// comparisons alone; what is between them, which starts with a back element and
+// ends with a front one, is what a partition makes blocks of. Returns that
+// region as `Ok`, or as `Err` the split when there is nothing to move.
+pub(crate) fn trim<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
+    arr: &[T],
     lo: usize,
     hi: usize,
+    front: &F,
+    log: &mut U,
+) -> Result<(usize, usize), usize> {
+    let Some(start) = (lo..hi).find(|&i| !front(log, arr, i)) else { return Err(hi) };
+    let Some(last) = (start + 1..hi).rev().find(|&i| front(log, arr, i)) else { return Err(start) };
+    Ok((start, last + 1))
+}
+
+// A partition made whole blocks of one type each of `b` cells in `arr[lo..end]`,
+// each type's in order, then `loose` front elements, fewer than a block, then the
+// rest of the back elements, fewer than a block, in order: put the blocks in
+// order and rotate the loose front elements in front of the back blocks. Returns
+// the split.
+pub(crate) fn finish<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
+    arr: &mut [T],
+    lo: usize,
+    end: usize,
+    loose: usize,
     b: usize,
     front: &F,
     scratch: &mut [T],
     log: &mut U,
-    gather: G,
-) -> usize
-where
-    G: FnOnce(&mut [T], usize, usize, &mut [T], &mut U) -> (usize, usize),
-{
-    let Some(start) = (lo..hi).find(|&i| !front(log, arr, i)) else { return hi };
-    let Some(last) = (start + 1..hi).rev().find(|&i| front(log, arr, i)) else { return start };
-    let (lo, hi) = (start, last + 1);
-    if hi - lo <= scratch.len() { return buffered(arr, lo, hi, front, scratch, log); }
-    let (end, loose) = gather(arr, lo, hi, scratch, log);
+) -> usize {
     let fronts = order_blocks(arr, lo, (end - lo) / b, b, front, log);
-    // The loose front elements rotate in front of the back blocks.
     rotate_region::<R, T, U>(arr, lo + fronts * b, end, end + loose, scratch, log);
     lo + fronts * b + loose
 }
