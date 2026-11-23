@@ -919,6 +919,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "stable_quick_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "extraction_lib",
+ "rotation_auxiliary",
+ "rotation_reversal",
+ "rotation_trinity",
+ "sort_logger",
+]
+
+[[package]]
 name = "syn"
 version = "2.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"

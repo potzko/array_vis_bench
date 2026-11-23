@@ -1,0 +1,22 @@
+# The stable_quick_sort_lib crate: `StableQuickSort`, a quick sort over a
+# stable partition, and the catalog fragment and query of the family.
+[package]
+name = "stable_quick_sort_lib"
+version = "0.1.0"
+edition = "2021"
+description = "Stable quick sort, `StableQuickSort<P, R>`: a quick sort whose three way split is a stable partition `P` rotating with `R`, around a median of three values, a ninther past a size, recursing into the smaller side and looping on the larger, an insertion sort below a cutoff. Types only; the spec catalog emits the entries."
+
+[lib]
+name = "stable_quick_sort_lib"
+path = "src/lib.rs"
+
+[dependencies]
+array_vis_bench_traits = { path = "../../../array_vis_bench_traits" }
+sort_logger = { path = "../../../sort_logger" }
+
+[dev-dependencies]
+# The stable partitions and three rotations for the module tests.
+extraction_lib = { path = "../../components/extraction_lib" }
+rotation_reversal = { path = "../../rotations/rotation_reversal" }
+rotation_trinity = { path = "../../rotations/rotation_trinity" }
+rotation_auxiliary = { path = "../../rotations/rotation_auxiliary" }
