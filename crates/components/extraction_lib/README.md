@@ -51,9 +51,13 @@ through in windows of up to a thousand elements, each window's types held as a
 bit mask in sixteen words of locals, and a window is permuted in place into
 whole blocks of the front type, whole blocks of the back type, and then the
 partial blocks that start the next window. An element's place is worked out
-from popcounts of the mask below it, a table of the places is walked by cycles
+from popcounts of the mask below it, the cycles of the permutation are walked
 with one element carried in a local, and every element that moves is written
-once. Its scratch is none, and it shares the trim, the ordering of the blocks
-and the last rotation with the encoded partition, in `blocks.rs`.
+once. It holds 290 bytes of arrays in locals, whatever the element type is, and
+asks for no scratch. `MaskedTablePartition` is the same with the places of a
+window filled into a table first, which the cycle walk then reads instead of
+counting bits: twice as fast, at 2210 bytes of locals. Both share the trim, the
+ordering of the blocks and the last rotation with the encoded partition, in
+`blocks.rs`.
 
 Its catalog components are declared in `extraction.spec`.

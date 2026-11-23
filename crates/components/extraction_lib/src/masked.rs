@@ -1,12 +1,17 @@
-//! `MaskedPartition`, the stable partition in linear time with no buffer: the
+//! The masked stable partitions, linear time with no buffer of elements: the
 //! whole blocks that `EncodedPartition` gathers through a buffer are made here
 //! by permuting windows of the region, each window's classes held as a bit mask
 //! in a few local words. `permute_window` reads a window's mask and works out
-//! where every element goes from popcounts of the mask below it, into a table of
-//! places, `cycle_permute` applies the table by cycles with one element carried
-//! in a local, `windows` slides the window along the region, and `by_masks` is
-//! the whole partition, the `blocks` module ordering the blocks the windows
-//! leave.
+//! where every element goes from popcounts of the mask below it, `Walk` applies
+//! those places by cycles with one element carried in a local, `windows` slides
+//! the window along the region, and `by_masks` is the whole partition, the
+//! `blocks` module ordering the blocks the windows leave. The two walks are the
+//! two fillers: `MaskedPartition` works each place out by popcount as it goes,
+//! with a second mask for the positions done, and `MaskedTablePartition` fills a
+//! table of places first, which is faster and takes more locals.
+
+use core::marker::PhantomData;
+use core::mem::size_of;
 
 use array_vis_bench_traits::role::{Rotation, StablePartition};
 use array_vis_bench_traits::Complexity;
@@ -14,12 +19,91 @@ use sort_logger::SortLogger;
 
 use crate::blocks::{by_blocks, ceil_log2};
 
+/// How the places of a window are applied to its elements.
+pub trait Walk {
+    /// The label of the partition that walks this way.
+    const LABEL: &'static str;
+
+    /// Bytes of the arrays a window of this walk holds in locals, the masks and
+    /// whatever the walk adds, whatever the element type is.
+    const LOCAL_BYTES: usize;
+
+    /// Move the element at each position `p` of `arr[start..start + len]` to
+    /// `place(p)`, which is a permutation of the positions, writing each element
+    /// that moves once, by `write_data`.
+    fn apply<T: Ord + Copy, U: ?Sized + SortLogger<T>, P: Fn(usize) -> usize>(arr: &mut [T], start: usize, len: usize, place: P, log: &mut U);
+}
+
+// The masks of a window: the classes and a table of the backs below each word.
+const MASK_BYTES: usize = size_of::<[u64; MASK_WORDS]>() + size_of::<[u16; MASK_WORDS + 1]>();
+
+/// Each place is worked out by popcount as the cycle is walked, and a mask marks
+/// the positions done: a few words of locals and nothing else.
+pub struct Popcount;
+impl Walk for Popcount {
+    const LABEL: &'static str = "masked";
+    const LOCAL_BYTES: usize = MASK_BYTES + size_of::<[u64; MASK_WORDS]>();
+
+    // A cycle is followed with its element carried in a local: take the first
+    // position not done whose place is elsewhere, write what it holds to its
+    // place, carry the element that was there and write it to its place in turn,
+    // until the cycle closes on the first position.
+    fn apply<T: Ord + Copy, U: ?Sized + SortLogger<T>, P: Fn(usize) -> usize>(arr: &mut [T], start: usize, len: usize, place: P, log: &mut U) {
+        let mut done = [0u64; MASK_WORDS];
+        for first in 0..len {
+            if done[first / 64] >> (first % 64) & 1 == 1 || place(first) == first { continue; }
+            let (mut at, mut carried) = (first, arr[start + first]);
+            loop {
+                done[at / 64] |= 1 << (at % 64);
+                let to = place(at);
+                let displaced = arr[start + to];
+                log.write_data(arr, start + to, carried);
+                if to == first { break; }
+                (at, carried) = (to, displaced);
+            }
+        }
+    }
+}
+
+/// The places of a window are filled into a table of 16 bit entries before any
+/// element moves, and the cycles walk the table, marking a position done by
+/// pointing its entry at itself. Locals of a position's two bytes more.
+pub struct Tabulated;
+impl Walk for Tabulated {
+    const LABEL: &'static str = "masked table";
+    const LOCAL_BYTES: usize = MASK_BYTES + size_of::<[u16; MASK_WORDS * 64]>();
+
+    fn apply<T: Ord + Copy, U: ?Sized + SortLogger<T>, P: Fn(usize) -> usize>(arr: &mut [T], start: usize, len: usize, place: P, log: &mut U) {
+        let mut dest = [0u16; MASK_WORDS * 64];
+        dest[..len].iter_mut().enumerate().for_each(|(p, to)| *to = place(p) as u16);
+        for first in 0..len {
+            if dest[first] as usize == first { continue; }
+            let (mut at, mut carried) = (first, arr[start + first]);
+            loop {
+                let to = dest[at] as usize;
+                dest[at] = at as u16;
+                let displaced = arr[start + to];
+                log.write_data(arr, start + to, carried);
+                if to == first { break; }
+                (at, carried) = (to, displaced);
+            }
+        }
+    }
+}
+
 /// Windows of the region permuted by bit masks into whole blocks, then the
 /// blocks put in order as `EncodedPartition` does: `O(n)` moves and
-/// comparisons, no scratch of its own.
-pub struct MaskedPartition;
-impl StablePartition for MaskedPartition {
-    const NAME: &'static str = "masked";
+/// comparisons, no scratch of its own, whichever way `K` walks the places.
+pub struct Masked<K: Walk>(PhantomData<K>);
+
+/// Masked, the places worked out by popcount during the walk.
+pub type MaskedPartition = Masked<Popcount>;
+
+/// Masked, the places tabulated before the walk.
+pub type MaskedTablePartition = Masked<Tabulated>;
+
+impl<K: Walk> StablePartition for Masked<K> {
+    const NAME: &'static str = K::LABEL;
     const MOVES: Complexity = Complexity::N1;
 
     fn partition<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -31,7 +115,7 @@ impl StablePartition for MaskedPartition {
         log: &mut U,
     ) -> usize {
         let b = block_len(hi - lo);
-        by_masks::<R, T, U, _>(arr, lo, hi, b, window(b), &move |log: &mut U, arr: &[T], i| log.cmp_lt_data(arr, i, pivot), scratch, log)
+        by_masks::<K, R, T, U, _>(arr, lo, hi, b, window(b), &move |log: &mut U, arr: &[T], i| log.cmp_lt_data(arr, i, pivot), scratch, log)
     }
 
     fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -43,20 +127,31 @@ impl StablePartition for MaskedPartition {
         log: &mut U,
     ) -> usize {
         let b = block_len(hi - lo);
-        by_masks::<R, T, U, _>(arr, lo, hi, b, window(b), &move |log: &mut U, arr: &[T], i| !log.cmp_gt_data(arr, i, pivot), scratch, log)
+        by_masks::<K, R, T, U, _>(arr, lo, hi, b, window(b), &move |log: &mut U, arr: &[T], i| !log.cmp_gt_data(arr, i, pivot), scratch, log)
     }
 }
 
-// Words of a mask, and so the most elements a window can hold, 1024: the two
-// partial blocks a window starts with and the fresh elements it takes. A window
-// is permuted out of two masks, the classes and the positions done, and a table
-// of how many backs lie below each word, which are the only memory it uses.
+// Words of a mask. A window, the partial blocks it starts with and the fresh
+// elements it takes, is at most 64 times as many elements, 1024, and its places
+// are 16 bit entries. A window holds bits and no element: the classes, and a
+// table of the backs below each word. Measured on one partition of 2^20 random
+// elements half of them in front, with blocks of eight logarithms, in
+// milliseconds by popcount and by table: 8 words took 10.5 and 6.0, 16 took 9.5
+// and 5.0, 32 took 9.0 and 4.6, 64 took 8.8 and 4.6 and 128 took 9.1 and 5.4. The
+// arrays are `18 w + 2` bytes by popcount and `138 w + 2` by table, so 16 words
+// is under 300 bytes and under 2.3 KB, and 32, which is 5 to 8 percent faster,
+// has twice the bytes.
 const MASK_WORDS: usize = 16;
+const _: () = assert!(MASK_WORDS * 64 <= u16::MAX as usize);
 
 // Cells in a block: BLOCK_LOGS times the logarithm of `n`, rounded up, and at
-// least two, as in `EncodedPartition`, and at most a quarter of a window's
-// bits, so that a window holds at least two blocks' worth of fresh elements and
-// every block count of a region fits the code cells of its ranks.
+// least two, as in `EncodedPartition`, and at most a quarter of a window, so that
+// a window takes at least two blocks of fresh elements and the code cells of a
+// block's rank, `ceil(log2(minority blocks))` of them, are fewer than its cells.
+// Measured as above with 16 words, one logarithm took 13.3 and 9.4 ms, two 10.8
+// and 6.6, four 9.8 and 5.4, eight 9.4 and 5.1 and sixteen 10.1 and 5.3, and the
+// moves an element went from 2.9 to 2.6 and back up to 2.8, so eight is as in the
+// encoded partition and in the flat part.
 const BLOCK_LOGS: usize = 8;
 const MAX_BLOCK: usize = MASK_WORDS * 64 / 4;
 
@@ -70,7 +165,7 @@ fn window(b: usize) -> usize { MASK_WORDS * 64 - 2 * b }
 // front, by one logged comparison against the pivot, `b` is the block length and
 // `w` the fresh elements a window takes. The trim and everything after the blocks
 // are made belong to `by_blocks`.
-fn by_masks<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
+fn by_masks<K: Walk, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
     arr: &mut [T],
     lo: usize,
     hi: usize,
@@ -80,7 +175,7 @@ fn by_masks<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U,
     scratch: &mut [T],
     log: &mut U,
 ) -> usize {
-    by_blocks::<R, T, U, F, _>(arr, lo, hi, b, front, scratch, log, |arr, lo, hi, _, log| windows(arr, lo, hi, b, w, front, log))
+    by_blocks::<R, T, U, F, _>(arr, lo, hi, b, front, scratch, log, |arr, lo, hi, _, log| windows::<K, T, U, F>(arr, lo, hi, b, w, front, log))
 }
 
 // The region goes through in windows. Behind the window are whole blocks of one
@@ -90,7 +185,7 @@ fn by_masks<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U,
 // blocks and new partial blocks, so each element is compared once and moved
 // about once, and nothing outside the masks is kept. Returns `end` and `z`, and
 // the `h` back elements run to `hi`, as `by_blocks` asks.
-fn windows<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
+fn windows<K: Walk, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
     arr: &mut [T],
     lo: usize,
     hi: usize,
@@ -102,7 +197,7 @@ fn windows<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) 
     let (mut end, mut z, mut h) = (lo, 0, 0);
     while end + z + h < hi {
         let fresh = w.min(hi - end - z - h);
-        let (whole, fronts, backs) = permute_window(arr, end, (z, h, fresh), b, front, log);
+        let (whole, fronts, backs) = permute_window::<K, T, U, F>(arr, end, (z, h, fresh), b, front, log);
         (end, z, h) = (end + whole, fronts, backs);
     }
     (end, z)
@@ -120,14 +215,13 @@ fn windows<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) 
 // they land in the whole blocks first. A rank is a popcount of the mask below the
 // position, so the mask does not change while the elements move.
 //
-// The places are worked out for every position before any element moves, into a
-// table of 16 bit entries, one a position, which holds places and never
-// elements. A cycle walk that worked each place out as it went waited for a
-// load, a popcount and the selects of every step before it could start the
-// next, and took 6.9 ms over 2^20 random elements; walking a table, which is
-// filled in a pass where no entry waits for another, took 3.0. Returns the cells
-// in whole blocks, and the front and back elements left over.
-fn permute_window<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
+// The places are handed to the walk `K`, which applies them. Walking the cycles
+// with each place worked out as it goes waits, at every step, on a load, a
+// popcount and the selects before the next step can start; a table of the places,
+// filled in a pass where no entry waits for another, takes that out of the walk,
+// at two bytes a position more of locals. Returns the cells in whole blocks, and
+// the front and back elements left over.
+fn permute_window<K: Walk, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
     arr: &mut [T],
     start: usize,
     (z, h, fresh): (usize, usize, usize),
@@ -148,13 +242,13 @@ fn permute_window<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], 
         *bits = (from.max(z + h)..to).fold(held, |bits, p| bits | u64::from(!front(log, arr, start + p)) << (p % 64));
     }
     // `below[i]` is the back elements in the words before word `i`.
-    let mut below = [0usize; MASK_WORDS + 1];
-    (0..words).for_each(|i| below[i + 1] = below[i] + back[i].count_ones() as usize);
-    let (backs, fronts) = (below[words], len - below[words]);
+    let mut below = [0u16; MASK_WORDS + 1];
+    (0..words).for_each(|i| below[i + 1] = below[i] + back[i].count_ones() as u16);
+    let (backs, fronts) = (below[words] as usize, len - below[words] as usize);
     let (whole_fronts, whole_backs) = (fronts / b * b, backs / b * b);
     let (blocks, loose_fronts) = (whole_fronts + whole_backs, fronts - whole_fronts);
     let place = |p: usize| {
-        let backs_before = below[p / 64] + (back[p / 64] & ((1u64 << (p % 64)) - 1)).count_ones() as usize;
+        let backs_before = below[p / 64] as usize + (back[p / 64] & ((1u64 << (p % 64)) - 1)).count_ones() as usize;
         let (rank, whole, first_loose, loose_base) = if back[p / 64] >> (p % 64) & 1 == 1 {
             (backs_before, whole_backs, whole_fronts, blocks + loose_fronts)
         } else {
@@ -162,32 +256,8 @@ fn permute_window<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], 
         };
         if rank < whole { first_loose + rank } else { loose_base + rank - whole }
     };
-    let mut dest = [0u16; MASK_WORDS * 64];
-    dest[..len].iter_mut().enumerate().for_each(|(p, to)| *to = place(p) as u16);
-    cycle_permute(arr, start, &mut dest[..len], log);
+    K::apply(arr, start, len, place, log);
     (blocks, loose_fronts, backs - whole_backs)
-}
-
-// Moves the element at each position `p` of `arr[start..]` to `dest[p]`, which
-// is a permutation of the positions. A cycle is followed with its element
-// carried in a local: take the first position not done whose place is elsewhere,
-// write what it holds to its place, carry the element that was there and write
-// it to its place in turn, until the cycle closes on the first position. Each
-// element that moves is written once, by `write_data`, and a position done is
-// marked by pointing its entry at itself.
-fn cycle_permute<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &mut [T], start: usize, dest: &mut [u16], log: &mut U) {
-    for first in 0..dest.len() {
-        if dest[first] as usize == first { continue; }
-        let (mut at, mut carried) = (first, arr[start + first]);
-        loop {
-            let to = dest[at] as usize;
-            dest[at] = at as u16;
-            let displaced = arr[start + to];
-            log.write_data(arr, start + to, carried);
-            if to == first { break; }
-            (at, carried) = (to, displaced);
-        }
-    }
 }
 
 #[cfg(test)]
@@ -207,13 +277,13 @@ mod tests {
 
     // The partition with blocks of `B` cells, or of the least length when `B` is
     // 0, and windows of `W` fresh elements, so that a window can end at every
-    // place a block can.
-    struct Windowed<const B: usize, const W: usize>;
-    impl<const B: usize, const W: usize> Windowed<B, W> {
+    // place a block can, walked by `K`.
+    struct Windowed<const B: usize, const W: usize, K = Popcount>(PhantomData<K>);
+    impl<const B: usize, const W: usize, K> Windowed<B, W, K> {
         fn block(n: usize) -> usize { if B == 0 { tight(n) } else { B } }
     }
-    impl<const B: usize, const W: usize> StablePartition for Windowed<B, W> {
-        const NAME: &'static str = "masked, sized";
+    impl<const B: usize, const W: usize, K: Walk> StablePartition for Windowed<B, W, K> {
+        const NAME: &'static str = "masked, windowed";
         const MOVES: Complexity = Complexity::N1;
 
         fn partition<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -224,7 +294,7 @@ mod tests {
             scratch: &mut [T],
             log: &mut U,
         ) -> usize {
-            by_masks::<R, T, U, _>(arr, lo, hi, Self::block(hi - lo), W, &move |log: &mut U, arr: &[T], i| log.cmp_lt_data(arr, i, pivot), scratch, log)
+            by_masks::<K, R, T, U, _>(arr, lo, hi, Self::block(hi - lo), W, &move |log: &mut U, arr: &[T], i| log.cmp_lt_data(arr, i, pivot), scratch, log)
         }
 
         fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -235,7 +305,7 @@ mod tests {
             scratch: &mut [T],
             log: &mut U,
         ) -> usize {
-            by_masks::<R, T, U, _>(arr, lo, hi, Self::block(hi - lo), W, &move |log: &mut U, arr: &[T], i| !log.cmp_gt_data(arr, i, pivot), scratch, log)
+            by_masks::<K, R, T, U, _>(arr, lo, hi, Self::block(hi - lo), W, &move |log: &mut U, arr: &[T], i| !log.cmp_gt_data(arr, i, pivot), scratch, log)
         }
     }
 
@@ -245,8 +315,7 @@ mod tests {
     // the whole blocks of fronts, the whole blocks of backs, the latest fronts
     // and the latest backs, each in order, with every unread element compared
     // once, every element that moves written once and none that stays touched.
-    #[test]
-    fn a_window_comes_out_as_whole_blocks_then_the_loose_elements() {
+    fn a_window_comes_out_as_whole_blocks_then_the_loose_elements<K: Walk>() {
         let mut rng = Rng(0x57A6);
         let is_front = |log: &mut Tally, arr: &[usize], i: usize| log.cmp_lt_data(arr, i, BACK);
         for b in [2usize, 3, 5, 16, 100] {
@@ -263,8 +332,8 @@ mod tests {
                 let (whole_fronts, whole_backs) = (fronts.len() / b * b, backs.len() / b * b);
                 let expected: Vec<usize> = fronts[..whole_fronts].iter().chain(&backs[..whole_backs]).chain(&fronts[whole_fronts..]).chain(&backs[whole_backs..]).copied().collect();
                 let mut tally = Tally::default();
-                let got = permute_window(&mut arr, start, (z, h, fresh), b, &is_front, &mut tally);
-                let name = format!("b={b} z={z} h={h} fresh={fresh}");
+                let got = permute_window::<K, _, _, _>(&mut arr, start, (z, h, fresh), b, &is_front, &mut tally);
+                let name = format!("{}: b={b} z={z} h={h} fresh={fresh}", K::LABEL);
                 assert_eq!(&arr[start..start + before.len()], &expected[..], "{name}: the window");
                 assert_eq!((&arr[..start], &arr[start + before.len()..]), (&vec![7; start][..], &[8, 9][..]), "{name}: outside the window");
                 assert_eq!(got, (whole_fronts + whole_backs, fronts.len() - whole_fronts, backs.len() - whole_backs), "{name}: what is left over");
@@ -274,10 +343,15 @@ mod tests {
         }
     }
 
-    // A permutation by cycles puts every element where `place` says, writing
-    // each element that moves once and logging every write.
     #[test]
-    fn a_permutation_by_cycles_writes_each_moved_element_once() {
+    fn a_window_comes_out_as_whole_blocks_then_the_loose_elements_by_either_walk() {
+        a_window_comes_out_as_whole_blocks_then_the_loose_elements::<Popcount>();
+        a_window_comes_out_as_whole_blocks_then_the_loose_elements::<Tabulated>();
+    }
+
+    // A walk puts every element where `place` says, writing each element that
+    // moves once and logging every write.
+    fn a_walk_writes_each_moved_element_once<K: Walk>() {
         let mut rng = Rng(0xC1C1E);
         for len in [0usize, 1, 2, 3, 63, 64, 65, 500, MASK_WORDS * 64] {
             for round in 0..20 {
@@ -290,26 +364,37 @@ mod tests {
                 let before: Vec<usize> = (0..start + len + 2).collect();
                 let mut arr = before.clone();
                 let mut replay = Replay::of(&arr);
-                cycle_permute(&mut arr, start, &mut place.iter().map(|&p| p as u16).collect::<Vec<_>>(), &mut replay);
-                assert!((0..len).all(|p| arr[start + place[p]] == before[start + p]), "len={len} round={round}: not placed");
-                assert_eq!((&arr[..start], &arr[start + len..]), (&before[..start], &before[start + len..]), "len={len}: outside");
-                assert_eq!(replay.main(), &arr[..], "len={len} round={round}: a move went unlogged");
+                K::apply(&mut arr, start, len, |p| place[p], &mut replay);
+                let name = format!("{}: len={len} round={round}", K::LABEL);
+                assert!((0..len).all(|p| arr[start + place[p]] == before[start + p]), "{name}: not placed");
+                assert_eq!((&arr[..start], &arr[start + len..]), (&before[..start], &before[start + len..]), "{name}: outside");
+                assert_eq!(replay.main(), &arr[..], "{name}: a move went unlogged");
                 let mut tally = Tally::default();
                 let mut again = before.clone();
-                cycle_permute(&mut again, start, &mut place.iter().map(|&p| p as u16).collect::<Vec<_>>(), &mut tally);
-                assert_eq!(tally.moves, (0..len).filter(|&p| place[p] != p).count(), "len={len} round={round}: moves");
+                K::apply(&mut again, start, len, |p| place[p], &mut tally);
+                assert_eq!(tally.moves, (0..len).filter(|&p| place[p] != p).count(), "{name}: moves");
             }
         }
     }
 
     #[test]
-    fn the_masked_partition_matches_the_reference() {
-        for shapes in [block_len, tight] {
-            matches_the_reference::<MaskedPartition, ReversalRotation>(0, shapes);
-            matches_the_reference::<MaskedPartition, TrinityRotation>(0, shapes);
-            matches_the_reference::<MaskedPartition, AuxiliaryRotation>(0, shapes);
-            matches_the_reference::<MaskedPartition, BlockCycleRotation>(0, shapes);
+    fn a_walk_by_cycles_writes_each_moved_element_once() {
+        a_walk_writes_each_moved_element_once::<Popcount>();
+        a_walk_writes_each_moved_element_once::<Tabulated>();
+    }
+
+    #[test]
+    fn the_masked_partitions_match_the_reference() {
+        fn both<K: Walk>() {
+            for shapes in [block_len, tight] {
+                matches_the_reference::<Masked<K>, ReversalRotation>(0, shapes);
+                matches_the_reference::<Masked<K>, TrinityRotation>(0, shapes);
+                matches_the_reference::<Masked<K>, AuxiliaryRotation>(0, shapes);
+                matches_the_reference::<Masked<K>, BlockCycleRotation>(0, shapes);
+            }
         }
+        both::<Popcount>();
+        both::<Tabulated>();
     }
 
     // Windows of one fresh element and of a few, of a block and of two, three
@@ -317,18 +402,22 @@ mod tests {
     // middle of one, with blocks of the least length and of a fixed length.
     #[test]
     fn windows_of_every_awkward_size_match_the_reference() {
-        matches_the_reference::<Windowed<0, 1>, ReversalRotation>(0, Windowed::<0, 1>::block);
-        matches_the_reference::<Windowed<0, 7>, ReversalRotation>(0, Windowed::<0, 7>::block);
-        matches_the_reference::<Windowed<0, 100>, TrinityRotation>(0, Windowed::<0, 100>::block);
-        matches_the_reference::<Windowed<12, 1>, ReversalRotation>(0, Windowed::<12, 1>::block);
-        matches_the_reference::<Windowed<12, 11>, ReversalRotation>(0, Windowed::<12, 11>::block);
-        matches_the_reference::<Windowed<12, 12>, TrinityRotation>(0, Windowed::<12, 12>::block);
-        matches_the_reference::<Windowed<12, 13>, ReversalRotation>(0, Windowed::<12, 13>::block);
-        matches_the_reference::<Windowed<16, 16>, ReversalRotation>(0, Windowed::<16, 16>::block);
-        matches_the_reference::<Windowed<16, 32>, TrinityRotation>(0, Windowed::<16, 32>::block);
-        matches_the_reference::<Windowed<16, 48>, ReversalRotation>(0, Windowed::<16, 48>::block);
-        matches_the_reference::<Windowed<16, 96>, AuxiliaryRotation>(0, Windowed::<16, 96>::block);
-        matches_the_reference::<Windowed<16, 992>, ReversalRotation>(0, Windowed::<16, 992>::block);
+        fn both<K: Walk>() {
+            matches_the_reference::<Windowed<0, 1, K>, ReversalRotation>(0, Windowed::<0, 1, K>::block);
+            matches_the_reference::<Windowed<0, 7, K>, ReversalRotation>(0, Windowed::<0, 7, K>::block);
+            matches_the_reference::<Windowed<0, 100, K>, TrinityRotation>(0, Windowed::<0, 100, K>::block);
+            matches_the_reference::<Windowed<12, 1, K>, ReversalRotation>(0, Windowed::<12, 1, K>::block);
+            matches_the_reference::<Windowed<12, 11, K>, ReversalRotation>(0, Windowed::<12, 11, K>::block);
+            matches_the_reference::<Windowed<12, 12, K>, TrinityRotation>(0, Windowed::<12, 12, K>::block);
+            matches_the_reference::<Windowed<12, 13, K>, ReversalRotation>(0, Windowed::<12, 13, K>::block);
+            matches_the_reference::<Windowed<16, 16, K>, ReversalRotation>(0, Windowed::<16, 16, K>::block);
+            matches_the_reference::<Windowed<16, 32, K>, TrinityRotation>(0, Windowed::<16, 32, K>::block);
+            matches_the_reference::<Windowed<16, 48, K>, ReversalRotation>(0, Windowed::<16, 48, K>::block);
+            matches_the_reference::<Windowed<16, 96, K>, AuxiliaryRotation>(0, Windowed::<16, 96, K>::block);
+            matches_the_reference::<Windowed<16, 992, K>, ReversalRotation>(0, Windowed::<16, 992, K>::block);
+        }
+        both::<Popcount>();
+        both::<Tabulated>();
     }
 
     // The scratch of the rotation, and one that holds the whole region, which a
@@ -337,6 +426,7 @@ mod tests {
     fn a_longer_scratch_matches_the_reference() {
         for extra in [5, 40, 400] {
             matches_the_reference::<MaskedPartition, ReversalRotation>(extra, block_len);
+            matches_the_reference::<MaskedTablePartition, ReversalRotation>(extra, block_len);
             matches_the_reference::<Windowed<0, 7>, ReversalRotation>(extra, Windowed::<0, 7>::block);
         }
     }
@@ -345,8 +435,9 @@ mod tests {
     fn two_three_and_four_distinct_values_match_the_reference() {
         few_distinct_values_match_the_reference::<MaskedPartition, ReversalRotation>();
         few_distinct_values_match_the_reference::<MaskedPartition, AuxiliaryRotation>();
+        few_distinct_values_match_the_reference::<MaskedTablePartition, ReversalRotation>();
         few_distinct_values_match_the_reference::<Windowed<0, 7>, ReversalRotation>();
-        few_distinct_values_match_the_reference::<Windowed<16, 32>, ReversalRotation>();
+        few_distinct_values_match_the_reference::<Windowed<16, 32, Tabulated>, ReversalRotation>();
         few_distinct_values_match_the_reference::<EncodedPartition, ReversalRotation>();
     }
 
@@ -366,53 +457,84 @@ mod tests {
     fn no_move_goes_unlogged() {
         replays_without_a_gap::<MaskedPartition>(block_len);
         replays_without_a_gap::<MaskedPartition>(tight);
+        replays_without_a_gap::<MaskedTablePartition>(block_len);
+        replays_without_a_gap::<MaskedTablePartition>(tight);
         replays_without_a_gap::<Windowed<0, 7>>(tight);
+        replays_without_a_gap::<Windowed<0, 7, Tabulated>>(tight);
     }
 
     #[test]
     fn the_moves_per_element_are_flat_in_the_size_and_below_the_rotation_partitions() {
         moves_are_flat_and_below_the_rotation_partition::<MaskedPartition>(block_len, 1 << 13);
+        moves_are_flat_and_below_the_rotation_partition::<MaskedTablePartition>(block_len, 1 << 13);
     }
 
     #[test]
-    fn every_shape_moves_a_few_times_per_element() { every_shape_is_cheap::<MaskedPartition>(block_len); }
+    fn every_shape_moves_a_few_times_per_element() {
+        every_shape_is_cheap::<MaskedPartition>(block_len);
+        every_shape_is_cheap::<MaskedTablePartition>(block_len);
+    }
 
     #[test]
     fn a_pass_with_nothing_to_move_costs_comparisons_only() {
-        nothing_to_move_costs_comparisons_only::<MaskedPartition>(block_len);
-        nothing_to_move_costs_comparisons_only::<MaskedPartition>(tight);
+        for shapes in [block_len, tight] {
+            nothing_to_move_costs_comparisons_only::<MaskedPartition>(shapes);
+            nothing_to_move_costs_comparisons_only::<MaskedTablePartition>(shapes);
+        }
     }
 
     #[test]
-    fn the_ends_that_are_in_place_cost_no_moves() { ends_in_place_cost_no_moves::<MaskedPartition>(); }
+    fn the_ends_that_are_in_place_cost_no_moves() {
+        ends_in_place_cost_no_moves::<MaskedPartition>();
+        ends_in_place_cost_no_moves::<MaskedTablePartition>();
+    }
 
     #[test]
-    fn an_empty_region_and_a_lone_element_cost_nothing() { empty_and_lone_regions_cost_nothing::<MaskedPartition>(); }
+    fn an_empty_region_and_a_lone_element_cost_nothing() {
+        empty_and_lone_regions_cost_nothing::<MaskedPartition>();
+        empty_and_lone_regions_cost_nothing::<MaskedTablePartition>();
+    }
 
     // No scratch at all: the empty slice is enough for the reversal rotation,
     // whatever the size, since the partition keeps nothing but locals.
     #[test]
     fn an_empty_scratch_slice_is_enough() {
-        let mut rng = Rng(0xE3);
-        for n in [2usize, 50, 1000, 5000] {
-            for shape in 0..SHAPES {
-                let keys: Vec<u32> = types(shape, n, block_len(n), &mut rng).iter().map(|&f| key(f, &mut rng)).collect();
-                let arr0 = items(&keys);
-                let mut arr = arr0.clone();
-                let split = MaskedPartition::partition::<ReversalRotation, _, _>(&mut arr, 0, n, item(PIVOT), &mut [], &mut sort_logger::NoOpLogger);
-                assert_eq!((pairs(&arr), split), (reference(&arr0, |k| k < PIVOT), arr0.iter().filter(|x| x.key < PIVOT).count()), "n={n} shape={shape}");
+        fn both<K: Walk>() {
+            let mut rng = Rng(0xE3);
+            for n in [2usize, 50, 1000, 5000] {
+                for shape in 0..SHAPES {
+                    let keys: Vec<u32> = types(shape, n, block_len(n), &mut rng).iter().map(|&f| key(f, &mut rng)).collect();
+                    let arr0 = items(&keys);
+                    let mut arr = arr0.clone();
+                    let split = Masked::<K>::partition::<ReversalRotation, _, _>(&mut arr, 0, n, item(PIVOT), &mut [], &mut sort_logger::NoOpLogger);
+                    assert_eq!((pairs(&arr), split), (reference(&arr0, |k| k < PIVOT), arr0.iter().filter(|x| x.key < PIVOT).count()), "{}: n={n} shape={shape}", K::LABEL);
+                }
             }
+            assert_eq!(Masked::<K>::scratch_size(1 << 20), 0);
         }
-        assert_eq!(MaskedPartition::scratch_size(1 << 20), 0);
+        both::<Popcount>();
+        both::<Tabulated>();
     }
 
     // The masked phase one moves a front element once and a back element once,
     // where the buffered one moves a back element twice, so the whole partition
     // moves less.
     #[test]
-    fn the_masked_partition_moves_less_than_the_encoded_one() {
-        let (masked, _) = cost::<MaskedPartition, ReversalRotation>(1 << 16, 2, 1);
+    fn the_masked_partitions_move_less_than_the_encoded_one() {
         let (encoded, _) = cost::<EncodedPartition, ReversalRotation>(1 << 16, 2, 1);
-        assert!(masked < encoded, "{masked} moves per element against the encoded partition's {encoded}");
+        for (masked, _) in [cost::<MaskedPartition, ReversalRotation>(1 << 16, 2, 1), cost::<MaskedTablePartition, ReversalRotation>(1 << 16, 2, 1)] {
+            assert!(masked < encoded, "{masked} moves per element against the encoded partition's {encoded}");
+        }
+    }
+
+    // The locals of a window, in bytes: the masks take a few hundred bytes with
+    // the walk by popcount, which is less than the encoded partition's buffer of
+    // `usize` elements at 2^20, and the table of places takes more.
+    #[test]
+    fn the_walk_by_popcount_holds_fewer_bytes_than_the_encoded_buffer() {
+        let encoded = size_of::<usize>() * EncodedPartition::scratch_size(1 << 20);
+        assert_eq!((Popcount::LOCAL_BYTES, Tabulated::LOCAL_BYTES), (290, 2210), "at {MASK_WORDS} words");
+        assert!(Popcount::LOCAL_BYTES < encoded, "{} bytes against the encoded partition's {encoded}", Popcount::LOCAL_BYTES);
+        assert!(Tabulated::LOCAL_BYTES > encoded);
     }
 }

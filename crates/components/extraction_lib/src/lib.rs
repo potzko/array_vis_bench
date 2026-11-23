@@ -22,7 +22,7 @@ pub mod partition;
 pub mod test_util;
 
 pub use encoded::EncodedPartition;
-pub use masked::MaskedPartition;
+pub use masked::{Masked, MaskedPartition, MaskedTablePartition, Popcount, Tabulated, Walk};
 pub use partition::{RotationPartition, SlidingPartition};
 
 // Runs of RUN elements are insertion sorted before the first merge.
