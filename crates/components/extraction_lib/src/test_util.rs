@@ -4,13 +4,16 @@
 //! logged moves and comparisons, `Needy`, a partition that insists on its
 //! scratch, and the battery the block partitions share: the shapes of input
 //! (`types`), the comparison with the reference over every size
-//! (`matches_the_reference`) and the cost of one pass (`cost`).
+//! (`matches_the_reference`), the cost of one pass (`cost`) and the tests of
+//! that cost, which a partition's own test module calls with itself.
 
 use core::cmp::Ordering;
 
+use crate::blocks::ceil_log2;
 use crate::RotationPartition;
 use array_vis_bench_traits::role::{Rotation, StablePartition};
 use array_vis_bench_traits::Complexity;
+use rotation_reversal::ReversalRotation;
 use sort_logger::{NoOpLogger, SortLog, SortLogger};
 
 #[derive(Clone, Copy, Debug)]
@@ -258,4 +261,99 @@ pub fn cost<P: StablePartition, R: Rotation>(n: usize, shape: usize, b: usize) -
     let split = P::partition::<R, _, _>(&mut arr, 0, n, n, &mut scratch, &mut tally);
     assert!(arr[..split].iter().all(|&x| x < n) && arr[split..].iter().all(|&x| x >= n));
     (tally.moves as f64 / n as f64, tally.cmps as f64 / n as f64)
+}
+
+// The block length leaves the cell that tells a block's type alone: the code
+// cells are `ceil(log2(minority blocks))` of the cells, the minority is at most
+// half of the blocks, and a block is longer than that.
+pub fn code_cells_fit(block: fn(usize) -> usize) {
+    for n in (2..20_000).chain([1 << 20, (1 << 20) + 1, 1 << 30, usize::MAX >> 1]) {
+        let b = block(n);
+        let minority = n / b / 2;
+        assert!(b >= 2 && (minority < 2 || ceil_log2(minority) < b), "n={n}: {b} cells for {minority} minority blocks");
+    }
+}
+
+// Moves and comparisons that count are the logged ones, and a cell of the
+// scratch is written before it is read: the scratch is full of garbage the
+// replay's copy of it lacks, so a read of an unwritten cell would leave the two
+// arrays apart.
+pub fn replays_without_a_gap<P: StablePartition>(block: fn(usize) -> usize) {
+    const BACK: usize = 1 << 20;
+    let mut rng = Rng(0x10661);
+    for n in [3usize, 10, 33, 100, 257, 1000, 3001] {
+        for shape in 0..SHAPES {
+            let mut arr: Vec<usize> = types(shape, n, block(n), &mut rng).iter().zip(0..).map(|(&f, i)| if f { i } else { BACK + i }).collect();
+            let mut replay = Replay::of(&arr);
+            let mut scratch = vec![usize::MAX; ReversalRotation::scratch_size(n).max(P::scratch_size(n))];
+            replay.log_aux_arr_t(&scratch);
+            let split = P::partition::<ReversalRotation, _, _>(&mut arr, 0, n, BACK, &mut scratch, &mut replay);
+            assert!(arr[..split].iter().all(|&x| x < BACK) && arr[split..].iter().all(|&x| x >= BACK), "n={n} shape={shape}");
+            assert!(arr[..split].windows(2).all(|w| w[0] < w[1]) && arr[split..].windows(2).all(|w| w[0] < w[1]), "n={n} shape={shape}: order");
+            assert_eq!(replay.main(), &arr[..], "n={n} shape={shape}: a move went unlogged or an unwritten cell was read");
+        }
+    }
+}
+
+// The moves per element do not grow with the size, which a partition by
+// rotation's `log n` would, and stay under a few and below the rotation
+// partition's.
+pub fn moves_are_flat_and_below_the_rotation_partition<P: StablePartition>(block: fn(usize) -> usize) {
+    let (small, _) = cost::<P, ReversalRotation>(1 << 10, 2, block(1 << 10));
+    let (large, cmps) = cost::<P, ReversalRotation>(1 << 16, 2, block(1 << 16));
+    let (rotation, _) = cost::<RotationPartition, ReversalRotation>(1 << 16, 2, block(1 << 16));
+    assert!(large < 1.3 * small, "{small} moves per element at 2^10 and {large} at 2^16");
+    assert!(large < 5.0, "{large} moves per element at 2^16");
+    assert!(cmps < 1.3, "{cmps} comparisons per element at 2^16");
+    assert!(2.0 * large < rotation, "{large} moves per element against the rotation partition's {rotation}");
+}
+
+pub fn every_shape_is_cheap<P: StablePartition>(block: fn(usize) -> usize) {
+    for shape in 0..SHAPES {
+        let (moves, cmps) = cost::<P, ReversalRotation>(1 << 14, shape, block(1 << 14));
+        assert!(moves < 5.0 && cmps < 1.5, "shape {shape}: {moves} moves and {cmps} comparisons per element");
+    }
+}
+
+// A region already partitioned, or with nothing to move to the front, costs its
+// comparisons and no move: every element is read once and none written.
+pub fn nothing_to_move_costs_comparisons_only<P: StablePartition>(block: fn(usize) -> usize) {
+    for n in [100usize, 1 << 10, 1 << 14, 40_000] {
+        for (shape, name) in [(0, "all front"), (1, "all back"), (7, "sorted")] {
+            let mut rng = Rng(5);
+            let types = types(shape, n, block(n), &mut rng);
+            let mut arr: Vec<usize> = types.iter().enumerate().map(|(i, &f)| if f { i } else { n + i }).collect();
+            let want = arr.clone();
+            let mut scratch = vec![0usize; ReversalRotation::scratch_size(n).max(P::scratch_size(n))];
+            let mut tally = Tally::default();
+            let split = P::partition::<ReversalRotation, _, _>(&mut arr, 0, n, n, &mut scratch, &mut tally);
+            assert_eq!(arr, want, "{name}, n={n}: moved");
+            assert_eq!(split, types.iter().filter(|&&f| f).count(), "{name}, n={n}: the split");
+            assert_eq!((tally.moves, tally.cmps <= n + 2), (0, true), "{name}, n={n}: {} moves, {} comparisons", tally.moves, tally.cmps);
+        }
+    }
+}
+
+// The ends are trimmed, and what is between them partitioned: an eighth in
+// front, a quarter shuffled and the rest in back cost the quarter alone.
+pub fn ends_in_place_cost_no_moves<P: StablePartition>() {
+    let n = 1 << 14;
+    let mut rng = Rng(11);
+    let middle: Vec<usize> = (0..n / 4).map(|i| if rng.next(2) == 0 { i } else { n + i }).collect();
+    let mut arr: Vec<usize> = (0..n / 8).chain(middle).chain((0..5 * n / 8).map(|i| n + i)).collect();
+    let mut scratch = vec![0usize; ReversalRotation::scratch_size(n).max(P::scratch_size(n))];
+    let mut tally = Tally::default();
+    let split = P::partition::<ReversalRotation, _, _>(&mut arr, 0, n, n, &mut scratch, &mut tally);
+    assert!(arr[..split].iter().all(|&x| x < n) && arr[split..].iter().all(|&x| x >= n));
+    assert!(tally.moves < n, "{} moves for a middle of {}", tally.moves, n / 4);
+    assert!(tally.cmps < n + n / 16, "{} comparisons", tally.cmps);
+}
+
+pub fn empty_and_lone_regions_cost_nothing<P: StablePartition>() {
+    let mut arr = items(&[3, 1]);
+    let mut tally = Tally::default();
+    let empty = P::partition::<ReversalRotation, _, _>(&mut arr, 1, 1, item(2), &mut [], &mut tally);
+    assert_eq!((empty, tally.moves, tally.cmps), (1, 0, 0));
+    let lone = P::partition::<ReversalRotation, _, _>(&mut arr, 1, 2, item(2), &mut [], &mut tally);
+    assert_eq!((lone, tally.moves, tally.cmps), (2, 0, 1));
 }
