@@ -343,7 +343,7 @@ mod tests {
     // and caps.
     fn every_shape<M: RotationMerge>(label: &str) {
         let mut rng = Rng(0xA11CE);
-        for (la, lb) in [(1, 300), (300, 1), (32, 32), (33, 32), (32, 33), (64, 65), (100, 300), (512, 512), (513, 511), (1024, 1), (1, 1024), (1500, 700), (2000, 2100)] {
+        for (la, lb) in [(1, 300), (300, 1), (32, 32), (33, 32), (32, 33), (64, 65), (100, 300), (512, 512), (513, 511), (1024, 1), (1, 1024), (1500, 700), (2000, 2100), (50, 5000), (5000, 50)] {
             for kind in 0..SHAPES {
                 let (a, b) = shape(kind, &mut rng, la, lb);
                 assert_merges::<M>(&a, &b, &format!("{label}, shape {kind}"));
