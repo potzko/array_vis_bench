@@ -44,6 +44,9 @@ index_heap_sort_lib = { path = "../crates/families/index_heap_sort_lib" }
 # Building stone: level heap family, the stable heap sort through a buffer.
 level_heap_sort_lib = { path = "../crates/families/level_heap_sort_lib" }
 
+# Building stone: stable quick sort family, a quick sort over a stable partition.
+stable_quick_sort_lib = { path = "../crates/families/stable_quick_sort_lib" }
+
 # Building stone: tagged heap family.
 tagged_heap_sort_lib = { path = "../crates/families/tagged_heap_sort_lib" }
 

@@ -2450,6 +2450,36 @@ Sort	shell sort<sequence: sedgewick>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	shell sort<sequence: tokuda>	1.0Sqrt 1.0 1.0Sqrt 0.0 false
 Sort	slow sort	0.0Exponential 0.0Exponential 0.0Exponential 0.1 false
 Sort	slow sort potzko	0.0Exponential 0.0Exponential 0.0Exponential 0.1 false
+Sort	stable quick sort<partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	stable quick sort<partition: encoded, rotation: block cycle>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: encoded, rotation: bridge>	2.0 1.1 1.1 1.0 true
+Sort	stable quick sort<partition: encoded, rotation: contrev>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: encoded, rotation: drill>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: encoded, rotation: grail>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: encoded, rotation: gries-mills>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: encoded, rotation: helix>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: encoded, rotation: juggling>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: encoded, rotation: optimized piston<3 windows>>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: encoded, rotation: optimized piston<in place>>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: encoded, rotation: optimized piston>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: encoded, rotation: piston>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: encoded, rotation: reversal>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: encoded, rotation: trinity>	2.0 1.1 1.1 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: auxiliary>	2.1 1.2 1.2 1.0 true
+Sort	stable quick sort<partition: rotation, rotation: block cycle>	2.1 1.2 1.2 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: bridge>	2.1 1.2 1.2 1.0 true
+Sort	stable quick sort<partition: rotation, rotation: contrev>	2.1 1.2 1.2 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: drill>	2.1 1.2 1.2 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: grail>	2.1 1.2 1.2 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: gries-mills>	2.1 1.2 1.2 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: helix>	2.1 1.2 1.2 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: juggling>	2.1 1.2 1.2 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: optimized piston<3 windows>>	2.1 1.2 1.2 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: optimized piston<in place>>	2.1 1.2 1.2 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: optimized piston>	2.1 1.2 1.2 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: piston>	2.1 1.2 1.2 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: reversal>	2.1 1.2 1.2 0.1 true
+Sort	stable quick sort<partition: rotation, rotation: trinity>	2.1 1.2 1.2 0.1 true
 Sort	stooge sort<insertion: 32>	2.0Sqrt 2.0Sqrt 2.0Sqrt 0.1 false
 Sort	stooge sort<network: 16>	2.0Sqrt 2.0Sqrt 2.0Sqrt 0.1 false
 Sort	tagged heap sort	1.1 1.1 1.1 1.0 true

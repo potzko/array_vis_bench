@@ -898,6 +898,7 @@ dependencies = [
  "sort_logger",
  "spec_core",
  "spec_emit",
+ "stable_quick_sort_lib",
  "tagged_heap_sort_lib",
  "tree_sort_lib",
  "weak_heap_sort_lib",

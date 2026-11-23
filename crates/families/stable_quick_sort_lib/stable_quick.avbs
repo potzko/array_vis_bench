@@ -1,0 +1,10 @@
+// Stable quick sort family, query owned by stable_quick_sort_lib. Every stable
+// partition but the sliding one by every rotation. The sliding partition gathers
+// the matches in one block riding behind the scan, `O(n + m r)` moves for `m`
+// matches in `r` runs, which on a split of random keys is about `n^2 / 16`: a
+// minute at 2^18 elements, so it is measured by the record and not catalogued.
+
+StableQuickSorts: SortingAlgorithm = SortingAlgorithm<StableQuickSort<
+    part = _ - { SlidingPartition },
+    rot = _
+>>

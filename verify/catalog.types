@@ -2443,6 +2443,36 @@
 "smaller-side<piston>"	SmallerSideRotationMerge<PistonRotation>
 "smaller-side<reversal>"	SmallerSideRotationMerge<ReversalRotation>
 "smaller-side<trinity>"	SmallerSideRotationMerge<TrinityRotation>
+"stable quick sort<partition: encoded, rotation: auxiliary>"	StableQuickSort<EncodedPartition, AuxiliaryRotation>
+"stable quick sort<partition: encoded, rotation: block cycle>"	StableQuickSort<EncodedPartition, BlockCycleRotation>
+"stable quick sort<partition: encoded, rotation: bridge>"	StableQuickSort<EncodedPartition, BridgeRotation>
+"stable quick sort<partition: encoded, rotation: contrev>"	StableQuickSort<EncodedPartition, ContrevRotation>
+"stable quick sort<partition: encoded, rotation: drill>"	StableQuickSort<EncodedPartition, DrillRotation>
+"stable quick sort<partition: encoded, rotation: grail>"	StableQuickSort<EncodedPartition, GrailRotation>
+"stable quick sort<partition: encoded, rotation: gries-mills>"	StableQuickSort<EncodedPartition, GriesMillsRotation>
+"stable quick sort<partition: encoded, rotation: helix>"	StableQuickSort<EncodedPartition, HelixRotation>
+"stable quick sort<partition: encoded, rotation: juggling>"	StableQuickSort<EncodedPartition, JugglingRotation>
+"stable quick sort<partition: encoded, rotation: optimized piston<3 windows>>"	StableQuickSort<EncodedPartition, OptimizedPiston<3, 256>>
+"stable quick sort<partition: encoded, rotation: optimized piston<in place>>"	StableQuickSort<EncodedPartition, OptimizedPiston<2, 0>>
+"stable quick sort<partition: encoded, rotation: optimized piston>"	StableQuickSort<EncodedPartition, OptimizedPistonRotation>
+"stable quick sort<partition: encoded, rotation: piston>"	StableQuickSort<EncodedPartition, PistonRotation>
+"stable quick sort<partition: encoded, rotation: reversal>"	StableQuickSort<EncodedPartition, ReversalRotation>
+"stable quick sort<partition: encoded, rotation: trinity>"	StableQuickSort<EncodedPartition, TrinityRotation>
+"stable quick sort<partition: rotation, rotation: auxiliary>"	StableQuickSort<RotationPartition, AuxiliaryRotation>
+"stable quick sort<partition: rotation, rotation: block cycle>"	StableQuickSort<RotationPartition, BlockCycleRotation>
+"stable quick sort<partition: rotation, rotation: bridge>"	StableQuickSort<RotationPartition, BridgeRotation>
+"stable quick sort<partition: rotation, rotation: contrev>"	StableQuickSort<RotationPartition, ContrevRotation>
+"stable quick sort<partition: rotation, rotation: drill>"	StableQuickSort<RotationPartition, DrillRotation>
+"stable quick sort<partition: rotation, rotation: grail>"	StableQuickSort<RotationPartition, GrailRotation>
+"stable quick sort<partition: rotation, rotation: gries-mills>"	StableQuickSort<RotationPartition, GriesMillsRotation>
+"stable quick sort<partition: rotation, rotation: helix>"	StableQuickSort<RotationPartition, HelixRotation>
+"stable quick sort<partition: rotation, rotation: juggling>"	StableQuickSort<RotationPartition, JugglingRotation>
+"stable quick sort<partition: rotation, rotation: optimized piston<3 windows>>"	StableQuickSort<RotationPartition, OptimizedPiston<3, 256>>
+"stable quick sort<partition: rotation, rotation: optimized piston<in place>>"	StableQuickSort<RotationPartition, OptimizedPiston<2, 0>>
+"stable quick sort<partition: rotation, rotation: optimized piston>"	StableQuickSort<RotationPartition, OptimizedPistonRotation>
+"stable quick sort<partition: rotation, rotation: piston>"	StableQuickSort<RotationPartition, PistonRotation>
+"stable quick sort<partition: rotation, rotation: reversal>"	StableQuickSort<RotationPartition, ReversalRotation>
+"stable quick sort<partition: rotation, rotation: trinity>"	StableQuickSort<RotationPartition, TrinityRotation>
 "stooge sort<insertion: 32>"	StoogeSort<InsertionSmallSort<LinearInsertion, 32>>
 "stooge sort<network: 16>"	StoogeSort<Network16SmallSort>
 "tagged heap sort"	TaggedHeapSort
