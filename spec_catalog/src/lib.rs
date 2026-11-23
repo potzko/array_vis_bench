@@ -130,7 +130,7 @@ mod tests {
         assert_eq!(COUNT_TAGGED_HEAP, 1, "tagged heap family");
         assert_eq!(COUNT_LEVEL_HEAP, 210, "level heap family (14 buffers with cells x 15 rotations)");
         assert_eq!(COUNT_STABLE_QUICK, 30, "stable quick family (2 stable partitions, not the sliding one, x 15 rotations)");
-        assert_eq!(COUNT_BLOCK_MERGE, 477, "block merge family (15 buffers x 2 key shapes x 15 rotations by the scan, plus 3 shapes x 3 rotations x 3 other extractions)");
+        assert_eq!(COUNT_BLOCK_MERGE, 486, "block merge family (15 buffers x 2 key shapes x 15 rotations by the scan, plus 3 shapes x 3 rotations x 4 other extractions)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
         assert_eq!(COUNT_ROD, 114, "rod family (6 branching x [3 merges + the tree merge over 8 trees x 2 key stores])");
@@ -226,7 +226,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 2497, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 2506, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -751,7 +751,7 @@ mod tests {
         fn emits_fifteen_buffers_by_two_key_shapes_by_every_rotation_that_run() {
             let es = entries();
             assert_eq!(es.len(), COUNT_BLOCK_MERGE, "count drifted");
-            assert_eq!(COUNT_BLOCK_MERGE, 450 + 27);
+            assert_eq!(COUNT_BLOCK_MERGE, 450 + 36);
             assert_eq!(es.iter().filter(|e| e.name.ends_with(", extraction: scan>")).count(), 450);
             let cfg = RunConfig { size: 64, seed: 1 };
             for e in &es {
@@ -783,16 +783,16 @@ mod tests {
             find("block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: scan>");
             find("block sort<buffer: external<512>, keys: in array, rotation: reversal, extraction: scan>");
             let wiki = entries().iter().filter(|e| e.name.starts_with("block sort<buffer: in array<sqrt>, keys: in array,")).count();
-            assert_eq!(wiki, 15 + 3 * 3, "WikiSort under every rotation, and under the other extractions by three");
+            assert_eq!(wiki, 15 + 3 * 4, "WikiSort under every rotation, and under the other four extractions by three rotations");
         }
 
-        // The study: three shapes by three rotations by the three extractions
+        // The study: three shapes by three rotations by the four extractions
         // that are not the scan.
         #[test]
         fn the_extraction_study_covers_three_shapes_by_three_rotations() {
             let study: Vec<&str> = entries().iter().filter(|e| !e.name.ends_with(", extraction: scan>")).map(|e| e.name).collect();
-            assert_eq!(study.len(), 27);
-            for extraction in ["prefix sort", "partition<rotation>", "partition<sliding>"] {
+            assert_eq!(study.len(), 36);
+            for extraction in ["prefix sort", "partition<rotation>", "partition<sliding>", "partition<encoded>"] {
                 for rotation in ["reversal", "trinity", "auxiliary"] {
                     for buffer in ["in array<sqrt>", "external<sqrt>", "none"] {
                         let name = format!("block sort<buffer: {buffer}, keys: in array, rotation: {rotation}, extraction: {extraction}>");

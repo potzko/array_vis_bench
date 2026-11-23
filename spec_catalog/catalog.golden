@@ -450,6 +450,7 @@ Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: optimized pis
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: piston, extraction: scan>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: reversal, extraction: scan>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: trinity, extraction: scan>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<encoded>>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<rotation>>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<sliding>>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: prefix sort>	1.1 1.0 1.1 1.0 true
@@ -466,10 +467,12 @@ Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: optimized pist
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: optimized piston<in place>, extraction: scan>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: piston, extraction: scan>	1.1 1.0 1.1 0.0Sqrt true
+Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: partition<encoded>>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: partition<rotation>>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: partition<sliding>>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: prefix sort>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: scan>	1.1 1.0 1.1 0.0Sqrt true
+Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: partition<encoded>>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: partition<rotation>>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: partition<sliding>>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: prefix sort>	1.1 1.0 1.1 0.0Sqrt true
@@ -669,6 +672,7 @@ Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: optimized pis
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: piston, extraction: scan>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: reversal, extraction: scan>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: trinity, extraction: scan>	2.0 1.1 2.0 0.0 true
+Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<encoded>>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<rotation>>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<sliding>>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: prefix sort>	1.1 1.0 1.1 1.0 true
@@ -685,10 +689,12 @@ Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: optimized pist
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: optimized piston<in place>, extraction: scan>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: piston, extraction: scan>	1.1 1.0 1.1 0.0 true
+Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: partition<encoded>>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: partition<rotation>>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: partition<sliding>>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: prefix sort>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: scan>	1.1 1.0 1.1 0.0 true
+Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: partition<encoded>>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: partition<rotation>>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: partition<sliding>>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: prefix sort>	1.1 1.0 1.1 0.0 true
@@ -708,6 +714,7 @@ Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: optimized piston<i
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: piston, extraction: scan>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: reversal, extraction: scan>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: trinity, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: partition<encoded>>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: partition<rotation>>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: partition<sliding>>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: prefix sort>	1.2 1.0 1.2 1.0 true
@@ -724,10 +731,12 @@ Sort	block sort<buffer: none, keys: in array, rotation: optimized piston, extrac
 Sort	block sort<buffer: none, keys: in array, rotation: optimized piston<3 windows>, extraction: scan>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: optimized piston<in place>, extraction: scan>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: piston, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: none, keys: in array, rotation: reversal, extraction: partition<encoded>>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: reversal, extraction: partition<rotation>>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: reversal, extraction: partition<sliding>>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: reversal, extraction: prefix sort>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: reversal, extraction: scan>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: none, keys: in array, rotation: trinity, extraction: partition<encoded>>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: trinity, extraction: partition<rotation>>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: trinity, extraction: partition<sliding>>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: trinity, extraction: prefix sort>	1.2 1.0 1.2 0.0 true
