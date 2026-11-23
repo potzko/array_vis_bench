@@ -48,4 +48,6 @@ buffers (in the array or external by seven sizes, or none) by two key shapes by
 fifteen rotations, each carving by the scan and merging by the smaller side; and `BlockMergeExtractions`, 36
 entries: the other four extractions over the WikiSort, dynamic GrailSort and
 bufferless shapes with in array keys, by the reversal, trinity and auxiliary
-rotations.
+rotations; and `BlockMergeMasks`, 90 entries: the mask merge as the local merge over every
+buffer and both key shapes, carving by the scan, by the reversal, block cycle
+and auxiliary rotations.

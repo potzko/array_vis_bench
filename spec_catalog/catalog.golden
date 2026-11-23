@@ -285,7 +285,9 @@ Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-r
 Sort	beap sort quick build<dir: min reverse, build: stack partition<part: left-right pointer, pivot: middle>>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
 Sort	beap sort<dir: max forward, build: iterative>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
 Sort	beap sort<dir: min reverse, build: iterative>	1.0Sqrt 1.0Sqrt 1.0Sqrt 0.1 false
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<10 log>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<10 log>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<10 log>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<10 log>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
@@ -298,9 +300,12 @@ Sort	block sort<buffer: external<10 log>, keys: in array, rotation: optimized pi
 Sort	block sort<buffer: external<10 log>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<10 log>, keys: in array, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<10 log>, keys: in array, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<10 log>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<10 log>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<10 log>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<10 log>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<10 log>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<10 log>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
@@ -313,9 +318,12 @@ Sort	block sort<buffer: external<10 log>, keys: none, rotation: optimized piston
 Sort	block sort<buffer: external<10 log>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<10 log>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<10 log>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<10 log>, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<10 log>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<10 log>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
@@ -328,9 +336,12 @@ Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: optimized pi
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: piston, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
+Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
+Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
@@ -343,9 +354,12 @@ Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: optimized piston
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
+Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<2 sqrt>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
+Sort	block sort<buffer: external<512>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<512>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
@@ -358,9 +372,12 @@ Sort	block sort<buffer: external<512>, keys: in array, rotation: optimized pisto
 Sort	block sort<buffer: external<512>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: external<512>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: external<512>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<512>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
@@ -373,9 +390,12 @@ Sort	block sort<buffer: external<512>, keys: none, rotation: optimized piston, e
 Sort	block sort<buffer: external<512>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: external<512>, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: external<512>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: external<half>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: external<half>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
@@ -388,9 +408,12 @@ Sort	block sort<buffer: external<half>, keys: in array, rotation: optimized pist
 Sort	block sort<buffer: external<half>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: piston, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: external<half>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<half>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: external<half>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<half>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
@@ -403,9 +426,12 @@ Sort	block sort<buffer: external<half>, keys: none, rotation: optimized piston, 
 Sort	block sort<buffer: external<half>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<half>, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<half>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<log>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<log>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
@@ -418,9 +444,12 @@ Sort	block sort<buffer: external<log>, keys: in array, rotation: optimized pisto
 Sort	block sort<buffer: external<log>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<log>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<log>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<log>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
@@ -433,9 +462,12 @@ Sort	block sort<buffer: external<log>, keys: none, rotation: optimized piston, e
 Sort	block sort<buffer: external<log>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<log>, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
 Sort	block sort<buffer: external<log>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.1 true
+Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
@@ -448,9 +480,12 @@ Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: optimized
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: piston, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
@@ -463,13 +498,16 @@ Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: optimized pis
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sixteenth>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<encoded>, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<rotation>, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<sliding>, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: prefix sort, merge: smaller-side>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
@@ -486,13 +524,16 @@ Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extr
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: partition<rotation>, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: partition<sliding>, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: prefix sort, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
+Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: partition<encoded>, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: partition<rotation>, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: partition<sliding>, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: prefix sort, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0Sqrt true
+Sort	block sort<buffer: external<sqrt>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: external<sqrt>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
@@ -505,9 +546,12 @@ Sort	block sort<buffer: external<sqrt>, keys: none, rotation: optimized piston, 
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
+Sort	block sort<buffer: external<sqrt>, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
 Sort	block sort<buffer: external<sqrt>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0Sqrt true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
@@ -520,9 +564,12 @@ Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: optimized pi
 Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<10 log>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<10 log>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<10 log>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<10 log>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<10 log>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
@@ -535,9 +582,12 @@ Sort	block sort<buffer: in array<10 log>, keys: none, rotation: optimized piston
 Sort	block sort<buffer: in array<10 log>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<10 log>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<10 log>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<10 log>, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<10 log>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<10 log>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0 true
@@ -550,9 +600,12 @@ Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: optimized pi
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: piston, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0 true
+Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0 true
+Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
@@ -565,9 +618,12 @@ Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: optimized piston
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<2 sqrt>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<512>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: in array<512>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
@@ -580,9 +636,12 @@ Sort	block sort<buffer: in array<512>, keys: in array, rotation: optimized pisto
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<512>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<512>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: in array<512>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
@@ -595,9 +654,12 @@ Sort	block sort<buffer: in array<512>, keys: none, rotation: optimized piston, e
 Sort	block sort<buffer: in array<512>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<512>, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<512>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<half>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	2.0 1.1 2.0 1.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 1.0 true
+Sort	block sort<buffer: in array<half>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 1.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
@@ -610,9 +672,12 @@ Sort	block sort<buffer: in array<half>, keys: in array, rotation: optimized pist
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: piston, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
+Sort	block sort<buffer: in array<half>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
+Sort	block sort<buffer: in array<half>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	2.0 1.1 2.0 1.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 1.0 true
+Sort	block sort<buffer: in array<half>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 1.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
@@ -625,9 +690,12 @@ Sort	block sort<buffer: in array<half>, keys: none, rotation: optimized piston, 
 Sort	block sort<buffer: in array<half>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
+Sort	block sort<buffer: in array<half>, keys: none, rotation: reversal, extraction: scan, merge: mask>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<half>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
+Sort	block sort<buffer: in array<log>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: in array<log>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
@@ -640,9 +708,12 @@ Sort	block sort<buffer: in array<log>, keys: in array, rotation: optimized pisto
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<log>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<log>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: in array<log>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
@@ -655,9 +726,12 @@ Sort	block sort<buffer: in array<log>, keys: none, rotation: optimized piston, e
 Sort	block sort<buffer: in array<log>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<log>, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<log>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	2.0 1.1 2.0 1.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 1.0 true
+Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 1.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
@@ -670,9 +744,12 @@ Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: optimized
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: piston, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
+Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
+Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	2.0 1.1 2.0 1.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 1.0 true
+Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 1.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
@@ -685,13 +762,16 @@ Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: optimized pis
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
+Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: reversal, extraction: scan, merge: mask>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sixteenth>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	2.0 1.1 2.0 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<encoded>, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<rotation>, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: partition<sliding>, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: prefix sort, merge: smaller-side>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
+Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 1.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0 true
@@ -708,13 +788,16 @@ Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extr
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: partition<rotation>, merge: smaller-side>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: partition<sliding>, merge: smaller-side>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: prefix sort, merge: smaller-side>	1.1 1.0 1.1 0.0 true
+Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: partition<encoded>, merge: smaller-side>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: partition<rotation>, merge: smaller-side>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: partition<sliding>, merge: smaller-side>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: prefix sort, merge: smaller-side>	1.1 1.0 1.1 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.1 1.0 1.1 0.0 true
+Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
@@ -727,13 +810,16 @@ Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: optimized piston, 
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: in array<sqrt>, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: partition<encoded>, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: partition<rotation>, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: partition<sliding>, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: prefix sort, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: none, keys: in array, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
@@ -750,13 +836,16 @@ Sort	block sort<buffer: none, keys: in array, rotation: reversal, extraction: pa
 Sort	block sort<buffer: none, keys: in array, rotation: reversal, extraction: partition<rotation>, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: reversal, extraction: partition<sliding>, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: reversal, extraction: prefix sort, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: none, keys: in array, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: trinity, extraction: partition<encoded>, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: trinity, extraction: partition<rotation>, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: trinity, extraction: partition<sliding>, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: trinity, extraction: prefix sort, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: in array, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: none, keys: none, rotation: auxiliary, extraction: scan, merge: mask>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: none, keys: none, rotation: auxiliary, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
+Sort	block sort<buffer: none, keys: none, rotation: block cycle, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: none, rotation: block cycle, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: none, rotation: bridge, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 1.0 true
 Sort	block sort<buffer: none, keys: none, rotation: contrev, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
@@ -769,6 +858,7 @@ Sort	block sort<buffer: none, keys: none, rotation: optimized piston, extraction
 Sort	block sort<buffer: none, keys: none, rotation: optimized piston<3 windows>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: none, rotation: optimized piston<in place>, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: none, rotation: piston, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
+Sort	block sort<buffer: none, keys: none, rotation: reversal, extraction: scan, merge: mask>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: none, rotation: reversal, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	block sort<buffer: none, keys: none, rotation: trinity, extraction: scan, merge: smaller-side>	1.2 1.0 1.2 0.0 true
 Sort	bottom-up merge sort<small: insertion: 32, pp=false, ee=false>	1.1 1.1 1.1 1.0 true

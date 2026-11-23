@@ -130,7 +130,7 @@ mod tests {
         assert_eq!(COUNT_TAGGED_HEAP, 1, "tagged heap family");
         assert_eq!(COUNT_LEVEL_HEAP, 294, "level heap family (14 buffers with cells x 15 rotations by the rotation partition, plus x 2 rotations by the encoded one and by the masked one over each of its 2 walks)");
         assert_eq!(COUNT_STABLE_QUICK, 60, "stable quick family (rotation, encoded and the masked one by each of its 2 walks, not the sliding one, 4 stable partitions x 15 rotations)");
-        assert_eq!(COUNT_BLOCK_MERGE, 486, "block merge family (15 buffers x 2 key shapes x 15 rotations by the scan, plus 3 shapes x 3 rotations x 4 other extractions, all merging by the smaller side)");
+        assert_eq!(COUNT_BLOCK_MERGE, 576, "block merge family (15 buffers x 2 key shapes x 15 rotations by the scan, plus 3 shapes x 3 rotations x 4 other extractions, all merging by the smaller side, plus 15 buffers x 2 key shapes x 3 rotations by the mask merge)");
         assert_eq!(COUNT_BUBBLE, 6, "bubble family (3 base + 3 odd-even)");
         assert_eq!(COUNT_COMB, 6, "comb family (6 shrink ratios)");
         assert_eq!(COUNT_ROD, 114, "rod family (6 branching x [3 merges + the tree merge over 8 trees x 2 key stores])");
@@ -226,7 +226,7 @@ mod tests {
         let all = navigation::variants();
         assert_eq!(all.len(), ALGORITHMS.len());
         assert_eq!(all.len(), COUNT_TOTAL);
-        assert_eq!(all.len(), 2755, "the catalog size pinned by catalog.golden");
+        assert_eq!(all.len(), 2845, "the catalog size pinned by catalog.golden");
         let names: std::collections::HashSet<&str> = all.iter().map(|v| v.name.as_str()).collect();
         assert_eq!(names.len(), all.len(), "a name is listed twice");
         let bare: Vec<&str> =
@@ -735,6 +735,7 @@ mod tests {
         use super::*;
         use block_merge_sort_lib::BlockMergeSort;
         use extraction_lib::ScanExtraction;
+        use merge_sort_lib::MaskMerge;
         use rotation_auxiliary::AuxiliaryRotation;
         use rotation_reversal::ReversalRotation;
         use scratchspace_lib::{ExternalBuffer, Fixed, Half, InArrayBuffer, InArrayKeys, NoBuffer, NoKeys, Sqrt};
@@ -751,7 +752,7 @@ mod tests {
         fn emits_fifteen_buffers_by_two_key_shapes_by_every_rotation_that_run() {
             let es = entries();
             assert_eq!(es.len(), COUNT_BLOCK_MERGE, "count drifted");
-            assert_eq!(COUNT_BLOCK_MERGE, 450 + 36);
+            assert_eq!(COUNT_BLOCK_MERGE, 450 + 36 + 90);
             assert_eq!(es.iter().filter(|e| e.name.ends_with(", extraction: scan, merge: smaller-side>")).count(), 450);
             let cfg = RunConfig { size: 64, seed: 1 };
             for e in &es {
@@ -783,19 +784,45 @@ mod tests {
             find("block sort<buffer: in array<sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>");
             find("block sort<buffer: external<512>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>");
             let wiki = entries().iter().filter(|e| e.name.starts_with("block sort<buffer: in array<sqrt>, keys: in array,")).count();
-            assert_eq!(wiki, 15 + 3 * 4, "WikiSort under every rotation, and under the other four extractions by three rotations");
+            assert_eq!(wiki, 15 + 3 * 4 + 3, "WikiSort under every rotation, under the other four extractions by three rotations, and under the mask merge by three");
         }
 
         // The study: three shapes by three rotations by the four extractions
         // that are not the scan.
         #[test]
         fn the_extraction_study_covers_three_shapes_by_three_rotations() {
-            let study: Vec<&str> = entries().iter().filter(|e| !e.name.ends_with(", extraction: scan, merge: smaller-side>")).map(|e| e.name).collect();
+            let study: Vec<&str> = entries()
+                .iter()
+                .filter(|e| e.name.ends_with(", merge: smaller-side>") && !e.name.contains(", extraction: scan,"))
+                .map(|e| e.name)
+                .collect();
             assert_eq!(study.len(), 36);
             for extraction in ["prefix sort", "partition<rotation>", "partition<sliding>", "partition<encoded>"] {
                 for rotation in ["reversal", "trinity", "auxiliary"] {
                     for buffer in ["in array<sqrt>", "external<sqrt>", "none"] {
                         let name = format!("block sort<buffer: {buffer}, keys: in array, rotation: {rotation}, extraction: {extraction}, merge: smaller-side>");
+                        assert!(study.contains(&name.as_str()), "no entry {name}");
+                    }
+                }
+            }
+        }
+
+        // The merge study: every buffer and both key shapes by three rotations, carving
+        // by the scan, with the mask merge as the local merge.
+        #[test]
+        fn the_merge_study_covers_every_buffer_and_both_key_shapes_by_three_rotations() {
+            let study: Vec<&str> = entries().iter().filter(|e| e.name.ends_with(", merge: mask>")).map(|e| e.name).collect();
+            assert_eq!(study.len(), 90);
+            let sizes = ["10 log", "2 sqrt", "512", "half", "log", "sixteenth", "sqrt"];
+            let buffers: Vec<String> = ["external", "in array"]
+                .iter()
+                .flat_map(|at| sizes.iter().map(move |size| format!("{at}<{size}>")))
+                .chain(["none".to_string()])
+                .collect();
+            for buffer in &buffers {
+                for keys in ["in array", "none"] {
+                    for rotation in ["reversal", "block cycle", "auxiliary"] {
+                        let name = format!("block sort<buffer: {buffer}, keys: {keys}, rotation: {rotation}, extraction: scan, merge: mask>");
                         assert!(study.contains(&name.as_str()), "no entry {name}");
                     }
                 }
@@ -829,6 +856,13 @@ mod tests {
             let dynamic = find("block sort<buffer: external<sqrt>, keys: in array, rotation: reversal, extraction: scan, merge: smaller-side>");
             assert_eq!(dynamic.space, <BlockMergeSort<ExternalBuffer<Sqrt>, InArrayKeys, ReversalRotation, ScanExtraction> as HasSpace>::SPACE);
             assert_eq!(dynamic.space, Complexity::SQRT_N);
+            // the mask merge leaves the bounds of the shape as they were
+            let masked = find("block sort<buffer: none, keys: none, rotation: reversal, extraction: scan, merge: mask>");
+            assert_eq!(masked.worst, <BlockMergeSort<NoBuffer, NoKeys, ReversalRotation, ScanExtraction, MaskMerge> as HasTimeBounds>::WORST);
+            assert_eq!(masked.worst, bare.worst);
+            assert!(masked.stable);
+            let masked_copying = find("block sort<buffer: in array<sqrt>, keys: in array, rotation: auxiliary, extraction: scan, merge: mask>");
+            assert_eq!(masked_copying.space, copying.space);
         }
 
         #[test]
