@@ -1618,6 +1618,8 @@ Sort	insertion sort<strategy: binary>	2.0 1.0 2.0 0.0 true
 Sort	insertion sort<strategy: linear>	2.0 1.0 2.0 0.0 true
 Sort	level heap sort<buffer: external<10 log>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<10 log>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<10 log>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<10 log>, partition: masked, rotation: reversal>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1635,6 +1637,8 @@ Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: re
 Sort	level heap sort<buffer: external<10 log>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: external<2 sqrt>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<2 sqrt>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<2 sqrt>, partition: masked, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1652,6 +1656,8 @@ Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: re
 Sort	level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: external<512>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<512>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: external<512>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<512>, partition: masked, rotation: reversal>	2.0 1.1 1.1 0.0 true
 Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0 true
 Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1669,6 +1675,8 @@ Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: rever
 Sort	level heap sort<buffer: external<512>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0 true
 Sort	level heap sort<buffer: external<half>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<half>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<half>, partition: masked, rotation: reversal>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1686,6 +1694,8 @@ Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: reve
 Sort	level heap sort<buffer: external<half>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<log>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<log>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: external<log>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<log>, partition: masked, rotation: reversal>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1703,6 +1713,8 @@ Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: rever
 Sort	level heap sort<buffer: external<log>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: external<sixteenth>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<sixteenth>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sixteenth>, partition: masked, rotation: reversal>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1720,6 +1732,8 @@ Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation:
 Sort	level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<sqrt>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<sqrt>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: external<sqrt>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: external<sqrt>, partition: masked, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1737,6 +1751,8 @@ Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: reve
 Sort	level heap sort<buffer: external<sqrt>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: in array<10 log>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<10 log>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<10 log>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<10 log>, partition: masked, rotation: reversal>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1754,6 +1770,8 @@ Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: re
 Sort	level heap sort<buffer: in array<10 log>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: in array<2 sqrt>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<2 sqrt>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<2 sqrt>, partition: masked, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1771,6 +1789,8 @@ Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: re
 Sort	level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: in array<512>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<512>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 0.0 true
+Sort	level heap sort<buffer: in array<512>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<512>, partition: masked, rotation: reversal>	2.0 1.1 1.1 0.0 true
 Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0 true
 Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1788,6 +1808,8 @@ Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: rever
 Sort	level heap sort<buffer: in array<512>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.0 true
 Sort	level heap sort<buffer: in array<half>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<half>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<half>, partition: masked, rotation: reversal>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1805,6 +1827,8 @@ Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: reve
 Sort	level heap sort<buffer: in array<half>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<log>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<log>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 0.1 true
+Sort	level heap sort<buffer: in array<log>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<log>, partition: masked, rotation: reversal>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1822,6 +1846,8 @@ Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: rever
 Sort	level heap sort<buffer: in array<log>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 0.1 true
 Sort	level heap sort<buffer: in array<sixteenth>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<sixteenth>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sixteenth>, partition: masked, rotation: reversal>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true
@@ -1839,6 +1865,8 @@ Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation:
 Sort	level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: trinity>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<sqrt>, partition: encoded, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<sqrt>, partition: encoded, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
+Sort	level heap sort<buffer: in array<sqrt>, partition: masked, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
+Sort	level heap sort<buffer: in array<sqrt>, partition: masked, rotation: reversal>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: auxiliary>	2.0 1.1 1.1 1.0 true
 Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: block cycle>	2.0 1.1 1.1 0.0Sqrt true
 Sort	level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: bridge>	2.0 1.1 1.1 1.0 true

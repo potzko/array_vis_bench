@@ -277,7 +277,7 @@ mod tests {
     use super::*;
     use crate::test_util::{items, pairs, Item, Replay, Rng, Tally};
     use array_vis_bench_traits::DirectSort;
-    use extraction_lib::{EncodedPartition, RotationPartition};
+    use extraction_lib::{EncodedPartition, MaskedPartition, RotationPartition};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
@@ -492,6 +492,15 @@ mod tests {
         sorts_stably::<LevelHeapSort<ExternalBuffer<Half>, EncodedPartition, ReversalRotation>>("external half, encoded");
     }
 
+    // The masked partition asks for no scratch of its own, so the buffers are
+    // the only memory the level build holds.
+    #[test]
+    fn the_masked_partition_sorts_stably() {
+        sorts_stably::<LevelHeapSort<InArrayBuffer<Log>, MaskedPartition, ReversalRotation>>("in array log, masked");
+        sorts_stably::<LevelHeapSort<ExternalBuffer<Sqrt>, MaskedPartition, AuxiliaryRotation>>("external sqrt, masked, auxiliary");
+        sorts_stably::<LevelHeapSort<ExternalBuffer<Half>, MaskedPartition, ReversalRotation>>("external half, masked");
+    }
+
     fn moves_are_all_logged<S: DirectSort>(name: &str) {
         let mut rng = Rng(0x10661);
         for n in [32usize, 33, 100, 257, 600, 1500] {
@@ -512,6 +521,8 @@ mod tests {
         moves_are_all_logged::<LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, TrinityRotation>>("external sqrt, trinity");
         moves_are_all_logged::<LevelHeapSort<InArrayBuffer<Log>, EncodedPartition, ReversalRotation>>("in array log, encoded");
         moves_are_all_logged::<LevelHeapSort<ExternalBuffer<Sqrt>, EncodedPartition, AuxiliaryRotation>>("external sqrt, encoded, auxiliary");
+        moves_are_all_logged::<LevelHeapSort<InArrayBuffer<Log>, MaskedPartition, ReversalRotation>>("in array log, masked");
+        moves_are_all_logged::<LevelHeapSort<ExternalBuffer<Sqrt>, MaskedPartition, AuxiliaryRotation>>("external sqrt, masked, auxiliary");
     }
 
     #[test]
