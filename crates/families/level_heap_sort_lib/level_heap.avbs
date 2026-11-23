@@ -1,10 +1,18 @@
 // Level heap family, query owned by level_heap_sort_lib. Every buffer with
 // cells, in the array or outside it by seven sizes, by the rotation partition
 // and every rotation, 210 entries: the curve of space against time, and the
-// rotations that keep the space where it is.
+// rotations that keep the space where it is. Then the encoded partition study:
+// the same buffers by the reversal and auxiliary rotations, 28 entries, since
+// the small buffers pay for the level build's partitions most.
 
 LevelHeapSorts: SortingAlgorithm = SortingAlgorithm<LevelHeapSort<
     buffer = _ where ( InArrayBuffer<_> | ExternalBuffer<_> ),
     part = _ where ( RotationPartition ),
     rot = _
+>>
+
+LevelHeapEncoded: SortingAlgorithm = SortingAlgorithm<LevelHeapSort<
+    buffer = _ where ( InArrayBuffer<_> | ExternalBuffer<_> ),
+    part = _ where ( EncodedPartition ),
+    rot = _ where ( ReversalRotation | AuxiliaryRotation )
 >>

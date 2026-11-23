@@ -31,4 +31,6 @@ so an unstable heap sort puts it back in order at the end, and it slides
 home like a block sort's.
 
 Its catalog component is declared in `level_heap.spec` and built by
-`level_heap.avbs`.
+`level_heap.avbs`: `LevelHeapSorts`, 210 entries over every buffer and rotation by the rotation
+partition, and `LevelHeapEncoded`, 28 entries by the encoded partition over the reversal and
+auxiliary rotations.

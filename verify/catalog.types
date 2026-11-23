@@ -1425,6 +1425,8 @@
 "left-right<median of medians>"	Pivoted<LeftRightPartition, MedianOfMedians>
 "left-right<middle>"	Pivoted<LeftRightPartition, MiddleElement>
 "left-right<ninther>"	Pivoted<LeftRightPartition, Ninther>
+"level heap sort<buffer: external<10 log>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TenLog>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: external<10 log>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TenLog>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: external<10 log>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<10 log>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<10 log>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, BridgeRotation>
@@ -1440,6 +1442,8 @@
 "level heap sort<buffer: external<10 log>, partition: rotation, rotation: piston>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, PistonRotation>
 "level heap sort<buffer: external<10 log>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: external<10 log>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<TenLog>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: external<2 sqrt>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: external<2 sqrt>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, BridgeRotation>
@@ -1455,6 +1459,8 @@
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: piston>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, PistonRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: external<2 sqrt>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<TwoSqrt>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: external<512>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: external<512>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: external<512>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<512>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<512>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, RotationPartition, BridgeRotation>
@@ -1470,6 +1476,8 @@
 "level heap sort<buffer: external<512>, partition: rotation, rotation: piston>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, RotationPartition, PistonRotation>
 "level heap sort<buffer: external<512>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: external<512>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<Fixed<512>>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: external<half>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Half>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: external<half>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Half>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: external<half>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Half>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<half>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<Half>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<half>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<Half>, RotationPartition, BridgeRotation>
@@ -1485,6 +1493,8 @@
 "level heap sort<buffer: external<half>, partition: rotation, rotation: piston>"	LevelHeapSort<ExternalBuffer<Half>, RotationPartition, PistonRotation>
 "level heap sort<buffer: external<half>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Half>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: external<half>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<Half>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: external<log>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Log>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: external<log>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Log>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: external<log>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Log>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<log>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<Log>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<log>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<Log>, RotationPartition, BridgeRotation>
@@ -1500,6 +1510,8 @@
 "level heap sort<buffer: external<log>, partition: rotation, rotation: piston>"	LevelHeapSort<ExternalBuffer<Log>, RotationPartition, PistonRotation>
 "level heap sort<buffer: external<log>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Log>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: external<log>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<Log>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: external<sixteenth>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sixteenth>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: external<sixteenth>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sixteenth>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sixteenth>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<Sixteenth>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<Sixteenth>, RotationPartition, BridgeRotation>
@@ -1515,6 +1527,8 @@
 "level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: piston>"	LevelHeapSort<ExternalBuffer<Sixteenth>, RotationPartition, PistonRotation>
 "level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sixteenth>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: external<sixteenth>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<Sixteenth>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: external<sqrt>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sqrt>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: external<sqrt>, partition: encoded, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sqrt>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: block cycle>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: bridge>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, BridgeRotation>
@@ -1530,6 +1544,8 @@
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: piston>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, PistonRotation>
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: reversal>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: external<sqrt>, partition: rotation, rotation: trinity>"	LevelHeapSort<ExternalBuffer<Sqrt>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: in array<10 log>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TenLog>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: in array<10 log>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TenLog>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: in array<10 log>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<10 log>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<10 log>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, BridgeRotation>
@@ -1545,6 +1561,8 @@
 "level heap sort<buffer: in array<10 log>, partition: rotation, rotation: piston>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, PistonRotation>
 "level heap sort<buffer: in array<10 log>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: in array<10 log>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<TenLog>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: in array<2 sqrt>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: in array<2 sqrt>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, BridgeRotation>
@@ -1560,6 +1578,8 @@
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: piston>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, PistonRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: in array<2 sqrt>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<TwoSqrt>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: in array<512>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: in array<512>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: in array<512>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<512>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<512>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, RotationPartition, BridgeRotation>
@@ -1575,6 +1595,8 @@
 "level heap sort<buffer: in array<512>, partition: rotation, rotation: piston>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, RotationPartition, PistonRotation>
 "level heap sort<buffer: in array<512>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: in array<512>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<Fixed<512>>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: in array<half>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Half>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: in array<half>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Half>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: in array<half>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Half>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<half>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<Half>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<half>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<Half>, RotationPartition, BridgeRotation>
@@ -1590,6 +1612,8 @@
 "level heap sort<buffer: in array<half>, partition: rotation, rotation: piston>"	LevelHeapSort<InArrayBuffer<Half>, RotationPartition, PistonRotation>
 "level heap sort<buffer: in array<half>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Half>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: in array<half>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<Half>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: in array<log>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Log>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: in array<log>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Log>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: in array<log>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Log>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<log>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<Log>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<log>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<Log>, RotationPartition, BridgeRotation>
@@ -1605,6 +1629,8 @@
 "level heap sort<buffer: in array<log>, partition: rotation, rotation: piston>"	LevelHeapSort<InArrayBuffer<Log>, RotationPartition, PistonRotation>
 "level heap sort<buffer: in array<log>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Log>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: in array<log>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<Log>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: in array<sixteenth>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sixteenth>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: in array<sixteenth>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sixteenth>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sixteenth>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<Sixteenth>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<Sixteenth>, RotationPartition, BridgeRotation>
@@ -1620,6 +1646,8 @@
 "level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: piston>"	LevelHeapSort<InArrayBuffer<Sixteenth>, RotationPartition, PistonRotation>
 "level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sixteenth>, RotationPartition, ReversalRotation>
 "level heap sort<buffer: in array<sixteenth>, partition: rotation, rotation: trinity>"	LevelHeapSort<InArrayBuffer<Sixteenth>, RotationPartition, TrinityRotation>
+"level heap sort<buffer: in array<sqrt>, partition: encoded, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sqrt>, EncodedPartition, AuxiliaryRotation>
+"level heap sort<buffer: in array<sqrt>, partition: encoded, rotation: reversal>"	LevelHeapSort<InArrayBuffer<Sqrt>, EncodedPartition, ReversalRotation>
 "level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: auxiliary>"	LevelHeapSort<InArrayBuffer<Sqrt>, RotationPartition, AuxiliaryRotation>
 "level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: block cycle>"	LevelHeapSort<InArrayBuffer<Sqrt>, RotationPartition, BlockCycleRotation>
 "level heap sort<buffer: in array<sqrt>, partition: rotation, rotation: bridge>"	LevelHeapSort<InArrayBuffer<Sqrt>, RotationPartition, BridgeRotation>
