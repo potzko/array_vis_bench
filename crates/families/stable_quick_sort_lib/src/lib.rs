@@ -1,10 +1,11 @@
 //! Stable quick sort, `StableQuickSort<P, R>`: a quick sort whose split is a
-//! stable three way partition `P`, rotating with `R`, so that equal elements
-//! never cross each other and the sort needs no tag and no index. `sort` is the
-//! driver, `pivot_of` reads the pivot value off a median of three, a ninther
-//! past `NINTHER` elements, and `sort_range` splits, recurses into the smaller
-//! side and loops on the larger. The family is declared in `stable_quick.spec`
-//! and built by `stable_quick.avbs`.
+//! stable partition `P`, rotating with `R`, so that equal elements never cross
+//! each other and the sort needs no tag and no index. `sort` is the driver,
+//! `pivot_of` reads the pivot value off a median of three, a ninther past
+//! `NINTHER` elements, and `sort_range` splits, with a second pass for the equals
+//! of the pivot only when the first left nothing below it, recurses into the
+//! smaller side and loops on the larger. The family is declared in
+//! `stable_quick.spec` and built by `stable_quick.avbs`.
 
 use core::marker::PhantomData;
 
@@ -18,7 +19,7 @@ use sort_logger::SortLogger;
 #[cfg(test)]
 pub mod test_util;
 
-/// `P` is the `StablePartition` that splits a region three ways and `R` the
+/// `P` is the `StablePartition` that splits a region around the pivot and `R` the
 /// `Rotation` it rotates with. The scratch the two share is the one allocation
 /// of the sort.
 pub struct StableQuickSort<P, R>(PhantomData<(P, R)>);
@@ -76,10 +77,15 @@ fn pivot_of<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], lo: usize, hi: 
     arr[index]
 }
 
-// Split `arr[lo..hi]` around the pivot into below, equal and above, each in
-// order, sort the below and the above, and leave the equal part where it is. The
-// smaller of the two sides is the recursion and the larger the next turn of the
-// loop, so the stack is `log n` frames deep whatever the pivots do.
+// Split `arr[lo..hi]` around the pivot into below and the rest, each in order,
+// sort the below and the rest, and loop. When nothing is below the pivot the rest
+// is the whole region and the split has made no progress, so a second pass,
+// over the region again, peels the equals of the pivot off, which are in place
+// and end the region when they are all of it; a region of distinct keys never
+// needs the pass, and the first pass alone is cheaper than both passes by about a
+// quarter of the moves and the comparisons. The smaller of the two sides is the
+// recursion and the larger the next turn of the loop, so the stack is `log n`
+// frames deep whatever the pivots do.
 fn sort_range<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
     arr: &mut [T],
     lo: usize,
@@ -90,7 +96,8 @@ fn sort_range<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + SortLo
     let (mut lo, mut hi) = (lo, hi);
     while hi - lo > SMALL {
         let pivot = pivot_of(arr, lo, hi, log);
-        let (equal, above) = P::partition_three_way::<R, T, U>(arr, lo, hi, pivot, scratch, log);
+        let equal = P::partition::<R, T, U>(arr, lo, hi, pivot, scratch, log);
+        let above = if equal == lo { P::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, log) } else { equal };
         if equal - lo < hi - above {
             sort_range::<P, R, T, U>(arr, lo, equal, scratch, log);
             lo = above;
@@ -203,7 +210,7 @@ mod tests {
     }
 
     // A comparison per element per level of a split that halves, give or take
-    // the three way split's second pass over the upper half.
+    // the pivot's median of three and the insertion sorted leaves.
     #[test]
     fn costs_n_log_n_comparisons_on_random_keys() {
         let n = 1 << 16;
@@ -266,6 +273,101 @@ mod tests {
         assert!(arr.windows(2).all(|w| w[0].key <= w[1].key));
         let used = start - LOWEST.with(|c| c.get()).min(start);
         assert!(used < 64 * 1024, "the sort used {used} bytes of stack for {n} elements");
+    }
+
+    // A partition by rotation that counts its calls of the second kind, the pass
+    // that peels the equals of the pivot off.
+    struct Spy;
+    thread_local! {
+        static AT_MOST: core::cell::Cell<usize> = const { core::cell::Cell::new(0) };
+    }
+    impl StablePartition for Spy {
+        const NAME: &'static str = "spy";
+        const MOVES: Complexity = Complexity::N_LOG_N;
+
+        fn partition<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+            arr: &mut [T],
+            lo: usize,
+            hi: usize,
+            pivot: T,
+            scratch: &mut [T],
+            log: &mut U,
+        ) -> usize {
+            RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, log)
+        }
+
+        fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+            arr: &mut [T],
+            lo: usize,
+            hi: usize,
+            pivot: T,
+            scratch: &mut [T],
+            log: &mut U,
+        ) -> usize {
+            AT_MOST.with(|c| c.set(c.get() + 1));
+            RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, log)
+        }
+    }
+
+    fn at_most_passes(arr0: &[Item]) -> usize {
+        let mut arr = arr0.to_vec();
+        AT_MOST.with(|c| c.set(0));
+        StableQuickSort::<Spy, ReversalRotation>::sort(&mut arr, &mut NoOpLogger);
+        let mut want = arr0.to_vec();
+        want.sort_by_key(|x| x.key);
+        assert_eq!(pairs(&arr), pairs(&want));
+        AT_MOST.with(|c| c.get())
+    }
+
+    // The pass that peels the equals off is for a split that left nothing below
+    // the pivot, since the rest would be the whole region again: a region of
+    // distinct keys never needs it, a region of one value needs it once.
+    #[test]
+    fn the_second_pass_is_made_only_when_nothing_is_below_the_pivot() {
+        let mut rng = Rng(0xD15);
+        assert_eq!(at_most_passes(&items(&(0..3000).map(|_| rng.next(1 << 30) as u32).collect::<Vec<_>>())), 0);
+        assert_eq!(at_most_passes(&items(&(0..3000).rev().collect::<Vec<u32>>())), 0);
+        assert_eq!(at_most_passes(&items(&vec![7; 3000])), 1);
+    }
+
+    // The regions that need the second pass end and stay stable: every key
+    // equal, a pivot that is the least key of its region, in every level, and
+    // few values with a great many of each.
+    #[test]
+    fn a_region_of_equal_keys_and_one_with_its_minimum_for_a_pivot_end_and_stay_stable() {
+        fn sorts<S: DirectSort>(name: &str) {
+            let mut rng = Rng(0xE0);
+            for n in [17usize, 40, 129, 1000, 6000] {
+                let minimum_pivots: Vec<u32> = (0..n).map(|i| if i % 3 == 0 || i == n / 2 || i == n - 1 { 0 } else { 1 + rng.next(n) as u32 }).collect();
+                let shapes = [vec![9u32; n], minimum_pivots, (0..n).map(|i| (i % 2) as u32).collect(), (0..n).map(|i| u32::from(i > n / 2)).collect()];
+                for (shape, keys) in shapes.iter().enumerate() {
+                    let arr0 = items(keys);
+                    let mut arr = arr0.clone();
+                    S::sort(&mut arr, &mut NoOpLogger);
+                    let mut want = arr0.clone();
+                    want.sort_by_key(|x| x.key);
+                    assert_eq!(pairs(&arr), pairs(&want), "{name}: shape {shape}, n={n}");
+                }
+            }
+        }
+        sorts::<StableQuickSort<RotationPartition, ReversalRotation>>("rotation");
+        sorts::<StableQuickSort<EncodedPartition, ReversalRotation>>("encoded");
+        sorts::<StableQuickSort<EncodedPartition, AuxiliaryRotation>>("encoded, auxiliary");
+        sorts::<StableQuickSort<SlidingPartition, ReversalRotation>>("sliding");
+    }
+
+    // One pass of the partition a level, and a second only when needed: on
+    // distinct keys the comparisons and moves are those of the first alone.
+    #[test]
+    fn distinct_keys_cost_one_pass_of_the_partition_a_level() {
+        let n = 1 << 16;
+        let mut rng = Rng(0xBEE);
+        let mut arr: Vec<usize> = (0..n).map(|_| rng.next(8 * n)).collect();
+        let mut tally = Tally::default();
+        StableQuickSort::<EncodedPartition, ReversalRotation>::sort(&mut arr, &mut tally);
+        assert!(arr.windows(2).all(|w| w[0] <= w[1]));
+        assert!(tally.cmps < 21 * n, "comparisons {} an element", tally.cmps as f64 / n as f64);
+        assert!(tally.moves < 45 * n, "moves {} an element", tally.moves as f64 / n as f64);
     }
 
     #[test]
