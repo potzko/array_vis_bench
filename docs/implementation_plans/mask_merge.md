@@ -9,8 +9,8 @@ a merge of two runs of `n / 2` costs `O(n log (n / cap))` moves. It is built, te
 catalog and measured. It takes 35 to 48 percent off the time of the rotation merge sorts and
 28 to 46 percent off the bufferless block sort on distinct keys and on repeats, and loses 6 to
 40 percent on keys that take few values; the split beats the fallback on distinct keys and
-loses to it on few. The cap of 16 words stays. `bufferless_merge` and the block merge sort
-are untouched.
+loses to it on few. The cap of 16 words stays. `bufferless_merge` is untouched, and the
+block merge sort takes its local merge as an axis, in the section before Open.
 
 ## The question
 
@@ -476,13 +476,48 @@ Verdict.
   3 percent on distinct keys and costs 2 to 6 percent on few keys. No default was changed, and
   the type text of an entry is the same, so `verify/catalog.types` is untouched.
 
+## The block sort's merge axis
+
+The local merge of the block merge sort, the merge it runs where neither its buffer nor its
+keys reach, was `bufferless_merge`, symMerge over the sort's rotation. It is now the `merge`
+slot of the sort, a fifth parameter `M: MergeStrategy`, which defaults to symMerge.
+
+- The role. `MergeStrategy` is a rotation merge left open in its rotation,
+  `type With<R: Rotation>: RotationMerge`, so the sort picks the merge and the rotation apart:
+  the merge is `M::With<R>` over the `R` the sort rotates with everywhere else. It is not a
+  `RotationMerge` or a `MergeKind`, so the merge kinds and the rotation merge sorts stay the
+  entries they were. Two components fill it, `SmallerSideMerge` (label `smaller-side`) and
+  `MaskMerge` (label `mask`, the defaults of `MaskRotationMerge`), declared in `merge.spec`.
+- Where it runs. `merge_in_place` is the one call, with the guard for an empty side, and
+  `Stash::None` and a merge with no block size reach it; every other caller of
+  `bufferless_merge` (`AuxiliaryMerge`, the workflows, the extraction's prefix sort and
+  gather) is as it was. The sort's scratch is the largest of the rotation's, the
+  extraction's and the merge's. The local merge runs in every merge of the shapes without a
+  buffer or without keys, and in the others only when the keys run short or the blocks outgrow
+  the buffer.
+- The bounds. They do not gain `M`: both merges are stable and in place over the rotation, and
+  the sort's worst case is the smaller side merge's, which the mask merge does not exceed. A
+  mask merge shape is bounded above by it, not tightly.
+- Catalog. Every one of the 486 entries that were there names `merge: smaller-side`, with the
+  same bounds, and a study of 90 adds the mask merge: every buffer (15) and both key shapes by
+  the reversal, block cycle and auxiliary rotations, carving by the scan, `BlockMergeMasks`.
+  The reversal is the plain rotation, block cycle the best measured with the mask merge and
+  auxiliary the one with a scratch of its own, so the scratch of the sort is the merge's too.
+  The block merge sorts are 576 and the catalog 2802. The golden and type lines were taken
+  from the small catalog and checked against a scripted rename of the old lines.
+- What it answers. The bufferless block sort numbers above, 38 percent off with no keys and 28
+  with in array keys on distinct keys, 18 to 38 percent slower on few distinct keys, come from
+  copies of the crates with the mask merge in the local merges. The 90 entries put the same
+  switch in the catalog, over the shapes with a buffer too, so the catalog's timing measures
+  it. Not measured here.
+
 ## Open
 
 - The bufferless block sort number is in the section above: 38 percent off with no keys and
-  28 with in array keys on distinct keys, and 18 to 38 percent slower on few keys. Switching
-  `bufferless_merge`, the block merge sort's `NoBuffer` shapes and `AuxiliaryMerge` over
-  `NoBuffer` to the mask merge is the user's decision from that number; the copies in the
-  measurement are the only place the mask merge stood under them.
+  28 with in array keys on distinct keys, and 18 to 38 percent slower on few keys. The block
+  merge sort's choice is now an axis and the 90 entries of it are in the catalog. Switching
+  `bufferless_merge` and `AuxiliaryMerge` over `NoBuffer` to the mask merge is the user's
+  decision from that number.
 - Keys with few distinct values are where the mask loses, by 6 to 40 percent in the sorts and
   by 50 percent for a long merge of 16 keys. The mask can count the runs it holds,
   `popcount(m ^ (m >> 1))` over the words, and a window with few runs per position could go to
@@ -501,4 +536,5 @@ Verdict.
 - `WORDS` and `SPLIT` could be query axes if a curve in the catalog is wanted, at the
   price of 120 entries for each value.
 - `verify/timing.tsv` is not touched. It is machine specific and `--bless` is the
-  user's to run; the 135 entries are not in it.
+  user's to run; the 135 entries are not in it, nor the 90 of the block sort's merge axis,
+  and its block sort rows carry names without the merge.
