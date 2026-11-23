@@ -143,18 +143,20 @@ pub fn three_way(arr: &[Item], pivot: u32) -> Vec<(u32, u32)> {
     below.chain(equal).chain(above).map(|x| (x.key, x.tag)).collect()
 }
 
-/// Counts the logged moves and comparisons, to read a growth rate off a run.
+/// Counts the logged moves and comparisons, to read a growth rate off a run. A
+/// write to a word of a partition's own is no move of an element, and counted
+/// apart.
 #[derive(Default)]
 pub struct Tally {
     pub moves: usize,
     pub cmps: usize,
+    pub word_writes: usize,
 }
 impl<T: Copy + Ord> SortLogger<T> for Tally {
     fn log(&mut self, event: SortLog<T>) {
         match event {
-            SortLog::Swap { .. } | SortLog::WriteInArr { .. } | SortLog::WriteData { .. } | SortLog::WriteDataU { .. } => {
-                self.moves += 1
-            }
+            SortLog::Swap { .. } | SortLog::WriteInArr { .. } | SortLog::WriteData { .. } => self.moves += 1,
+            SortLog::WriteDataU { .. } => self.word_writes += 1,
             SortLog::CmpInArr { .. } | SortLog::CmpData { .. } | SortLog::CmpDataU { .. } | SortLog::CmpAcrossArrs { .. } => {
                 self.cmps += 1
             }
@@ -167,12 +169,14 @@ impl<T: Copy + Ord> SortLogger<T> for Tally {
 /// the array that was partitioned with the array itself shows that no move went
 /// unlogged. An event finds its array by address, as the visualiser does, so a
 /// sub slice of the array, which is what a rotation is handed, resolves to the
-/// right copy and offset.
+/// right copy and offset. An array of words is compared with its copy when it is
+/// freed, while it is still live, which shows that no write to it went unlogged.
 pub struct Replay {
     arrays: Vec<(usize, Vec<usize>)>,
+    words: Vec<usize>,
 }
 impl Replay {
-    pub fn of(arr: &[usize]) -> Self { Replay { arrays: vec![(arr.as_ptr() as usize, arr.to_vec())] } }
+    pub fn of(arr: &[usize]) -> Self { Replay { arrays: vec![(arr.as_ptr() as usize, arr.to_vec())], words: Vec::new() } }
 
     pub fn main(&self) -> &[usize] { &self.arrays[0].1 }
 
@@ -203,10 +207,21 @@ impl SortLogger<usize> for Replay {
                 let (copy, off) = self.at(name);
                 copy[ind + off] = data;
             }
-            SortLog::CreateAuxArrT { name, length } | SortLog::CreateAuxArr { name, length } => {
+            SortLog::CreateAuxArrT { name, length } => self.arrays.push((name, vec![0; length])),
+            SortLog::CreateAuxArr { name, length } => {
                 self.arrays.push((name, vec![0; length]));
+                self.words.push(name);
             }
-            SortLog::FreeAuxArr { name } => self.arrays.retain(|(base, _)| *base != name),
+            SortLog::FreeAuxArr { name } => {
+                if self.words.contains(&name) {
+                    let (_, copy) = self.arrays.iter().find(|(base, _)| *base == name).expect("the words are live until they are freed");
+                    // SAFETY: the array of `copy.len()` words at `name` is live, the event is logged before it is dropped.
+                    let held = unsafe { core::slice::from_raw_parts(name as *const usize, copy.len()) };
+                    assert_eq!(held, &copy[..], "a write to the words went unlogged");
+                    self.words.retain(|&word| word != name);
+                }
+                self.arrays.retain(|(base, _)| *base != name);
+            }
             _ => {}
         }
     }
@@ -366,24 +381,30 @@ pub fn code_cells_fit(block: fn(usize) -> usize) {
 }
 
 // Moves and comparisons that count are the logged ones, and a cell of the
-// scratch and a word are written before they are read: both are full of garbage
-// the replay's copy of them lacks, so a read of an unwritten cell would leave the
-// two arrays apart.
+// scratch and a word are written before they are read: the scratch is full of
+// garbage the replay's copy of it lacks, so a read of an unwritten cell would
+// leave the two arrays apart, and so are the words on a second pass. On the
+// first the words start blank like their copy, and are compared with it when
+// they are freed, so that a write to them that was not logged shows.
 pub fn replays_without_a_gap<P: StablePartition>(block: fn(usize) -> usize) {
     const BACK: usize = 1 << 20;
     let mut rng = Rng(0x10661);
     for n in [3usize, 10, 33, 100, 257, 1000, 3001] {
         for shape in 0..SHAPES {
-            let mut arr: Vec<usize> = types(shape, n, block(n), &mut rng).iter().zip(0..).map(|(&f, i)| if f { i } else { BACK + i }).collect();
-            let mut replay = Replay::of(&arr);
-            let mut scratch = vec![usize::MAX; ReversalRotation::scratch_size(n).max(P::scratch_size(n))];
-            replay.log_aux_arr_t(&scratch);
-            let mut words = replay.create_aux_arr_split(P::SCRATCH_SECTIONS);
-            words.fill(usize::MAX);
-            let split = P::partition::<ReversalRotation, _, _>(&mut arr, 0, n, BACK, &mut scratch, &mut words, &mut replay);
-            assert!(arr[..split].iter().all(|&x| x < BACK) && arr[split..].iter().all(|&x| x >= BACK), "n={n} shape={shape}");
-            assert!(arr[..split].windows(2).all(|w| w[0] < w[1]) && arr[split..].windows(2).all(|w| w[0] < w[1]), "n={n} shape={shape}: order");
-            assert_eq!(replay.main(), &arr[..], "n={n} shape={shape}: a move went unlogged or an unwritten cell was read");
+            for garbage in [false, true] {
+                let mut arr: Vec<usize> = types(shape, n, block(n), &mut rng).iter().zip(0..).map(|(&f, i)| if f { i } else { BACK + i }).collect();
+                let mut replay = Replay::of(&arr);
+                let mut scratch = vec![usize::MAX; ReversalRotation::scratch_size(n).max(P::scratch_size(n))];
+                replay.log_aux_arr_t(&scratch);
+                let mut words = replay.create_aux_arr_split(P::SCRATCH_SECTIONS);
+                if garbage { words.fill(usize::MAX); }
+                let split = P::partition::<ReversalRotation, _, _>(&mut arr, 0, n, BACK, &mut scratch, &mut words, &mut replay);
+                let name = format!("n={n} shape={shape} garbage={garbage}");
+                assert!(arr[..split].iter().all(|&x| x < BACK) && arr[split..].iter().all(|&x| x >= BACK), "{name}");
+                assert!(arr[..split].windows(2).all(|w| w[0] < w[1]) && arr[split..].windows(2).all(|w| w[0] < w[1]), "{name}: order");
+                assert_eq!(replay.main(), &arr[..], "{name}: a move went unlogged or an unwritten cell was read");
+                if !garbage { replay.free_aux_arr_split(&words, P::SCRATCH_SECTIONS); }
+            }
         }
     }
 }

@@ -220,8 +220,8 @@ mod tests {
         assert_eq!(created, 1);
     }
 
-    // The masked partitions ask for no scratch, so over a rotation that asks for
-    // none the sort allocates nothing.
+    // The masked partitions ask for no scratch of elements, so over a rotation that
+    // asks for none the sort allocates no array of them.
     #[test]
     fn the_masked_partitions_over_a_rotation_without_scratch_allocate_nothing() {
         use sort_logger::{SortLog, VisualizerLogger};
@@ -310,6 +310,33 @@ mod tests {
             sort(&mut arr, &mut log);
             assert_eq!(word_events(&log), (vec![], vec![], 0));
         }
+    }
+
+    // The lengths of the arrays of words, in the order they were created, that a
+    // sort of 5000 elements by `S` leaves, those freed in the same order, and the
+    // writes to them.
+    fn words_of_a_sort<S: DirectSort>() -> (Vec<usize>, bool, usize) {
+        use sort_logger::{SortLog, VisualizerLogger};
+        let mut arr: Vec<usize> = (0..5000).map(|i| i * 7919 % 5003).collect();
+        let mut log = VisualizerLogger { type_ghost: PhantomData, log: Vec::new() };
+        S::sort(&mut arr, &mut log);
+        assert!(arr.windows(2).all(|w| w[0] <= w[1]));
+        let (created, freed, writes) = word_events(&log);
+        let lengths = log.log.iter().filter_map(|e| if let SortLog::CreateAuxArr { length, .. } = e { Some(*length) } else { None });
+        (lengths.collect(), freed == created, writes)
+    }
+
+    // The masked partitions keep their masks, counts and the walk's array in words:
+    // three arrays side by side, made once for the whole sort and freed once, the
+    // windows of every partition writing to them.
+    #[test]
+    fn the_masked_partitions_create_their_words_once_per_sort() {
+        let (lengths, freed, writes) = words_of_a_sort::<StableQuickSort<MaskedPartition, ReversalRotation>>();
+        assert_eq!((lengths, freed), (vec![16, 17, 16], true));
+        assert!(writes > 1000, "{writes} writes to the words");
+        let (lengths, freed, writes) = words_of_a_sort::<StableQuickSort<MaskedTablePartition, ReversalRotation>>();
+        assert_eq!((lengths, freed), (vec![16, 17, 1024], true));
+        assert!(writes > 1000, "{writes} writes to the words");
     }
 
     // A comparison per element per level of a split that halves, give or take

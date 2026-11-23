@@ -261,6 +261,9 @@ mod tests {
         carves_first_occurrences::<PartitionExtraction<EncodedPartition>, ReversalRotation>();
         carves_first_occurrences::<PartitionExtraction<EncodedPartition>, TrinityRotation>();
         carves_first_occurrences::<PartitionExtraction<EncodedPartition>, AuxiliaryRotation>();
+        carves_first_occurrences::<PartitionExtraction<MaskedPartition>, ReversalRotation>();
+        carves_first_occurrences::<PartitionExtraction<MaskedTablePartition>, ReversalRotation>();
+        carves_first_occurrences::<PartitionExtraction<MaskedTablePartition>, AuxiliaryRotation>();
     }
 
     // A partition's own scratch is the extraction's, and the scan and the prefix
@@ -285,6 +288,8 @@ mod tests {
     fn an_extraction_asks_for_the_words_of_its_partition() {
         assert_eq!(<PartitionExtraction<Wordy> as Extraction>::SCRATCH_SECTIONS, &[3, 0, 5]);
         assert!(<PartitionExtraction<RotationPartition> as Extraction>::SCRATCH_SECTIONS.is_empty());
+        assert!(<PartitionExtraction<EncodedPartition> as Extraction>::SCRATCH_SECTIONS.is_empty());
+        assert_eq!(<PartitionExtraction<MaskedTablePartition> as Extraction>::SCRATCH_SECTIONS, MaskedTablePartition::SCRATCH_SECTIONS);
         assert!(<ScanExtraction as Extraction>::SCRATCH_SECTIONS.is_empty());
         assert!(<PrefixSortExtraction as Extraction>::SCRATCH_SECTIONS.is_empty());
     }

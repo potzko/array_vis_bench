@@ -238,7 +238,7 @@ mod tests {
     use super::*;
     use crate::test_util::{pairs, Item, Marks, Regions, Replay, Rng, Tally};
     use array_vis_bench_traits::DirectSort;
-    use extraction_lib::{EncodedPartition, PartitionExtraction, PrefixSortExtraction, RotationPartition, ScanExtraction, SlidingPartition};
+    use extraction_lib::{EncodedPartition, MaskedPartition, MaskedTablePartition, PartitionExtraction, PrefixSortExtraction, RotationPartition, ScanExtraction, SlidingPartition};
     use merge_sort_lib::{MaskMerge, SmallerSideMerge, SmallerSideRotationMerge};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_block_cycle::BlockCycleRotation;
@@ -347,6 +347,9 @@ mod tests {
         sorts_stably::<BlockMergeSort<ExternalBuffer<Fixed<512>>, InArrayKeys, TrinityRotation, PartitionExtraction<RotationPartition>>>("grail, trinity, partition by rotation");
         sorts_stably::<BlockMergeSort<NoBuffer, InArrayKeys, AuxiliaryRotation, PartitionExtraction<RotationPartition>>>("none, auxiliary, partition by rotation");
         sorts_stably::<BlockMergeSort<InArrayBuffer<Sixteenth>, NoKeys, ReversalRotation, PrefixSortExtraction>>("sixteenth, none, prefix sort");
+        sorts_stably::<Wiki<PartitionExtraction<MaskedPartition>>>("wiki, partition by masks");
+        sorts_stably::<Wiki<PartitionExtraction<MaskedTablePartition>>>("wiki, partition by masks and a table");
+        sorts_stably::<BlockMergeSort<NoBuffer, InArrayKeys, AuxiliaryRotation, PartitionExtraction<MaskedTablePartition>, MaskMerge>>("none, auxiliary, partition by masks, mask merge");
     }
     // An extraction that wants a scratch of its own, as long as the array, and
     // fails when it is handed a shorter one.
