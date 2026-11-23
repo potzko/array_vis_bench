@@ -12,7 +12,7 @@ use core::marker::PhantomData;
 
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::role::keys::{extract_distinct, heap_sort_region, slide_merge, sort_region};
-use array_vis_bench_traits::role::{Auxiliary, Rotation, StablePartition};
+use array_vis_bench_traits::role::{with_words, Auxiliary, Rotation, StablePartition};
 use array_vis_bench_traits::Complexity;
 use sort_logger::{RegionKind, SortLogger};
 
@@ -24,8 +24,9 @@ const RUN: usize = 8;
 
 /// `B` is the buffer, carved from the array or allocated beside it, `P` the
 /// `StablePartition` the level build selects with and `R` the `Rotation` it
-/// rotates with, whose scratch, or the partition's if that is larger, is the
-/// one other allocation of the sort.
+/// rotates with, whose scratch, or the partition's if that is larger, is one
+/// other allocation of the sort, and the fixed size words of the partition are
+/// another.
 pub struct LevelHeapSort<B, P, R>(PhantomData<(B, P, R)>);
 
 impl<B: Auxiliary, P: StablePartition, R: Rotation> LevelHeapSort<B, P, R> {
@@ -43,14 +44,16 @@ impl<B: Auxiliary, P: StablePartition, R: Rotation> LevelHeapSort<B, P, R> {
         let mut ext = if external > 0 { log.create_aux_arr_t(external) } else { Vec::new() };
         if external > 0 { log.hold_region(&ext, 0, external, RegionKind::Buffer); }
         let mut dead = log.create_aux_arr_u8(external.max(carved));
-        if external > 0 {
-            sort_range::<P, R, T, U>(arr, 0, n, &mut ext, &mut dead, false, &mut scratch, log);
-            log.release_region(&ext, 0, external, RegionKind::Buffer);
-            log.free_aux_arr_t(&ext);
-        } else {
-            let (buffer, rest) = arr.split_at_mut(carved);
-            sort_range::<P, R, T, U>(rest, 0, n - carved, buffer, &mut dead, true, &mut scratch, log);
-        }
+        with_words::<T, U, _>(log, P::SCRATCH_SECTIONS, |log, words| {
+            if external > 0 {
+                sort_range::<P, R, T, U>(arr, 0, n, &mut ext, &mut dead, false, &mut scratch, words, log);
+                log.release_region(&ext, 0, external, RegionKind::Buffer);
+                log.free_aux_arr_t(&ext);
+            } else {
+                let (buffer, rest) = arr.split_at_mut(carved);
+                sort_range::<P, R, T, U>(rest, 0, n - carved, buffer, &mut dead, true, &mut scratch, words, log);
+            }
+        });
         log.free_aux_arr_u8(&dead);
         // The carved buffer is distinct, so an unstable sort puts it back in
         // order, and it slides home ahead of its equals.
@@ -103,12 +106,13 @@ pub fn select<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + SortLo
     hi: usize,
     k: usize,
     scratch: &mut [T],
+    words: &mut [usize],
     log: &mut U,
 ) {
     let (mut lo, mut hi, mut k) = (lo, hi, k);
     while k > 0 && k < hi - lo {
         let pivot = arr[median_of_three(arr, lo, lo + (hi - lo) / 2, hi - 1, log)];
-        let (equal, above) = P::partition_three_way::<R, T, U>(arr, lo, hi, pivot, scratch, log);
+        let (equal, above) = P::partition_three_way::<R, T, U>(arr, lo, hi, pivot, scratch, words, log);
         if lo + k < equal {
             hi = equal;
         } else if lo + k > above {
@@ -140,11 +144,12 @@ pub fn build_levels<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + 
     lo: usize,
     hi: usize,
     scratch: &mut [T],
+    words: &mut [usize],
     log: &mut U,
 ) {
     let mut end = hi;
     for b in boundaries(hi - lo).collect::<Vec<_>>().into_iter().rev() {
-        select::<P, R, T, U>(arr, lo, end, b, scratch, log);
+        select::<P, R, T, U>(arr, lo, end, b, scratch, words, log);
         end = lo + b;
     }
 }
@@ -161,6 +166,7 @@ pub fn sort_range<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + So
     dead: &mut [u8],
     keeps: bool,
     scratch: &mut [T],
+    words: &mut [usize],
     log: &mut U,
 ) {
     let m = hi - lo;
@@ -169,10 +175,10 @@ pub fn sort_range<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + So
     } else if m <= heap.len() {
         heap_sort_into(arr, lo, hi, heap, dead, keeps, log);
     } else {
-        build_levels::<P, R, T, U>(arr, lo, hi, scratch, log);
+        build_levels::<P, R, T, U>(arr, lo, hi, scratch, words, log);
         let mut start = lo;
         for b in boundaries(m).map(|b| lo + b).chain([hi]) {
-            sort_range::<P, R, T, U>(arr, start, b, heap, dead, keeps, scratch, log);
+            sort_range::<P, R, T, U>(arr, start, b, heap, dead, keeps, scratch, words, log);
             start = b;
         }
     }
@@ -304,10 +310,11 @@ mod tests {
             hi: usize,
             pivot: T,
             scratch: &mut [T],
+            words: &mut [usize],
             log: &mut U,
         ) -> usize {
             assert!(scratch.len() >= hi - lo, "a scratch of {} for a region of {}", scratch.len(), hi - lo);
-            RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, log)
+            RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
         }
 
         fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -316,10 +323,11 @@ mod tests {
             hi: usize,
             pivot: T,
             scratch: &mut [T],
+            words: &mut [usize],
             log: &mut U,
         ) -> usize {
             assert!(scratch.len() >= hi - lo, "a scratch of {} for a region of {}", scratch.len(), hi - lo);
-            RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, log)
+            RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
         }
     }
 
@@ -425,7 +433,7 @@ mod tests {
             for kind in 0..KINDS {
                 let arr0 = input(kind, n, &mut rng);
                 let mut arr = arr0.clone();
-                build_levels::<RotationPartition, ReversalRotation, _, _>(&mut arr, 0, n, &mut [], &mut NoOpLogger);
+                build_levels::<RotationPartition, ReversalRotation, _, _>(&mut arr, 0, n, &mut [], &mut [], &mut NoOpLogger);
                 for hi in boundaries(n) {
                     let got: HashSet<u32> = arr[..hi].iter().map(|x| x.tag).collect();
                     assert_eq!(got, smallest(&arr0, hi), "kind {kind}, n={n}: the first {hi}");
@@ -480,6 +488,87 @@ mod tests {
         LevelHeapSort::<InArrayBuffer<Sqrt>, Needy, ReversalRotation>::sort(&mut arr, &mut log);
         let created = log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArrT { .. })).count();
         assert_eq!(created, 1, "the scratch is one aux array of the run");
+    }
+
+    // A partition by rotation that keeps words of its own, two sections whose
+    // length it checks on every call and which it writes to through the logger.
+    struct Wordy;
+    impl StablePartition for Wordy {
+        const NAME: &'static str = "wordy";
+        const MOVES: Complexity = Complexity::N_LOG_N;
+        const SCRATCH_SECTIONS: &'static [usize] = &[4, 2];
+
+        fn partition<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+            arr: &mut [T],
+            lo: usize,
+            hi: usize,
+            pivot: T,
+            scratch: &mut [T],
+            words: &mut [usize],
+            log: &mut U,
+        ) -> usize {
+            assert_eq!(words.len(), 6, "the words of a call");
+            log.write_data_u(words, 5, hi - lo);
+            RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
+        }
+
+        fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+            arr: &mut [T],
+            lo: usize,
+            hi: usize,
+            pivot: T,
+            scratch: &mut [T],
+            words: &mut [usize],
+            log: &mut U,
+        ) -> usize {
+            assert_eq!(words.len(), 6, "the words of a call");
+            log.write_data_u(words, 5, hi - lo);
+            RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
+        }
+    }
+
+    // The arrays of words a sort created, by name and length, those it freed and
+    // the writes to them. The dead marks are an array of `usize` events too, so the
+    // words are told by their lengths.
+    fn word_events(log: &VisualizerLogger<usize>) -> (Vec<(usize, usize)>, Vec<usize>, usize) {
+        let made = log.log.iter().filter_map(|e| if let SortLog::CreateAuxArr { name, length } = e { Some((*name, *length)) } else { None });
+        let words: Vec<(usize, usize)> = made.filter(|(_, length)| Wordy::SCRATCH_SECTIONS.contains(length)).collect();
+        let named = |name: &usize| words.iter().any(|(word, _)| word == name);
+        let freed = log.log.iter().filter_map(|e| if let SortLog::FreeAuxArr { name } = e { Some(*name) } else { None }).filter(named);
+        let writes = log.log.iter().filter(|e| matches!(e, SortLog::WriteDataU { name, .. } if named(name))).count();
+        (words.clone(), freed.collect(), writes)
+    }
+
+    // The partition's words are one allocation of the sort, an array a section,
+    // however many selections of the level build use them.
+    #[test]
+    fn a_partition_with_words_is_handed_them_once_per_sort() {
+        sorts_stably::<LevelHeapSort<InArrayBuffer<Sqrt>, Wordy, ReversalRotation>>("in array sqrt, wordy");
+        sorts_stably::<LevelHeapSort<ExternalBuffer<Sqrt>, Wordy, TrinityRotation>>("external sqrt, wordy, trinity");
+        for external in [false, true] {
+            let mut arr: Vec<usize> = (0..1000).map(|i| i * 7919 % 1009).collect();
+            let mut log = VisualizerLogger { type_ghost: core::marker::PhantomData, log: Vec::new() };
+            if external {
+                LevelHeapSort::<ExternalBuffer<Sqrt>, Wordy, ReversalRotation>::sort(&mut arr, &mut log);
+            } else {
+                LevelHeapSort::<InArrayBuffer<Sqrt>, Wordy, ReversalRotation>::sort(&mut arr, &mut log);
+            }
+            let (created, freed, writes) = word_events(&log);
+            assert_eq!(created.iter().map(|(_, length)| *length).collect::<Vec<_>>(), [4, 2], "external {external}");
+            assert_eq!(freed, created.iter().map(|(name, _)| *name).collect::<Vec<_>>(), "external {external}");
+            assert!(writes > 10, "external {external}: {writes} writes to the words");
+        }
+    }
+
+    // The dead marks are the one array of `usize` events a partition without words
+    // leaves.
+    #[test]
+    fn a_partition_without_words_makes_no_arrays_of_them() {
+        let mut arr: Vec<usize> = (0..1000).map(|i| i * 7919 % 1009).collect();
+        let mut log = VisualizerLogger { type_ghost: core::marker::PhantomData, log: Vec::new() };
+        LevelHeapSort::<InArrayBuffer<Sqrt>, EncodedPartition, ReversalRotation>::sort(&mut arr, &mut log);
+        assert_eq!(log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArr { .. })).count(), 1);
+        assert!(log.log.iter().all(|e| !matches!(e, SortLog::Beside { .. })));
     }
 
     // The encoded partition's own scratch is allocated with the rotation's, and

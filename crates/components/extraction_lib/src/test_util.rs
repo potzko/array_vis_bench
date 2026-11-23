@@ -63,10 +63,11 @@ impl StablePartition for Needy {
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        words: &mut [usize],
         log: &mut U,
     ) -> usize {
         assert!(scratch.len() >= hi - lo, "a scratch of {} for a region of {}", scratch.len(), hi - lo);
-        RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, log)
+        RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
     }
 
     fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -75,12 +76,54 @@ impl StablePartition for Needy {
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        words: &mut [usize],
         log: &mut U,
     ) -> usize {
         assert!(scratch.len() >= hi - lo, "a scratch of {} for a region of {}", scratch.len(), hi - lo);
-        RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, log)
+        RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
     }
 }
+
+/// Partitions by rotation and keeps words of its own, three sections with an
+/// empty one between: it checks their length on every call and writes the size of
+/// the region into the last word, through the logger.
+pub struct Wordy;
+impl StablePartition for Wordy {
+    const NAME: &'static str = "wordy";
+    const MOVES: Complexity = Complexity::N_LOG_N;
+    const SCRATCH_SECTIONS: &'static [usize] = &[3, 0, 5];
+
+    fn partition<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        lo: usize,
+        hi: usize,
+        pivot: T,
+        scratch: &mut [T],
+        words: &mut [usize],
+        log: &mut U,
+    ) -> usize {
+        assert_eq!(words.len(), 8, "the words of a call");
+        log.write_data_u(words, 7, hi - lo);
+        RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
+    }
+
+    fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        lo: usize,
+        hi: usize,
+        pivot: T,
+        scratch: &mut [T],
+        words: &mut [usize],
+        log: &mut U,
+    ) -> usize {
+        assert_eq!(words.len(), 8, "the words of a call");
+        log.write_data_u(words, 7, hi - lo);
+        RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
+    }
+}
+
+/// The words a partition asks for, blank, for a test that does not register them.
+pub fn words_of<P: StablePartition>() -> Vec<usize> { vec![0; P::SCRATCH_SECTIONS.iter().sum()] }
 
 /// The expected outcome of a partition, spelled out: the elements the predicate
 /// picks in order, then the rest in order.
@@ -232,19 +275,20 @@ pub fn matches_the_reference<P: StablePartition, R: Rotation>(extra: usize, bloc
             let arr0 = items(&keys);
             let hi = lo + n;
             let mut scratch = vec![item(u32::MAX); R::scratch_size(n).max(P::scratch_size(n)) + extra];
+            let mut words = words_of::<P>();
             let name = format!("{}, {}: n={n} shape={shape} lo={lo} extra={extra}", P::NAME, R::NAME);
             let below = arr0[lo..hi].iter().filter(|x| x.key < PIVOT).count();
             let not_above = arr0[lo..hi].iter().filter(|x| x.key <= PIVOT).count();
             let mut arr = arr0.clone();
-            let split = P::partition::<R, _, _>(&mut arr, lo, hi, item(PIVOT), &mut scratch, &mut NoOpLogger);
+            let split = P::partition::<R, _, _>(&mut arr, lo, hi, item(PIVOT), &mut scratch, &mut words, &mut NoOpLogger);
             expect(&arr, &arr0, lo, hi, reference(&arr0[lo..hi], |k| k < PIVOT), &name);
             assert_eq!(split, lo + below, "{name}: the split is off");
             let mut arr = arr0.clone();
-            let split = P::partition_at_most::<R, _, _>(&mut arr, lo, hi, item(PIVOT), &mut scratch, &mut NoOpLogger);
+            let split = P::partition_at_most::<R, _, _>(&mut arr, lo, hi, item(PIVOT), &mut scratch, &mut words, &mut NoOpLogger);
             expect(&arr, &arr0, lo, hi, reference(&arr0[lo..hi], |k| k <= PIVOT), &name);
             assert_eq!(split, lo + not_above, "{name}: the at most split is off");
             let mut arr = arr0.clone();
-            let ends = P::partition_three_way::<R, _, _>(&mut arr, lo, hi, item(PIVOT), &mut scratch, &mut NoOpLogger);
+            let ends = P::partition_three_way::<R, _, _>(&mut arr, lo, hi, item(PIVOT), &mut scratch, &mut words, &mut NoOpLogger);
             expect(&arr, &arr0, lo, hi, three_way(&arr0[lo..hi], PIVOT), &name);
             assert_eq!(ends, (lo + below, lo + not_above), "{name}: the three way splits are off");
         }
@@ -275,18 +319,19 @@ pub fn few_distinct_values_match_the_reference<P: StablePartition, R: Rotation>(
                     .collect();
                 let arr0 = items(&keys);
                 let mut scratch = vec![item(u32::MAX); R::scratch_size(n).max(P::scratch_size(n))];
+                let mut words = words_of::<P>();
                 for pivot in 0..=values {
                     let name = format!("{}, {}: n={n} values={values} skew={skew} pivot={pivot}", P::NAME, R::NAME);
                     let below = arr0.iter().filter(|x| x.key < pivot).count();
                     let not_above = arr0.iter().filter(|x| x.key <= pivot).count();
                     let mut arr = arr0.clone();
-                    let split = P::partition::<R, _, _>(&mut arr, 0, n, item(pivot), &mut scratch, &mut NoOpLogger);
+                    let split = P::partition::<R, _, _>(&mut arr, 0, n, item(pivot), &mut scratch, &mut words, &mut NoOpLogger);
                     assert_eq!((pairs(&arr), split), (reference(&arr0, |k| k < pivot), below), "{name}: below");
                     let mut arr = arr0.clone();
-                    let split = P::partition_at_most::<R, _, _>(&mut arr, 0, n, item(pivot), &mut scratch, &mut NoOpLogger);
+                    let split = P::partition_at_most::<R, _, _>(&mut arr, 0, n, item(pivot), &mut scratch, &mut words, &mut NoOpLogger);
                     assert_eq!((pairs(&arr), split), (reference(&arr0, |k| k <= pivot), not_above), "{name}: at most");
                     let mut arr = arr0.clone();
-                    let ends = P::partition_three_way::<R, _, _>(&mut arr, 0, n, item(pivot), &mut scratch, &mut NoOpLogger);
+                    let ends = P::partition_three_way::<R, _, _>(&mut arr, 0, n, item(pivot), &mut scratch, &mut words, &mut NoOpLogger);
                     assert_eq!((pairs(&arr), ends), (three_way(&arr0, pivot), (below, not_above)), "{name}: three way");
                 }
             }
@@ -300,8 +345,9 @@ pub fn cost<P: StablePartition, R: Rotation>(n: usize, shape: usize, b: usize) -
     let mut rng = Rng(7 + n as u64);
     let mut arr: Vec<usize> = types(shape, n, b, &mut rng).iter().map(|&f| if f { rng.next(n) } else { n + rng.next(n) }).collect();
     let mut scratch = vec![0usize; R::scratch_size(n).max(P::scratch_size(n))];
+    let mut words = words_of::<P>();
     let mut tally = Tally::default();
-    let split = P::partition::<R, _, _>(&mut arr, 0, n, n, &mut scratch, &mut tally);
+    let split = P::partition::<R, _, _>(&mut arr, 0, n, n, &mut scratch, &mut words, &mut tally);
     assert!(arr[..split].iter().all(|&x| x < n) && arr[split..].iter().all(|&x| x >= n));
     (tally.moves as f64 / n as f64, tally.cmps as f64 / n as f64)
 }
@@ -318,9 +364,9 @@ pub fn code_cells_fit(block: fn(usize) -> usize) {
 }
 
 // Moves and comparisons that count are the logged ones, and a cell of the
-// scratch is written before it is read: the scratch is full of garbage the
-// replay's copy of it lacks, so a read of an unwritten cell would leave the two
-// arrays apart.
+// scratch and a word are written before they are read: both are full of garbage
+// the replay's copy of them lacks, so a read of an unwritten cell would leave the
+// two arrays apart.
 pub fn replays_without_a_gap<P: StablePartition>(block: fn(usize) -> usize) {
     const BACK: usize = 1 << 20;
     let mut rng = Rng(0x10661);
@@ -330,7 +376,9 @@ pub fn replays_without_a_gap<P: StablePartition>(block: fn(usize) -> usize) {
             let mut replay = Replay::of(&arr);
             let mut scratch = vec![usize::MAX; ReversalRotation::scratch_size(n).max(P::scratch_size(n))];
             replay.log_aux_arr_t(&scratch);
-            let split = P::partition::<ReversalRotation, _, _>(&mut arr, 0, n, BACK, &mut scratch, &mut replay);
+            let mut words = replay.create_aux_arr_split(P::SCRATCH_SECTIONS);
+            words.fill(usize::MAX);
+            let split = P::partition::<ReversalRotation, _, _>(&mut arr, 0, n, BACK, &mut scratch, &mut words, &mut replay);
             assert!(arr[..split].iter().all(|&x| x < BACK) && arr[split..].iter().all(|&x| x >= BACK), "n={n} shape={shape}");
             assert!(arr[..split].windows(2).all(|w| w[0] < w[1]) && arr[split..].windows(2).all(|w| w[0] < w[1]), "n={n} shape={shape}: order");
             assert_eq!(replay.main(), &arr[..], "n={n} shape={shape}: a move went unlogged or an unwritten cell was read");
@@ -368,8 +416,9 @@ pub fn nothing_to_move_costs_comparisons_only<P: StablePartition>(block: fn(usiz
             let mut arr: Vec<usize> = types.iter().enumerate().map(|(i, &f)| if f { i } else { n + i }).collect();
             let want = arr.clone();
             let mut scratch = vec![0usize; ReversalRotation::scratch_size(n).max(P::scratch_size(n))];
+            let mut words = words_of::<P>();
             let mut tally = Tally::default();
-            let split = P::partition::<ReversalRotation, _, _>(&mut arr, 0, n, n, &mut scratch, &mut tally);
+            let split = P::partition::<ReversalRotation, _, _>(&mut arr, 0, n, n, &mut scratch, &mut words, &mut tally);
             assert_eq!(arr, want, "{name}, n={n}: moved");
             assert_eq!(split, types.iter().filter(|&&f| f).count(), "{name}, n={n}: the split");
             assert_eq!((tally.moves, tally.cmps <= n + 2), (0, true), "{name}, n={n}: {} moves, {} comparisons", tally.moves, tally.cmps);
@@ -385,8 +434,9 @@ pub fn ends_in_place_cost_no_moves<P: StablePartition>() {
     let middle: Vec<usize> = (0..n / 4).map(|i| if rng.next(2) == 0 { i } else { n + i }).collect();
     let mut arr: Vec<usize> = (0..n / 8).chain(middle).chain((0..5 * n / 8).map(|i| n + i)).collect();
     let mut scratch = vec![0usize; ReversalRotation::scratch_size(n).max(P::scratch_size(n))];
+    let mut words = words_of::<P>();
     let mut tally = Tally::default();
-    let split = P::partition::<ReversalRotation, _, _>(&mut arr, 0, n, n, &mut scratch, &mut tally);
+    let split = P::partition::<ReversalRotation, _, _>(&mut arr, 0, n, n, &mut scratch, &mut words, &mut tally);
     assert!(arr[..split].iter().all(|&x| x < n) && arr[split..].iter().all(|&x| x >= n));
     assert!(tally.moves < n, "{} moves for a middle of {}", tally.moves, n / 4);
     assert!(tally.cmps < n + n / 16, "{} comparisons", tally.cmps);
@@ -395,8 +445,9 @@ pub fn ends_in_place_cost_no_moves<P: StablePartition>() {
 pub fn empty_and_lone_regions_cost_nothing<P: StablePartition>() {
     let mut arr = items(&[3, 1]);
     let mut tally = Tally::default();
-    let empty = P::partition::<ReversalRotation, _, _>(&mut arr, 1, 1, item(2), &mut [], &mut tally);
+    let mut words = words_of::<P>();
+    let empty = P::partition::<ReversalRotation, _, _>(&mut arr, 1, 1, item(2), &mut [], &mut words, &mut tally);
     assert_eq!((empty, tally.moves, tally.cmps), (1, 0, 0));
-    let lone = P::partition::<ReversalRotation, _, _>(&mut arr, 1, 2, item(2), &mut [], &mut tally);
+    let lone = P::partition::<ReversalRotation, _, _>(&mut arr, 1, 2, item(2), &mut [], &mut words, &mut tally);
     assert_eq!((lone, tally.moves, tally.cmps), (2, 0, 1));
 }

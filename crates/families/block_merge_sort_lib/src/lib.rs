@@ -13,7 +13,7 @@ use core::marker::PhantomData;
 
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::role::keys::{heap_sort_region, slide_merge, sort_region};
-use array_vis_bench_traits::role::{Auxiliary, Extraction, Keys, MergeStrategy, Rotation, RotationMerge};
+use array_vis_bench_traits::role::{with_words, Auxiliary, Extraction, Keys, MergeStrategy, Rotation, RotationMerge};
 use array_vis_bench_traits::Complexity;
 use merge_sort_lib::SmallerSideMerge;
 use sort_logger::{RegionKind, SortLogger};
@@ -92,7 +92,7 @@ impl<B: Auxiliary, K: Keys, R: Rotation, E: Extraction, M: MergeStrategy> BlockM
         // The keys come first in the carved region and the buffer behind them. A
         // block of `isqrt(n)` elements gives `n / isqrt(n)` blocks to tag.
         let (want_keys, want_buffer) = (K::key_count(n / n.isqrt() + 2), B::internal_size(n));
-        let found = E::extract::<R, T, U>(arr, 0, n, want_keys + want_buffer, &mut scratch, log);
+        let found = with_words::<T, U, _>(log, E::SCRATCH_SECTIONS, |log, words| E::extract::<R, T, U>(arr, 0, n, want_keys + want_buffer, &mut scratch, words, log));
         let (keys, buffer) = settle(found, want_keys, want_buffer, log);
         if keys > 0 { log.hold_region(arr, 0, keys, RegionKind::Keys); }
         if buffer > 0 { log.hold_region(arr, keys, buffer, RegionKind::Buffer); }
@@ -358,10 +358,11 @@ mod tests {
             hi: usize,
             want: usize,
             scratch: &mut [T],
+            words: &mut [usize],
             log: &mut U,
         ) -> usize {
             assert!(scratch.len() >= hi - lo, "a scratch of {} for a region of {}", scratch.len(), hi - lo);
-            ScanExtraction::extract::<R, T, U>(arr, lo, hi, want, scratch, log)
+            ScanExtraction::extract::<R, T, U>(arr, lo, hi, want, scratch, words, log)
         }
     }
 
@@ -375,6 +376,51 @@ mod tests {
         BlockMergeSort::<InArrayBuffer<Sixteenth>, InArrayKeys, AuxiliaryRotation, Needy>::sort(&mut arr, &mut log);
         let created = log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArrT { .. } | SortLog::CreateAuxArr { .. }));
         assert_eq!(created.count(), 1);
+    }
+
+    // An extraction that keeps words of its own, two sections whose length it
+    // checks and which it writes to through the logger.
+    struct WordyExtraction;
+    impl Extraction for WordyExtraction {
+        const NAME: &'static str = "wordy";
+        const SCRATCH_SECTIONS: &'static [usize] = &[5, 3];
+
+        fn extract<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+            arr: &mut [T],
+            lo: usize,
+            hi: usize,
+            want: usize,
+            scratch: &mut [T],
+            words: &mut [usize],
+            log: &mut U,
+        ) -> usize {
+            assert_eq!(words.len(), 8, "the words of the extraction");
+            log.write_data_u(words, 7, want);
+            ScanExtraction::extract::<R, T, U>(arr, lo, hi, want, scratch, words, log)
+        }
+    }
+
+    // The extraction's words are one allocation of the sort, an array a section,
+    // made before the extraction and freed after it, and an extraction without
+    // words makes none.
+    #[test]
+    fn an_extraction_with_words_is_handed_them_once_per_sort() {
+        sorts_stably::<BlockMergeSort<InArrayBuffer<Sqrt>, InArrayKeys, ReversalRotation, WordyExtraction>>("wiki, wordy");
+        let sorted = |sort: fn(&mut [usize], &mut VisualizerLogger<usize>)| {
+            let mut arr: Vec<usize> = (0..1000).map(|i| i * 7919 % 1009).collect();
+            let mut log = VisualizerLogger { type_ghost: std::marker::PhantomData, log: Vec::new() };
+            sort(&mut arr, &mut log);
+            assert!(arr.windows(2).all(|w| w[0] <= w[1]));
+            log.log
+        };
+        let events = sorted(BlockMergeSort::<InArrayBuffer<Sqrt>, InArrayKeys, ReversalRotation, WordyExtraction>::sort);
+        let created: Vec<(usize, usize)> = events.iter().filter_map(|e| if let SortLog::CreateAuxArr { name, length } = e { Some((*name, *length)) } else { None }).collect();
+        let freed: Vec<usize> = events.iter().filter_map(|e| if let SortLog::FreeAuxArr { name } = e { Some(*name) } else { None }).collect();
+        assert_eq!(created.iter().map(|(_, length)| *length).collect::<Vec<_>>(), [5, 3]);
+        assert_eq!(freed, created.iter().map(|(name, _)| *name).collect::<Vec<_>>());
+        assert_eq!(events.iter().filter(|e| matches!(e, SortLog::WriteDataU { .. })).count(), 1);
+        let events = sorted(BlockMergeSort::<InArrayBuffer<Sqrt>, InArrayKeys, ReversalRotation, ScanExtraction>::sort);
+        assert!(events.iter().all(|e| !matches!(e, SortLog::CreateAuxArr { .. } | SortLog::WriteDataU { .. })));
     }
 
     // A merge that wants a scratch of its own, as long as the array, and fails when

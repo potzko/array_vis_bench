@@ -17,18 +17,25 @@ pub trait Extraction {
     #[inline]
     fn scratch_size(_n: usize) -> usize { 0 }
 
+    /// Lengths of the fixed size arrays of `usize` words the extraction keeps,
+    /// as `StablePartition::SCRATCH_SECTIONS` has them, which a partition
+    /// extraction takes over. The caller allocates them once, by `with_words`.
+    const SCRATCH_SECTIONS: &'static [usize] = &[];
+
     /// Gather up to `want` distinct elements of `arr[lo..hi]` at its front,
     /// sorted, and return how many were found. Each is the first occurrence of
     /// its value, so an element that stays is never ahead of an equal one that
     /// left, and the elements that stay keep their order among equals. `scratch`
     /// holds `R::scratch_size(n)` or `Self::scratch_size(n)` cells, whichever is
-    /// more, for an `n` no smaller than the region.
+    /// more, for an `n` no smaller than the region, and `words` the sections of
+    /// `SCRATCH_SECTIONS`.
     fn extract<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         lo: usize,
         hi: usize,
         want: usize,
         scratch: &mut [T],
+        words: &mut [usize],
         log: &mut U,
     ) -> usize;
 }

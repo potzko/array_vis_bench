@@ -60,6 +60,7 @@ impl Extraction for ScanExtraction {
         hi: usize,
         want: usize,
         scratch: &mut [T],
+        _words: &mut [usize],
         log: &mut U,
     ) -> usize {
         extract_distinct::<R, T, U>(arr, lo, hi, want, scratch, log)
@@ -86,6 +87,7 @@ impl Extraction for PrefixSortExtraction {
         hi: usize,
         want: usize,
         scratch: &mut [T],
+        _words: &mut [usize],
         log: &mut U,
     ) -> usize {
         if want == 0 || lo >= hi { return 0; }
@@ -119,6 +121,7 @@ pub struct PartitionExtraction<P>(PhantomData<P>);
 
 impl<P: StablePartition> Extraction for PartitionExtraction<P> {
     const NAME: &'static str = "partition";
+    const SCRATCH_SECTIONS: &'static [usize] = P::SCRATCH_SECTIONS;
 
     fn scratch_size(n: usize) -> usize { P::scratch_size(n) }
 
@@ -128,6 +131,7 @@ impl<P: StablePartition> Extraction for PartitionExtraction<P> {
         hi: usize,
         want: usize,
         scratch: &mut [T],
+        words: &mut [usize],
         log: &mut U,
     ) -> usize {
         if want == 0 || lo >= hi { return 0; }
@@ -143,7 +147,7 @@ impl<P: StablePartition> Extraction for PartitionExtraction<P> {
         let mut region = (lo + sample, hi);
         for _ in 0..ROUNDS {
             let pivot = arr[lo + rank];
-            end = P::partition::<R, T, U>(arr, region.0, region.1, pivot, scratch, log);
+            end = P::partition::<R, T, U>(arr, region.0, region.1, pivot, scratch, words, log);
             split = rank_of(arr, lo, lo + sample, pivot, log);
             let selection = (split - lo) + (end - lo - sample);
             if selection < want {
@@ -184,7 +188,7 @@ fn rank_of<T: Ord + Copy, U: ?Sized + SortLogger<T>>(arr: &[T], a: usize, b: usi
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_util::{item, items, pairs, Item, Needy, Rng, Tally};
+    use crate::test_util::{item, items, pairs, Item, Needy, Rng, Tally, Wordy};
     use rotation_auxiliary::AuxiliaryRotation;
     use rotation_reversal::ReversalRotation;
     use rotation_trinity::TrinityRotation;
@@ -214,7 +218,8 @@ mod tests {
             let lo = rng.next(3).min(n - 1);
             let mut arr = arr0.clone();
             let mut scratch = vec![item(0); R::scratch_size(n).max(E::scratch_size(n))];
-            let found = E::extract::<R, _, _>(&mut arr, lo, n, want, &mut scratch, &mut NoOpLogger);
+            let mut words = vec![0; E::SCRATCH_SECTIONS.iter().sum()];
+            let found = E::extract::<R, _, _>(&mut arr, lo, n, want, &mut scratch, &mut words, &mut NoOpLogger);
             let first = firsts(&arr0[lo..]);
             let name = format!("{}, {}: round {round}: n={n} values={values} want={want} lo={lo}", E::NAME, R::NAME);
             assert_eq!(found, want.min(first.len()), "{name}: found");
@@ -274,6 +279,28 @@ mod tests {
         carves_first_occurrences::<PartitionExtraction<Needy>, AuxiliaryRotation>();
     }
 
+    // The words of a partition are its extraction's, and the scan and the prefix
+    // sort have none.
+    #[test]
+    fn an_extraction_asks_for_the_words_of_its_partition() {
+        assert_eq!(<PartitionExtraction<Wordy> as Extraction>::SCRATCH_SECTIONS, &[3, 0, 5]);
+        assert!(<PartitionExtraction<RotationPartition> as Extraction>::SCRATCH_SECTIONS.is_empty());
+        assert!(<ScanExtraction as Extraction>::SCRATCH_SECTIONS.is_empty());
+        assert!(<PrefixSortExtraction as Extraction>::SCRATCH_SECTIONS.is_empty());
+    }
+
+    // Every partition of the extraction is handed the words, the one slice, whole.
+    #[test]
+    fn a_partition_extraction_carves_through_the_words_of_its_partition_and_hands_them_on() {
+        carves_first_occurrences::<PartitionExtraction<Wordy>, ReversalRotation>();
+        carves_first_occurrences::<PartitionExtraction<Wordy>, AuxiliaryRotation>();
+        let mut rng = Rng(0x3D);
+        let mut arr = random(&mut rng, 4096, 1 << 30);
+        let mut words = vec![0; 8];
+        PartitionExtraction::<Wordy>::extract::<ReversalRotation, _, _>(&mut arr, 0, 4096, 64, &mut [], &mut words, &mut NoOpLogger);
+        assert!(words[7] > 0, "no partition wrote its size into the words");
+    }
+
     // The partition extraction's point: on distinct data the keys are the
     // smallest values of the region, so nothing of the rest is below them.
     #[test]
@@ -283,7 +310,7 @@ mod tests {
             let (n, want) = (2048 + rng.next(4096), 64 + rng.next(192));
             let arr0 = random(&mut rng, n, 1 << 30);
             let mut arr = arr0.clone();
-            let found = PartitionExtraction::<RotationPartition>::extract::<ReversalRotation, _, _>(&mut arr, 0, n, want, &mut [], &mut NoOpLogger);
+            let found = PartitionExtraction::<RotationPartition>::extract::<ReversalRotation, _, _>(&mut arr, 0, n, want, &mut [], &mut [], &mut NoOpLogger);
             assert_eq!(found, want);
             let highest_key = arr[want - 1].key;
             let lowest_rest = arr[want..].iter().map(|x| x.key).min().unwrap();
@@ -305,7 +332,7 @@ mod tests {
         arr[0].key = 0;
         arr[1].key = 1;
         let mut tally = Tally::default();
-        let found = PartitionExtraction::<SlidingPartition>::extract::<ReversalRotation, _, _>(&mut arr, 0, N, WANT, &mut [], &mut tally);
+        let found = PartitionExtraction::<SlidingPartition>::extract::<ReversalRotation, _, _>(&mut arr, 0, N, WANT, &mut [], &mut [], &mut tally);
         assert_eq!(found, WANT);
         assert!(tally.moves < 10 * N, "{} moves for {N} elements", tally.moves);
     }
@@ -337,8 +364,8 @@ mod tests {
             assert_eq!(extract(&mut arr, &mut tally), WANT);
             tally.moves
         };
-        let scan = cost(|arr, log| ScanExtraction::extract::<ReversalRotation, _, _>(arr, 0, N, WANT, &mut [], log));
-        let prefix = cost(|arr, log| PrefixSortExtraction::extract::<ReversalRotation, _, _>(arr, 0, N, WANT, &mut [], log));
+        let scan = cost(|arr, log| ScanExtraction::extract::<ReversalRotation, _, _>(arr, 0, N, WANT, &mut [], &mut [], log));
+        let prefix = cost(|arr, log| PrefixSortExtraction::extract::<ReversalRotation, _, _>(arr, 0, N, WANT, &mut [], &mut [], log));
         assert!(prefix * 3 < scan, "prefix sort {prefix} moves against the scan's {scan}");
     }
 }

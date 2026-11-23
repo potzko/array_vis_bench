@@ -113,6 +113,7 @@ impl<K: Walk> StablePartition for Masked<K> {
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        _words: &mut [usize],
         log: &mut U,
     ) -> usize {
         let b = block_len(hi - lo);
@@ -125,6 +126,7 @@ impl<K: Walk> StablePartition for Masked<K> {
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        _words: &mut [usize],
         log: &mut U,
     ) -> usize {
         let b = block_len(hi - lo);
@@ -298,6 +300,7 @@ mod tests {
             hi: usize,
             pivot: T,
             scratch: &mut [T],
+            _words: &mut [usize],
             log: &mut U,
         ) -> usize {
             by_masks::<K, R, T, U, _>(arr, lo, hi, Self::block(hi - lo), W, &move |log: &mut U, arr: &[T], i| log.cmp_lt_data(arr, i, pivot), scratch, log)
@@ -309,6 +312,7 @@ mod tests {
             hi: usize,
             pivot: T,
             scratch: &mut [T],
+            _words: &mut [usize],
             log: &mut U,
         ) -> usize {
             by_masks::<K, R, T, U, _>(arr, lo, hi, Self::block(hi - lo), W, &move |log: &mut U, arr: &[T], i| !log.cmp_gt_data(arr, i, pivot), scratch, log)
@@ -519,7 +523,7 @@ mod tests {
                     let keys: Vec<u32> = types(shape, n, block_len(n), &mut rng).iter().map(|&f| key(f, &mut rng)).collect();
                     let arr0 = items(&keys);
                     let mut arr = arr0.clone();
-                    let split = Masked::<K>::partition::<ReversalRotation, _, _>(&mut arr, 0, n, item(PIVOT), &mut [], &mut sort_logger::NoOpLogger);
+                    let split = Masked::<K>::partition::<ReversalRotation, _, _>(&mut arr, 0, n, item(PIVOT), &mut [], &mut [], &mut sort_logger::NoOpLogger);
                     assert_eq!((pairs(&arr), split), (reference(&arr0, |k| k < PIVOT), arr0.iter().filter(|x| x.key < PIVOT).count()), "{}: n={n} shape={shape}", K::LABEL);
                 }
             }

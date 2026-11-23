@@ -24,6 +24,7 @@ impl StablePartition for EncodedPartition {
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        _words: &mut [usize],
         log: &mut U,
     ) -> usize {
         by_encoding::<R, T, U, _>(arr, lo, hi, block_len(hi - lo), &move |log: &mut U, arr: &[T], i| log.cmp_lt_data(arr, i, pivot), scratch, log)
@@ -35,6 +36,7 @@ impl StablePartition for EncodedPartition {
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        _words: &mut [usize],
         log: &mut U,
     ) -> usize {
         by_encoding::<R, T, U, _>(arr, lo, hi, block_len(hi - lo), &move |log: &mut U, arr: &[T], i| !log.cmp_gt_data(arr, i, pivot), scratch, log)
@@ -149,6 +151,7 @@ mod tests {
             hi: usize,
             pivot: T,
             scratch: &mut [T],
+            _words: &mut [usize],
             log: &mut U,
         ) -> usize {
             let b = Self::scratch_size(hi - lo);
@@ -161,6 +164,7 @@ mod tests {
             hi: usize,
             pivot: T,
             scratch: &mut [T],
+            _words: &mut [usize],
             log: &mut U,
         ) -> usize {
             let b = Self::scratch_size(hi - lo);

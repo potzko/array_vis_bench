@@ -23,6 +23,7 @@ impl StablePartition for RotationPartition {
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        _words: &mut [usize],
         log: &mut U,
     ) -> usize {
         by_rotation::<R, T, U, _>(arr, lo, hi, &move |log: &mut U, arr: &[T], i| log.cmp_lt_data(arr, i, pivot), scratch, log)
@@ -34,6 +35,7 @@ impl StablePartition for RotationPartition {
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        _words: &mut [usize],
         log: &mut U,
     ) -> usize {
         by_rotation::<R, T, U, _>(arr, lo, hi, &move |log: &mut U, arr: &[T], i| !log.cmp_gt_data(arr, i, pivot), scratch, log)
@@ -100,6 +102,7 @@ impl StablePartition for SlidingPartition {
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        _words: &mut [usize],
         log: &mut U,
     ) -> usize {
         by_sliding::<R, T, U, _>(arr, lo, hi, &move |log: &mut U, arr: &[T], i| log.cmp_lt_data(arr, i, pivot), scratch, log)
@@ -111,6 +114,7 @@ impl StablePartition for SlidingPartition {
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        _words: &mut [usize],
         log: &mut U,
     ) -> usize {
         by_sliding::<R, T, U, _>(arr, lo, hi, &move |log: &mut U, arr: &[T], i| !log.cmp_gt_data(arr, i, pivot), scratch, log)
@@ -172,17 +176,17 @@ mod tests {
             let not_above = arr0[lo..].iter().filter(|x| x.key <= pivot).count();
             let name = format!("{}, {}: round {round}: n={n} values={values} pivot={pivot} lo={lo}", P::NAME, R::NAME);
             let mut log = Cmps::default();
-            let split = P::partition::<R, _, _>(&mut arr, lo, n, item(pivot), &mut scratch, &mut log);
+            let split = P::partition::<R, _, _>(&mut arr, lo, n, item(pivot), &mut scratch, &mut [], &mut log);
             assert_eq!(pairs(&arr[..lo]), pairs(&arr0[..lo]), "{name}: touched the prefix");
             assert_eq!(pairs(&arr[lo..]), reference(&arr0[lo..], |k| k < pivot), "{name}: below");
             assert_eq!(split, lo + below, "{name}: the split is off");
             assert_eq!(log.0, n - lo, "{name}: more than one comparison per element");
             let mut arr = arr0.clone();
-            let split = P::partition_at_most::<R, _, _>(&mut arr, lo, n, item(pivot), &mut scratch, &mut NoOpLogger);
+            let split = P::partition_at_most::<R, _, _>(&mut arr, lo, n, item(pivot), &mut scratch, &mut [], &mut NoOpLogger);
             assert_eq!(pairs(&arr[lo..]), reference(&arr0[lo..], |k| k <= pivot), "{name}: not above");
             assert_eq!(split, lo + not_above, "{name}: the at most split is off");
             let mut arr = arr0.clone();
-            let (equal, above) = P::partition_three_way::<R, _, _>(&mut arr, lo, n, item(pivot), &mut scratch, &mut NoOpLogger);
+            let (equal, above) = P::partition_three_way::<R, _, _>(&mut arr, lo, n, item(pivot), &mut scratch, &mut [], &mut NoOpLogger);
             assert_eq!(pairs(&arr[lo..]), three_way(&arr0[lo..], pivot), "{name}: three way");
             assert_eq!((equal, above), (lo + below, lo + not_above), "{name}: the three way splits are off");
         }
@@ -214,11 +218,11 @@ mod tests {
     #[test]
     fn an_empty_region_and_an_unmoved_one_cost_nothing() {
         let mut arr = items(&[3, 1, 2]);
-        let empty = RotationPartition::partition::<ReversalRotation, _, _>(&mut arr, 2, 2, item(9), &mut [], &mut NoOpLogger);
+        let empty = RotationPartition::partition::<ReversalRotation, _, _>(&mut arr, 2, 2, item(9), &mut [], &mut [], &mut NoOpLogger);
         assert_eq!(empty, 2);
-        let all = SlidingPartition::partition::<ReversalRotation, _, _>(&mut arr, 0, 3, item(9), &mut [], &mut NoOpLogger);
+        let all = SlidingPartition::partition::<ReversalRotation, _, _>(&mut arr, 0, 3, item(9), &mut [], &mut [], &mut NoOpLogger);
         assert_eq!((all, pairs(&arr)), (3, vec![(3, 0), (1, 1), (2, 2)]));
-        let none = SlidingPartition::partition::<ReversalRotation, _, _>(&mut arr, 0, 3, item(0), &mut [], &mut NoOpLogger);
+        let none = SlidingPartition::partition::<ReversalRotation, _, _>(&mut arr, 0, 3, item(0), &mut [], &mut [], &mut NoOpLogger);
         assert_eq!((none, pairs(&arr)), (0, vec![(3, 0), (1, 1), (2, 2)]));
     }
 }

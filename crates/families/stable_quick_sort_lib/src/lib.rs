@@ -12,7 +12,7 @@ use core::marker::PhantomData;
 use array_vis_bench_traits::composable::{HasSpace, HasStability, HasTimeBounds};
 use array_vis_bench_traits::role::keys::sort_region;
 use array_vis_bench_traits::role::pivot::median_index;
-use array_vis_bench_traits::role::{Rotation, StablePartition};
+use array_vis_bench_traits::role::{with_words, Rotation, StablePartition};
 use array_vis_bench_traits::Complexity;
 use sort_logger::SortLogger;
 
@@ -20,8 +20,8 @@ use sort_logger::SortLogger;
 pub mod test_util;
 
 /// `P` is the `StablePartition` that splits a region around the pivot and `R` the
-/// `Rotation` it rotates with. The scratch the two share is the one allocation
-/// of the sort.
+/// `Rotation` it rotates with. The scratch the two share is one allocation of the
+/// sort, and the fixed size words of the partition are the other.
 pub struct StableQuickSort<P, R>(PhantomData<(P, R)>);
 
 impl<P: StablePartition, R: Rotation> StableQuickSort<P, R> {
@@ -30,7 +30,7 @@ impl<P: StablePartition, R: Rotation> StableQuickSort<P, R> {
         if n < 2 { return; }
         let cells = R::scratch_size(n).max(P::scratch_size(n));
         let mut scratch = if cells > 0 { log.create_aux_arr_t(cells) } else { Vec::new() };
-        sort_range::<P, R, T, U>(arr, 0, n, &mut scratch, log);
+        with_words::<T, U, _>(log, P::SCRATCH_SECTIONS, |log, words| sort_range::<P, R, T, U>(arr, 0, n, &mut scratch, words, log));
         if cells > 0 { log.free_aux_arr_t(&scratch); }
     }
 }
@@ -91,18 +91,19 @@ fn sort_range<P: StablePartition, R: Rotation, T: Ord + Copy, U: ?Sized + SortLo
     lo: usize,
     hi: usize,
     scratch: &mut [T],
+    words: &mut [usize],
     log: &mut U,
 ) {
     let (mut lo, mut hi) = (lo, hi);
     while hi - lo > SMALL {
         let pivot = pivot_of(arr, lo, hi, log);
-        let equal = P::partition::<R, T, U>(arr, lo, hi, pivot, scratch, log);
-        let above = if equal == lo { P::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, log) } else { equal };
+        let equal = P::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log);
+        let above = if equal == lo { P::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, words, log) } else { equal };
         if equal - lo < hi - above {
-            sort_range::<P, R, T, U>(arr, lo, equal, scratch, log);
+            sort_range::<P, R, T, U>(arr, lo, equal, scratch, words, log);
             lo = above;
         } else {
-            sort_range::<P, R, T, U>(arr, above, hi, scratch, log);
+            sort_range::<P, R, T, U>(arr, above, hi, scratch, words, log);
             hi = equal;
         }
     }
@@ -236,6 +237,79 @@ mod tests {
         assert_eq!(log.log.iter().filter(|e| matches!(e, SortLog::CreateAuxArrT { .. })).count(), 0);
     }
 
+    // A partition by rotation that keeps words of its own, three sections with an
+    // empty one between, whose length it checks on every call and which it writes
+    // to through the logger.
+    struct Wordy;
+    impl StablePartition for Wordy {
+        const NAME: &'static str = "wordy";
+        const MOVES: Complexity = Complexity::N_LOG_N;
+        const SCRATCH_SECTIONS: &'static [usize] = &[3, 0, 5];
+
+        fn partition<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+            arr: &mut [T],
+            lo: usize,
+            hi: usize,
+            pivot: T,
+            scratch: &mut [T],
+            words: &mut [usize],
+            log: &mut U,
+        ) -> usize {
+            assert_eq!(words.len(), 8, "the words of a call");
+            log.write_data_u(words, 7, hi - lo);
+            RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
+        }
+
+        fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+            arr: &mut [T],
+            lo: usize,
+            hi: usize,
+            pivot: T,
+            scratch: &mut [T],
+            words: &mut [usize],
+            log: &mut U,
+        ) -> usize {
+            assert_eq!(words.len(), 8, "the words of a call");
+            log.write_data_u(words, 7, hi - lo);
+            RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
+        }
+    }
+
+    // The names of the arrays of words a sort created, those it freed, and the
+    // writes to words. The arrays of elements are none of the three.
+    fn word_events(log: &sort_logger::VisualizerLogger<usize>) -> (Vec<usize>, Vec<usize>, usize) {
+        use sort_logger::SortLog;
+        let created: Vec<usize> = log.log.iter().filter_map(|e| if let SortLog::CreateAuxArr { name, .. } = e { Some(*name) } else { None }).collect();
+        let freed = log.log.iter().filter_map(|e| if let SortLog::FreeAuxArr { name } = e { Some(*name) } else { None });
+        let freed = freed.filter(|name| created.contains(name)).collect();
+        (created, freed, log.log.iter().filter(|e| matches!(e, SortLog::WriteDataU { .. })).count())
+    }
+
+    // The words are one allocation of the sort, an array for each section that has
+    // cells, however many partitions use them.
+    #[test]
+    fn the_words_are_created_once_and_freed_once_per_sort() {
+        use sort_logger::VisualizerLogger;
+        let mut arr: Vec<usize> = (0..5000).map(|i| i * 7919 % 5003).collect();
+        let mut log = VisualizerLogger { type_ghost: PhantomData, log: Vec::new() };
+        StableQuickSort::<Wordy, ReversalRotation>::sort(&mut arr, &mut log);
+        assert!(arr.windows(2).all(|w| w[0] <= w[1]));
+        let (created, freed, writes) = word_events(&log);
+        assert_eq!((created.len(), &freed), (2, &created));
+        assert!(writes > 100, "{writes} writes to the words: a partition each");
+    }
+
+    #[test]
+    fn a_partition_without_words_makes_no_arrays_of_them() {
+        use sort_logger::VisualizerLogger;
+        for sort in [StableQuickSort::<RotationPartition, ReversalRotation>::sort, StableQuickSort::<EncodedPartition, ReversalRotation>::sort] {
+            let mut arr: Vec<usize> = (0..5000).map(|i| i * 7919 % 5003).collect();
+            let mut log = VisualizerLogger { type_ghost: PhantomData, log: Vec::new() };
+            sort(&mut arr, &mut log);
+            assert_eq!(word_events(&log), (vec![], vec![], 0));
+        }
+    }
+
     // A comparison per element per level of a split that halves, give or take
     // the pivot's median of three and the insertion sorted leaves.
     #[test]
@@ -268,12 +342,13 @@ mod tests {
             hi: usize,
             _pivot: T,
             scratch: &mut [T],
+            words: &mut [usize],
             log: &mut U,
         ) -> usize {
             let here = 0u8;
             LOWEST.with(|c| c.set(c.get().min(&here as *const u8 as usize)));
             let least = *arr[lo..hi].iter().min().unwrap();
-            RotationPartition::partition::<R, T, U>(arr, lo, hi, least, scratch, log)
+            RotationPartition::partition::<R, T, U>(arr, lo, hi, least, scratch, words, log)
         }
 
         fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -282,10 +357,11 @@ mod tests {
             hi: usize,
             _pivot: T,
             scratch: &mut [T],
+            words: &mut [usize],
             log: &mut U,
         ) -> usize {
             let least = *arr[lo..hi].iter().min().unwrap();
-            RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, least, scratch, log)
+            RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, least, scratch, words, log)
         }
     }
 
@@ -318,9 +394,10 @@ mod tests {
             hi: usize,
             pivot: T,
             scratch: &mut [T],
+            words: &mut [usize],
             log: &mut U,
         ) -> usize {
-            RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, log)
+            RotationPartition::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
         }
 
         fn partition_at_most<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
@@ -329,10 +406,11 @@ mod tests {
             hi: usize,
             pivot: T,
             scratch: &mut [T],
+            words: &mut [usize],
             log: &mut U,
         ) -> usize {
             AT_MOST.with(|c| c.set(c.get() + 1));
-            RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, log)
+            RotationPartition::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
         }
     }
 

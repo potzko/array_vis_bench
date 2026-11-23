@@ -3,7 +3,9 @@
 //! keeping its order. The partition extraction of a block merge sort selects
 //! its sample with one, and a stable quick sort partitions with one. A filler
 //! rotates with the `Rotation` it is handed and may use the scratch as a buffer
-//! of its own, which the caller allocates once for the two together.
+//! of its own, which the caller allocates once for the two together. The fixed
+//! size arrays a partition keeps, which a C version holds on the stack, are the
+//! words the caller allocates once as well.
 
 use crate::Complexity;
 use crate::Rotation;
@@ -24,16 +26,26 @@ pub trait StablePartition {
     #[inline]
     fn scratch_size(_n: usize) -> usize { 0 }
 
+    /// Lengths of the fixed size arrays of `usize` words the partition keeps,
+    /// the ones a C version holds on the stack: bit masks, counts, a table of
+    /// places. The caller allocates them once, as one array in sections drawn
+    /// side by side, by `with_words`, and hands the whole to every call as
+    /// `words`, so the visualiser shows them and every write to them is logged.
+    /// A partition without any leaves the default and gets an empty slice.
+    const SCRATCH_SECTIONS: &'static [usize] = &[];
+
     /// Move the elements of `arr[lo..hi]` below `pivot` to its front, each side
     /// keeping its order, and return where the rest begins. `scratch` holds
     /// `R::scratch_size(n)` or `Self::scratch_size(n)` cells, whichever is more,
-    /// for an `n` no smaller than the region.
+    /// for an `n` no smaller than the region, and `words` the sections of
+    /// `SCRATCH_SECTIONS`, laid end to end, holding what the calls before left.
     fn partition<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
         arr: &mut [T],
         lo: usize,
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        words: &mut [usize],
         log: &mut U,
     ) -> usize;
 
@@ -44,6 +56,7 @@ pub trait StablePartition {
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        words: &mut [usize],
         log: &mut U,
     ) -> usize;
 
@@ -56,10 +69,11 @@ pub trait StablePartition {
         hi: usize,
         pivot: T,
         scratch: &mut [T],
+        words: &mut [usize],
         log: &mut U,
     ) -> (usize, usize) {
-        let equal = Self::partition::<R, T, U>(arr, lo, hi, pivot, scratch, log);
-        let above = Self::partition_at_most::<R, T, U>(arr, equal, hi, pivot, scratch, log);
+        let equal = Self::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log);
+        let above = Self::partition_at_most::<R, T, U>(arr, equal, hi, pivot, scratch, words, log);
         (equal, above)
     }
 }
