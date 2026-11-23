@@ -17,6 +17,7 @@ pub mod rotation;
 pub mod scratchspace;
 pub mod small_sort;
 pub mod stable_partition;
+pub mod words;
 
 pub use auxiliary::Auxiliary;
 pub use buffer_size::BufferSize;
@@ -30,6 +31,7 @@ pub use pivot::{DualPivotSelector, NoPivot, PivotInput, PivotSelector};
 pub use quick_select::QuickSelect;
 pub use rotation::Rotation;
 pub use stable_partition::StablePartition;
+pub use words::with_words;
 pub use small_sort::{
     insertion_sort_with, windowed_insertion_sort_with, DeferredSmallSort, InsertionStrategy,
     NonTrivialSmallSort, SetSizeSmallSort, SmallSort, SmallSortAdapter,
