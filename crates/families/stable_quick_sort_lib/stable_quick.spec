@@ -8,7 +8,7 @@ component stable_quick_sort
   type      StableQuickSort<{part}, {rot}>
   label     stable quick sort<partition: {part}, rotation: {rot}>
   provides  Sort
-  menu      quick sorts / stable
+  menu      stable quick sorts
   slot      part StablePartition
   slot      rot Rotation
 end
