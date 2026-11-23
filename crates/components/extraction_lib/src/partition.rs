@@ -64,7 +64,7 @@ fn by_rotation<R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut
 // One pass from the right: a match goes out to the scratch and an element that
 // stays shifts right by the matches passed, so the matches' slots open at the
 // front and the scratch empties into them in order. `n + m` moves for `m` matches.
-fn buffered<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
+pub(crate) fn buffered<T: Ord + Copy, U: ?Sized + SortLogger<T>, F: Fn(&mut U, &[T], usize) -> bool>(
     arr: &mut [T],
     lo: usize,
     hi: usize,

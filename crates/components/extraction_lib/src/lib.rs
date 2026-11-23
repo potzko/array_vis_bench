@@ -13,11 +13,13 @@ use array_vis_bench_traits::role::{Extraction, Rotation, StablePartition};
 use scratchspace_lib::bufferless_merge;
 use sort_logger::SortLogger;
 
+pub mod encoded;
 pub mod partition;
 
 #[cfg(test)]
 pub mod test_util;
 
+pub use encoded::EncodedPartition;
 pub use partition::{RotationPartition, SlidingPartition};
 
 // Runs of RUN elements are insertion sorted before the first merge.

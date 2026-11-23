@@ -215,6 +215,7 @@ version = "0.1.0"
 dependencies = [
  "array_vis_bench_traits",
  "rotation_auxiliary",
+ "rotation_block_cycle",
  "rotation_reversal",
  "rotation_trinity",
  "scratchspace_lib",

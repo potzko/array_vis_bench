@@ -112,3 +112,52 @@ impl<T: Copy + Ord> SortLogger<T> for Tally {
         }
     }
 }
+
+/// Replays the events onto copies of the arrays, so that comparing the copy of
+/// the array that was partitioned with the array itself shows that no move went
+/// unlogged. An event finds its array by address, as the visualiser does, so a
+/// sub slice of the array, which is what a rotation is handed, resolves to the
+/// right copy and offset.
+pub struct Replay {
+    arrays: Vec<(usize, Vec<usize>)>,
+}
+impl Replay {
+    pub fn of(arr: &[usize]) -> Self { Replay { arrays: vec![(arr.as_ptr() as usize, arr.to_vec())] } }
+
+    pub fn main(&self) -> &[usize] { &self.arrays[0].1 }
+
+    // The copy an address falls in, and the offset of the address in it.
+    fn at(&mut self, name: usize) -> (&mut Vec<usize>, usize) {
+        let size = std::mem::size_of::<usize>();
+        let (base, copy) = self
+            .arrays
+            .iter_mut()
+            .filter(|(base, copy)| *base <= name && name < *base + copy.len() * size)
+            .last()
+            .expect("an event names an array that is not live");
+        (copy, (name - *base) / size)
+    }
+}
+impl SortLogger<usize> for Replay {
+    fn log(&mut self, event: SortLog<usize>) {
+        match event {
+            SortLog::Swap { name, ind_a, ind_b } => {
+                let (copy, off) = self.at(name);
+                copy.swap(ind_a + off, ind_b + off);
+            }
+            SortLog::WriteInArr { name, ind_a, ind_b } => {
+                let (copy, off) = self.at(name);
+                copy[ind_a + off] = copy[ind_b + off];
+            }
+            SortLog::WriteData { name, ind, data } | SortLog::WriteDataU { name, ind, data } => {
+                let (copy, off) = self.at(name);
+                copy[ind + off] = data;
+            }
+            SortLog::CreateAuxArrT { name, length } | SortLog::CreateAuxArr { name, length } => {
+                self.arrays.push((name, vec![0; length]));
+            }
+            SortLog::FreeAuxArr { name } => self.arrays.retain(|(base, _)| *base != name),
+            _ => {}
+        }
+    }
+}

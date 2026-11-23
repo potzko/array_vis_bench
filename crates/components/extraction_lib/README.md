@@ -2,7 +2,7 @@
 
 How a block merge sort carves its keys and buffer, the `Extraction` axis, and
 the stable partitions, the `StablePartition` axis, that one of its fillers
-selects with.
+selects with and that a stable quick sort is built on.
 
 An extraction gathers `want` distinct elements of a region at its front,
 sorted, each the first occurrence of its value, the rest keeping their order
@@ -30,5 +30,19 @@ partition for a region the rotation's scratch holds: `O(n)` comparisons,
 scan, each run of elements that stay costing one rotation of the block past
 it: `O(n)` comparisons and `O(n + m r)` moves for `m` matches in `r` runs,
 linear when they are few or clustered and quadratic at worst.
+`EncodedPartition` is linear whatever the shape, `O(n)` moves and
+comparisons with `O(log n)` cells of scratch, the idea of Katajainen and
+Pasanen, "Stable minimum space partitioning in linear time" (BIT, 1992), and
+of aphitorite's Logsort partition. One scan gathers the region into blocks of
+one type each, with a buffer of a block for the back elements; a block swap
+then puts the blocks in order, and the one thing a block swap cannot do,
+remember which block was which, is written into the elements: the `j`th block
+of the minority type and the `j`th of the other type swap the cells at the set
+bits of `j`, which the pivot can read back since the two elements it swaps are
+never alike, so no element has to be distinct. The scratch is a block, eight
+times the logarithm of the region, which the partition lets go of before its
+last rotation, so it is allocated with the rotation's once, by the role's
+`scratch_size`; a region that scratch holds is partitioned in one buffered
+pass instead.
 
 Its catalog components are declared in `extraction.spec`.
