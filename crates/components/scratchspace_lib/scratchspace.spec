@@ -181,3 +181,25 @@ component keys_none
   label    none
   provides Keys
 end
+
+# The marks of a level heap sort's dead cells, a flag per buffer cell: a byte
+# or a bit of an aux array, or a pair of the array's own distinct elements, in
+# order or swapped.
+
+component marks_bytes
+  type     ByteMarks
+  label    bytes
+  provides Marks
+end
+
+component marks_bits
+  type     BitMarks
+  label    bits
+  provides Marks
+end
+
+component marks_in_array
+  type     InArrayMarks
+  label    in array
+  provides Marks
+end

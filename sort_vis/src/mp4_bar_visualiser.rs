@@ -122,6 +122,48 @@ fn compute_array_scales(actions: &[SortLog<usize>]) -> Vec<f64> {
     scales
 }
 
+// Converting rgb24 to YUV uses ffmpeg's BT.601 by default and leaves it untagged,
+// and players take untagged HD to be BT.709, so the colours shift. Convert with
+// BT.709 limited range and say so in the stream.
+const YUV_COLOUR: [&str; 10] = [
+    "-vf", "scale=out_color_matrix=bt709:out_range=tv",
+    "-colorspace", "bt709",
+    "-color_primaries", "bt709",
+    "-color_trc", "bt709",
+    "-color_range", "tv",
+];
+
+/// The ffmpeg arguments between the input spec and the output path.
+fn output_args(encoding: &Encoding) -> Vec<&'static str> {
+    let yuv = |codec_args: &[&'static str]| [codec_args, &YUV_COLOUR].concat();
+    // The index goes in front of the video so a player or an upload check can
+    // read the stream's shape without fetching the whole file.
+    let faststart = ["-movflags", "+faststart"];
+    let codec_args = match encoding {
+        Encoding::Lossless => vec![
+            // libx264rgb stores raw RGB, no YUV conversion, no quality loss.
+            // colormatrix=GBR signals to players not to apply a YUV matrix on playback.
+            "-c:v", "libx264rgb",
+            "-crf", "0",
+            "-preset", "medium",
+            "-x264-params", "colormatrix=GBR:colorprim=bt709:transfer=bt709",
+        ],
+        Encoding::Lossy => yuv(&[
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv444p",  // 4:4:4 avoids chroma blur on sharp edges
+            "-crf", "23",
+            "-preset", "medium",
+        ]),
+        Encoding::Fast => yuv(&[
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-crf", "28",
+            "-preset", "ultrafast",
+        ]),
+    };
+    [codec_args, faststart.to_vec()].concat()
+}
+
 impl Mp4Visualizer {
     pub fn new(config: Mp4Config) -> Self {
         Self { config }
@@ -142,30 +184,7 @@ impl Mp4Visualizer {
             "-i", "pipe:0",
         ];
 
-        // Mode-specific output args
-        match self.config.encoding {
-            Encoding::Lossless => args.extend([
-                // libx264rgb stores raw RGB — no YUV conversion, no quality loss.
-                // colormatrix=GBR signals to players not to apply a YUV matrix on playback.
-                "-c:v", "libx264rgb",
-                "-crf", "0",
-                "-preset", "medium",
-                "-x264-params", "colormatrix=GBR:colorprim=bt709:transfer=bt709",
-            ]),
-            Encoding::Lossy => args.extend([
-                "-c:v", "libx264",
-                "-pix_fmt", "yuv444p",  // 4:4:4 avoids chroma blur on sharp edges
-                "-crf", "23",
-                "-preset", "medium",
-            ]),
-            Encoding::Fast => args.extend([
-                "-c:v", "libx264",
-                "-pix_fmt", "yuv420p",
-                "-crf", "28",
-                "-preset", "ultrafast",
-            ]),
-        }
-
+        args.extend(output_args(&self.config.encoding));
         args.push(&self.config.output_path);
 
         Command::new("ffmpeg")
@@ -841,6 +860,33 @@ mod tests {
 
     fn region(start: usize, len: usize, kind: RegionKind, held: bool) -> SortLog<usize> {
         SortLog::Region { name: 0x1000, start, len, kind, held }
+    }
+
+    fn has_pair(args: &[&str], key: &str, value: &str) -> bool {
+        args.windows(2).any(|pair| pair == [key, value])
+    }
+
+    #[test]
+    fn a_yuv_encoding_converts_with_and_is_tagged_bt709_limited_range() {
+        for encoding in [Encoding::Lossy, Encoding::Fast] {
+            let args = output_args(&encoding);
+            assert!(has_pair(&args, "-vf", "scale=out_color_matrix=bt709:out_range=tv"));
+            for (key, value) in [("-colorspace", "bt709"), ("-color_primaries", "bt709"), ("-color_trc", "bt709"), ("-color_range", "tv")] {
+                assert!(has_pair(&args, key, value), "missing {key} {value}");
+            }
+        }
+    }
+
+    #[test]
+    fn every_encoding_puts_the_index_in_front_of_the_video() {
+        for encoding in [Encoding::Lossless, Encoding::Lossy, Encoding::Fast] {
+            assert!(has_pair(&output_args(&encoding), "-movflags", "+faststart"));
+        }
+    }
+
+    #[test]
+    fn the_rgb_encoding_has_no_yuv_conversion() {
+        assert!(!output_args(&Encoding::Lossless).contains(&"-vf"));
     }
 
     #[test]

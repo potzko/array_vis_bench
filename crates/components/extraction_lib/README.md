@@ -69,4 +69,14 @@ and `masked<table>`.
 `PartitionExtraction<P>` asks for the words of its partition and hands them on,
 and the other fillers ask for none.
 
+`BlockPartition` works through a workspace its caller lends, a buffer of
+elements and a mark per cell: the scan streams the matches into one half of
+the buffer and the rest into the other, a half that fills goes back into
+the cells the scan has emptied as a whole block, and the blocks are then
+moved into order along the cycles of their permutation, read off a mark per
+block for its kind and kept track of by a second: `O(n)` comparisons and
+moves for a region up to a quarter of the buffer's square, a longer one
+halved and rotated. Without a workspace it is the rotation partition, so it
+is not offered to the partition extraction.
+
 Its catalog components are declared in `extraction.spec`.

@@ -26,11 +26,13 @@ use sort_logger::SortLogger;
 pub mod buffers;
 pub mod bufferless;
 pub mod keys;
+pub mod marks;
 pub mod sizes;
 pub mod workflows;
 pub use buffers::{ExternalBuffer, InArrayBuffer};
 pub use bufferless::bufferless_merge;
 pub use keys::{InArrayKeys, NoKeys};
+pub use marks::{BitMarks, ByteMarks, InArrayMarks};
 pub use sizes::{Fixed, Half, Log, Sixteenth, Sqrt, TenLog, TwoSqrt};
 pub use workflows::{Exercise, ParkLoop, ParkSweep, Relocations, ScratchspaceMergeSort};
 

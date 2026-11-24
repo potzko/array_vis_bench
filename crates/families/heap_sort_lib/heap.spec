@@ -8,6 +8,7 @@
 #
 # This fragment OWNS the heap-cluster's shared role components HeapDir (2) and
 # HeapPart (3) — weak_heap and beap REFERENCE these roles (do not redeclare).
+# Smooth sort references HeapDir.
 # Everything else (HeapArity, HeapPiv, DeepHeapify*) is heap-specific.
 
 # ════════════════════════ Arity (4) ════════════════════════

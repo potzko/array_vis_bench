@@ -5,7 +5,9 @@
 # smallest values selected by a `StablePartition` around a pivot read off that
 # prefix. The partitions are by rotation, by a block riding behind the scan, or
 # by blocks put in order with their ranks written into the elements, which are
-# gathered through a buffer or made by bit masks over windows of the region.
+# gathered through a buffer or made by bit masks over windows of the region, or
+# by whole blocks through a workspace the caller lends, which the extraction
+# does not have, so the block partition is not one of its fillers' partitions.
 
 component ex_scan
   type     ScanExtraction
@@ -38,6 +40,12 @@ component sp_sliding
   provides StablePartition
 end
 
+component sp_block
+  type     BlockPartition
+  label    block
+  provides StablePartition
+end
+
 component sp_encoded
   type     EncodedPartition
   label    encoded
@@ -53,9 +61,9 @@ end
 
 # The walk of the masked partition, how the cycles of a window's permutation
 # find each element's place: by popcounts of the window's mask as the cycle is
-# walked, in 290 bytes of locals, or from a table of 16 bit places filled before
-# any element moves, in 2210 bytes. The table is the faster walk, and the popcount
-# is the one that spends bits where the table spends cells.
+# walked, with 16 words of done marks, or from a table of places filled before
+# any element moves, a word a position. The table is the faster walk, and the
+# popcount is the one that spends bits where the table spends cells.
 
 component mw_popcount
   type     Popcount

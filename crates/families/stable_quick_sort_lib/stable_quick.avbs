@@ -1,11 +1,14 @@
 // Stable quick sort family, query owned by stable_quick_sort_lib. Every stable
-// partition but the sliding one, so the rotation, encoded and masked partitions,
-// the masked one by each of its two walks, by every rotation, 60 entries. The sliding partition gathers the matches in one block
-// riding behind the scan, `O(n + m r)` moves for `m` matches in `r` runs, which
-// on a split of random keys is about `n^2 / 16`: a minute at 2^18 elements, so it
-// is measured by the record and not catalogued.
+// partition but the sliding and the block ones, so the rotation, encoded and
+// masked partitions, the masked one by each of its two walks, by every rotation,
+// 60 entries. The sliding partition gathers the matches in one block riding
+// behind the scan, `O(n + m r)` moves for `m` matches in `r` runs, which on a
+// split of random keys is about `n^2 / 16`: a minute at 2^18 elements, so it is
+// measured by the record and not catalogued. The block partition works through a
+// workspace its caller lends, which the quick sort has none of, and is the
+// rotation partition without one.
 
 StableQuickSorts: SortingAlgorithm = SortingAlgorithm<StableQuickSort<
-    part = _ - { SlidingPartition },
+    part = _ - { SlidingPartition, BlockPartition },
     rot = _
 >>

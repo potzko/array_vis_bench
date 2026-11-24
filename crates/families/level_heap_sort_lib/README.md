@@ -1,9 +1,9 @@
 # `level_heap_sort_lib`
 
-Level heap sort, `LevelHeapSort<B, P, R>`: a stable heap sort through a
+Level heap sort, `LevelHeapSort<B, M, P, R>`: a stable heap sort through a
 buffer of elements smaller than the array, over a buffer `B`, carved from
-the array or allocated beside it and sized by a `BufferSize`, a stable
-partition `P` and a rotation `R`.
+the array or allocated beside it and sized by a `BufferSize`, the marks `M`
+of its dead cells, a stable partition `P` and a rotation `R`.
 
 A heap sort is unstable because a pop moves the element at the array's end
 to the root, across every equal of it. Out of place there is nothing to
@@ -30,7 +30,30 @@ can be the square root the block sorts carve. A carved buffer is distinct,
 so an unstable heap sort puts it back in order at the end, and it slides
 home like a block sort's.
 
+The marks are a flag per buffer cell, and `M` is where they are kept: a byte
+or a bit of an aux array, or two more distinct elements of the array per
+cell, carved along with the buffer, in order while the cell is live and
+swapped once it is dead. Carved marks are read by a comparison and written
+by a swap, and with a carved buffer the sort allocates nothing.
+
+The time is the level build's. Its comparisons are `O(n log n)` expected,
+but a stable partition with no scratch moves `n log n`, and one runs over
+every element at each of the `log (n / B)` depths, so the sort is
+`O(n log^2 n)` expected over an in place rotation and a buffer smaller than
+linear. It is `O(n log n)` with a linear buffer, reached in a constant
+number of depths, or over a rotation whose scratch is linear, which the
+partition then makes one pass through. The selection is a quickselect, so
+the worst case is `n` partitions of the range, `O(n^2 log n)` in place.
+
+The buffer and the marks lie idle while a range is levelled, so the sort
+lends them to its partition. The rotation partition has no use for them.
+The block partition works through them and is linear for a buffer of the
+square root or more, which makes the sort `O(n log n)` expected with nothing
+allocated beyond what the buffer and the marks already are.
+
 Its catalog component is declared in `level_heap.spec` and built by
-`level_heap.avbs`: `LevelHeapSorts`, 210 entries over every buffer and rotation by the rotation
-partition, and `LevelHeapEncoded`, 28 entries by the encoded partition over the reversal and
-auxiliary rotations, and `LevelHeapMasked`, the same 28 by the masked partition.
+`level_heap.avbs`: `LevelHeapInArray` and `LevelHeapExternal`, 240 entries
+each, four buffer sizes by two marks by the rotation and block partitions by
+every rotation, and `LevelHeapInArrayStudy` and `LevelHeapExternalStudy`, 48
+each, the same buffers and marks by the encoded partition and the masked one
+of each walk over the reversal and auxiliary rotations.

@@ -44,7 +44,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 
 ## Current catalog
 
-2845 entries are emitted from the build at the tip of this branch.
+3199 entries are emitted from the build at the tip of this branch.
 
 | family | entries | notes |
 |---|---|---|
@@ -58,6 +58,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 | quick select | 56 | recursive and iterative, pivoted and heap extract |
 | quick heap sorts | 34 | 16 classic + 16 deferred + 2 set quick select |
 | shell sorts | 30 | 9 gap sequences and 6 rod gap chains x 2 drivers |
+| smooth sorts | 72 | the heap a forest of post order trees: 2 directions x 3 tree shapes (Leonardo, perfect, Narayana) x 3 sifts x the roots sorted over 3 builds or scanned over 1 |
 | circle sorts | 17 | |
 | rod sorts | 114 | 6 branching strategies x 19 merges, sixteen of them over the tree sort trees, keyed by copies or in place |
 | bubble sorts | 6 | 3 base + 3 odd even |
@@ -68,7 +69,7 @@ each one registers an `AlgorithmEntry` into a linkme distributed slice.
 | tree sorts | 8 | avl trees of slack 1, 2, 4, 8, 16 and 32, a fixed slack 1 avl and naive, over one node store |
 | index heap sorts | 1 | a heap of indices, the index the secondary key, stable at one word per element |
 | tagged heap sort | 1 | a stable heap sort in pre-order, built by selection, a stamp only for the element a pop moves |
-| level heap sorts | 294 | a stable heap sort through a buffer, each level of the level ordered heap heaped out of place, 7 sizes in the array or outside it x 15 rotations, plus 28 each by the encoded partition and by the masked partition of each walk over two |
+| level heap sorts | 576 | a stable heap sort through a buffer, each level of the level ordered heap heaped out of place, 4 sizes in the array or outside it x 2 ways to mark the dead cells x 2 stable partitions x 15 rotations, plus 96 by the encoded partition and by the masked partition of each walk over two rotations |
 | cycle sort | 1 | |
 | first class kinds | 149 | 15 rotations, 7 small sorts, 67 partitions, 48 merges, 12 scratchspace workflows |
 

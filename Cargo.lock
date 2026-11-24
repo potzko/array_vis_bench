@@ -289,7 +289,6 @@ name = "insertion_sort_lib"
 version = "0.1.0"
 dependencies = [
  "array_vis_bench_traits",
- "small_sort_insertion_strategy",
  "sort_logger",
 ]
 
@@ -833,6 +832,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "smooth_sort_lib"
+version = "0.1.0"
+dependencies = [
+ "array_vis_bench_traits",
+ "heap_sort_lib",
+ "sort_logger",
+]
+
+[[package]]
 name = "sort_logger"
 version = "0.1.0"
 
@@ -901,6 +909,7 @@ dependencies = [
  "small_sort_insertion",
  "small_sort_insertion_strategy",
  "small_sort_network_16",
+ "smooth_sort_lib",
  "sort_logger",
  "spec_core",
  "spec_emit",

@@ -4,7 +4,9 @@
 // entries. Then the extraction study: the other four extractions over the
 // WikiSort, dynamic GrailSort and bufferless shapes with in array keys, by the
 // reversal, trinity and auxiliary rotations, 36 entries. The partition extraction
-// over the masked partition, by either walk, is left out of the study. Last the
+// over the masked partition, by either walk, is left out of the study, and so
+// is the one over the block partition, which works through a workspace the
+// extraction does not have. Last the
 // merge study: the mask merge as the local merge over every buffer and both key
 // shapes, carving by the scan, by the reversal, block cycle and auxiliary
 // rotations, 90 entries, 576 in all. The reversal is the plain rotation, the
@@ -19,7 +21,7 @@ BlockMergeExtractions: SortingAlgorithm = SortingAlgorithm<BlockMergeSort<
     buffer = _ where ( InArrayBuffer<Sqrt> | ExternalBuffer<Sqrt> | bb_none ),
     keys = _ where ( InArrayKeys ),
     rot = _ where ( ReversalRotation | TrinityRotation | AuxiliaryRotation ),
-    extract = _ - { ScanExtraction, PartitionExtraction<Masked<_>> },
+    extract = _ where ( PrefixSortExtraction | PartitionExtraction<RotationPartition> | PartitionExtraction<SlidingPartition> | PartitionExtraction<EncodedPartition> ),
     merge = _ where ( SmallerSideMerge )
 >>
 

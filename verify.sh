@@ -85,10 +85,9 @@ if cargo test --release -p spec_catalog >"$OUT/catalog_tests.log" 2>&1; then
 else
   fail "spec_catalog tests (see $OUT/catalog_tests.log)"
 fi
-# Cargo 1.100 moved build script output from `build/spec_catalog-HASH/out` to
-# `build/spec_catalog/HASH/out`; both layouts are searched.
-ENTRIES=$(ls -t target/release/build/spec_catalog-*/out/catalog_entries.rs \
-  target/release/build/spec_catalog/*/out/catalog_entries.rs 2>/dev/null | head -1)
+# Cargo keeps a build script's output under `spec_catalog-<hash>` or, from
+# 1.100, under `spec_catalog/<hash>`; the newest of either is this build's.
+ENTRIES=$(ls -t target/release/build/spec_catalog{-*,/*}/out/catalog_entries.rs 2>/dev/null | head -1)
 python3 -I "$BASE/fingerprint.py" "$ENTRIES" >"$OUT/catalog.types"
 bless_or_diff "emitted catalog names and types ($(wc -l <"$OUT/catalog.types") entries)" "$BASE/catalog.types" "$OUT/catalog.types"
 

@@ -9,6 +9,7 @@ pub mod buffer_size;
 pub mod direct_sort;
 pub mod extraction;
 pub mod keys;
+pub mod marks;
 pub mod merge;
 pub mod partition;
 pub mod pivot;
@@ -24,13 +25,14 @@ pub use buffer_size::BufferSize;
 pub use direct_sort::DirectSort;
 pub use extraction::Extraction;
 pub use keys::Keys;
+pub use marks::Marks;
 pub use merge::{run_rotation_merge, MergeStrategy, RotationMerge};
 pub use partition::{with_partition_scratch, PartitionScheme, PartitionVisitor};
 pub use scratchspace::{Scratchspace, ScratchspaceRun};
 pub use pivot::{DualPivotSelector, NoPivot, PivotInput, PivotSelector};
 pub use quick_select::QuickSelect;
 pub use rotation::Rotation;
-pub use stable_partition::StablePartition;
+pub use stable_partition::{StablePartition, Workspace};
 pub use words::with_words;
 pub use small_sort::{
     insertion_sort_with, windowed_insertion_sort_with, DeferredSmallSort, InsertionStrategy,

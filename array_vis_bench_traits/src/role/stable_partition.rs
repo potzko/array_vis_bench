@@ -5,11 +5,27 @@
 //! rotates with the `Rotation` it is handed and may use the scratch as a buffer
 //! of its own, which the caller allocates once for the two together. The fixed
 //! size arrays a partition keeps, which a C version holds on the stack, are the
-//! words the caller allocates once as well.
+//! words the caller allocates once as well. A caller with a buffer of elements
+//! and marks of its own lying idle lends them as a `Workspace`, which a filler
+//! may work through.
 
+use crate::role::Marks;
 use crate::Complexity;
 use crate::Rotation;
 use sort_logger::SortLogger;
+
+/// What a caller lends a partition beside the rotation's scratch: a buffer of
+/// cells and as many clear marks. A buffer that `keeps` its elements holds real
+/// ones, so it is swapped with and gets them all back, in any order; one that
+/// does not is written before it is read. The marks are clear again when the
+/// partition returns. `carved` is the region the marks are carved from, empty
+/// when they are allocated.
+pub struct Workspace<'a, M: Marks, T> {
+    pub buffer: &'a mut [T],
+    pub keeps: bool,
+    pub marks: &'a mut M::Store,
+    pub carved: &'a mut [T],
+}
 
 pub trait StablePartition {
     /// Short label used in the generated variant name.
@@ -17,6 +33,14 @@ pub trait StablePartition {
 
     /// Worst case moves of a partition of `n` elements without scratch.
     const MOVES: Complexity;
+
+    /// The same with scratch for a constant fraction of the region, `MOVES`
+    /// for a filler the scratch does not help.
+    const MOVES_BUFFERED: Complexity = Self::MOVES;
+
+    /// The same with no scratch but a workspace lent of the square root of the
+    /// array or more, `MOVES` for a filler that does not work through one.
+    const MOVES_LENT: Complexity = Self::MOVES;
 
     /// Cells of scratch a partition of up to `n` elements wants for itself, 0
     /// for a filler that makes do with the rotation's. The caller allocates the
@@ -74,6 +98,53 @@ pub trait StablePartition {
     ) -> (usize, usize) {
         let equal = Self::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log);
         let above = Self::partition_at_most::<R, T, U>(arr, equal, hi, pivot, scratch, words, log);
+        (equal, above)
+    }
+
+    /// `partition` with a workspace lent, which a filler may ignore.
+    #[allow(clippy::too_many_arguments)]
+    fn partition_lent<M: Marks, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        lo: usize,
+        hi: usize,
+        pivot: T,
+        _work: &mut Workspace<M, T>,
+        scratch: &mut [T],
+        words: &mut [usize],
+        log: &mut U,
+    ) -> usize {
+        Self::partition::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
+    }
+
+    /// `partition_at_most` with a workspace lent.
+    #[allow(clippy::too_many_arguments)]
+    fn partition_at_most_lent<M: Marks, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        lo: usize,
+        hi: usize,
+        pivot: T,
+        _work: &mut Workspace<M, T>,
+        scratch: &mut [T],
+        words: &mut [usize],
+        log: &mut U,
+    ) -> usize {
+        Self::partition_at_most::<R, T, U>(arr, lo, hi, pivot, scratch, words, log)
+    }
+
+    /// `partition_three_way` with a workspace lent to both of its splits.
+    #[allow(clippy::too_many_arguments)]
+    fn partition_three_way_lent<M: Marks, R: Rotation, T: Ord + Copy, U: ?Sized + SortLogger<T>>(
+        arr: &mut [T],
+        lo: usize,
+        hi: usize,
+        pivot: T,
+        work: &mut Workspace<M, T>,
+        scratch: &mut [T],
+        words: &mut [usize],
+        log: &mut U,
+    ) -> (usize, usize) {
+        let equal = Self::partition_lent::<M, R, T, U>(arr, lo, hi, pivot, work, scratch, words, log);
+        let above = Self::partition_at_most_lent::<M, R, T, U>(arr, equal, hi, pivot, work, scratch, words, log);
         (equal, above)
     }
 }

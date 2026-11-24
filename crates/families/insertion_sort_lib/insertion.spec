@@ -3,7 +3,7 @@
 # Gathered by `spec_catalog` via `[package.metadata.array_vis_bench] spec =
 # "insertion.spec"`. Declares the `InsertionSort<{strategy}>` driver and the two
 # strategies (linear / binary). The strategy TYPES live in
-# `small_sort_insertion_strategy` (a dependency of this crate); the `uses` paths
+# `small_sort_insertion_strategy` (a dependency of `spec_catalog`); the `uses` paths
 # resolve in the consumer (`spec_catalog`).
 
 component insertion_sort

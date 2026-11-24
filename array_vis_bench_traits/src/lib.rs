@@ -29,7 +29,7 @@ pub use composable::{HasSpace, HasStability, HasTimeBounds, PivotQuality};
 pub use role::{
     with_partition_scratch, with_words, DeferredSmallSort, DirectSort, DualPivotSelector, Extraction, InsertionStrategy, NoPivot,
     NonTrivialSmallSort, PartitionScheme, PartitionVisitor, PivotInput, PivotSelector, QuickSelect,
-    Keys, MergeStrategy, Rotation, RotationMerge, Scratchspace, ScratchspaceRun, SetSizeSmallSort, SmallSort,
+    Keys, Marks, MergeStrategy, Rotation, RotationMerge, Scratchspace, ScratchspaceRun, SetSizeSmallSort, SmallSort,
     SmallSortAdapter, StablePartition,
 };
 pub use role::rotation::reverse;

@@ -1,0 +1,10 @@
+// Smooth family, queries owned by smooth_sort_lib. Five holes: the heap
+// direction (2, shared with the other heap sorts), the shape of the trees (3),
+// the sift (3), what is done about the roots (2) and the build (3). With the
+// roots sorted every build is its own, 2 x 3 x 3 x 3 = 54. With them scanned a
+// lazy insertion has no roots to leave out and a heapify does what an insertion
+// does, so one build is left, 2 x 3 x 3 = 18. 72 entries.
+
+SmoothSortedRoots: SortingAlgorithm = SortingAlgorithm<SmoothSort<d = _, s = _, f = _, r = SortedRoots, b = _>>
+
+SmoothScannedRoots: SortingAlgorithm = SortingAlgorithm<SmoothSort<d = _, s = _, f = _, r = ScannedRoots, b = _ - { LazyInsert, Heapify }>>

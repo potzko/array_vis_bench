@@ -5,7 +5,7 @@
 name = "level_heap_sort_lib"
 version = "0.1.0"
 edition = "2021"
-description = "Level heap sort, `LevelHeapSort<B, P, R>`: a stable heap sort through a buffer of elements, each level of the level ordered heap sorted out of place by a pre-order heap whose pops sink a hole instead of moving the last element, a level larger than the buffer levelled again; the buffer carved from the array or allocated, over a stable partition and a rotation. Types only; the spec catalog emits the entries."
+description = "Level heap sort, `LevelHeapSort<B, M, P, R>`: a stable heap sort through a buffer of elements, each level of the level ordered heap sorted out of place by a pre-order heap whose pops sink a hole instead of moving the last element, a level larger than the buffer levelled again; the buffer carved from the array or allocated, its dead cells marked in bytes, bits or pairs of the array's elements, over a stable partition and a rotation. Types only; the spec catalog emits the entries."
 
 [lib]
 name = "level_heap_sort_lib"

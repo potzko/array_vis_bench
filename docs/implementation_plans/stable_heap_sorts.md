@@ -125,12 +125,111 @@ partitions the whole range. The heaps themselves are a small part of the
 time. The in array half and sixteenth carve their buffer by the scan at the
 square, as the block sort's do, and are quadratic.
 
-Two cuts are open. The external buffer is free while a level is being
+Two cuts were open; the first is taken by the block partition, below. The external buffer is free while a level is being
 built and could serve the partition as scratch, which makes a partition of
 a range at most twice the buffer one buffered pass; for a carved buffer the
 pass has to swap rather than write, since the buffer's elements are real.
 And the selection build of each level's heap is `m log m` comparisons where
 a heapify is linear, the same cost the tagged heap carried.
+
+### The marks, an axis
+
+The mark per buffer cell was a byte of an aux array, the one allocation of
+a shape with a carved buffer. It is the `Marks` slot of
+`LevelHeapSort<B, M, P, R>`, three fillers in `scratchspace_lib`: the byte,
+a bit packed into words, and two more distinct elements of the array per
+cell, carved in the same run as the buffer, in order while the cell is live
+and swapped once it is dead. A carved mark is read by a comparison and
+written by a swap, each pop ends by clearing the marks of its level, which
+are all set by then, so no write reads first, and the pairs are sorted again
+whenever a level is done. With a carved buffer and carved marks the sort
+allocates nothing. A shape that finds fewer distinct elements than it asks
+for has the cells they pay for, a third of them each with carved marks.
+
+Best of five, the same keys, comparisons and moves per element at 2^20,
+measured together on another day than the table above:
+
+| sort | 2^18 | 2^20 | comparisons | moves | extra space |
+|---|---|---|---|---|---|
+| in array 10 log, bytes | 78 ms | 342 ms | 70.2 | 123.9 | 10 log n bytes |
+| in array 10 log, bits | 76 ms | 335 ms | 70.2 | 123.9 | 10 log n bits, at most ten words |
+| in array 10 log, in array | 70 ms | 331 ms | 79.6 | 123.1 | none |
+| in array sqrt, bytes | 64 ms | 291 ms | 64.1 | 128.2 | sqrt n bytes |
+| in array sqrt, bits | 64 ms | 292 ms | 64.1 | 128.2 | sqrt n bits |
+| in array sqrt, in array | 64 ms | 283 ms | 77.0 | 126.1 | none |
+| external half, bytes | 36 ms | 169 ms | 40.6 | 68.4 | n / 2 words, n / 2 bytes |
+| external half, bits | 35 ms | 167 ms | 40.6 | 68.4 | n / 2 words, n / 2 bits |
+
+The carved marks cost a comparison per child the sinking hole looks at,
+about a seventh more comparisons over the sort, and no time on integer
+keys: the heaps are a small part of the work and the marks sit in the
+array beside them. The bits cost nothing over the bytes.
+
+### The time, counted in moves
+
+The bounds first declared for the family counted comparisons. In moves a
+stable partition with no scratch is `n log n`, and the level build runs
+one over every element at each depth, so a shape over an in place
+rotation with a buffer smaller than linear is `O(n log^2 n)` expected and
+`O(n^2 log n)` at worst, the quickselect taking a pass per element. Two
+things take the log back: a linear buffer, reached in a constant number of
+depths, and a rotation with linear scratch, which the partition makes one
+pass through. Writes per `n log n` on random keys, a swap as two:
+
+| sort | 2^12 | 2^14 | 2^16 | 2^18 | 2^20 |
+|---|---|---|---|---|---|
+| in array sqrt, reversal | 7.3 | 8.2 | 9.4 | 10.8 | 11.4 |
+| in array 10 log, reversal | 7.1 | 8.6 | 9.4 | 10.3 | 11.9 |
+| external half, reversal | 4.9 | 5.5 | 5.7 | 5.4 | 6.0 |
+| in array sqrt, auxiliary | 3.3 | 3.2 | 3.3 | 3.4 | 3.3 |
+| in array 10 log, auxiliary | 3.4 | 3.4 | 3.4 | 3.5 | 3.5 |
+
+The comparisons per `n log n` stay between 2 and 3.5 in every row.
+
+### The block partition
+
+The buffer and the marks are idle while a range is levelled, and the sort
+lends them to its partition as a workspace. `BlockPartition`, in
+`extraction_lib`, streams the matches into one half of the buffer and the
+rest into the other, writes a half that fills back as a whole block, marks
+each block's kind, and moves the blocks into order along the cycles of
+their permutation with a second mark per block for the ones placed. That is
+linear for a range up to a quarter of the buffer's square, so a buffer of
+the square root or more makes the sort `O(n log n)` expected, still stable
+and with nothing more allocated. A smaller buffer only shortens the
+rotations at the bottom, and the order stays `O(n log^2 n)`.
+
+Comparisons and writes per `n log n` at 2^20 and best of three, random
+keys, the reversal rotation:
+
+| sort | comparisons | writes | 2^18 | 2^20 |
+|---|---|---|---|---|
+| rotation, in array sqrt, bytes | 3.17 | 11.4 | 66 ms | 296 ms |
+| block, in array sqrt, bytes | 3.17 | 15.3 | 44 ms | 198 ms |
+| block, in array 2 sqrt, bytes | 2.98 | 13.7 | 42 ms | 183 ms |
+| block, in array 2 sqrt, in array | 3.96 | 16.2 | 45 ms | 203 ms |
+| block, external 2 sqrt, bytes | 3.19 | 7.6 | 40 ms | 175 ms |
+| rotation, in array 10 log, in array | 4.05 | 12.0 | 71 ms | 339 ms |
+| block, in array 10 log, in array | 4.82 | 20.1 | 53 ms | 255 ms |
+| rotation, external half, bytes | 1.96 | 6.0 | 38 ms | 179 ms |
+| block, external half, bytes | 1.96 | 2.3 | 30 ms | 145 ms |
+
+The block rows' writes per `n log n` are flat from 2^14 up where the
+rotation rows climb. A carved buffer is swapped with, two writes where an
+external one takes one, which is the gap between the in array and the
+external rows. The block partition writes more than the rotations at these
+sizes and is still a third faster, its writes being sequential.
+
+### The shapes the catalog keeps
+
+The types take any buffer, marks, partition and rotation, and the tables
+above measure shapes the catalog does not list. It lists 480: the buffer
+sizes log, 512, sqrt and sixteenth, the half, the ten logs and the two
+square roots left out as near neighbours of those; a buffer in the array
+with its marks in bytes or in the array, the bits there being the bytes 1
+to 3 percent slower at 2^20 over six shapes; and an external buffer with
+its marks in bytes or in bits, since a sort that allocates its buffer gains
+nothing by carving its marks.
 
 ## Verdict
 
@@ -141,7 +240,8 @@ a heapify is linear, the same cost the tagged heap carried.
   sort, and a quicksort by another name, so it did not stay.
 - The level heap sort is the heap sort the level property was for: stable
   with a buffer of any size, half the index heap's words at its speed, and a
-  curve down to log n bytes at about twice the time.
+  curve down to log n bytes at about twice the time, or to no allocation at
+  all with the marks carved from the array.
 - The tagged heap works, and every move but the jump is order safe, but it
   costs about four times the unstable heap. Its comparisons are higher
   because the selection build is `n log n` where a heapify is `2n`, and a
